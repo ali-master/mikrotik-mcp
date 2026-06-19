@@ -16,11 +16,7 @@ import {
   isEmpty,
   Cmd,
 } from "../core/routeros";
-
-/** Mask password values in printed output. */
-function redactPassword(text: string): string {
-  return text.replace(/password="[^"]*"/g, 'password="***"');
-}
+import { redactSecrets } from "../utils";
 
 const VALID_POLICIES = [
   "local",
@@ -84,7 +80,7 @@ async function runUpdateUser(
     `/user print detail where name="${detailsName}"`,
     ctx,
   );
-  return `User updated successfully:\n\n${redactPassword(details)}`;
+  return `User updated successfully:\n\n${redactSecrets(details)}`;
 }
 
 export const userTools: ToolModule = [
@@ -122,7 +118,7 @@ export const userTools: ToolModule = [
             ctx,
           );
           if (details.trim())
-            return `User created successfully:\n\n${redactPassword(details)}`;
+            return `User created successfully:\n\n${redactSecrets(details)}`;
           return `User created with ID: ${result}`;
         }
         return `Failed to create user: ${result}`;
@@ -133,7 +129,7 @@ export const userTools: ToolModule = [
         ctx,
       );
       if (details.trim())
-        return `User created successfully:\n\n${redactPassword(details)}`;
+        return `User created successfully:\n\n${redactSecrets(details)}`;
       return "User creation completed but unable to verify.";
     },
   }),
@@ -163,7 +159,7 @@ export const userTools: ToolModule = [
         ctx,
       );
       if (isEmpty(result)) return "No users found matching the criteria.";
-      return `USERS:\n\n${redactPassword(result)}`;
+      return `USERS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -180,7 +176,7 @@ export const userTools: ToolModule = [
         ctx,
       );
       if (isEmpty(result)) return `User '${a.name}' not found.`;
-      return `USER DETAILS:\n\n${redactPassword(result)}`;
+      return `USER DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 

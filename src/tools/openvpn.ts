@@ -10,11 +10,8 @@ import {
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { redactSecrets } from "../utils";
 
-/** Mask password values in printed output. */
-function redactPassword(text: string): string {
-  return text.replace(/password="[^"]*"/g, 'password="***"');
-}
 
 export const openvpnTools: ToolModule = [
   defineTool({
@@ -138,14 +135,14 @@ export const openvpnTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result))
-        return `Failed to create OpenVPN client: ${redactPassword(result)}`;
+        return `Failed to create OpenVPN client: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface ovpn-client print detail where name="${a.name}"`,
         ctx,
       );
       return details.trim()
-        ? `OpenVPN client created successfully:\n\n${redactPassword(details)}`
+        ? `OpenVPN client created successfully:\n\n${redactSecrets(details)}`
         : "OpenVPN client creation completed but unable to verify.";
     },
   }),
@@ -170,7 +167,7 @@ export const openvpnTools: ToolModule = [
       );
       return isEmpty(result)
         ? "No OpenVPN clients found matching the criteria."
-        : `OPENVPN CLIENTS:\n\n${redactPassword(result)}`;
+        : `OPENVPN CLIENTS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -189,7 +186,7 @@ export const openvpnTools: ToolModule = [
       );
       return isEmpty(result)
         ? `OpenVPN client '${a.name}' not found.`
-        : `OPENVPN CLIENT DETAILS:\n\n${redactPassword(result)}`;
+        : `OPENVPN CLIENT DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 

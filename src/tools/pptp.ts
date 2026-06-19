@@ -15,11 +15,8 @@ import {
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { redactSecrets } from "../utils";
 
-/** Mask password values in printed output (mirrors the users.ts redaction pattern). */
-function redact(text: string): string {
-  return text.replace(/password="[^"]*"/g, 'password="***"');
-}
 
 export const pptpTools: ToolModule = [
   // ── SERVER `/interface pptp-server server` ────────────────────────────────
@@ -119,14 +116,14 @@ export const pptpTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result))
-        return `Failed to create PPTP client: ${redact(result)}`;
+        return `Failed to create PPTP client: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface pptp-client print detail where name="${a.name}"`,
         ctx,
       );
       return details.trim()
-        ? `PPTP client created successfully:\n\n${redact(details)}`
+        ? `PPTP client created successfully:\n\n${redactSecrets(details)}`
         : "PPTP client creation completed but unable to verify.";
     },
   }),
@@ -150,7 +147,7 @@ export const pptpTools: ToolModule = [
       );
       return isEmpty(result)
         ? "No PPTP clients found matching the criteria."
-        : `PPTP CLIENTS:\n\n${redact(result)}`;
+        : `PPTP CLIENTS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -169,7 +166,7 @@ export const pptpTools: ToolModule = [
       );
       return isEmpty(result)
         ? `PPTP client '${a.name}' not found.`
-        : `PPTP CLIENT DETAILS:\n\n${redact(result)}`;
+        : `PPTP CLIENT DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 

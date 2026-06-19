@@ -10,13 +10,8 @@ import {
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { redactSecrets } from "../utils";
 
-/** Mask RADIUS shared secrets in printed output so they never leak to the model. */
-function redact(text: string): string {
-  return text
-    .replace(/secret="[^"]*"/g, 'secret="***"')
-    .replace(/shared-secret="[^"]*"/g, 'shared-secret="***"');
-}
 
 export const radiusTools: ToolModule = [
   defineTool({
@@ -71,7 +66,7 @@ export const radiusTools: ToolModule = [
         ctx,
       );
       return details.trim()
-        ? `RADIUS server added successfully:\n\n${redact(details)}`
+        ? `RADIUS server added successfully:\n\n${redactSecrets(details)}`
         : "RADIUS server creation completed but unable to verify.";
     },
   }),
@@ -97,7 +92,7 @@ export const radiusTools: ToolModule = [
       );
       return isEmpty(result)
         ? "No RADIUS servers found matching the criteria."
-        : `RADIUS SERVERS:\n\n${redact(result)}`;
+        : `RADIUS SERVERS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -118,7 +113,7 @@ export const radiusTools: ToolModule = [
       );
       return isEmpty(result)
         ? `RADIUS server '${a.radius_id}' not found.`
-        : `RADIUS SERVER DETAILS:\n\n${redact(result)}`;
+        : `RADIUS SERVER DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -170,7 +165,7 @@ export const radiusTools: ToolModule = [
         `/radius print detail where .id="${a.radius_id}"`,
         ctx,
       );
-      return `RADIUS server updated successfully:\n\n${redact(details)}`;
+      return `RADIUS server updated successfully:\n\n${redactSecrets(details)}`;
     },
   }),
 

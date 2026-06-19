@@ -10,11 +10,8 @@ import {
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { redactSecrets } from "../utils";
 
-/** Mask password values in printed output (mirrors the users.ts redaction pattern). */
-function redact(text: string): string {
-  return text.replace(/password="[^"]*"/g, 'password="***"');
-}
 
 const UseIpsecServer = z.enum(["yes", "no", "required"]);
 const UseIpsecClient = z.enum(["yes", "no"]);
@@ -130,14 +127,14 @@ export const l2tpTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result))
-        return `Failed to create L2TP client: ${redact(result)}`;
+        return `Failed to create L2TP client: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface l2tp-client print detail where name="${a.name}"`,
         ctx,
       );
       return details.trim()
-        ? `L2TP client created successfully:\n\n${redact(details)}`
+        ? `L2TP client created successfully:\n\n${redactSecrets(details)}`
         : "L2TP client creation completed but unable to verify.";
     },
   }),
@@ -161,7 +158,7 @@ export const l2tpTools: ToolModule = [
       );
       return isEmpty(result)
         ? "No L2TP clients found matching the criteria."
-        : `L2TP CLIENTS:\n\n${redact(result)}`;
+        : `L2TP CLIENTS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -180,7 +177,7 @@ export const l2tpTools: ToolModule = [
       );
       return isEmpty(result)
         ? `L2TP client '${a.name}' not found.`
-        : `L2TP CLIENT DETAILS:\n\n${redact(result)}`;
+        : `L2TP CLIENT DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 

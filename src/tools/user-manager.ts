@@ -23,13 +23,7 @@ import {
   commandUnsupported,
   Cmd,
 } from "../core/routeros";
-
-/** Mask password / shared-secret values in printed output. */
-function redact(text: string): string {
-  return text
-    .replace(/password="[^"]*"/g, 'password="***"')
-    .replace(/shared-secret="[^"]*"/g, 'shared-secret="***"');
-}
+import { redactSecrets } from "../utils";
 
 const NOT_AVAILABLE =
   "User Manager is not available on this device (package not installed).";
@@ -131,7 +125,7 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       return details.trim()
-        ? `User Manager user created successfully:\n\n${redact(details)}`
+        ? `User Manager user created successfully:\n\n${redactSecrets(details)}`
         : "User Manager user creation completed but unable to verify.";
     },
   }),
@@ -156,7 +150,7 @@ export const userManagerTools: ToolModule = [
       if (commandUnsupported(result)) return NOT_AVAILABLE;
       return isEmpty(result)
         ? "No User Manager users found matching the criteria."
-        : `USER MANAGER USERS:\n\n${redact(result)}`;
+        : `USER MANAGER USERS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -176,7 +170,7 @@ export const userManagerTools: ToolModule = [
       if (commandUnsupported(result)) return NOT_AVAILABLE;
       return isEmpty(result)
         ? `User Manager user '${a.name}' not found.`
-        : `USER MANAGER USER DETAILS:\n\n${redact(result)}`;
+        : `USER MANAGER USER DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -218,7 +212,7 @@ export const userManagerTools: ToolModule = [
         `/user-manager user print detail where name="${target}"`,
         ctx,
       );
-      return `User Manager user updated successfully:\n\n${redact(details)}`;
+      return `User Manager user updated successfully:\n\n${redactSecrets(details)}`;
     },
   }),
 
@@ -431,7 +425,7 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       return details.trim()
-        ? `User Manager router created successfully:\n\n${redact(details)}`
+        ? `User Manager router created successfully:\n\n${redactSecrets(details)}`
         : "User Manager router creation completed but unable to verify.";
     },
   }),
@@ -457,7 +451,7 @@ export const userManagerTools: ToolModule = [
       if (commandUnsupported(result)) return NOT_AVAILABLE;
       return isEmpty(result)
         ? "No User Manager routers found matching the criteria."
-        : `USER MANAGER ROUTERS:\n\n${redact(result)}`;
+        : `USER MANAGER ROUTERS:\n\n${redactSecrets(result)}`;
     },
   }),
 

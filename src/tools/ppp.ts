@@ -10,11 +10,8 @@ import {
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { redactSecrets } from "../utils";
 
-/** Mask password values in printed output (mirrors the users.ts redaction pattern). */
-function redact(text: string): string {
-  return text.replace(/password="[^"]*"/g, 'password="***"');
-}
 
 const UseEncryption = z.enum(["default", "yes", "no", "required"]);
 const ChangeTcpMss = z.enum(["default", "yes", "no"]);
@@ -225,14 +222,14 @@ export const pppTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result))
-        return `Failed to create PPP secret: ${redact(result)}`;
+        return `Failed to create PPP secret: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/ppp secret print detail where name="${a.name}"`,
         ctx,
       );
       return details.trim()
-        ? `PPP secret created successfully:\n\n${redact(details)}`
+        ? `PPP secret created successfully:\n\n${redactSecrets(details)}`
         : "PPP secret creation completed but unable to verify.";
     },
   }),
@@ -259,7 +256,7 @@ export const pppTools: ToolModule = [
       );
       return isEmpty(result)
         ? "No PPP secrets found matching the criteria."
-        : `PPP SECRETS:\n\n${redact(result)}`;
+        : `PPP SECRETS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -278,7 +275,7 @@ export const pppTools: ToolModule = [
       );
       return isEmpty(result)
         ? `PPP secret '${a.name}' not found.`
-        : `PPP SECRET DETAILS:\n\n${redact(result)}`;
+        : `PPP SECRET DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -318,14 +315,14 @@ export const pppTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result))
-        return `Failed to update PPP secret: ${redact(result)}`;
+        return `Failed to update PPP secret: ${redactSecrets(result)}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
         `/ppp secret print detail where name="${target}"`,
         ctx,
       );
-      return `PPP secret updated successfully:\n\n${redact(details)}`;
+      return `PPP secret updated successfully:\n\n${redactSecrets(details)}`;
     },
   }),
 

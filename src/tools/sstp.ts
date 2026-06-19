@@ -10,11 +10,8 @@ import {
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { redactSecrets } from "../utils";
 
-/** Mask password values in printed output. */
-function redactPassword(text: string): string {
-  return text.replace(/password="[^"]*"/g, 'password="***"');
-}
 
 export const sstpTools: ToolModule = [
   defineTool({
@@ -124,14 +121,14 @@ export const sstpTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result))
-        return `Failed to create SSTP client: ${redactPassword(result)}`;
+        return `Failed to create SSTP client: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface sstp-client print detail where name="${a.name}"`,
         ctx,
       );
       return details.trim()
-        ? `SSTP client created successfully:\n\n${redactPassword(details)}`
+        ? `SSTP client created successfully:\n\n${redactSecrets(details)}`
         : "SSTP client creation completed but unable to verify.";
     },
   }),
@@ -155,7 +152,7 @@ export const sstpTools: ToolModule = [
       );
       return isEmpty(result)
         ? "No SSTP clients found matching the criteria."
-        : `SSTP CLIENTS:\n\n${redactPassword(result)}`;
+        : `SSTP CLIENTS:\n\n${redactSecrets(result)}`;
     },
   }),
 
@@ -174,7 +171,7 @@ export const sstpTools: ToolModule = [
       );
       return isEmpty(result)
         ? `SSTP client '${a.name}' not found.`
-        : `SSTP CLIENT DETAILS:\n\n${redactPassword(result)}`;
+        : `SSTP CLIENT DETAILS:\n\n${redactSecrets(result)}`;
     },
   }),
 
