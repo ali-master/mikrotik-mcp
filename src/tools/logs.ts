@@ -10,6 +10,7 @@ import { executeMikrotikCommand } from "../core/connector";
 import {  READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type {ToolModule} from "../core/registry";
 import { isEmpty } from "../core/routeros";
+import { tailLines, orMatch } from "../utils";
 import type { ToolContext } from "../core/context";
 
 interface GetLogsOptions {
@@ -46,12 +47,12 @@ async function runGetLogs(o: GetLogsOptions, ctx: ToolContext): Promise<string> 
   if (o.time_filter) filters.push(`time > ([:timestamp] - ${o.time_filter})`);
 
   if (filters.length) cmd += ` where ${  filters.join(" and ")}`;
-  if (o.limit) cmd += ` limit=${o.limit}`;
   if (o.follow) cmd += " follow";
 
   const result = await executeMikrotikCommand(cmd, ctx);
   if (isEmpty(result)) return "No log entries found matching the criteria.";
-  return `LOG ENTRIES:\n\n${result}`;
+  const limited = o.limit ? tailLines(result, o.limit) : result;
+  return `LOG ENTRIES:\n\n${limited}`;
 }
 
 export const logTools: ToolModule = [
@@ -201,18 +202,21 @@ export const logTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info("Getting security logs");
 
-      // Security-related topics and keywords
-      const securityTopics = "system,firewall,warning,error";
+      // Security-related topics and keywords. RouterOS `where` clauses require
+      // double-quoted strings (single quotes are a syntax error), and matching
+      // several topics needs an OR of separate `topics~"…"` terms rather than a
+      // single comma-joined regex.
+      const securityTopics = ["system", "firewall", "warning", "error"];
       const securityKeywords = "(login|logout|failed|denied|blocked|attack|invalid|unauthorized)";
 
-      let cmd = `/log print where (topics~'${securityTopics}') and message~'${securityKeywords}'`;
+      let cmd = `/log print where ${orMatch("topics", securityTopics)} and message~"${securityKeywords}"`;
 
       if (a.time_filter) cmd += ` and time > ([:timestamp] - ${a.time_filter})`;
-      if (a.limit) cmd += ` limit=${a.limit}`;
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (isEmpty(result)) return "No security-related log entries found.";
-      return `SECURITY LOG ENTRIES:\n\n${result}`;
+      const limited = a.limit ? tailLines(result, a.limit) : result;
+      return `SECURITY LOG ENTRIES:\n\n${limited}`;
     },
   }),
 
@@ -319,19 +323,22 @@ export const logTools: ToolModule = [
       let duration = a.duration;
       if (duration > 60) duration = 60;
 
-      // This is a simplified version - real-time monitoring would require
-      // a different approach with streaming
-      let cmd = "/log print follow-only";
+      // A non-interactive SSH session can't truly stream, so instead of the
+      // blocking `follow-only` we read the entries logged within the last
+      // `duration` seconds. RouterOS `print` has no `limit=`, so the output is
+      // capped client-side via tailLines().
+      const filters: string[] = [];
+      if (a.topics) filters.push(`topics~"${a.topics}"`);
+      if (a.action) filters.push(`action="${a.action}"`);
+      filters.push(`time > ([:timestamp] - ${duration}s)`);
 
-      if (a.topics) cmd += ` where topics~"${a.topics}"`;
-      if (a.action) cmd += ` action="${a.action}"`;
-
-      // Add a limit to prevent overwhelming output
-      cmd += " limit=100";
-
+      const cmd = `/log print where ${filters.join(" and ")}`;
       const result = await executeMikrotikCommand(cmd, ctx);
+      if (isEmpty(result)) {
+        return `LOG MONITOR (last ${duration} seconds):\n\nNo log entries in this window.`;
+      }
 
-      return `LOG MONITOR (last ${duration} seconds):\n\n${result}`;
+      return `LOG MONITOR (last ${duration} seconds):\n\n${tailLines(result, 100)}`;
     },
   }),
 ];
