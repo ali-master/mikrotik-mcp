@@ -38,6 +38,7 @@ import { routingFilterTools } from "./routing-filter";
 import { routingIdTools } from "./routing-id";
 import { routingNexthopTools } from "./routing-nexthop";
 import { routingOspfTools } from "./routing-ospf";
+import { routingPimsmTools } from "./routing-pimsm";
 import { routingRipTools } from "./routing-rip";
 import { routingSettingsTools } from "./routing-settings";
 import { routingRuleTools } from "./routing-rule";
@@ -90,6 +91,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "BGP", slug: "routing-bgp", group: "Dynamic Routing", description: "BGP connections, templates, sessions and advertisements (`/routing bgp`).", tools: routingBgpTools },
   { label: "OSPF", slug: "routing-ospf", group: "Dynamic Routing", description: "OSPF instances, areas, ranges, interface-templates, neighbors and LSAs (`/routing ospf`).", tools: routingOspfTools },
   { label: "RIP", slug: "routing-rip", group: "Dynamic Routing", description: "RIP instances, interface-templates, static + dynamic neighbors (`/routing rip`).", tools: routingRipTools },
+  { label: "PIM-SM", slug: "routing-pimsm", group: "Dynamic Routing", description: "PIM Sparse-Mode instances, interface-templates, RPs and neighbors (`/routing pimsm`).", tools: routingPimsmTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
