@@ -34,6 +34,7 @@ import { radiusTools } from "./radius";
 import { routeTools } from "./routes";
 import { routingIdTools } from "./routing-id";
 import { routingSettingsTools } from "./routing-settings";
+import { routingRuleTools } from "./routing-rule";
 import { routingTableTools } from "./routing-table";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
@@ -76,6 +77,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "Router ID", slug: "routing-id", group: "Dynamic Routing", description: "Router-ID instances for OSPF/BGP (`/routing id`).", tools: routingIdTools },
   { label: "Routing Settings", slug: "routing-settings", group: "Dynamic Routing", description: "Global routing settings: ECMP hash policy, VRF-as-interface (`/routing settings`).", tools: routingSettingsTools },
   { label: "Routing Tables", slug: "routing-table", group: "Dynamic Routing", description: "Named routing tables / FIBs (`/routing table`).", tools: routingTableTools },
+  { label: "Routing Rules", slug: "routing-rule", group: "Dynamic Routing", description: "Policy routing rules selecting a table by src/dst/interface/mark (`/routing rule`).", tools: routingRuleTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
