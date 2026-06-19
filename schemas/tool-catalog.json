@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 346,
+  "toolCount": 349,
   "tools": [
     {
       "name": "list_interfaces",
@@ -11210,6 +11210,91 @@
         },
         "required": [
           "filename"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_disks",
+      "title": "List Disks",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists storage disks (USB, NVMe, internal flash) attached to the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_disk",
+      "title": "Get Disk",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed information about a specific disk.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Disk name, e.g. 'disk1'"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "format_disk",
+      "title": "Format Disk",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Formats (ERASES) a disk on the MikroTik device. This destroys all data on the disk. Requires confirm=true.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Disk name to format, e.g. 'disk1'"
+          },
+          "file_system": {
+            "description": "File system to create",
+            "type": "string",
+            "enum": [
+              "ext4",
+              "fat32",
+              "exfat",
+              "ntfs"
+            ]
+          },
+          "label": {
+            "description": "Volume label",
+            "type": "string"
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be true to actually erase the disk"
+          }
+        },
+        "required": [
+          "name",
+          "confirm"
         ],
         "additionalProperties": false
       }

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_disk",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Disk name, e.g. 'disk1'"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

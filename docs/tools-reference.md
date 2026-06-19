@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**346 tools** across **35 modules**. A `*` marks a required parameter.
+**349 tools** across **36 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -44,6 +44,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Logs](#logs) | System & Ops | 10 | Log retrieval, search, statistics and export (`/log`). |
 | [Logging Config](#logging) | System & Ops | 6 | Logging rules + actions: where each topic is logged (`/system logging`). |
 | [Backup](#backup) | System & Ops | 10 | Binary backups, text exports, file transfer and restore. |
+| [Disk](#disk) | System & Ops | 3 | Storage devices: list/get disks and format-drive (`/disk`). |
 | [Safe Mode](#safe-mode) | System & Ops | 4 | Transactional config window with auto-revert (Ctrl+X session). |
 
 ## Interfaces
@@ -625,6 +626,16 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `import_configuration` | ⛔ dangerous | `filename`*, `run_after_reset`*, `verbose`* | Imports and executes a RouterOS configuration script (.rsc file) on the device. |
 | `remove_file` | ⛔ dangerous | `filename`* | Removes a file from the MikroTik device filesystem. |
 | `backup_info` | 🟢 read | `filename`* | Gets detailed information about a backup file on the MikroTik device. |
+
+## Disk
+
+<a id="disk"></a>Storage devices: list/get disks and format-drive (`/disk`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_disks` | 🟢 read | _none_ | Lists storage disks (USB, NVMe, internal flash) attached to the MikroTik device. |
+| `get_disk` | 🟢 read | `name`* | Gets detailed information about a specific disk. |
+| `format_disk` | ⛔ dangerous | `name`*, `file_system`, `label`, `confirm`* | Formats (ERASES) a disk on the MikroTik device. This destroys all data on the disk. Requires confirm=true. |
 
 ## Safe Mode
 

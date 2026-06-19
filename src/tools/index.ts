@@ -12,6 +12,7 @@ import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
+import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
@@ -96,6 +97,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "Logs", slug: "logs", group: "System & Ops", description: "Log retrieval, search, statistics and export (`/log`).", tools: logTools },
   { label: "Logging Config", slug: "logging", group: "System & Ops", description: "Logging rules + actions: where each topic is logged (`/system logging`).", tools: systemLoggingTools },
   { label: "Backup", slug: "backup", group: "System & Ops", description: "Binary backups, text exports, file transfer and restore.", tools: backupTools },
+  { label: "Disk", slug: "disk", group: "System & Ops", description: "Storage devices: list/get disks and format-drive (`/disk`).", tools: diskTools },
   { label: "Safe Mode", slug: "safe-mode", group: "System & Ops", description: "Transactional config window with auto-revert (Ctrl+X session).", tools: safeModeTools },
 ];
 

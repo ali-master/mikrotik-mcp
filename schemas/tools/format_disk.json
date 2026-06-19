@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "format_disk",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Disk name to format, e.g. 'disk1'"
+    },
+    "file_system": {
+      "description": "File system to create",
+      "type": "string",
+      "enum": [
+        "ext4",
+        "fat32",
+        "exfat",
+        "ntfs"
+      ]
+    },
+    "label": {
+      "description": "Volume label",
+      "type": "string"
+    },
+    "confirm": {
+      "type": "boolean",
+      "description": "Must be true to actually erase the disk"
+    }
+  },
+  "required": [
+    "name",
+    "confirm"
+  ],
+  "additionalProperties": false
+}
