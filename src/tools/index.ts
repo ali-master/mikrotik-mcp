@@ -42,6 +42,7 @@ import { routingNexthopTools } from "./routing-nexthop";
 import { routingOspfTools } from "./routing-ospf";
 import { routingPimsmTools } from "./routing-pimsm";
 import { routingRipTools } from "./routing-rip";
+import { routingRpkiTools } from "./routing-rpki";
 import { routingSettingsTools } from "./routing-settings";
 import { routingRuleTools } from "./routing-rule";
 import { routingTableTools } from "./routing-table";
@@ -96,6 +97,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "PIM-SM", slug: "routing-pimsm", group: "Dynamic Routing", description: "PIM Sparse-Mode instances, interface-templates, RPs and neighbors (`/routing pimsm`).", tools: routingPimsmTools },
   { label: "IGMP Proxy", slug: "routing-igmp-proxy", group: "Dynamic Routing", description: "IGMP proxy settings, interfaces and forwarding cache (`/routing igmp-proxy`).", tools: routingIgmpProxyTools },
   { label: "GMP", slug: "routing-gmp", group: "Dynamic Routing", description: "Group Management Protocol (IGMP/MLD) interfaces and memberships (`/routing gmp`).", tools: routingGmpTools },
+  { label: "RPKI", slug: "routing-rpki", group: "Dynamic Routing", description: "RPKI validator sessions for BGP origin validation (`/routing rpki`).", tools: routingRpkiTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
