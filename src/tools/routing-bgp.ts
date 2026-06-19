@@ -2,8 +2,8 @@
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import {
-  WRITE,
   WRITE_IDEMPOTENT,
+  WRITE,
   READ,
   DESTRUCTIVE,
   defineTool,

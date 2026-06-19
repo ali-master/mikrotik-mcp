@@ -2,15 +2,14 @@
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import {
-  WRITE,
   WRITE_IDEMPOTENT,
+  WRITE,
   READ,
   DESTRUCTIVE,
   defineTool,
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import {
-  yesno,
   whereClause,
   looksLikeError,
   isEmpty,
