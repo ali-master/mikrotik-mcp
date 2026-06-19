@@ -37,6 +37,7 @@ import { routingBgpTools } from "./routing-bgp";
 import { routingFilterTools } from "./routing-filter";
 import { routingIdTools } from "./routing-id";
 import { routingNexthopTools } from "./routing-nexthop";
+import { routingOspfTools } from "./routing-ospf";
 import { routingSettingsTools } from "./routing-settings";
 import { routingRuleTools } from "./routing-rule";
 import { routingTableTools } from "./routing-table";
@@ -86,6 +87,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "Routing Filters", slug: "routing-filter", group: "Dynamic Routing", description: "Route filter rules, select-rules and num-lists (`/routing filter`).", tools: routingFilterTools },
   { label: "BFD", slug: "routing-bfd", group: "Dynamic Routing", description: "Bidirectional Forwarding Detection config + sessions (`/routing bfd`).", tools: routingBfdTools },
   { label: "BGP", slug: "routing-bgp", group: "Dynamic Routing", description: "BGP connections, templates, sessions and advertisements (`/routing bgp`).", tools: routingBgpTools },
+  { label: "OSPF", slug: "routing-ospf", group: "Dynamic Routing", description: "OSPF instances, areas, ranges, interface-templates, neighbors and LSAs (`/routing ospf`).", tools: routingOspfTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
