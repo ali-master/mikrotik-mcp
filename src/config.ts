@@ -1,11 +1,6 @@
 /**
  * Runtime configuration: one or more named MikroTik devices + MCP transport.
  *
- * Resolution order (highest precedence last): defaults -> environment
- * variables -> command-line flags. The single-device `MIKROTIK_*` variables are
- * kept **byte-for-byte compatible** with the legacy Python server (they define a
- * device named `default`), so an existing deployment swaps binaries unchanged.
- *
  * For multi-device setups (e.g. building a tunnel between two routers) define a
  * `devices` map via a JSON config file (`--config` / `MIKROTIK_CONFIG_FILE`) or
  * the `MIKROTIK_DEVICES` env var. Each device gets a name the AI can target

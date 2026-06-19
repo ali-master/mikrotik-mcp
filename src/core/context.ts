@@ -1,7 +1,6 @@
 /**
  * ToolContext is the lightweight per-call logging surface handed to every tool
- * handler — the TypeScript analog of FastMCP's `Context` object in the Python
- * server (`ctx.info()` / `ctx.error()`).
+ * handler
  *
  * Diagnostic messages are written to stderr (never stdout, which the stdio
  * transport reserves for JSON-RPC) and, when the MCP client has opted into

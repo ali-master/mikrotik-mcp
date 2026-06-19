@@ -63,8 +63,6 @@ in memory and auto-reverts if your session drops, so you can't lock yourself out
 - 🖧 **Multiple devices** — define named routers and the AI targets one per call
   (a validated `device` argument). Configure **both ends of a tunnel** from one
   conversation. See **[docs/multi-device.md](docs/multi-device.md)**.
-- 🔁 **Drop-in for the Python server** — the `MIKROTIK_*` environment variables are
-  byte-for-byte compatible; swap the binary, keep your config.
 - 🤖 **Guided prompts** — 9 built-in workflows (harden, diagnose, guest Wi-Fi, VPNs,
   cross-device tunnels, backup & document) that turn an intent into tool calls.
 
@@ -247,16 +245,6 @@ source** (`bun run gen:schemas`) so they can never drift:
 - `schemas/tool-catalog.json` — all 466 tools with risk, description, and input schema
 - `schemas/tools/<name>.json` — per-tool input schema
 - `schemas/config.schema.json` — the runtime configuration
-
-## Migrating from the Python server
-
-This is a from-scratch rewrite of [`mcp-server-mikrotik`](https://github.com/jeff-nasseri/mikrotik-mcp)
-in Bun + TypeScript. All 169 original tools are ported 1:1 (same names, same
-parameters), plus 141 new ones (the full VPN suite, system/network tools, bridge,
-address-lists, scheduler, certificates, IP services). Because the `MIKROTIK_*`
-environment variables are identical, migration is usually just swapping the
-command. The legacy Python source remains in [`mikrotik-mcp/`](mikrotik-mcp/) for
-reference.
 
 ## Documentation
 

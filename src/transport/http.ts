@@ -5,7 +5,7 @@
  * a `Response`, which slots directly into `Bun.serve` with no Node `http` shim.
  *
  * DNS-rebinding protection is reconciled with the actual bind host the same way
- * the Python server did (issue #86): a localhost bind gets a secure localhost
+ * the Bun server did: a localhost bind gets a secure localhost
  * allowlist; an explicit allowlist is honored; binding to a public interface
  * with no allowlist disables the Host check (with a loud warning) so a reverse
  * proxy doesn't get every request rejected with HTTP 421.

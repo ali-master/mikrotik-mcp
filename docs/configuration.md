@@ -1,8 +1,6 @@
 # Configuration
 
 Every setting can be supplied as an **environment variable** or a **CLI flag**.
-The environment variable names are byte-for-byte compatible with the legacy
-Python server, so existing deployments work unchanged.
 
 ## Resolution order
 
@@ -62,8 +60,7 @@ Transport values are `stdio`, `streamable-http`, or `sse`. The HTTP bind host,
 port, and allow-lists only apply to the HTTP transports; they're ignored for
 `stdio`.
 
-The `__` (double underscore) in the env var names is the nested-key delimiter
-inherited from the Python server's settings model.
+The `__` (double underscore) in the env var names is the nested-key delimiter.
 
 ## Logging
 

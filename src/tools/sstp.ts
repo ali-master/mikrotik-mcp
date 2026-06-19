@@ -11,7 +11,7 @@ import {
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
-/** Mask password values in printed output (mirrors the Python `re.sub`). */
+/** Mask password values in printed output. */
 function redactPassword(text: string): string {
   return text.replace(/password="[^"]*"/g, 'password="***"');
 }

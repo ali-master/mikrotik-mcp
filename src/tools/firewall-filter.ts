@@ -21,7 +21,7 @@ import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
 
-/** Shared update routine — used by update/enable/disable (mirrors the Python delegation). */
+/** Shared update routine — used by update/enable/disable. */
 async function updateFilterRule(
   a: {
     rule_id: string;

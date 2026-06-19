@@ -1,12 +1,5 @@
 /**
  * Tool declaration + registration layer.
- *
- * `defineTool()` is the TypeScript counterpart of the Python `@mcp.tool(...)`
- * decorator. It pairs a Zod input schema (validation + auto-generated JSON
- * Schema) with one of the shared *risk presets* (READ / WRITE / DESTRUCTIVE …)
- * so MCP clients can reason about each tool's blast radius, and wraps the
- * handler so every tool returns the protocol's `{ content: [...] }` shape and
- * funnels failures through a single error path.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type {
@@ -57,7 +50,7 @@ export const DANGEROUS: ToolAnnotations = {
 };
 
 export interface ToolDef<Shape extends ZodRawShape> {
-  /** Stable tool id exposed to MCP clients (snake_case, matches the Python names). */
+  /** Stable tool id exposed to MCP clients. */
   name: string;
   /** Short human-readable display name shown in compact tool lists. */
   title: string;

@@ -20,8 +20,7 @@ import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 /**
  * Shared "create, then verify" flow: when RouterOS echoes a new `.id` (`*N` or a
- * bare number) re-print by id, otherwise fall back to a lookup by name — mirroring
- * the original Python control flow exactly.
+ * bare number) re-print by id, otherwise fall back to a lookup by name
  */
 async function verifyCreate(
   result: string,

@@ -7,10 +7,6 @@ and a complete **VPN suite** (WireGuard, IPsec, L2TP, PPTP, SSTP, OpenVPN, and
 GRE/IPIP/EoIP/VXLAN tunnels). It can manage **multiple named devices** at once,
 so the AI can configure both ends of a tunnel from one conversation.
 
-It runs on **Bun ≥ 1.3**, is written in TypeScript, and its environment
-variables are byte-for-byte compatible with the legacy Python server, so an
-existing deployment can swap binaries without touching its configuration.
-
 ## Contents
 
 | Doc | What's inside |
