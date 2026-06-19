@@ -22,6 +22,7 @@ import { ipServiceTools } from "./ip-service";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
+import { systemLoggingTools } from "./logging";
 import { networkToolTools } from "./network-tools";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
@@ -93,6 +94,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "Scheduler / Scripts", slug: "scheduler", group: "System & Ops", description: "Scheduled jobs and scripts (`/system scheduler`, `/system script`).", tools: schedulerTools },
   { label: "Users", slug: "users", group: "System & Ops", description: "Users, groups, active sessions and SSH keys (`/user`).", tools: userTools },
   { label: "Logs", slug: "logs", group: "System & Ops", description: "Log retrieval, search, statistics and export (`/log`).", tools: logTools },
+  { label: "Logging Config", slug: "logging", group: "System & Ops", description: "Logging rules + actions: where each topic is logged (`/system logging`).", tools: systemLoggingTools },
   { label: "Backup", slug: "backup", group: "System & Ops", description: "Binary backups, text exports, file transfer and restore.", tools: backupTools },
   { label: "Safe Mode", slug: "safe-mode", group: "System & Ops", description: "Transactional config window with auto-revert (Ctrl+X session).", tools: safeModeTools },
 ];

@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**340 tools** across **34 modules**. A `*` marks a required parameter.
+**346 tools** across **35 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -42,6 +42,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Scheduler / Scripts](#scheduler) | System & Ops | 10 | Scheduled jobs and scripts (`/system scheduler`, `/system script`). |
 | [Users](#users) | System & Ops | 18 | Users, groups, active sessions and SSH keys (`/user`). |
 | [Logs](#logs) | System & Ops | 10 | Log retrieval, search, statistics and export (`/log`). |
+| [Logging Config](#logging) | System & Ops | 6 | Logging rules + actions: where each topic is logged (`/system logging`). |
 | [Backup](#backup) | System & Ops | 10 | Binary backups, text exports, file transfer and restore. |
 | [Safe Mode](#safe-mode) | System & Ops | 4 | Transactional config window with auto-revert (Ctrl+X session). |
 
@@ -594,6 +595,19 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `get_log_statistics` | 🟢 read | _none_ | Gets log entry counts by topic and severity from the MikroTik device. |
 | `export_logs` | 🟢 read | `filename`, `topics`, `time_filter`, `format`* | Exports logs to a file on the MikroTik device with optional topic and time filters. |
 | `monitor_logs` | 🟢 read | `topics`, `action`, `duration`* | Monitors MikroTik logs in near-real-time for a limited duration (max 60s). |
+
+## Logging Config
+
+<a id="logging"></a>Logging rules + actions: where each topic is logged (`/system logging`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_logging_rule` | 🟡 write | `topics`*, `action`, `prefix`, `disabled`* | Adds a system logging rule that routes log messages matching the given topics to a logging action. |
+| `list_logging_rules` | 🟢 read | `topics_filter`, `action_filter` | Lists system logging rules on the MikroTik device. |
+| `remove_logging_rule` | 🔴 destructive | `rule_id`* | Removes a system logging rule by its internal id. |
+| `add_logging_action` | 🟡 write | `name`*, `target`*, `remote`, `remote_port`, `bsd_syslog`, `syslog_facility`, `syslog_severity`, `disk_file_name`, `disk_lines_per_file`, `memory_lines`, `email_to`, `disabled`* | Adds a system logging action defining where matching log messages are sent (memory, disk, echo, remote syslog or email). |
+| `list_logging_actions` | 🟢 read | `name_filter` | Lists system logging actions on the MikroTik device. |
+| `remove_logging_action` | 🔴 destructive | `name`* | Removes a system logging action by name. |
 
 ## Backup
 

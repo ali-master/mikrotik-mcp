@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_logging_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "description": "Internal .id of the logging rule, e.g. '*1'"
+    }
+  },
+  "required": [
+    "rule_id"
+  ],
+  "additionalProperties": false
+}

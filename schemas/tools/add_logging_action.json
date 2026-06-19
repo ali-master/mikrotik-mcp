@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_logging_action",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new logging action"
+    },
+    "target": {
+      "type": "string",
+      "enum": [
+        "memory",
+        "disk",
+        "echo",
+        "remote",
+        "email"
+      ],
+      "description": "Where log messages are written"
+    },
+    "remote": {
+      "description": "Remote syslog server address (target=remote)",
+      "type": "string"
+    },
+    "remote_port": {
+      "description": "Remote syslog UDP port",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "bsd_syslog": {
+      "description": "Use BSD-style syslog format",
+      "type": "boolean"
+    },
+    "syslog_facility": {
+      "type": "string"
+    },
+    "syslog_severity": {
+      "type": "string"
+    },
+    "disk_file_name": {
+      "description": "File name for target=disk",
+      "type": "string"
+    },
+    "disk_lines_per_file": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "memory_lines": {
+      "description": "Lines kept for target=memory",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "email_to": {
+      "description": "Recipient address for target=email",
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "target",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_logging_action",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the logging action to remove"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

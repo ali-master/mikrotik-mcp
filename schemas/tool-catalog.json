@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 340,
+  "toolCount": 346,
   "tools": [
     {
       "name": "list_interfaces",
@@ -10668,6 +10668,221 @@
         },
         "required": [
           "duration"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_logging_rule",
+      "title": "Add Logging Rule",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a system logging rule that routes log messages matching the given topics to a logging action.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "topics": {
+            "type": "string",
+            "description": "Comma-separated log topics, e.g. \"info\", \"firewall,!debug\""
+          },
+          "action": {
+            "description": "Logging action name (default 'memory')",
+            "type": "string"
+          },
+          "prefix": {
+            "description": "Text prepended to each matching log message",
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "topics",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_logging_rules",
+      "title": "List Logging Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists system logging rules on the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "topics_filter": {
+            "description": "Partial topics match",
+            "type": "string"
+          },
+          "action_filter": {
+            "description": "Exact action name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_logging_rule",
+      "title": "Remove Logging Rule",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a system logging rule by its internal id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Internal .id of the logging rule, e.g. '*1'"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_logging_action",
+      "title": "Add Logging Action",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a system logging action defining where matching log messages are sent (memory, disk, echo, remote syslog or email).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name for the new logging action"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "memory",
+              "disk",
+              "echo",
+              "remote",
+              "email"
+            ],
+            "description": "Where log messages are written"
+          },
+          "remote": {
+            "description": "Remote syslog server address (target=remote)",
+            "type": "string"
+          },
+          "remote_port": {
+            "description": "Remote syslog UDP port",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "bsd_syslog": {
+            "description": "Use BSD-style syslog format",
+            "type": "boolean"
+          },
+          "syslog_facility": {
+            "type": "string"
+          },
+          "syslog_severity": {
+            "type": "string"
+          },
+          "disk_file_name": {
+            "description": "File name for target=disk",
+            "type": "string"
+          },
+          "disk_lines_per_file": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "memory_lines": {
+            "description": "Lines kept for target=memory",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "email_to": {
+            "description": "Recipient address for target=email",
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "target",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_logging_actions",
+      "title": "List Logging Actions",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists system logging actions on the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial name match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_logging_action",
+      "title": "Remove Logging Action",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a system logging action by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the logging action to remove"
+          }
+        },
+        "required": [
+          "name"
         ],
         "additionalProperties": false
       }

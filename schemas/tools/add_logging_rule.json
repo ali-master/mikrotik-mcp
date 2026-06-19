@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_logging_rule",
+  "type": "object",
+  "properties": {
+    "topics": {
+      "type": "string",
+      "description": "Comma-separated log topics, e.g. \"info\", \"firewall,!debug\""
+    },
+    "action": {
+      "description": "Logging action name (default 'memory')",
+      "type": "string"
+    },
+    "prefix": {
+      "description": "Text prepended to each matching log message",
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "topics",
+    "disabled"
+  ],
+  "additionalProperties": false
+}
