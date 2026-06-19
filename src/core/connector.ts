@@ -13,6 +13,7 @@ import { MikroTikSSHClient } from "../ssh/client";
 import { getSafeModeManager } from "../ssh/safe-mode";
 
 async function runOnce(command: string, deviceName?: string): Promise<string> {
+  const name = resolveDeviceName(deviceName);
   const dc = getDevice(deviceName);
   const ssh = new MikroTikSSHClient({
     host: dc.host,
@@ -26,11 +27,17 @@ async function runOnce(command: string, deviceName?: string): Promise<string> {
   });
   try {
     if (!(await ssh.connect())) {
-      return "Error: Failed to connect to MikroTik device";
+      const authMode = dc.keyFilename || dc.privateKey ? "SSH key" : dc.password ? "password" : "no credentials";
+      const reason = ssh.lastError ? ` — ${ssh.lastError}` : "";
+      // Throwing (vs. returning an "Error:" string) makes this a real tool
+      // error: the registry catches it and marks the result isError, instead of
+      // a handler wrapping it in a success message like "INTERFACES: …".
+      throw new Error(
+        `Failed to connect to MikroTik device '${name}' at ${dc.host}:${dc.port} (auth: ${authMode})${reason}. ` +
+          "Check the host/port are reachable, the SSH service is enabled (/ip service), and the credentials are correct.",
+      );
     }
     return await ssh.run(command);
-  } catch (e) {
-    return `Error executing command: ${e instanceof Error ? e.message : String(e)}`;
   } finally {
     ssh.disconnect();
   }
@@ -49,20 +56,15 @@ async function runOnce(command: string, deviceName?: string): Promise<string> {
 export async function executeMikrotikCommand(command: string, ctx: ToolContext): Promise<string> {
   const deviceName = resolveDeviceName(ctx.device);
   const safe = getSafeModeManager(deviceName);
-  let result: string;
 
+  // Transport/connection failures throw here and propagate to the registry,
+  // which turns them into a proper `isError` tool result. Device-reported
+  // command errors (syntax/failure) come back as normal output and are handled
+  // by each tool via looksLikeError().
   if (safe.isActive) {
     ctx.info(`[${deviceName}] Executing (safe mode): ${command}`);
-    try {
-      result = await safe.execute(command);
-    } catch (e) {
-      result = `Error executing command in safe mode session: ${e instanceof Error ? e.message : String(e)}`;
-    }
-  } else {
-    ctx.info(`[${deviceName}] Executing MikroTik command: ${command}`);
-    result = await runOnce(command, ctx.device);
+    return safe.execute(command);
   }
-
-  if (result.startsWith("Error")) ctx.error(result);
-  return result;
+  ctx.info(`[${deviceName}] Executing MikroTik command: ${command}`);
+  return runOnce(command, ctx.device);
 }

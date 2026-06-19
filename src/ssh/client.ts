@@ -60,12 +60,16 @@ export class MikroTikSSHClient {
   > &
     SSHClientOptions;
 
+  /** Human-readable reason the last `connect()` failed, if it did. */
+  lastError?: string;
+
   constructor(opts: SSHClientOptions) {
     this.opts = { port: 22, timeoutMs: 10_000, ...opts };
   }
 
   /** Establish the SSH connection. Resolves `true` on success, `false` on failure. */
   connect(): Promise<boolean> {
+    this.lastError = undefined;
     return new Promise((resolve) => {
       const client = new Client();
       const cfg: ConnectConfig = {
@@ -81,9 +85,8 @@ export class MikroTikSSHClient {
         try {
           cfg.privateKey = readFileSync(this.opts.keyFilename);
         } catch (e) {
-          logger.error(
-            `Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`,
-          );
+          this.lastError = `could not read key file ${this.opts.keyFilename}: ${e instanceof Error ? e.message : String(e)}`;
+          logger.error(`Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`);
           resolve(false);
           return;
         }
@@ -99,6 +102,7 @@ export class MikroTikSSHClient {
           resolve(true);
         })
         .on("error", (err) => {
+          this.lastError = err.message;
           logger.error(`Failed to connect to MikroTik: ${err.message}`);
           resolve(false);
         })
