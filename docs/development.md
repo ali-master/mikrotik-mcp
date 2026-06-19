@@ -22,6 +22,9 @@ All scripts are defined in `package.json`.
 |---------|--------------|
 | `bun run start` | Run the server from source (`src/cli.ts serve`, stdio). |
 | `bun run auth-check` | Run the SSH connectivity probe from source. |
+| `bun run inspect` | Open the [MCP Inspector](./inspector.md) UI against the dev server. |
+| `bun run inspect:config` | Inspector UI using `mcp-inspector.config.json`. |
+| `bun run inspect:cli` | Headless `tools/list` via the Inspector (CI smoke test). |
 | `bun test` | Run the test suite with Bun's built-in test runner. |
 | `bun run test:types` | Type-check the whole project (`tsc --noEmit`). |
 | `bun run build` | Bundle to `dist/` with **bunup** and mark the CLI executable. |

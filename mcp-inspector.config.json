@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "mikrotik": {
+      "command": "bun",
+      "args": ["run", "src/cli.ts", "serve"],
+      "env": {
+        "MIKROTIK_HOST": "192.168.88.1",
+        "MIKROTIK_USERNAME": "admin",
+        "MIKROTIK_PASSWORD": "",
+        "MIKROTIK_LOG_LEVEL": "debug"
+      }
+    },
+    "mikrotik-built": {
+      "command": "bun",
+      "args": ["dist/cli.js", "serve"],
+      "env": {
+        "MIKROTIK_HOST": "192.168.88.1",
+        "MIKROTIK_USERNAME": "admin",
+        "MIKROTIK_PASSWORD": ""
+      }
+    },
+    "mikrotik-http": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}

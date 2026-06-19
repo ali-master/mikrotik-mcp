@@ -26,6 +26,7 @@ existing deployment can swap binaries without touching its configuration.
 | [Prompts](./prompts.md) | The 9 built-in MCP prompts and how clients invoke them. |
 | [Security](./security.md) | Credential handling, DNS-rebinding, risk annotations, client-side gating. |
 | [Development](./development.md) | Tests, type-checking, building, generating schemas and docs, project layout. |
+| **[MCP Inspector](./inspector.md)** | Test the server's tools and prompts in the official UI / CLI. |
 | [Docker](./docker.md) | A minimal Bun-based image and how to pass `MIKROTIK_*` env vars. |
 | **[Tool reference](./tools-reference.md)** | The full, generated catalog of all 311 tools with parameters and risk levels. |
 

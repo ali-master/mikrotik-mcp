@@ -85,6 +85,13 @@ mikrotik-mcp tools
 mikrotik-mcp serve
 ```
 
+**Try it without an AI client** — open the official [MCP Inspector](docs/inspector.md)
+against the server (from source):
+
+```bash
+bun run inspect        # opens the Inspector UI to browse/run all 311 tools
+```
+
 **Prefer SSH keys over a password?** Point the server at a key file instead — and
 add a passphrase if the key is encrypted:
 
@@ -265,6 +272,7 @@ reference.
 | [Architecture](docs/architecture.md) | How it's built |
 | [Security](docs/security.md) | Credentials, risk gating |
 | [Tool reference](docs/tools-reference.md) | All 311 tools |
+| [MCP Inspector](docs/inspector.md) | Test tools/prompts in the UI or CLI |
 | [Development](docs/development.md) · [Docker](docs/docker.md) | Build, test, deploy |
 
 ## Development
