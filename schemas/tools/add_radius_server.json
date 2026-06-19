@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_radius_server",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "RADIUS server IP address or hostname"
+    },
+    "secret": {
+      "type": "string",
+      "description": "Shared secret used with the RADIUS server"
+    },
+    "service": {
+      "type": "string",
+      "description": "Comma-separated services, e.g. \"login,ppp,hotspot,wireless,dhcp,ipsec,dot1x\""
+    },
+    "authentication_port": {
+      "default": 1812,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "accounting_port": {
+      "default": 1813,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "timeout": {
+      "description": "Request timeout, e.g. \"300ms\"",
+      "type": "string"
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "realm": {
+      "type": "string"
+    },
+    "called_id": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "address",
+    "secret",
+    "service",
+    "authentication_port",
+    "accounting_port",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

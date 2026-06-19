@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 311,
+  "toolCount": 321,
   "tools": [
     {
       "name": "list_interfaces",
@@ -1952,7 +1952,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Gets the route cache.",
+      "description": "Shows the route/forwarding cache. Version-aware: on RouterOS v6 it reads the real route cache (`/ip route cache`); on v7+ — which removed the separate cache — it returns the active forwarding table (FIB), i.e. `/ip route` entries with active=yes, the closest equivalent.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1969,7 +1969,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Flushes the route cache.",
+      "description": "Flushes the route cache (`/ip route cache flush`). Version-aware: on RouterOS v6 it flushes the cache; on v7+ there is no separate cache, so it reports a no-op (the FIB is rebuilt from /ip route directly).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -2706,7 +2706,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Gets DNS cache statistics.",
+      "description": "Gets DNS cache statistics — cache size/used/max-ttl (from `/ip dns print`) and the number of cached entries. Works on RouterOS v6 and v7 (there is no `/ip dns cache print stats` command).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -7224,6 +7224,331 @@
         "required": [
           "name"
         ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_radius_server",
+      "title": "Add RADIUS Server",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a RADIUS server entry that the router uses to authenticate clients.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "RADIUS server IP address or hostname"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Shared secret used with the RADIUS server"
+          },
+          "service": {
+            "type": "string",
+            "description": "Comma-separated services, e.g. \"login,ppp,hotspot,wireless,dhcp,ipsec,dot1x\""
+          },
+          "authentication_port": {
+            "default": 1812,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "accounting_port": {
+            "default": 1813,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "timeout": {
+            "description": "Request timeout, e.g. \"300ms\"",
+            "type": "string"
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "realm": {
+            "type": "string"
+          },
+          "called_id": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "address",
+          "secret",
+          "service",
+          "authentication_port",
+          "accounting_port",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_radius_servers",
+      "title": "List RADIUS Servers",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists configured RADIUS servers.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "service_filter": {
+            "description": "Partial service match",
+            "type": "string"
+          },
+          "address_filter": {
+            "description": "Partial address match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_radius_server",
+      "title": "Get RADIUS Server",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed information about a specific RADIUS server by its internal id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "radius_id": {
+            "type": "string",
+            "description": "RADIUS entry internal .id, e.g. '*1'"
+          }
+        },
+        "required": [
+          "radius_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_radius_server",
+      "title": "Update RADIUS Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an existing RADIUS server entry.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "radius_id": {
+            "type": "string",
+            "description": "RADIUS entry internal .id, e.g. '*1'"
+          },
+          "address": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "authentication_port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "accounting_port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "timeout": {
+            "type": "string"
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "realm": {
+            "type": "string"
+          },
+          "called_id": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "radius_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_radius_server",
+      "title": "Remove RADIUS Server",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a RADIUS server entry.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "radius_id": {
+            "type": "string",
+            "description": "RADIUS entry internal .id, e.g. '*1'"
+          }
+        },
+        "required": [
+          "radius_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enable_radius_server",
+      "title": "Enable RADIUS Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables a RADIUS server entry.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "radius_id": {
+            "type": "string",
+            "description": "RADIUS entry internal .id, e.g. '*1'"
+          }
+        },
+        "required": [
+          "radius_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "disable_radius_server",
+      "title": "Disable RADIUS Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disables a RADIUS server entry.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "radius_id": {
+            "type": "string",
+            "description": "RADIUS entry internal .id, e.g. '*1'"
+          }
+        },
+        "required": [
+          "radius_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_radius_incoming",
+      "title": "Get RADIUS Incoming",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the RADIUS incoming (Change of Authorization / CoA) settings.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_radius_incoming",
+      "title": "Set RADIUS Incoming",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Configures RADIUS incoming (Change of Authorization / CoA) settings.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "accept": {
+            "description": "Whether to accept incoming CoA requests",
+            "type": "boolean"
+          },
+          "port": {
+            "description": "UDP port to listen on for CoA requests",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "reset_radius_counters",
+      "title": "Reset RADIUS Counters",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Resets the RADIUS request/response counters.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
         "additionalProperties": false
       }
     },

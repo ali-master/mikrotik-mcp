@@ -28,6 +28,7 @@ import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
 import { pptpTools } from "./pptp";
 import { queueTools } from "./queue";
+import { radiusTools } from "./radius";
 import { routeTools } from "./routes";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
@@ -79,6 +80,8 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "SSTP", slug: "sstp", group: "VPN & Tunneling", description: "SSTP (TLS) server + clients (`/interface sstp-*`).", tools: sstpTools },
   { label: "OpenVPN", slug: "openvpn", group: "VPN & Tunneling", description: "OpenVPN server + clients (`/interface ovpn-*`).", tools: openvpnTools },
   { label: "Tunnels", slug: "tunnels", group: "VPN & Tunneling", description: "GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`).", tools: tunnelTools },
+  // ── AAA (RADIUS / User Manager) ───────────────────────────────────────────
+  { label: "RADIUS", slug: "radius", group: "AAA", description: "RADIUS client servers, incoming CoA, counters (`/radius`).", tools: radiusTools },
   // ── QoS ──────────────────────────────────────────────────────────────────
   { label: "Queues / QoS", slug: "queue", group: "QoS", description: "Queue types, queue trees and simple queues (`/queue`).", tools: queueTools },
   // ── System / operations ──────────────────────────────────────────────────

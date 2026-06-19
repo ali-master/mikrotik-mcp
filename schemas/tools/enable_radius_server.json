@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "enable_radius_server",
+  "type": "object",
+  "properties": {
+    "radius_id": {
+      "type": "string",
+      "description": "RADIUS entry internal .id, e.g. '*1'"
+    }
+  },
+  "required": [
+    "radius_id"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_radius_server",
+  "type": "object",
+  "properties": {
+    "radius_id": {
+      "type": "string",
+      "description": "RADIUS entry internal .id, e.g. '*1'"
+    },
+    "address": {
+      "type": "string"
+    },
+    "secret": {
+      "type": "string"
+    },
+    "service": {
+      "type": "string"
+    },
+    "authentication_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "accounting_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "timeout": {
+      "type": "string"
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "realm": {
+      "type": "string"
+    },
+    "called_id": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "radius_id"
+  ],
+  "additionalProperties": false
+}

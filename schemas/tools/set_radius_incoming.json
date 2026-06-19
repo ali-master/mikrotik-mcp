@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_radius_incoming",
+  "type": "object",
+  "properties": {
+    "accept": {
+      "description": "Whether to accept incoming CoA requests",
+      "type": "boolean"
+    },
+    "port": {
+      "description": "UDP port to listen on for CoA requests",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}

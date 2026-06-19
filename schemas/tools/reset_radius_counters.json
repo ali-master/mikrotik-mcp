@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "reset_radius_counters",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

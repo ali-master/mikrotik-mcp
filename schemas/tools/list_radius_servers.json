@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_radius_servers",
+  "type": "object",
+  "properties": {
+    "service_filter": {
+      "description": "Partial service match",
+      "type": "string"
+    },
+    "address_filter": {
+      "description": "Partial address match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

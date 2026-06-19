@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**311 tools** across **32 modules**. A `*` marks a required parameter.
+**321 tools** across **33 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -33,6 +33,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [SSTP](#sstp) | VPN & Tunneling | 6 | SSTP (TLS) server + clients (`/interface sstp-*`). |
 | [OpenVPN](#openvpn) | VPN & Tunneling | 8 | OpenVPN server + clients (`/interface ovpn-*`). |
 | [Tunnels](#tunnels) | VPN & Tunneling | 16 | GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`). |
+| [RADIUS](#radius) | AAA | 10 | RADIUS client servers, incoming CoA, counters (`/radius`). |
 | [Queues / QoS](#queue) | QoS | 19 | Queue types, queue trees and simple queues (`/queue`). |
 | [Devices](#devices) | System & Ops | 1 | List the configured MikroTik devices the AI can target via the `device` argument. |
 | [System](#system) | System & Ops | 14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown. |
@@ -420,6 +421,23 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `list_vxlan_tunnels` | 🟢 read | `name_filter` | Lists VXLAN interfaces on the MikroTik device. |
 | `get_vxlan_tunnel` | 🟢 read | `name`* | Gets detailed information about a specific VXLAN interface. |
 | `remove_vxlan_tunnel` | 🔴 destructive | `name`* | Removes a VXLAN interface from the MikroTik device. |
+
+## RADIUS
+
+<a id="radius"></a>RADIUS client servers, incoming CoA, counters (`/radius`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_radius_server` | 🟡 write | `address`*, `secret`*, `service`*, `authentication_port`*, `accounting_port`*, `timeout`, `src_address`, `realm`, `called_id`, `domain`, `comment`, `disabled`* | Adds a RADIUS server entry that the router uses to authenticate clients. |
+| `list_radius_servers` | 🟢 read | `service_filter`, `address_filter` | Lists configured RADIUS servers. |
+| `get_radius_server` | 🟢 read | `radius_id`* | Gets detailed information about a specific RADIUS server by its internal id. |
+| `update_radius_server` | 🟡 write·idem | `radius_id`*, `address`, `secret`, `service`, `authentication_port`, `accounting_port`, `timeout`, `src_address`, `realm`, `called_id`, `domain`, `comment`, `disabled` | Updates an existing RADIUS server entry. |
+| `remove_radius_server` | 🔴 destructive | `radius_id`* | Removes a RADIUS server entry. |
+| `enable_radius_server` | 🟡 write·idem | `radius_id`* | Enables a RADIUS server entry. |
+| `disable_radius_server` | 🟡 write·idem | `radius_id`* | Disables a RADIUS server entry. |
+| `get_radius_incoming` | 🟢 read | _none_ | Gets the RADIUS incoming (Change of Authorization / CoA) settings. |
+| `set_radius_incoming` | 🟡 write·idem | `accept`, `port` | Configures RADIUS incoming (Change of Authorization / CoA) settings. |
+| `reset_radius_counters` | 🔴 destructive | _none_ | Resets the RADIUS request/response counters. |
 
 ## Queues / QoS
 
