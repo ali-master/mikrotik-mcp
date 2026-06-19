@@ -32,6 +32,7 @@ import { pptpTools } from "./pptp";
 import { queueTools } from "./queue";
 import { radiusTools } from "./radius";
 import { routeTools } from "./routes";
+import { routingBfdTools } from "./routing-bfd";
 import { routingFilterTools } from "./routing-filter";
 import { routingIdTools } from "./routing-id";
 import { routingNexthopTools } from "./routing-nexthop";
@@ -82,6 +83,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "Routing Rules", slug: "routing-rule", group: "Dynamic Routing", description: "Policy routing rules selecting a table by src/dst/interface/mark (`/routing rule`).", tools: routingRuleTools },
   { label: "Next-hops", slug: "routing-nexthop", group: "Dynamic Routing", description: "Resolved recursive next-hop table, read-only diagnostics (`/routing nexthop`).", tools: routingNexthopTools },
   { label: "Routing Filters", slug: "routing-filter", group: "Dynamic Routing", description: "Route filter rules, select-rules and num-lists (`/routing filter`).", tools: routingFilterTools },
+  { label: "BFD", slug: "routing-bfd", group: "Dynamic Routing", description: "Bidirectional Forwarding Detection config + sessions (`/routing bfd`).", tools: routingBfdTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
