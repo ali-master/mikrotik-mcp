@@ -187,3 +187,5 @@ results/
 
 # Local plans / notes
 plans/
+
+./mcp-inspector.config.local.json
