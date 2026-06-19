@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_user_manager_user_profiles",
+  "type": "object",
+  "properties": {
+    "user_filter": {
+      "description": "Partial user match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

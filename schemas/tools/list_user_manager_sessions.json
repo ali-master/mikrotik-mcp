@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_user_manager_sessions",
+  "type": "object",
+  "properties": {
+    "user_filter": {
+      "description": "Partial user match",
+      "type": "string"
+    },
+    "active_only": {
+      "default": false,
+      "description": "Only show currently active sessions",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "active_only"
+  ],
+  "additionalProperties": false
+}

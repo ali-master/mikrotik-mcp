@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_user_manager_router",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Friendly name for the RADIUS client"
+    },
+    "address": {
+      "type": "string",
+      "description": "IP address of the RADIUS client"
+    },
+    "shared_secret": {
+      "type": "string",
+      "description": "Shared secret for the RADIUS client"
+    },
+    "coa_port": {
+      "description": "Change-of-Authorization port",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "address",
+    "shared_secret",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

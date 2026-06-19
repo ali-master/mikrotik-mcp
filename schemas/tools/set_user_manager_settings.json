@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_user_manager_settings",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "description": "Enable or disable the User Manager server",
+      "type": "boolean"
+    },
+    "certificate": {
+      "description": "TLS certificate name for RADIUS over TLS",
+      "type": "string"
+    },
+    "use_profiles": {
+      "description": "Enable the profile/payment subsystem",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

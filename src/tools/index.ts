@@ -35,6 +35,7 @@ import { schedulerTools } from "./scheduler";
 import { sstpTools } from "./sstp";
 import { systemTools } from "./system";
 import { tunnelTools } from "./tunnels";
+import { userManagerTools } from "./user-manager";
 import { userTools } from "./users";
 import { vlanTools } from "./vlan";
 import { wireguardTools } from "./wireguard";
@@ -82,6 +83,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "Tunnels", slug: "tunnels", group: "VPN & Tunneling", description: "GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`).", tools: tunnelTools },
   // ── AAA (RADIUS / User Manager) ───────────────────────────────────────────
   { label: "RADIUS", slug: "radius", group: "AAA", description: "RADIUS client servers, incoming CoA, counters (`/radius`).", tools: radiusTools },
+  { label: "User Manager", slug: "user-manager", group: "AAA", description: "Built-in RADIUS server: users, profiles, routers (NAS), limitations, sessions (`/user-manager`).", tools: userManagerTools },
   // ── QoS ──────────────────────────────────────────────────────────────────
   { label: "Queues / QoS", slug: "queue", group: "QoS", description: "Queue types, queue trees and simple queues (`/queue`).", tools: queueTools },
   // ── System / operations ──────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**321 tools** across **33 modules**. A `*` marks a required parameter.
+**340 tools** across **34 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -34,6 +34,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [OpenVPN](#openvpn) | VPN & Tunneling | 8 | OpenVPN server + clients (`/interface ovpn-*`). |
 | [Tunnels](#tunnels) | VPN & Tunneling | 16 | GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`). |
 | [RADIUS](#radius) | AAA | 10 | RADIUS client servers, incoming CoA, counters (`/radius`). |
+| [User Manager](#user-manager) | AAA | 19 | Built-in RADIUS server: users, profiles, routers (NAS), limitations, sessions (`/user-manager`). |
 | [Queues / QoS](#queue) | QoS | 19 | Queue types, queue trees and simple queues (`/queue`). |
 | [Devices](#devices) | System & Ops | 1 | List the configured MikroTik devices the AI can target via the `device` argument. |
 | [System](#system) | System & Ops | 14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown. |
@@ -438,6 +439,32 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `get_radius_incoming` | 🟢 read | _none_ | Gets the RADIUS incoming (Change of Authorization / CoA) settings. |
 | `set_radius_incoming` | 🟡 write·idem | `accept`, `port` | Configures RADIUS incoming (Change of Authorization / CoA) settings. |
 | `reset_radius_counters` | 🔴 destructive | _none_ | Resets the RADIUS request/response counters. |
+
+## User Manager
+
+<a id="user-manager"></a>Built-in RADIUS server: users, profiles, routers (NAS), limitations, sessions (`/user-manager`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_user_manager_settings` | 🟢 read | _none_ | Gets the User Manager settings (enabled, certificate, use-profiles). |
+| `set_user_manager_settings` | 🟡 write·idem | `enabled`, `certificate`, `use_profiles` | Updates the User Manager settings. |
+| `add_user_manager_user` | 🟡 write | `name`*, `password`*, `group`, `shared_users`, `attributes`, `comment`, `disabled`* | Adds a user to the User Manager RADIUS database. |
+| `list_user_manager_users` | 🟢 read | `name_filter` | Lists users in the User Manager RADIUS database. |
+| `get_user_manager_user` | 🟢 read | `name`* | Gets detailed information about a specific User Manager user. |
+| `update_user_manager_user` | 🟡 write·idem | `name`*, `new_name`, `password`, `group`, `shared_users`, `attributes`, `comment`, `disabled` | Updates an existing User Manager user. |
+| `remove_user_manager_user` | 🔴 destructive | `name`* | Removes a user from the User Manager RADIUS database. |
+| `add_user_manager_profile` | 🟡 write | `name`*, `name_for_users`, `validity`, `price`, `starts_when`, `override_shared_users`, `comment` | Adds a User Manager profile (a billing/service plan). |
+| `list_user_manager_profiles` | 🟢 read | `name_filter` | Lists User Manager profiles. |
+| `remove_user_manager_profile` | 🔴 destructive | `name`* | Removes a User Manager profile. |
+| `assign_user_manager_profile` | 🟡 write | `user`*, `profile`* | Assigns a profile to a User Manager user. |
+| `list_user_manager_user_profiles` | 🟢 read | `user_filter` | Lists User Manager user-profile assignments. |
+| `add_user_manager_router` | 🟡 write | `name`*, `address`*, `shared_secret`*, `coa_port`, `disabled`* | Adds a RADIUS client (router/NAS) that authenticates against User Manager. |
+| `list_user_manager_routers` | 🟢 read | `name_filter` | Lists RADIUS clients (routers/NAS) configured in User Manager. |
+| `remove_user_manager_router` | 🔴 destructive | `name`* | Removes a RADIUS client (router/NAS) from User Manager. |
+| `add_user_manager_limitation` | 🟡 write | `name`*, `rate_limit_rx`, `rate_limit_tx`, `transfer_limit`, `uptime_limit`, `comment` | Adds a User Manager limitation (rate/transfer/uptime limits). |
+| `list_user_manager_limitations` | 🟢 read | `name_filter` | Lists User Manager limitations. |
+| `remove_user_manager_limitation` | 🔴 destructive | `name`* | Removes a User Manager limitation. |
+| `list_user_manager_sessions` | 🟢 read | `user_filter`, `active_only`* | Lists User Manager accounting sessions. |
 
 ## Queues / QoS
 

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "assign_user_manager_profile",
+  "type": "object",
+  "properties": {
+    "user": {
+      "type": "string",
+      "description": "User to assign the profile to"
+    },
+    "profile": {
+      "type": "string",
+      "description": "Profile to assign"
+    }
+  },
+  "required": [
+    "user",
+    "profile"
+  ],
+  "additionalProperties": false
+}
