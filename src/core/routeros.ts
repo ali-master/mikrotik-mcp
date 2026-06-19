@@ -100,14 +100,24 @@ export function isEmpty(result: string): boolean {
   return t === "" || t === "no such item" || t === "no such item (4)";
 }
 
-/** Heuristic: did the device report a failure for a mutating command? */
+/**
+ * Heuristic: did the device reject the command? Covers RouterOS console parser
+ * and value errors that would otherwise be wrapped in a success message — value
+ * failures (`failure:`), parser errors (`syntax error`, `bad command`,
+ * `bad parameter`, `expected end of command`), and argument errors
+ * (`invalid value`, `input does not match …`, `ambiguous value`).
+ */
 export function looksLikeError(result: string): boolean {
   const t = result.toLowerCase();
   return (
     t.includes("failure:") ||
     t.includes("syntax error") ||
     t.includes("bad command") ||
+    t.includes("bad parameter") ||
     t.includes("expected end of command") ||
+    t.includes("invalid value") ||
+    t.includes("input does not match") ||
+    t.includes("ambiguous value") ||
     t.startsWith("error")
   );
 }

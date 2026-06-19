@@ -106,9 +106,16 @@ describe("RouterOS command builder", () => {
     expect(commandUnsupported("failure: already have such entry")).toBe(false);
   });
 
-  test("looksLikeError still catches device failures and parser errors", () => {
+  test("looksLikeError catches device failures, parser and value errors", () => {
     expect(looksLikeError("failure: already have such entry")).toBe(true);
     expect(looksLikeError("bad command name cache (line 1 column 11)")).toBe(true);
+    // Value/parameter errors that previously slipped through as "success".
+    expect(looksLikeError("bad parameter stats (line 1 column 26)")).toBe(true);
+    expect(looksLikeError("invalid value for argument address")).toBe(true);
+    expect(looksLikeError("input does not match any value of mode")).toBe(true);
+    expect(looksLikeError("ambiguous value")).toBe(true);
+    // Normal print output must not be flagged.
     expect(looksLikeError("flags: X, A")).toBe(false);
+    expect(looksLikeError("cache-used: 16KiB")).toBe(false);
   });
 });

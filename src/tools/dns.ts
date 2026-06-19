@@ -341,11 +341,25 @@ export const dnsTools: ToolModule = [
     name: "get_dns_cache_statistics",
     title: "DNS Cache Statistics",
     annotations: READ,
-    description: "Gets DNS cache statistics.",
+    description:
+      "Gets DNS cache statistics — cache size/used/max-ttl (from `/ip dns print`) and the number of " +
+      "cached entries. Works on RouterOS v6 and v7 (there is no `/ip dns cache print stats` command).",
     async handler(_a, ctx) {
       ctx.info("Getting DNS cache statistics");
-      const result = await executeMikrotikCommand("/ip dns cache print stats", ctx);
-      return isEmpty(result) ? "Unable to retrieve DNS cache statistics." : `DNS CACHE STATISTICS:\n\n${result}`;
+      // RouterOS exposes cache stats on the DNS settings, not as a cache sub-command.
+      const settings = await executeMikrotikCommand("/ip dns print", ctx);
+      if (looksLikeError(settings)) return `Failed to get DNS cache statistics: ${settings}`;
+      if (isEmpty(settings)) return "Unable to retrieve DNS cache statistics.";
+
+      // Keep just the cache-related fields (cache-size, cache-used, cache-max-ttl).
+      const cacheLines = settings.split("\n").filter((l) => l.toLowerCase().includes("cache"));
+      const stats = cacheLines.length ? cacheLines.join("\n") : settings.trim();
+
+      // Add the live count of cached entries.
+      const count = (await executeMikrotikCommand("/ip dns cache print count-only", ctx)).trim();
+      const entryLine = /^\d+$/.test(count) ? `cached-entries: ${count}\n` : "";
+
+      return `DNS CACHE STATISTICS:\n\n${entryLine}${stats}`;
     },
   }),
 

@@ -195,7 +195,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `disable_dns_static` | 🟡 write·idem | `entry_id`* | Disables a static DNS entry. |
 | `get_dns_cache` | 🟢 read | _none_ | Gets the current DNS cache. |
 | `flush_dns_cache` | 🔴 destructive | _none_ | Flushes the DNS cache. |
-| `get_dns_cache_statistics` | 🟢 read | _none_ | Gets DNS cache statistics. |
+| `get_dns_cache_statistics` | 🟢 read | _none_ | Gets DNS cache statistics — cache size/used/max-ttl (from `/ip dns print`) and the number of cached entries. Works on RouterOS v6 and v7 (there is no `/ip dns cache print stats` command). |
 | `add_dns_regexp` | 🟡 write | `regexp`*, `address`*, `ttl`*, `comment`, `disabled`* | Adds a DNS regexp entry. |
 | `test_dns_query` | 🟢 read | `name`*, `server`, `type`* | Tests a DNS query. |
 | `export_dns_config` | 🟢 read | `filename` | Exports DNS configuration to a file. |
