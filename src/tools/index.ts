@@ -32,6 +32,7 @@ import { pptpTools } from "./pptp";
 import { queueTools } from "./queue";
 import { radiusTools } from "./radius";
 import { routeTools } from "./routes";
+import { routingIdTools } from "./routing-id";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
 import { sstpTools } from "./sstp";
@@ -66,9 +67,11 @@ export const moduleCatalog: ModuleInfo[] = [
   // ── Layer 3 / addressing & routing ───────────────────────────────────────
   { label: "IP Addresses", slug: "ip-address", group: "Addressing & Routing", description: "Interface IP addressing (`/ip address`).", tools: ipAddressTools },
   { label: "IP Pools", slug: "ip-pool", group: "Addressing & Routing", description: "Address pools for DHCP/PPP (`/ip pool`).", tools: ipPoolTools },
-  { label: "Routing", slug: "routes", group: "Addressing & Routing", description: "Static routes, routing table, route checks and cache (`/ip route`).", tools: routeTools },
+  { label: "Routing — Static", slug: "routes", group: "Addressing & Routing", description: "Static routes, routing table, route checks and cache (`/ip route`).", tools: routeTools },
   { label: "DHCP", slug: "dhcp", group: "Addressing & Routing", description: "DHCP servers, networks and pools (`/ip dhcp-server`).", tools: dhcpTools },
   { label: "DNS", slug: "dns", group: "Addressing & Routing", description: "DNS settings, static records, cache and regexp (`/ip dns`).", tools: dnsTools },
+  // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
+  { label: "Router ID", slug: "routing-id", group: "Dynamic Routing", description: "Router-ID instances for OSPF/BGP (`/routing id`).", tools: routingIdTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
