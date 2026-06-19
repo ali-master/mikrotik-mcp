@@ -3,38 +3,73 @@
   "title": "MikrotikConfig",
   "type": "object",
   "properties": {
-    "host": {
-      "default": "127.0.0.1",
+    "devices": {
+      "default": {
+        "default": {
+          "host": "127.0.0.1",
+          "username": "admin",
+          "password": "",
+          "port": 22,
+          "timeoutMs": 10000
+        }
+      },
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "default": "127.0.0.1",
+            "type": "string"
+          },
+          "username": {
+            "default": "admin",
+            "type": "string"
+          },
+          "password": {
+            "default": "",
+            "type": "string"
+          },
+          "port": {
+            "default": 22,
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "keyFilename": {
+            "type": "string"
+          },
+          "privateKey": {
+            "type": "string"
+          },
+          "keyPassphrase": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "default": 10000,
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "username",
+          "password",
+          "port",
+          "timeoutMs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "defaultDevice": {
+      "default": "default",
       "type": "string"
-    },
-    "username": {
-      "default": "admin",
-      "type": "string"
-    },
-    "password": {
-      "default": "",
-      "type": "string"
-    },
-    "port": {
-      "default": 22,
-      "type": "integer",
-      "exclusiveMinimum": 0,
-      "maximum": 9007199254740991
-    },
-    "keyFilename": {
-      "type": "string"
-    },
-    "privateKey": {
-      "type": "string"
-    },
-    "keyPassphrase": {
-      "type": "string"
-    },
-    "timeoutMs": {
-      "default": 10000,
-      "type": "integer",
-      "exclusiveMinimum": 0,
-      "maximum": 9007199254740991
     },
     "mcp": {
       "default": {
@@ -85,11 +120,8 @@
     }
   },
   "required": [
-    "host",
-    "username",
-    "password",
-    "port",
-    "timeoutMs",
+    "devices",
+    "defaultDevice",
     "mcp"
   ],
   "additionalProperties": false

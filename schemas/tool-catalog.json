@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 310,
+  "toolCount": 311,
   "tools": [
     {
       "name": "list_interfaces",
@@ -8093,6 +8093,23 @@
       }
     },
     {
+      "name": "list_mikrotik_devices",
+      "title": "List Devices",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the configured MikroTik devices (name, host, description) and which is the default. Pass a device's name as the `device` argument on any other tool to target it. Secrets are never shown.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "get_system_identity",
       "title": "Get Identity",
       "risk": "read",
@@ -10096,7 +10113,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Returns whether MikroTik Safe Mode is currently active.",
+      "description": "Returns whether MikroTik Safe Mode is currently active (for the targeted device).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -10112,7 +10129,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Activates MikroTik Safe Mode; changes are held in memory and auto-reverted on disconnect until committed.",
+      "description": "Activates MikroTik Safe Mode on the targeted device; changes are held in memory and auto-reverted on disconnect until committed.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -10128,7 +10145,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Commits all pending Safe Mode changes to persistent storage and exits Safe Mode.",
+      "description": "Commits all pending Safe Mode changes on the targeted device to persistent storage and exits Safe Mode.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -10144,7 +10161,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Discards all pending Safe Mode changes by closing the SSH session, triggering automatic rollback.",
+      "description": "Discards all pending Safe Mode changes on the targeted device by closing the SSH session, triggering automatic rollback.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

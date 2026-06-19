@@ -17,7 +17,8 @@ default.
 
 ## Connection settings
 
-These control the SSH connection to the RouterOS device.
+These control the SSH connection to the RouterOS device. On their own they define
+a single device named `default`.
 
 | Setting | CLI flag | Environment variable | Default |
 |---------|----------|----------------------|---------|
@@ -29,6 +30,20 @@ These control the SSH connection to the RouterOS device.
 | Inline private key (PEM) | `--private-key` | `MIKROTIK_PRIVATE_KEY` | _(unset)_ |
 | Private key passphrase | `--key-passphrase` | `MIKROTIK_KEY_PASSPHRASE` | _(unset)_ |
 | SSH connect timeout (ms) | `--timeout-ms` | `MIKROTIK_TIMEOUT_MS` | `10000` |
+
+## Multiple devices
+
+To manage more than one router from a single server (e.g. to build a tunnel
+between two), define a **named devices map**. The AI then targets a device per
+call via an injected `device` argument.
+
+| Setting | CLI flag | Environment variable |
+|---------|----------|----------------------|
+| Named-devices JSON file | `--config` | `MIKROTIK_CONFIG_FILE` |
+| Named-devices inline JSON | `--devices` | `MIKROTIK_DEVICES` |
+
+Full guide, file format, and the per-device Safe Mode behaviour:
+**[Multiple devices](./multi-device.md)**.
 
 ## Transport settings
 

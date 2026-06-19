@@ -10,6 +10,7 @@ import { addressListTools } from "./address-list";
 import { backupTools } from "./backup";
 import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
+import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
 import { dnsTools } from "./dns";
 import { firewallFilterTools } from "./firewall-filter";
@@ -81,6 +82,7 @@ export const moduleCatalog: ModuleInfo[] = [
   // ── QoS ──────────────────────────────────────────────────────────────────
   { label: "Queues / QoS", slug: "queue", group: "QoS", description: "Queue types, queue trees and simple queues (`/queue`).", tools: queueTools },
   // ── System / operations ──────────────────────────────────────────────────
+  { label: "Devices", slug: "devices", group: "System & Ops", description: "List the configured MikroTik devices the AI can target via the `device` argument.", tools: deviceTools },
   { label: "System", slug: "system", group: "System & Ops", description: "Identity, resources, health, clock/NTP, packages, reboot/shutdown.", tools: systemTools },
   { label: "Network Tools", slug: "network-tools", group: "System & Ops", description: "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).", tools: networkToolTools },
   { label: "Scheduler / Scripts", slug: "scheduler", group: "System & Ops", description: "Scheduled jobs and scripts (`/system scheduler`, `/system script`).", tools: schedulerTools },

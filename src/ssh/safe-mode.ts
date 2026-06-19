@@ -13,7 +13,7 @@
  */
 import type { ClientChannel } from "ssh2";
 import { MikroTikSSHClient, decodeOutput } from "./client";
-import { getConfig } from "../core/runtime";
+import { getDevice } from "../core/runtime";
 
 /** Matches RouterOS prompts in both normal and safe mode:
  *   [admin@MikroTik] >
@@ -40,6 +40,9 @@ export class SafeModeManager {
   /** Serializes channel access so concurrent tool calls don't interleave I/O. */
   private queue: Promise<unknown> = Promise.resolve();
 
+  /** The device this Safe Mode session belongs to (a configured device name). */
+  constructor(private readonly deviceName: string) {}
+
   get isActive(): boolean {
     return this.active;
   }
@@ -59,16 +62,16 @@ export class SafeModeManager {
     return this.lock(async () => {
       if (this.active) return "Safe mode is already active.";
 
-      const cfg = getConfig();
+      const dc = getDevice(this.deviceName);
       const ssh = new MikroTikSSHClient({
-        host: cfg.host,
-        username: cfg.username,
-        password: cfg.password,
-        keyFilename: cfg.keyFilename,
-        privateKey: cfg.privateKey,
-        keyPassphrase: cfg.keyPassphrase,
-        port: cfg.port,
-        timeoutMs: cfg.timeoutMs,
+        host: dc.host,
+        username: dc.username,
+        password: dc.password,
+        keyFilename: dc.keyFilename,
+        privateKey: dc.privateKey,
+        keyPassphrase: dc.keyPassphrase,
+        port: dc.port,
+        timeoutMs: dc.timeoutMs,
       });
       if (!(await ssh.connect())) {
         return "Error: Failed to connect to MikroTik device for safe mode session.";
@@ -202,9 +205,14 @@ export class SafeModeManager {
   }
 }
 
-let manager: SafeModeManager | null = null;
+// One Safe Mode session per device — each router holds its own pending changes.
+const managers = new Map<string, SafeModeManager>();
 
-export function getSafeModeManager(): SafeModeManager {
-  if (!manager) manager = new SafeModeManager();
-  return manager;
+export function getSafeModeManager(deviceName: string): SafeModeManager {
+  let m = managers.get(deviceName);
+  if (!m) {
+    m = new SafeModeManager(deviceName);
+    managers.set(deviceName, m);
+  }
+  return m;
 }

@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**310 tools** across **31 modules**. A `*` marks a required parameter.
+**311 tools** across **32 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -34,6 +34,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [OpenVPN](#openvpn) | VPN & Tunneling | 8 | OpenVPN server + clients (`/interface ovpn-*`). |
 | [Tunnels](#tunnels) | VPN & Tunneling | 16 | GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`). |
 | [Queues / QoS](#queue) | QoS | 19 | Queue types, queue trees and simple queues (`/queue`). |
+| [Devices](#devices) | System & Ops | 1 | List the configured MikroTik devices the AI can target via the `device` argument. |
 | [System](#system) | System & Ops | 14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown. |
 | [Network Tools](#network-tools) | System & Ops | 8 | ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`). |
 | [Scheduler / Scripts](#scheduler) | System & Ops | 10 | Scheduled jobs and scripts (`/system scheduler`, `/system script`). |
@@ -446,6 +447,14 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `enable_simple_queue` | 🟡 write·idem | `name`* | Enables a simple queue. |
 | `disable_simple_queue` | 🟡 write·idem | `name`* | Disables a simple queue. |
 
+## Devices
+
+<a id="devices"></a>List the configured MikroTik devices the AI can target via the `device` argument.
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_mikrotik_devices` | 🟢 read | _none_ | Lists the configured MikroTik devices (name, host, description) and which is the default. Pass a device's name as the `device` argument on any other tool to target it. Secrets are never shown. |
+
 ## System
 
 <a id="system"></a>Identity, resources, health, clock/NTP, packages, reboot/shutdown.
@@ -564,8 +573,8 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 
 | Tool | Risk | Parameters | Description |
 |------|------|------------|-------------|
-| `safe_mode_status` | 🟢 read | _none_ | Returns whether MikroTik Safe Mode is currently active. |
-| `enable_safe_mode` | 🟡 write | _none_ | Activates MikroTik Safe Mode; changes are held in memory and auto-reverted on disconnect until committed. |
-| `commit_safe_mode` | 🟡 write | _none_ | Commits all pending Safe Mode changes to persistent storage and exits Safe Mode. |
-| `rollback_safe_mode` | 🟡 write | _none_ | Discards all pending Safe Mode changes by closing the SSH session, triggering automatic rollback. |
+| `safe_mode_status` | 🟢 read | _none_ | Returns whether MikroTik Safe Mode is currently active (for the targeted device). |
+| `enable_safe_mode` | 🟡 write | _none_ | Activates MikroTik Safe Mode on the targeted device; changes are held in memory and auto-reverted on disconnect until committed. |
+| `commit_safe_mode` | 🟡 write | _none_ | Commits all pending Safe Mode changes on the targeted device to persistent storage and exits Safe Mode. |
+| `rollback_safe_mode` | 🟡 write | _none_ | Discards all pending Safe Mode changes on the targeted device by closing the SSH session, triggering automatic rollback. |
 

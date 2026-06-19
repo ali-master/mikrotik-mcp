@@ -10,9 +10,17 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolAnnotations, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
 import type { ZodRawShape } from "zod";
 import {   createContext } from "./context";
 import type {ToolContext, SendLog} from "./context";
+
+/** Options threaded into every tool registration. */
+export interface RegisterOptions {
+  sendLog?: SendLog;
+  /** Configured device names; when more than one, a `device` selector is injected. */
+  deviceNames?: string[];
+}
 
 // ── Behaviour presets (MCP §Tool Annotations) ──────────────────────────────
 /** Read-only, side-effect free, repeatable. */
@@ -55,7 +63,7 @@ export interface RegisterableTool {
   annotations: ToolAnnotations;
   inputSchema?: ZodRawShape;
   description: string;
-  register: (server: McpServer, sendLog?: SendLog) => void;
+  register: (server: McpServer, opts?: RegisterOptions) => void;
 }
 
 export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): RegisterableTool {
@@ -65,11 +73,31 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     description: def.description,
     annotations: def.annotations,
     inputSchema: def.inputSchema,
-    register(server: McpServer, sendLog?: SendLog) {
+    register(server: McpServer, opts: RegisterOptions = {}) {
+      const { sendLog, deviceNames } = opts;
+      const multiDevice = !!deviceNames && deviceNames.length > 1;
+
+      // When more than one device is configured, every tool gains an optional
+      // `device` selector (a validated enum of the configured names) so the AI
+      // can target a specific router per call. Single-device setups are untouched.
+      const inputSchema = multiDevice
+        ? {
+            ...(def.inputSchema ?? {}),
+            device: z
+              .enum(deviceNames as [string, ...string[]])
+              .optional()
+              .describe(
+                `Which configured MikroTik device to run this on. One of: ${deviceNames.join(", ")}. Omit to use the default device.`,
+              ),
+          }
+        : def.inputSchema;
+
       const callback = async (args: Record<string, unknown>): Promise<CallToolResult> => {
-        const ctx = createContext(sendLog);
+        // Peel the injected selector off before handing args to the handler.
+        const { device, ...rest } = args as { device?: unknown };
+        const ctx = createContext(sendLog, typeof device === "string" ? device : undefined);
         try {
-          const text = await def.handler(args, ctx);
+          const text = await def.handler(rest, ctx);
           return { content: [{ type: "text", text }] };
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
@@ -83,7 +111,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
         {
           title: def.title,
           description: def.description,
-          inputSchema: def.inputSchema,
+          inputSchema,
           annotations: { ...def.annotations, title: def.title },
         },
         // The SDK derives the callback's arg type from `inputSchema`; our
@@ -98,7 +126,11 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
 export type ToolModule = RegisterableTool[];
 
 /** Register every tool from every module, returning the total count. */
-export function registerTools(server: McpServer, modules: ToolModule[], sendLog?: SendLog): number {
+export function registerTools(
+  server: McpServer,
+  modules: ToolModule[],
+  opts: RegisterOptions = {},
+): number {
   let count = 0;
   const seen = new Set<string>();
   for (const mod of modules) {
@@ -107,7 +139,7 @@ export function registerTools(server: McpServer, modules: ToolModule[], sendLog?
         throw new Error(`Duplicate tool name registered: ${tool.name}`);
       }
       seen.add(tool.name);
-      tool.register(server, sendLog);
+      tool.register(server, opts);
       count++;
     }
   }

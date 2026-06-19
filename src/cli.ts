@@ -4,12 +4,14 @@
  *
  *   mikrotik-mcp                 start the server (stdio by default)
  *   mikrotik-mcp serve           same, explicit
- *   mikrotik-mcp auth-check      verify SSH connectivity to the device
+ *   mikrotik-mcp auth-check      verify SSH connectivity to every configured device
+ *   mikrotik-mcp devices         list the configured devices
  *   mikrotik-mcp tools           list every registered tool (name + risk)
  *   mikrotik-mcp --version       print version
  *   mikrotik-mcp --help          usage
  *
  * Connection details come from MIKROTIK_* env vars or --flags (see config.ts).
+ * Multiple named devices come from --config / MIKROTIK_DEVICES.
  */
 import { existsSync } from "node:fs";
 import { loadConfig } from "./config";
@@ -28,11 +30,12 @@ USAGE
 
 COMMANDS
   serve         Start the MCP server (default)
-  auth-check    Connect over SSH and run a probe command, then exit
+  auth-check    Connect over SSH to every configured device and probe it
+  devices       List the configured devices (name · host · auth)
   tools         Print the full tool catalog (name · risk · title)
   version       Print the version
 
-CONNECTION OPTIONS  (env var in parentheses)
+CONNECTION OPTIONS  (env var in parentheses) — defines the "default" device
   --host           RouterOS host             (MIKROTIK_HOST, default 127.0.0.1)
   --username       SSH username              (MIKROTIK_USERNAME, default admin)
   --port           SSH port                  (MIKROTIK_PORT, default 22)
@@ -43,6 +46,13 @@ AUTHENTICATION — use a password OR an SSH key (key takes precedence)
   --private-key    Inline private key (PEM)  (MIKROTIK_PRIVATE_KEY)
   --key-passphrase Passphrase for an encrypted key (MIKROTIK_KEY_PASSPHRASE)
 
+MULTIPLE DEVICES — give each router a name to target per tool call
+  --config <path>  JSON file of named devices (MIKROTIK_CONFIG_FILE)
+                   { "defaultDevice": "site-a",
+                     "devices": { "site-a": { "host": "...", ... },
+                                  "site-b": { "host": "...", ... } } }
+  MIKROTIK_DEVICES Inline JSON alternative to --config
+
 TRANSPORT OPTIONS
   --transport          stdio | sse | streamable-http   (MIKROTIK_MCP__TRANSPORT)
   --mcp-host           HTTP bind host                   (MIKROTIK_MCP__HOST)
@@ -50,9 +60,9 @@ TRANSPORT OPTIONS
   --mcp-allowed-hosts  Host header allow-list (DNS-rebinding protection)
 `;
 
-function warnIfPlaintextPasswordInContainer(password: string): void {
+function warnIfPlaintextPasswordInContainer(anyPassword: boolean): void {
   const inContainer = existsSync("/.dockerenv") || process.env.container === "docker";
-  if (inContainer && password) {
+  if (inContainer && anyPassword) {
     logger.warn(
       "Security notice: running inside a container with a plaintext password in the environment. " +
         "Environment variables are visible via 'docker inspect'. Prefer Docker secrets / a key file. See SECURITY.md.",
@@ -73,33 +83,54 @@ function listTools(): void {
   process.stdout.write(`\n${total} tools across ${allToolModules.length} modules\n`);
 }
 
-async function authCheck(): Promise<number> {
+function listDevicesCli(): void {
   const cfg = loadConfig();
-  logger.info(`Connecting to ${cfg.username}@${cfg.host}:${cfg.port} …`);
+  for (const [name, d] of Object.entries(cfg.devices)) {
+    const tag = name === cfg.defaultDevice ? " (default)" : "";
+    const auth = d.keyFilename || d.privateKey ? "key" : d.password ? "password" : "none";
+    const desc = d.description ? ` — ${d.description}` : "";
+    process.stdout.write(`${name}${tag}\t${d.username}@${d.host}:${d.port} [auth: ${auth}]${desc}\n`);
+  }
+  process.stdout.write(`\n${Object.keys(cfg.devices).length} device(s)\n`);
+}
+
+/** Probe one device; returns true on success. */
+async function probeDevice(name: string, d: import("./config").DeviceConfig): Promise<boolean> {
+  const authMode = d.keyFilename || d.privateKey ? "SSH key" : "password";
+  logger.info(`[${name}] Connecting to ${d.username}@${d.host}:${d.port} (auth: ${authMode}) …`);
   const ssh = new MikroTikSSHClient({
-    host: cfg.host,
-    username: cfg.username,
-    password: cfg.password,
-    keyFilename: cfg.keyFilename,
-    privateKey: cfg.privateKey,
-    keyPassphrase: cfg.keyPassphrase,
-    port: cfg.port,
-    timeoutMs: cfg.timeoutMs,
+    host: d.host,
+    username: d.username,
+    password: d.password,
+    keyFilename: d.keyFilename,
+    privateKey: d.privateKey,
+    keyPassphrase: d.keyPassphrase,
+    port: d.port,
+    timeoutMs: d.timeoutMs,
   });
-  const authMode = cfg.keyFilename || cfg.privateKey ? "SSH key" : "password";
-  logger.info(`Auth mode: ${authMode}`);
   if (!(await ssh.connect())) {
-    logger.error("Connection FAILED. Check host/credentials/reachability.");
-    return 1;
+    logger.error(`[${name}] Connection FAILED. Check host/credentials/reachability.`);
+    return false;
   }
   try {
-    const identity = await ssh.run("/system identity print");
-    const version = await ssh.run("/system resource print");
-    process.stdout.write(`\nConnection OK.\n\n${identity.trim()}\n\n${version.trim()}\n`);
-    return 0;
+    const identity = (await ssh.run("/system identity print")).trim();
+    process.stdout.write(`\n[${name}] Connection OK.\n${identity}\n`);
+    return true;
   } finally {
     ssh.disconnect();
   }
+}
+
+async function authCheck(): Promise<number> {
+  // Verify every configured device (a no-op extra device costs one SSH probe).
+  const cfg = loadConfig();
+  const entries = Object.entries(cfg.devices);
+  let ok = true;
+  for (const [name, d] of entries) {
+    ok = (await probeDevice(name, d)) && ok;
+  }
+  process.stdout.write(`\n${entries.length} device(s) checked.\n`);
+  return ok ? 0 : 1;
 }
 
 async function main(): Promise<void> {
@@ -118,6 +149,10 @@ async function main(): Promise<void> {
     listTools();
     return;
   }
+  if (command === "devices") {
+    listDevicesCli();
+    return;
+  }
   if (command === "auth-check") {
     process.exit(await authCheck());
   }
@@ -125,8 +160,12 @@ async function main(): Promise<void> {
   // serve
   const cfg = loadConfig();
   setConfig(cfg);
-  warnIfPlaintextPasswordInContainer(cfg.password);
-  logger.info(`Starting ${SERVER_NAME} v${VERSION} (transport=${cfg.mcp.transport})`);
+  warnIfPlaintextPasswordInContainer(Object.values(cfg.devices).some((d) => !!d.password));
+  const deviceNames = Object.keys(cfg.devices);
+  logger.info(
+    `Starting ${SERVER_NAME} v${VERSION} (transport=${cfg.mcp.transport}, ` +
+      `devices=${deviceNames.length === 1 ? deviceNames[0] : deviceNames.join("/")})`,
+  );
 
   if (cfg.mcp.transport === "stdio") {
     await runStdio();

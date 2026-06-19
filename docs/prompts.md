@@ -3,7 +3,7 @@
 MCP **prompts** are reusable, parameterized workflows a user can invoke by name
 (e.g. "harden this router"). Unlike tools — which the model calls — a prompt
 produces a ready-to-run instruction message that the model then executes using
-the tools. This server ships **8 prompts**.
+the tools. This server ships **9 prompts**.
 
 ## How prompts are authored
 
@@ -49,6 +49,7 @@ conversation. The model carries it out with the server's tools.
 | `setup-wireguard-vpn` | Stand up a WireGuard server and produce a client config. |
 | `setup-ipsec-site-to-site` | Build an interoperable IKEv2 site-to-site IPsec tunnel. |
 | `setup-l2tp-ipsec-roadwarrior` | L2TP/IPsec remote access for built-in OS VPN clients. |
+| `setup-tunnel-between-sites` | Configure **both** routers of a site-to-site tunnel and verify it end to end. |
 | `backup-and-document` | Create a restore point and a human-readable config inventory. |
 
 See the **[VPN guide](./vpn-guide.md)** for how the VPN prompts and tools fit together.
@@ -127,6 +128,19 @@ PPP profile, per-user secrets, the server, firewall, and a client setup card.
 |----------|:--:|-------------|
 | `vpn_pool` | **yes** | Address range handed to VPN clients (e.g. `192.168.89.10-192.168.89.254`). |
 | `local_gateway` | **yes** | Router's VPN/LAN-side address used as gateway/DNS. |
+
+### `setup-tunnel-between-sites`
+
+Drives **two** routers from one conversation: inventories both ends, picks a
+tunnel technology, configures each side with its `device` argument, opens the
+firewall under per-device Safe Mode, and verifies with `ping` from both. Requires
+[multiple devices](./multi-device.md) to be configured.
+
+| Argument | Required | Description |
+|----------|:--:|-------------|
+| `device_a` | **yes** | Name of the first configured device (e.g. `site-a`). |
+| `device_b` | **yes** | Name of the second configured device (e.g. `site-b`). |
+| `technology` | no | `wireguard` / `ipsec` / `gre` / `eoip`, or `recommend`. |
 
 ### `backup-and-document`
 

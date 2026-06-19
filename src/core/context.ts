@@ -14,6 +14,11 @@ export interface ToolContext {
   info: (message: string) => void;
   /** Error / failure message. */
   error: (message: string) => void;
+  /**
+   * Name of the device this call targets, when the client selected one.
+   * `undefined` means "use the configured default device".
+   */
+  device?: string;
 }
 
 export type SendLog = (level: "info" | "error", message: string) => void;
@@ -21,9 +26,11 @@ export type SendLog = (level: "info" | "error", message: string) => void;
 /**
  * Build a context. `sendLog`, when provided, forwards messages to the connected
  * MCP client as logging notifications in addition to the local stderr log.
+ * `device` is the target device name selected for this tool call.
  */
-export function createContext(sendLog?: SendLog): ToolContext {
+export function createContext(sendLog?: SendLog, device?: string): ToolContext {
   return {
+    device,
     info(message: string) {
       logger.info(message);
       sendLog?.("info", message);
