@@ -1,9 +1,5 @@
 import { defineConfig } from "bunup";
 
-// This is a Bun application: it uses bun:sqlite and other Bun-native APIs, so
-// every artifact targets the Bun runtime. paths.ts resolves the prompts/
-// schemas/ config/ data dirs from import.meta.url, so the bundled CLI in
-// dist/ still finds them at the project root (dist/.. === root).
 export default defineConfig([
   {
     name: "library",
