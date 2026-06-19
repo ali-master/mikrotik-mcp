@@ -3,7 +3,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type {ToolModule} from "../core/registry";
-import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
 
 interface AddRouteArgs {
   dst_address: string;
@@ -285,10 +285,16 @@ export const routeTools: ToolModule = [
     name: "get_route_cache",
     title: "Get Route Cache",
     annotations: READ,
-    description: "Gets the route cache.",
+    description:
+      "Gets the route cache (`/ip route cache`). Note: the route cache only exists on RouterOS v6; " +
+      "v7 removed it (the FIB is derived from /ip route directly) — on v7 use list_routes / get_routing_table.",
     async handler(_a, ctx) {
       ctx.info("Getting route cache");
       const result = await executeMikrotikCommand("/ip route cache print", ctx);
+      if (commandUnsupported(result)) {
+        return "Route cache is not available on this device. RouterOS v7 removed the separate route cache (the forwarding table is built from /ip route directly). Use list_routes or get_routing_table instead.";
+      }
+      if (looksLikeError(result)) return `Failed to get route cache: ${result}`;
       return isEmpty(result) ? "Route cache is empty." : `ROUTE CACHE:\n\n${result}`;
     },
   }),
@@ -297,10 +303,15 @@ export const routeTools: ToolModule = [
     name: "flush_route_cache",
     title: "Flush Route Cache",
     annotations: DESTRUCTIVE,
-    description: "Flushes the route cache.",
+    description:
+      "Flushes the route cache (`/ip route cache flush`). Only applies to RouterOS v6; v7 has no separate route cache.",
     async handler(_a, ctx) {
       ctx.info("Flushing route cache");
       const result = await executeMikrotikCommand("/ip route cache flush", ctx);
+      if (commandUnsupported(result)) {
+        return "Route cache flushing is not available on this device. RouterOS v7 has no separate route cache to flush.";
+      }
+      if (looksLikeError(result)) return `Failed to flush route cache: ${result}`;
       return result.trim() ? `Flush result: ${result}` : "Route cache flushed successfully.";
     },
   }),

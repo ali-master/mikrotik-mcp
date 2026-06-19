@@ -111,3 +111,20 @@ export function looksLikeError(result: string): boolean {
     t.startsWith("error")
   );
 }
+
+/**
+ * True when RouterOS rejected the command word itself — i.e. the command path
+ * does not exist on this RouterOS version (e.g. `/ip route cache`, removed in
+ * v7) or was mistyped. Distinct from a value-level `failure:`; lets a tool give
+ * a version-aware message instead of surfacing a raw parser error.
+ */
+export function commandUnsupported(result: string): boolean {
+  const t = result.toLowerCase();
+  return (
+    t.includes("bad command name") ||
+    t.includes("no such command") ||
+    t.includes("no such command prefix") ||
+    t.includes("expected end of command") ||
+    t.includes("invalid command name")
+  );
+}

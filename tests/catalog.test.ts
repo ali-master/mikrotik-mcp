@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
-import { Cmd, quoteValue, yesno } from "../src/core/routeros";
+import { Cmd, commandUnsupported, looksLikeError, quoteValue, yesno } from "../src/core/routeros";
 import { allToolModules, moduleCatalog } from "../src/tools";
 
 const allTools = allToolModules.flat();
@@ -94,5 +94,21 @@ describe("RouterOS command builder", () => {
   test("yesno maps booleans", () => {
     expect(yesno(true)).toBe("yes");
     expect(yesno(false)).toBe("no");
+  });
+
+  test("commandUnsupported detects RouterOS 'command does not exist' errors", () => {
+    // The exact string a v7 device returns for `/ip route cache print`.
+    expect(commandUnsupported("bad command name cache (line 1 column 11)")).toBe(true);
+    expect(commandUnsupported("no such command prefix")).toBe(true);
+    expect(commandUnsupported("expected end of command")).toBe(true);
+    // Real output and value-level failures are NOT "command unsupported".
+    expect(commandUnsupported("0 D 0.0.0.0/0 gw 10.0.0.1")).toBe(false);
+    expect(commandUnsupported("failure: already have such entry")).toBe(false);
+  });
+
+  test("looksLikeError still catches device failures and parser errors", () => {
+    expect(looksLikeError("failure: already have such entry")).toBe(true);
+    expect(looksLikeError("bad command name cache (line 1 column 11)")).toBe(true);
+    expect(looksLikeError("flags: X, A")).toBe(false);
   });
 });
