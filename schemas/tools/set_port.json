@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_port",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Serial port name to update"
+    },
+    "baud_rate": {
+      "description": "e.g. '115200' or 'auto'",
+      "type": "string"
+    },
+    "data_bits": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "parity": {
+      "type": "string",
+      "enum": [
+        "none",
+        "odd",
+        "even"
+      ]
+    },
+    "stop_bits": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "flow_control": {
+      "type": "string",
+      "enum": [
+        "none",
+        "hardware",
+        "xon-xoff"
+      ]
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

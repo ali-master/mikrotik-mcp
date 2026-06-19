@@ -35,6 +35,7 @@ import { routeTools } from "./routes";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
 import { sstpTools } from "./sstp";
+import { systemConfigTools } from "./system-config";
 import { systemTools } from "./system";
 import { tunnelTools } from "./tunnels";
 import { userManagerTools } from "./user-manager";
@@ -91,6 +92,7 @@ export const moduleCatalog: ModuleInfo[] = [
   // ── System / operations ──────────────────────────────────────────────────
   { label: "Devices", slug: "devices", group: "System & Ops", description: "List the configured MikroTik devices the AI can target via the `device` argument.", tools: deviceTools },
   { label: "System", slug: "system", group: "System & Ops", description: "Identity, resources, health, clock/NTP, packages, reboot/shutdown.", tools: systemTools },
+  { label: "System Config", slug: "system-config", group: "System & Ops", description: "Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog.", tools: systemConfigTools },
   { label: "Network Tools", slug: "network-tools", group: "System & Ops", description: "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).", tools: networkToolTools },
   { label: "Scheduler / Scripts", slug: "scheduler", group: "System & Ops", description: "Scheduled jobs and scripts (`/system scheduler`, `/system script`).", tools: schedulerTools },
   { label: "Users", slug: "users", group: "System & Ops", description: "Users, groups, active sessions and SSH keys (`/user`).", tools: userTools },

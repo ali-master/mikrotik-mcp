@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 349,
+  "toolCount": 367,
   "tools": [
     {
       "name": "list_interfaces",
@@ -9280,6 +9280,461 @@
         "required": [
           "confirm"
         ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_system_console",
+      "title": "List Console",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the system console sessions/ports (`/system console`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_leds",
+      "title": "List LEDs",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the configured LEDs and their triggers (`/system leds`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_leds_settings",
+      "title": "Get LED Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the global LED settings (`/system leds settings`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_leds_settings",
+      "title": "Set LED Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the global LED settings, e.g. dark-mode scheduling via all-leds-off.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "all_leds_off": {
+            "description": "When to turn all LEDs off (dark mode)",
+            "type": "string",
+            "enum": [
+              "never",
+              "immediate",
+              "after-1h",
+              "after-1min"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_license",
+      "title": "Get License",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the RouterOS license (`/system license`). On CHR shows the license level and deadline; on RouterBOARD the menu may differ or be absent.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_note",
+      "title": "Get Note",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the system note shown at login (`/system note`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_note",
+      "title": "Set Note",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Sets the system note and whether it is displayed at login.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "note": {
+            "description": "The note text to display",
+            "type": "string"
+          },
+          "show_at_login": {
+            "description": "Show the note on login",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_ntp_server",
+      "title": "Get NTP Server",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the NTP server configuration (`/system ntp server`, RouterOS 7).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_ntp_server",
+      "title": "Set NTP Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Configures the built-in NTP server (enable, broadcast/multicast/manycast modes).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "description": "Enable or disable the NTP server",
+            "type": "boolean"
+          },
+          "broadcast": {
+            "type": "boolean"
+          },
+          "multicast": {
+            "type": "boolean"
+          },
+          "manycast": {
+            "type": "boolean"
+          },
+          "broadcast_address": {
+            "description": "Broadcast address for NTP broadcasts",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "change_password",
+      "title": "Change Password",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Changes the current user's login password (`/password`). The old and new passwords are never echoed back in the result.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "old_password": {
+            "type": "string",
+            "description": "The current password"
+          },
+          "new_password": {
+            "type": "string",
+            "description": "The new password to set"
+          }
+        },
+        "required": [
+          "old_password",
+          "new_password"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ports",
+      "title": "List Serial Ports",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the device's serial ports (`/port`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial port name match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_port",
+      "title": "Get Serial Port",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed information about a specific serial port.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Serial port name, e.g. 'serial0'"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_port",
+      "title": "Set Serial Port",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a serial port's line settings (baud rate, data/stop bits, parity, flow control).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Serial port name to update"
+          },
+          "baud_rate": {
+            "description": "e.g. '115200' or 'auto'",
+            "type": "string"
+          },
+          "data_bits": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "parity": {
+            "type": "string",
+            "enum": [
+              "none",
+              "odd",
+              "even"
+            ]
+          },
+          "stop_bits": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "flow_control": {
+            "type": "string",
+            "enum": [
+              "none",
+              "hardware",
+              "xon-xoff"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_regulatory",
+      "title": "Get Regulatory",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Surfaces the wireless regulatory/country domain. RouterOS has no `/system regulatory` menu; this reads `/interface wifi radio` (wifiwave2), which exposes the country and regulatory settings of the radios.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "reset_configuration",
+      "title": "Reset Configuration",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Factory-resets the device configuration (`/system reset-configuration`). Requires confirm=true; the device reboots into a default configuration and the connection will drop.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be true to actually ERASE the configuration"
+          },
+          "keep_users": {
+            "description": "Keep existing user accounts after reset",
+            "type": "boolean"
+          },
+          "no_defaults": {
+            "description": "Do not load the default configuration",
+            "type": "boolean"
+          },
+          "skip_backup": {
+            "description": "Skip the automatic backup before reset",
+            "type": "boolean"
+          },
+          "run_after_reset": {
+            "description": "Script file to run after reset",
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_special_login",
+      "title": "List Special Login",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists special-login entries, e.g. serial-console auto-login (`/system special-login`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_watchdog",
+      "title": "Get Watchdog",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the hardware/software watchdog configuration (`/system watchdog`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_watchdog",
+      "title": "Set Watchdog",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Configures the watchdog timer and the host it pings to detect a hung device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "watchdog_timer": {
+            "description": "Enable the hardware watchdog timer",
+            "type": "boolean"
+          },
+          "watch_address": {
+            "description": "Address to ping; reboot if unreachable",
+            "type": "string"
+          },
+          "ping_timeout": {
+            "description": "e.g. '1m'",
+            "type": "string"
+          },
+          "no_ping_delay": {
+            "description": "e.g. '5m'",
+            "type": "string"
+          },
+          "automatic_supout": {
+            "description": "Generate a supout.rif on software failure",
+            "type": "boolean"
+          },
+          "auto_send_supout": {
+            "description": "Email the generated supout.rif",
+            "type": "boolean"
+          }
+        },
         "additionalProperties": false
       }
     },

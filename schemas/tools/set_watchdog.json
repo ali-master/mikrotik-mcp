@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_watchdog",
+  "type": "object",
+  "properties": {
+    "watchdog_timer": {
+      "description": "Enable the hardware watchdog timer",
+      "type": "boolean"
+    },
+    "watch_address": {
+      "description": "Address to ping; reboot if unreachable",
+      "type": "string"
+    },
+    "ping_timeout": {
+      "description": "e.g. '1m'",
+      "type": "string"
+    },
+    "no_ping_delay": {
+      "description": "e.g. '5m'",
+      "type": "string"
+    },
+    "automatic_supout": {
+      "description": "Generate a supout.rif on software failure",
+      "type": "boolean"
+    },
+    "auto_send_supout": {
+      "description": "Email the generated supout.rif",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

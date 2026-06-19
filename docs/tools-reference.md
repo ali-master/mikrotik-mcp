@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**349 tools** across **36 modules**. A `*` marks a required parameter.
+**367 tools** across **37 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -38,6 +38,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Queues / QoS](#queue) | QoS | 19 | Queue types, queue trees and simple queues (`/queue`). |
 | [Devices](#devices) | System & Ops | 1 | List the configured MikroTik devices the AI can target via the `device` argument. |
 | [System](#system) | System & Ops | 14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown. |
+| [System Config](#system-config) | System & Ops | 18 | Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog. |
 | [Network Tools](#network-tools) | System & Ops | 8 | ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`). |
 | [Scheduler / Scripts](#scheduler) | System & Ops | 10 | Scheduled jobs and scripts (`/system scheduler`, `/system script`). |
 | [Users](#users) | System & Ops | 18 | Users, groups, active sessions and SSH keys (`/user`). |
@@ -522,6 +523,31 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `get_system_history` | 🟢 read | _none_ | Gets the system change history (recent configuration actions). |
 | `reboot_system` | ⛔ dangerous | `confirm`* | Reboots the MikroTik device. Requires confirm=true; the connection will drop. |
 | `shutdown_system` | ⛔ dangerous | `confirm`* | Shuts down the MikroTik device. Requires confirm=true; the connection will drop. |
+
+## System Config
+
+<a id="system-config"></a>Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog.
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_system_console` | 🟢 read | _none_ | Lists the system console sessions/ports (`/system console`). |
+| `list_leds` | 🟢 read | _none_ | Lists the configured LEDs and their triggers (`/system leds`). |
+| `get_leds_settings` | 🟢 read | _none_ | Gets the global LED settings (`/system leds settings`). |
+| `set_leds_settings` | 🟡 write·idem | `all_leds_off` | Updates the global LED settings, e.g. dark-mode scheduling via all-leds-off. |
+| `get_license` | 🟢 read | _none_ | Gets the RouterOS license (`/system license`). On CHR shows the license level and deadline; on RouterBOARD the menu may differ or be absent. |
+| `get_note` | 🟢 read | _none_ | Gets the system note shown at login (`/system note`). |
+| `set_note` | 🟡 write·idem | `note`, `show_at_login` | Sets the system note and whether it is displayed at login. |
+| `get_ntp_server` | 🟢 read | _none_ | Gets the NTP server configuration (`/system ntp server`, RouterOS 7). |
+| `set_ntp_server` | 🟡 write·idem | `enabled`, `broadcast`, `multicast`, `manycast`, `broadcast_address` | Configures the built-in NTP server (enable, broadcast/multicast/manycast modes). |
+| `change_password` | 🟡 write | `old_password`*, `new_password`* | Changes the current user's login password (`/password`). The old and new passwords are never echoed back in the result. |
+| `list_ports` | 🟢 read | `name_filter` | Lists the device's serial ports (`/port`). |
+| `get_port` | 🟢 read | `name`* | Gets detailed information about a specific serial port. |
+| `set_port` | 🟡 write·idem | `name`*, `baud_rate`, `data_bits`, `parity`, `stop_bits`, `flow_control` | Updates a serial port's line settings (baud rate, data/stop bits, parity, flow control). |
+| `get_regulatory` | 🟢 read | _none_ | Surfaces the wireless regulatory/country domain. RouterOS has no `/system regulatory` menu; this reads `/interface wifi radio` (wifiwave2), which exposes the country and regulatory settings of the radios. |
+| `reset_configuration` | ⛔ dangerous | `confirm`*, `keep_users`, `no_defaults`, `skip_backup`, `run_after_reset` | Factory-resets the device configuration (`/system reset-configuration`). Requires confirm=true; the device reboots into a default configuration and the connection will drop. |
+| `list_special_login` | 🟢 read | _none_ | Lists special-login entries, e.g. serial-console auto-login (`/system special-login`). |
+| `get_watchdog` | 🟢 read | _none_ | Gets the hardware/software watchdog configuration (`/system watchdog`). |
+| `set_watchdog` | 🟡 write·idem | `watchdog_timer`, `watch_address`, `ping_timeout`, `no_ping_delay`, `automatic_supout`, `auto_send_supout` | Configures the watchdog timer and the host it pings to detect a hung device. |
 
 ## Network Tools
 

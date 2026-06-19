@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_port",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Serial port name, e.g. 'serial0'"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_note",
+  "type": "object",
+  "properties": {
+    "note": {
+      "description": "The note text to display",
+      "type": "string"
+    },
+    "show_at_login": {
+      "description": "Show the note on login",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

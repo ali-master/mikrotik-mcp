@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "reset_configuration",
+  "type": "object",
+  "properties": {
+    "confirm": {
+      "type": "boolean",
+      "description": "Must be true to actually ERASE the configuration"
+    },
+    "keep_users": {
+      "description": "Keep existing user accounts after reset",
+      "type": "boolean"
+    },
+    "no_defaults": {
+      "description": "Do not load the default configuration",
+      "type": "boolean"
+    },
+    "skip_backup": {
+      "description": "Skip the automatic backup before reset",
+      "type": "boolean"
+    },
+    "run_after_reset": {
+      "description": "Script file to run after reset",
+      "type": "string"
+    }
+  },
+  "required": [
+    "confirm"
+  ],
+  "additionalProperties": false
+}

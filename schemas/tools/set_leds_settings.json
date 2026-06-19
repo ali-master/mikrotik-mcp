@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_leds_settings",
+  "type": "object",
+  "properties": {
+    "all_leds_off": {
+      "description": "When to turn all LEDs off (dark mode)",
+      "type": "string",
+      "enum": [
+        "never",
+        "immediate",
+        "after-1h",
+        "after-1min"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

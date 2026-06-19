@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_ntp_server",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "description": "Enable or disable the NTP server",
+      "type": "boolean"
+    },
+    "broadcast": {
+      "type": "boolean"
+    },
+    "multicast": {
+      "type": "boolean"
+    },
+    "manycast": {
+      "type": "boolean"
+    },
+    "broadcast_address": {
+      "description": "Broadcast address for NTP broadcasts",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
