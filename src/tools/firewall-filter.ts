@@ -1,9 +1,22 @@
 /** Firewall filter rules — `/ip firewall filter`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool, DANGEROUS } from "../core/registry";
-import type {ToolModule} from "../core/registry";
-import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+  DANGEROUS,
+} from "../core/registry";
+import type { ToolModule } from "../core/registry";
+import {
+  whereClause,
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  Cmd,
+} from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -59,17 +72,20 @@ async function updateFilterRule(
   put("limit", a.limit);
   put("tcp-flags", a.tcp_flags);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
-  if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
+  if (a.disabled !== undefined)
+    updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
     updates.push(`log=${a.log ? "yes" : "no"}`);
-    if (a.log && a.log_prefix) updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
+    if (a.log && a.log_prefix)
+      updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
   }
 
   if (updates.length === 0) return "No updates specified.";
 
   const cmd = `/ip firewall filter set ${a.rule_id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
-  if (looksLikeError(result)) return `Failed to update firewall filter rule: ${result}`;
+  if (looksLikeError(result))
+    return `Failed to update firewall filter rule: ${result}`;
 
   const details = await executeMikrotikCommand(
     `/ip firewall filter print detail where .id=${a.rule_id}`,
@@ -85,10 +101,10 @@ export const firewallFilterTools: ToolModule = [
     annotations: WRITE,
     description:
       "Creates a firewall filter rule in the specified chain on the MikroTik device. " +
-      "connection_state: comma-separated e.g. \"established,related,new,invalid\". " +
-      "limit: RouterOS rate/burst string e.g. \"10,5:packet\" or \"10/1s:packet\". " +
-      "tcp_flags: RouterOS flag expression e.g. \"syn,!ack\". " +
-      "place_before: rule number or ID (*N) to insert before e.g. \"0\" or \"*3\".",
+      'connection_state: comma-separated e.g. "established,related,new,invalid". ' +
+      'limit: RouterOS rate/burst string e.g. "10,5:packet" or "10/1s:packet". ' +
+      'tcp_flags: RouterOS flag expression e.g. "syn,!ack". ' +
+      'place_before: rule number or ID (*N) to insert before e.g. "0" or "*3".',
     inputSchema: {
       chain: z.enum(["input", "forward", "output"]),
       action: z.enum([
@@ -109,20 +125,34 @@ export const firewallFilterTools: ToolModule = [
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
-      connection_state: z.string().optional().describe('Comma-separated e.g. "established,related,new,invalid"'),
+      connection_state: z
+        .string()
+        .optional()
+        .describe('Comma-separated e.g. "established,related,new,invalid"'),
       connection_nat_state: z.string().optional(),
       src_address_list: z.string().optional(),
       dst_address_list: z.string().optional(),
-      limit: z.string().optional().describe('RouterOS rate/burst string e.g. "10,5:packet"'),
-      tcp_flags: z.string().optional().describe('RouterOS flag expression e.g. "syn,!ack"'),
+      limit: z
+        .string()
+        .optional()
+        .describe('RouterOS rate/burst string e.g. "10,5:packet"'),
+      tcp_flags: z
+        .string()
+        .optional()
+        .describe('RouterOS flag expression e.g. "syn,!ack"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
       log_prefix: z.string().optional(),
-      place_before: z.string().optional().describe('Rule number or ID (*N) to insert before e.g. "0" or "*3"'),
+      place_before: z
+        .string()
+        .optional()
+        .describe('Rule number or ID (*N) to insert before e.g. "0" or "*3"'),
     },
     async handler(a, ctx) {
-      ctx.info(`Creating firewall filter rule: chain=${a.chain}, action=${a.action}`);
+      ctx.info(
+        `Creating firewall filter rule: chain=${a.chain}, action=${a.action}`,
+      );
 
       const cmd = new Cmd("/ip firewall filter add")
         .set("chain", a.chain)
@@ -165,7 +195,10 @@ export const firewallFilterTools: ToolModule = [
       }
 
       // No output might mean success — verify by fetching the last rule.
-      const count = await executeMikrotikCommand("/ip firewall filter print detail count-only", ctx);
+      const count = await executeMikrotikCommand(
+        "/ip firewall filter print detail count-only",
+        ctx,
+      );
       const c = count.trim();
       if (isDigits(c) && Number.parseInt(c, 10) > 0) {
         const details = await executeMikrotikCommand(
@@ -202,17 +235,24 @@ export const firewallFilterTools: ToolModule = [
       const filters: string[] = [];
       if (a.chain_filter) filters.push(`chain=${a.chain_filter}`);
       if (a.action_filter) filters.push(`action=${a.action_filter}`);
-      if (a.src_address_filter) filters.push(`src-address~"${a.src_address_filter}"`);
-      if (a.dst_address_filter) filters.push(`dst-address~"${a.dst_address_filter}"`);
+      if (a.src_address_filter)
+        filters.push(`src-address~"${a.src_address_filter}"`);
+      if (a.dst_address_filter)
+        filters.push(`dst-address~"${a.dst_address_filter}"`);
       if (a.protocol_filter) filters.push(`protocol=${a.protocol_filter}`);
       if (a.interface_filter) {
-        filters.push(`(in-interface~"${a.interface_filter}" or out-interface~"${a.interface_filter}")`);
+        filters.push(
+          `(in-interface~"${a.interface_filter}" or out-interface~"${a.interface_filter}")`,
+        );
       }
       if (a.disabled_only) filters.push("disabled=yes");
       if (a.invalid_only) filters.push("invalid=yes");
       if (a.dynamic_only) filters.push("dynamic=yes");
 
-      const result = await executeMikrotikCommand(`/ip firewall filter print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/ip firewall filter print${whereClause(filters)}`,
+        ctx,
+      );
       return isEmpty(result)
         ? "No firewall filter rules found matching the criteria."
         : `FIREWALL FILTER RULES:\n\n${result}`;
@@ -226,7 +266,9 @@ export const firewallFilterTools: ToolModule = [
     description:
       "Gets detailed information about a specific firewall filter rule. " +
       'rule_id: use the ID from list output e.g. "*1" or "0".',
-    inputSchema: { rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"') },
+    inputSchema: {
+      rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
+    },
     async handler(a, ctx) {
       ctx.info(`Getting firewall filter rule details: rule_id=${a.rule_id}`);
       const result = await executeMikrotikCommand(
@@ -292,10 +334,15 @@ export const firewallFilterTools: ToolModule = [
         `/ip firewall filter print count-only where .id=${a.rule_id}`,
         ctx,
       );
-      if (count.trim() === "0") return `Firewall filter rule with ID '${a.rule_id}' not found.`;
+      if (count.trim() === "0")
+        return `Firewall filter rule with ID '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(`/ip firewall filter remove ${a.rule_id}`, ctx);
-      if (looksLikeError(result)) return `Failed to remove firewall filter rule: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/ip firewall filter remove ${a.rule_id}`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove firewall filter rule: ${result}`;
       return `Firewall filter rule with ID '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -313,19 +360,23 @@ export const firewallFilterTools: ToolModule = [
       destination: z.number().int().describe("0-based target position index"),
     },
     async handler(a, ctx) {
-      ctx.info(`Moving firewall filter rule: rule_id=${a.rule_id} to position ${a.destination}`);
+      ctx.info(
+        `Moving firewall filter rule: rule_id=${a.rule_id} to position ${a.destination}`,
+      );
 
       const count = await executeMikrotikCommand(
         `/ip firewall filter print count-only where .id=${a.rule_id}`,
         ctx,
       );
-      if (count.trim() === "0") return `Firewall filter rule with ID '${a.rule_id}' not found.`;
+      if (count.trim() === "0")
+        return `Firewall filter rule with ID '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ip firewall filter move ${a.rule_id} destination=${a.destination}`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to move firewall filter rule: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to move firewall filter rule: ${result}`;
       return `Firewall filter rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
     },
   }),
@@ -356,7 +407,8 @@ export const firewallFilterTools: ToolModule = [
     name: "create_basic_firewall_setup",
     title: "Create Basic Firewall Setup",
     annotations: DANGEROUS,
-    description: "Creates a basic firewall setup with common security rules on the MikroTik device.",
+    description:
+      "Creates a basic firewall setup with common security rules on the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Creating basic firewall setup");
 
@@ -367,37 +419,47 @@ export const firewallFilterTools: ToolModule = [
         '/ip firewall filter add chain=input action=accept connection-state=established,related comment="Accept established,related"',
         ctx,
       );
-      results.push(`Rule 1 (established/related): ${  !r1 || r1.includes("*") ? "Created" : r1}`);
+      results.push(
+        `Rule 1 (established/related): ${!r1 || r1.includes("*") ? "Created" : r1}`,
+      );
 
       // Drop invalid connections
       const r2 = await executeMikrotikCommand(
         '/ip firewall filter add chain=input action=drop connection-state=invalid comment="Drop invalid"',
         ctx,
       );
-      results.push(`Rule 2 (drop invalid): ${  !r2 || r2.includes("*") ? "Created" : r2}`);
+      results.push(
+        `Rule 2 (drop invalid): ${!r2 || r2.includes("*") ? "Created" : r2}`,
+      );
 
       // Allow ICMP
       const r3 = await executeMikrotikCommand(
         '/ip firewall filter add chain=input action=accept protocol=icmp comment="Accept ICMP"',
         ctx,
       );
-      results.push(`Rule 3 (ICMP): ${  !r3 || r3.includes("*") ? "Created" : r3}`);
+      results.push(
+        `Rule 3 (ICMP): ${!r3 || r3.includes("*") ? "Created" : r3}`,
+      );
 
       // Allow management from specific network
       const r4 = await executeMikrotikCommand(
         '/ip firewall filter add chain=input action=accept src-address=192.168.88.0/24 comment="Accept management network"',
         ctx,
       );
-      results.push(`Rule 4 (management network): ${  !r4 || r4.includes("*") ? "Created" : r4}`);
+      results.push(
+        `Rule 4 (management network): ${!r4 || r4.includes("*") ? "Created" : r4}`,
+      );
 
       // Drop everything else
       const r5 = await executeMikrotikCommand(
         '/ip firewall filter add chain=input action=drop comment="Drop everything else"',
         ctx,
       );
-      results.push(`Rule 5 (drop all): ${  !r5 || r5.includes("*") ? "Created" : r5}`);
+      results.push(
+        `Rule 5 (drop all): ${!r5 || r5.includes("*") ? "Created" : r5}`,
+      );
 
-      return `BASIC FIREWALL SETUP RESULTS:\n\n${  results.join("\n")}`;
+      return `BASIC FIREWALL SETUP RESULTS:\n\n${results.join("\n")}`;
     },
   }),
 ];

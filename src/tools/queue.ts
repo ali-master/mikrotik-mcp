@@ -8,8 +8,14 @@
 import { z } from "zod";
 import type { ToolContext } from "../core/context";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 /**
@@ -27,13 +33,20 @@ async function verifyCreate(
   if (result.trim()) {
     if (result.includes("*") || /^\d+$/.test(result.trim())) {
       const id = result.trim();
-      const details = await executeMikrotikCommand(`${path} print detail where .id=${id}`, ctx);
+      const details = await executeMikrotikCommand(
+        `${path} print detail where .id=${id}`,
+        ctx,
+      );
       if (details.trim()) return `${label} created successfully:\n\n${details}`;
       return `${label} created with ID: ${id}`;
     }
-    if (looksLikeError(result)) return `Failed to create ${label.toLowerCase()}: ${result}`;
+    if (looksLikeError(result))
+      return `Failed to create ${label.toLowerCase()}: ${result}`;
   }
-  const details = await executeMikrotikCommand(`${path} print detail where name="${name}"`, ctx);
+  const details = await executeMikrotikCommand(
+    `${path} print detail where name="${name}"`,
+    ctx,
+  );
   if (details.trim()) return `${label} created successfully:\n\n${details}`;
   return `${label} creation completed but unable to verify.`;
 }
@@ -50,8 +63,20 @@ const QueueKind = z.enum([
   "mq-pfifo",
   "none",
 ]);
-const CakeFlowmode = z.enum(["triple-isolate", "dual-srchost", "dual-dsthost", "host", "flow", "none"]);
-const CakeDiffserv = z.enum(["besteffort", "diffserv3", "diffserv4", "diffserv8"]);
+const CakeFlowmode = z.enum([
+  "triple-isolate",
+  "dual-srchost",
+  "dual-dsthost",
+  "host",
+  "flow",
+  "none",
+]);
+const CakeDiffserv = z.enum([
+  "besteffort",
+  "diffserv3",
+  "diffserv4",
+  "diffserv8",
+]);
 const CakeAckFilter = z.enum(["filter", "aggressive", "none"]);
 
 export const queueTools: ToolModule = [
@@ -71,20 +96,35 @@ export const queueTools: ToolModule = [
       cake_mpu: z.number().int().optional(),
       cake_diffserv: CakeDiffserv.optional(),
       cake_ack_filter: CakeAckFilter.optional(),
-      cake_rtt: z.string().optional().describe('Round-trip time e.g. "50ms", "100ms"'),
+      cake_rtt: z
+        .string()
+        .optional()
+        .describe('Round-trip time e.g. "50ms", "100ms"'),
       cake_wash: z.boolean().optional(),
       cake_overhead_scheme: z.string().optional(),
-      pcq_rate: z.string().optional().describe('Bandwidth per flow e.g. "1M", "512k"'),
+      pcq_rate: z
+        .string()
+        .optional()
+        .describe('Bandwidth per flow e.g. "1M", "512k"'),
       pcq_limit: z.number().int().optional(),
-      pcq_classifier: z.string().optional().describe('Comma-separated classifiers e.g. "src-address,dst-address"'),
+      pcq_classifier: z
+        .string()
+        .optional()
+        .describe('Comma-separated classifiers e.g. "src-address,dst-address"'),
       pfifo_limit: z.number().int().optional(),
       bfifo_limit: z.number().int().optional(),
       sfq_perturb: z.number().int().optional(),
       sfq_allot: z.number().int().optional(),
       fq_codel_limit: z.number().int().optional(),
       fq_codel_quantum: z.number().int().optional(),
-      fq_codel_target: z.string().optional().describe('Time e.g. "5ms", "100ms"'),
-      fq_codel_interval: z.string().optional().describe('Time e.g. "5ms", "100ms"'),
+      fq_codel_target: z
+        .string()
+        .optional()
+        .describe('Time e.g. "5ms", "100ms"'),
+      fq_codel_interval: z
+        .string()
+        .optional()
+        .describe('Time e.g. "5ms", "100ms"'),
       red_limit: z.number().int().optional(),
       red_min_threshold: z.number().int().optional(),
       red_max_threshold: z.number().int().optional(),
@@ -150,10 +190,12 @@ export const queueTools: ToolModule = [
       if (a.kind_filter) filters.push(`kind=${a.kind_filter}`);
 
       let cmd = "/queue type print";
-      if (filters.length) cmd += ` where ${  filters.join(" ")}`;
+      if (filters.length) cmd += ` where ${filters.join(" ")}`;
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      return isEmpty(result) ? "No queue types found matching the criteria." : `QUEUE TYPES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No queue types found matching the criteria."
+        : `QUEUE TYPES:\n\n${result}`;
     },
   }),
 
@@ -165,8 +207,13 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting queue type details: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue type print detail where name="${a.name}"`, ctx);
-      return isEmpty(result) ? `Queue type '${a.name}' not found.` : `QUEUE TYPE DETAILS:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue type print detail where name="${a.name}"`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? `Queue type '${a.name}' not found.`
+        : `QUEUE TYPE DETAILS:\n\n${result}`;
     },
   }),
 
@@ -174,7 +221,8 @@ export const queueTools: ToolModule = [
     name: "update_queue_type",
     title: "Update Queue Type",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing queue type's discipline-specific settings.",
+    description:
+      "Updates an existing queue type's discipline-specific settings.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -212,10 +260,14 @@ export const queueTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to update queue type: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update queue type: ${result}`;
 
       const lookupName = a.new_name ?? a.name;
-      const details = await executeMikrotikCommand(`/queue type print detail where name="${lookupName}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue type print detail where name="${lookupName}"`,
+        ctx,
+      );
       return `Queue type updated successfully:\n\n${details}`;
     },
   }),
@@ -228,8 +280,12 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing queue type: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue type remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove queue type: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue type remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove queue type: ${result}`;
       return `Queue type '${a.name}' removed successfully.`;
     },
   }),
@@ -239,19 +295,38 @@ export const queueTools: ToolModule = [
     name: "create_queue_tree",
     title: "Create Queue Tree",
     annotations: WRITE,
-    description: "Creates a hierarchical queue tree entry attached to a parent interface or queue.",
+    description:
+      "Creates a hierarchical queue tree entry attached to a parent interface or queue.",
     inputSchema: {
       name: z.string(),
-      parent: z.string().describe('Interface name e.g. "ether1" or parent queue name'),
+      parent: z
+        .string()
+        .describe('Interface name e.g. "ether1" or parent queue name'),
       queue: z.string().optional(),
       packet_mark: z.string().optional(),
-      max_limit: z.string().optional().describe('Bandwidth e.g. "10M", "512k", "1G"'),
-      limit_at: z.string().optional().describe('Bandwidth e.g. "10M", "512k", "1G"'),
-      burst_limit: z.string().optional().describe('Bandwidth e.g. "10M", "512k", "1G"'),
-      burst_threshold: z.string().optional().describe('Bandwidth e.g. "10M", "512k", "1G"'),
+      max_limit: z
+        .string()
+        .optional()
+        .describe('Bandwidth e.g. "10M", "512k", "1G"'),
+      limit_at: z
+        .string()
+        .optional()
+        .describe('Bandwidth e.g. "10M", "512k", "1G"'),
+      burst_limit: z
+        .string()
+        .optional()
+        .describe('Bandwidth e.g. "10M", "512k", "1G"'),
+      burst_threshold: z
+        .string()
+        .optional()
+        .describe('Bandwidth e.g. "10M", "512k", "1G"'),
       burst_time: z.string().optional().describe('Duration e.g. "8s"'),
       bucket_size: z.string().optional(),
-      priority: z.number().int().optional().describe("1 (highest) – 8 (lowest)"),
+      priority: z
+        .number()
+        .int()
+        .optional()
+        .describe("1 (highest) – 8 (lowest)"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -298,10 +373,12 @@ export const queueTools: ToolModule = [
       if (a.invalid_only) filters.push("invalid=yes");
 
       let cmd = "/queue tree print";
-      if (filters.length) cmd += ` where ${  filters.join(" ")}`;
+      if (filters.length) cmd += ` where ${filters.join(" ")}`;
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      return isEmpty(result) ? "No queue trees found matching the criteria." : `QUEUE TREES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No queue trees found matching the criteria."
+        : `QUEUE TREES:\n\n${result}`;
     },
   }),
 
@@ -313,8 +390,13 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting queue tree details: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue tree print detail where name="${a.name}"`, ctx);
-      return isEmpty(result) ? `Queue tree '${a.name}' not found.` : `QUEUE TREE DETAILS:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue tree print detail where name="${a.name}"`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? `Queue tree '${a.name}' not found.`
+        : `QUEUE TREE DETAILS:\n\n${result}`;
     },
   }),
 
@@ -322,7 +404,8 @@ export const queueTools: ToolModule = [
     name: "update_queue_tree",
     title: "Update Queue Tree",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing queue tree entry (bandwidth limits, parent, priority, etc.).",
+    description:
+      "Updates an existing queue tree entry (bandwidth limits, parent, priority, etc.).",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -331,11 +414,21 @@ export const queueTools: ToolModule = [
       packet_mark: z.string().optional(),
       max_limit: z.string().optional().describe('Bandwidth e.g. "10M", "512k"'),
       limit_at: z.string().optional().describe('Bandwidth e.g. "10M", "512k"'),
-      burst_limit: z.string().optional().describe('Bandwidth e.g. "10M", "512k"'),
-      burst_threshold: z.string().optional().describe('Bandwidth e.g. "10M", "512k"'),
+      burst_limit: z
+        .string()
+        .optional()
+        .describe('Bandwidth e.g. "10M", "512k"'),
+      burst_threshold: z
+        .string()
+        .optional()
+        .describe('Bandwidth e.g. "10M", "512k"'),
       burst_time: z.string().optional().describe('Duration e.g. "8s"'),
       bucket_size: z.string().optional(),
-      priority: z.number().int().optional().describe("1 (highest) – 8 (lowest)"),
+      priority: z
+        .number()
+        .int()
+        .optional()
+        .describe("1 (highest) – 8 (lowest)"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -360,10 +453,14 @@ export const queueTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to update queue tree: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update queue tree: ${result}`;
 
       const lookupName = a.new_name ?? a.name;
-      const details = await executeMikrotikCommand(`/queue tree print detail where name="${lookupName}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue tree print detail where name="${lookupName}"`,
+        ctx,
+      );
       return `Queue tree updated successfully:\n\n${details}`;
     },
   }),
@@ -376,8 +473,12 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing queue tree: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue tree remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove queue tree: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue tree remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove queue tree: ${result}`;
       return `Queue tree '${a.name}' removed successfully.`;
     },
   }),
@@ -390,10 +491,17 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling queue tree: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue tree set [find name="${a.name}"] disabled=no`, ctx);
-      if (looksLikeError(result)) return `Failed to enable queue tree: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue tree set [find name="${a.name}"] disabled=no`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to enable queue tree: ${result}`;
 
-      const details = await executeMikrotikCommand(`/queue tree print detail where name="${a.name}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue tree print detail where name="${a.name}"`,
+        ctx,
+      );
       return `Queue tree enabled:\n\n${details}`;
     },
   }),
@@ -406,10 +514,17 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling queue tree: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue tree set [find name="${a.name}"] disabled=yes`, ctx);
-      if (looksLikeError(result)) return `Failed to disable queue tree: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue tree set [find name="${a.name}"] disabled=yes`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to disable queue tree: ${result}`;
 
-      const details = await executeMikrotikCommand(`/queue tree print detail where name="${a.name}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue tree print detail where name="${a.name}"`,
+        ctx,
+      );
       return `Queue tree disabled:\n\n${details}`;
     },
   }),
@@ -419,15 +534,38 @@ export const queueTools: ToolModule = [
     name: "create_simple_queue",
     title: "Create Simple Queue",
     annotations: WRITE,
-    description: "Creates a simple queue to rate-limit a target address or interface.",
+    description:
+      "Creates a simple queue to rate-limit a target address or interface.",
     inputSchema: {
       name: z.string(),
-      target: z.string().describe('IP/CIDR or interface e.g. "192.168.1.0/24" or "ether1"'),
+      target: z
+        .string()
+        .describe('IP/CIDR or interface e.g. "192.168.1.0/24" or "ether1"'),
       dst: z.string().optional(),
-      max_limit: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
-      limit_at: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
-      burst_limit: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
-      burst_threshold: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
+      max_limit: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
+      limit_at: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
+      burst_limit: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
+      burst_threshold: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
       burst_time: z.string().optional().describe('Duration e.g. "8s"'),
       bucket_size: z.string().optional(),
       queue: z.string().optional(),
@@ -482,10 +620,12 @@ export const queueTools: ToolModule = [
       if (a.invalid_only) filters.push("invalid=yes");
 
       let cmd = "/queue simple print";
-      if (filters.length) cmd += ` where ${  filters.join(" ")}`;
+      if (filters.length) cmd += ` where ${filters.join(" ")}`;
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      return isEmpty(result) ? "No simple queues found matching the criteria." : `SIMPLE QUEUES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No simple queues found matching the criteria."
+        : `SIMPLE QUEUES:\n\n${result}`;
     },
   }),
 
@@ -497,8 +637,13 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting simple queue details: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue simple print detail where name="${a.name}"`, ctx);
-      return isEmpty(result) ? `Simple queue '${a.name}' not found.` : `SIMPLE QUEUE DETAILS:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue simple print detail where name="${a.name}"`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? `Simple queue '${a.name}' not found.`
+        : `SIMPLE QUEUE DETAILS:\n\n${result}`;
     },
   }),
 
@@ -506,16 +651,40 @@ export const queueTools: ToolModule = [
     name: "update_simple_queue",
     title: "Update Simple Queue",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing simple queue's rate limits, target, or scheduling settings.",
+    description:
+      "Updates an existing simple queue's rate limits, target, or scheduling settings.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
-      target: z.string().optional().describe('IP/CIDR or interface e.g. "192.168.1.0/24" or "ether1"'),
+      target: z
+        .string()
+        .optional()
+        .describe('IP/CIDR or interface e.g. "192.168.1.0/24" or "ether1"'),
       dst: z.string().optional(),
-      max_limit: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
-      limit_at: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
-      burst_limit: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
-      burst_threshold: z.string().optional().describe('Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"'),
+      max_limit: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
+      limit_at: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
+      burst_limit: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
+      burst_threshold: z
+        .string()
+        .optional()
+        .describe(
+          'Upload/download bandwidth as "UL/DL" e.g. "10M/10M", or single value e.g. "10M"',
+        ),
       burst_time: z.string().optional().describe('Duration e.g. "8s"'),
       bucket_size: z.string().optional(),
       queue: z.string().optional(),
@@ -548,10 +717,14 @@ export const queueTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to update simple queue: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update simple queue: ${result}`;
 
       const lookupName = a.new_name ?? a.name;
-      const details = await executeMikrotikCommand(`/queue simple print detail where name="${lookupName}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue simple print detail where name="${lookupName}"`,
+        ctx,
+      );
       return `Simple queue updated successfully:\n\n${details}`;
     },
   }),
@@ -564,8 +737,12 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing simple queue: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue simple remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove simple queue: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue simple remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove simple queue: ${result}`;
       return `Simple queue '${a.name}' removed successfully.`;
     },
   }),
@@ -578,10 +755,17 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling simple queue: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue simple set [find name="${a.name}"] disabled=no`, ctx);
-      if (looksLikeError(result)) return `Failed to enable simple queue: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue simple set [find name="${a.name}"] disabled=no`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to enable simple queue: ${result}`;
 
-      const details = await executeMikrotikCommand(`/queue simple print detail where name="${a.name}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue simple print detail where name="${a.name}"`,
+        ctx,
+      );
       return `Simple queue enabled:\n\n${details}`;
     },
   }),
@@ -594,10 +778,17 @@ export const queueTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling simple queue: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/queue simple set [find name="${a.name}"] disabled=yes`, ctx);
-      if (looksLikeError(result)) return `Failed to disable simple queue: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/queue simple set [find name="${a.name}"] disabled=yes`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to disable simple queue: ${result}`;
 
-      const details = await executeMikrotikCommand(`/queue simple print detail where name="${a.name}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/queue simple print detail where name="${a.name}"`,
+        ctx,
+      );
       return `Simple queue disabled:\n\n${details}`;
     },
   }),

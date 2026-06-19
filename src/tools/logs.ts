@@ -7,8 +7,8 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import { READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { isEmpty } from "../core/routeros";
 import { tailLines, orMatch } from "../utils";
 import type { ToolContext } from "../core/context";
@@ -25,9 +25,14 @@ interface GetLogsOptions {
 }
 
 /** Shared log query used directly by `get_logs` and the convenience views. */
-async function runGetLogs(o: GetLogsOptions, ctx: ToolContext): Promise<string> {
+async function runGetLogs(
+  o: GetLogsOptions,
+  ctx: ToolContext,
+): Promise<string> {
   const printAs = o.print_as ?? "value";
-  ctx.info(`Getting logs with filters: topics=${o.topics}, action=${o.action}, time=${o.time_filter}`);
+  ctx.info(
+    `Getting logs with filters: topics=${o.topics}, action=${o.action}, time=${o.time_filter}`,
+  );
 
   let cmd = `/log print ${printAs}`;
 
@@ -46,7 +51,7 @@ async function runGetLogs(o: GetLogsOptions, ctx: ToolContext): Promise<string> 
   if (o.prefix_filter) filters.push(`message~"^${o.prefix_filter}"`);
   if (o.time_filter) filters.push(`time > ([:timestamp] - ${o.time_filter})`);
 
-  if (filters.length) cmd += ` where ${  filters.join(" and ")}`;
+  if (filters.length) cmd += ` where ${filters.join(" and ")}`;
   if (o.follow) cmd += " follow";
 
   const result = await executeMikrotikCommand(cmd, ctx);
@@ -60,7 +65,8 @@ export const logTools: ToolModule = [
     name: "get_logs",
     title: "Get Logs",
     annotations: READ,
-    description: "Gets logs from the MikroTik device with optional topic, time, and message filters.",
+    description:
+      "Gets logs from the MikroTik device with optional topic, time, and message filters.",
     inputSchema: {
       topics: z.string().optional(),
       action: z.string().optional(),
@@ -92,7 +98,8 @@ export const logTools: ToolModule = [
     name: "get_logs_by_severity",
     title: "Get Logs by Severity",
     annotations: READ,
-    description: "Gets logs filtered by severity level (debug/info/warning/error/critical).",
+    description:
+      "Gets logs filtered by severity level (debug/info/warning/error/critical).",
     inputSchema: {
       severity: z.enum(["debug", "info", "warning", "error", "critical"]),
       time_filter: z.string().optional(),
@@ -112,7 +119,10 @@ export const logTools: ToolModule = [
 
       const topics = severityTopics[a.severity];
 
-      return runGetLogs({ topics, time_filter: a.time_filter, limit: a.limit }, ctx);
+      return runGetLogs(
+        { topics, time_filter: a.time_filter, limit: a.limit },
+        ctx,
+      );
     },
   }),
 
@@ -120,7 +130,8 @@ export const logTools: ToolModule = [
     name: "get_logs_by_topic",
     title: "Get Logs by Topic",
     annotations: READ,
-    description: "Gets logs for a specific topic/facility (system, dhcp, interface, firewall, etc.).",
+    description:
+      "Gets logs for a specific topic/facility (system, dhcp, interface, firewall, etc.).",
     inputSchema: {
       topic: z.string(),
       time_filter: z.string().optional(),
@@ -128,7 +139,10 @@ export const logTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Getting logs by topic: topic=${a.topic}`);
-      return runGetLogs({ topics: a.topic, time_filter: a.time_filter, limit: a.limit }, ctx);
+      return runGetLogs(
+        { topics: a.topic, time_filter: a.time_filter, limit: a.limit },
+        ctx,
+      );
     },
   }),
 
@@ -150,7 +164,10 @@ export const logTools: ToolModule = [
       // case_sensitive flag does not change the filter we build here.
       const message_filter = a.search_term;
 
-      return runGetLogs({ message_filter, time_filter: a.time_filter, limit: a.limit }, ctx);
+      return runGetLogs(
+        { message_filter, time_filter: a.time_filter, limit: a.limit },
+        ctx,
+      );
     },
   }),
 
@@ -158,7 +175,8 @@ export const logTools: ToolModule = [
     name: "get_system_events",
     title: "System Events",
     annotations: READ,
-    description: "Gets system-related log events (login, reboot, config-change, etc.).",
+    description:
+      "Gets system-related log events (login, reboot, config-change, etc.).",
     inputSchema: {
       event_type: z.string().optional(),
       time_filter: z.string().optional(),
@@ -183,10 +201,14 @@ export const logTools: ToolModule = [
         };
 
         const key = a.event_type.toLowerCase();
-        message_filter = key in eventPatterns ? eventPatterns[key] : a.event_type;
+        message_filter =
+          key in eventPatterns ? eventPatterns[key] : a.event_type;
       }
 
-      return runGetLogs({ topics, message_filter, time_filter: a.time_filter, limit: a.limit }, ctx);
+      return runGetLogs(
+        { topics, message_filter, time_filter: a.time_filter, limit: a.limit },
+        ctx,
+      );
     },
   }),
 
@@ -194,7 +216,8 @@ export const logTools: ToolModule = [
     name: "get_security_logs",
     title: "Security Logs",
     annotations: READ,
-    description: "Gets security-related log entries (login failures, blocked connections, etc.).",
+    description:
+      "Gets security-related log entries (login failures, blocked connections, etc.).",
     inputSchema: {
       time_filter: z.string().optional(),
       limit: z.number().int().optional(),
@@ -207,7 +230,8 @@ export const logTools: ToolModule = [
       // several topics needs an OR of separate `topics~"…"` terms rather than a
       // single comma-joined regex.
       const securityTopics = ["system", "firewall", "warning", "error"];
-      const securityKeywords = "(login|logout|failed|denied|blocked|attack|invalid|unauthorized)";
+      const securityKeywords =
+        "(login|logout|failed|denied|blocked|attack|invalid|unauthorized)";
 
       let cmd = `/log print where ${orMatch("topics", securityTopics)} and message~"${securityKeywords}"`;
 
@@ -224,11 +248,15 @@ export const logTools: ToolModule = [
     name: "clear_logs",
     title: "Clear Logs",
     annotations: DESTRUCTIVE,
-    description: "Clears all logs from the MikroTik device. This action cannot be undone.",
+    description:
+      "Clears all logs from the MikroTik device. This action cannot be undone.",
     async handler(_a, ctx) {
       ctx.info("Clearing all logs");
 
-      const result = await executeMikrotikCommand("/log print follow-only", ctx);
+      const result = await executeMikrotikCommand(
+        "/log print follow-only",
+        ctx,
+      );
       if (result.trim() === "") return "Logs cleared successfully.";
       return `Log clear result: ${result}`;
     },
@@ -238,19 +266,34 @@ export const logTools: ToolModule = [
     name: "get_log_statistics",
     title: "Log Statistics",
     annotations: READ,
-    description: "Gets log entry counts by topic and severity from the MikroTik device.",
+    description:
+      "Gets log entry counts by topic and severity from the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Getting log statistics");
 
       // Get total count
-      const totalCount = await executeMikrotikCommand("/log print count-only", ctx);
+      const totalCount = await executeMikrotikCommand(
+        "/log print count-only",
+        ctx,
+      );
 
       const stats = [`Total log entries: ${totalCount.trim()}`];
 
       // Get counts by common topics
-      const topics = ["info", "warning", "error", "system", "dhcp", "firewall", "interface"];
+      const topics = [
+        "info",
+        "warning",
+        "error",
+        "system",
+        "dhcp",
+        "firewall",
+        "interface",
+      ];
       for (const topic of topics) {
-        const count = await executeMikrotikCommand(`/log print count-only where topics~"${topic}"`, ctx);
+        const count = await executeMikrotikCommand(
+          `/log print count-only where topics~"${topic}"`,
+          ctx,
+        );
         const c = count.trim();
         if (/^\d+$/.test(c) && Number.parseInt(c, 10) > 0) {
           stats.push(`${topic.charAt(0).toUpperCase()}${topic.slice(1)}: ${c}`);
@@ -271,7 +314,7 @@ export const logTools: ToolModule = [
       );
       stats.push(`Entries in last 24 hours: ${todayCount.trim()}`);
 
-      return `LOG STATISTICS:\n\n${  stats.join("\n")}`;
+      return `LOG STATISTICS:\n\n${stats.join("\n")}`;
     },
   }),
 
@@ -279,7 +322,8 @@ export const logTools: ToolModule = [
     name: "export_logs",
     title: "Export Logs",
     annotations: READ,
-    description: "Exports logs to a file on the MikroTik device with optional topic and time filters.",
+    description:
+      "Exports logs to a file on the MikroTik device with optional topic and time filters.",
     inputSchema: {
       filename: z.string().optional(),
       topics: z.string().optional(),
@@ -287,7 +331,8 @@ export const logTools: ToolModule = [
       format: z.enum(["plain", "csv"]).default("plain"),
     },
     async handler(a, ctx) {
-      const filename = a.filename || `logs_export_${Math.floor(Date.now() / 1000)}`;
+      const filename =
+        a.filename || `logs_export_${Math.floor(Date.now() / 1000)}`;
 
       ctx.info(`Exporting logs to file: ${filename}`);
 
@@ -295,9 +340,10 @@ export const logTools: ToolModule = [
 
       const filters: string[] = [];
       if (a.topics) filters.push(`topics~"${a.topics}"`);
-      if (a.time_filter) filters.push(`time > ([:timestamp] - ${a.time_filter})`);
+      if (a.time_filter)
+        filters.push(`time > ([:timestamp] - ${a.time_filter})`);
 
-      if (filters.length) cmd += ` where ${  filters.join(" and ")}`;
+      if (filters.length) cmd += ` where ${filters.join(" and ")}`;
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
@@ -310,7 +356,8 @@ export const logTools: ToolModule = [
     name: "monitor_logs",
     title: "Monitor Logs",
     annotations: READ,
-    description: "Monitors MikroTik logs in near-real-time for a limited duration (max 60s).",
+    description:
+      "Monitors MikroTik logs in near-real-time for a limited duration (max 60s).",
     inputSchema: {
       topics: z.string().optional(),
       action: z.string().optional(),

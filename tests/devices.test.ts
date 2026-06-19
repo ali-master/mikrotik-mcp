@@ -3,15 +3,22 @@
  */
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { loadConfig } from "../src/config";
-import { getDevice, listDevices, resolveDeviceName, setConfig } from "../src/core/runtime";
+import {
+  getDevice,
+  listDevices,
+  resolveDeviceName,
+  setConfig,
+} from "../src/core/runtime";
 
 const SAVED = { ...process.env };
 afterEach(() => {
-  for (const k of Object.keys(process.env)) if (k.startsWith("MIKROTIK")) delete process.env[k];
+  for (const k of Object.keys(process.env))
+    if (k.startsWith("MIKROTIK")) delete process.env[k];
   Object.assign(process.env, SAVED);
 });
 beforeEach(() => {
-  for (const k of Object.keys(process.env)) if (k.startsWith("MIKROTIK")) delete process.env[k];
+  for (const k of Object.keys(process.env))
+    if (k.startsWith("MIKROTIK")) delete process.env[k];
 });
 
 describe("single-device config (legacy MIKROTIK_*)", () => {
@@ -80,7 +87,10 @@ describe("device resolution", () => {
   beforeEach(() => {
     process.env.MIKROTIK_DEVICES = JSON.stringify({
       defaultDevice: "site-a",
-      devices: { "site-a": { host: "10.0.0.1" }, "site-b": { host: "10.0.0.2" } },
+      devices: {
+        "site-a": { host: "10.0.0.1" },
+        "site-b": { host: "10.0.0.2" },
+      },
     });
     setConfig(loadConfig([]));
   });

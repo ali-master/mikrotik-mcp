@@ -1,9 +1,22 @@
 /** BGP — `/routing bgp` (connections, templates, sessions, advertisements) — RouterOS v7. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE, WRITE_IDEMPOTENT, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import {
+  WRITE,
+  WRITE_IDEMPOTENT,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { yesno, whereClause, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+import {
+  yesno,
+  whereClause,
+  looksLikeError,
+  isEmpty,
+  commandUnsupported,
+  Cmd,
+} from "../core/routeros";
 
 const UNSUPPORTED =
   "BGP is not available on this device (requires RouterOS v7 with the routing package).";
@@ -18,15 +31,23 @@ export const routingBgpTools: ToolModule = [
       "Lists BGP connections (`/routing bgp connection`). In RouterOS v7 a 'connection' is one configured peer " +
       "(or listener) that pulls common settings from optional templates. Shows local/remote AS, addresses and role.",
     inputSchema: {
-      name_filter: z.string().optional().describe("Substring match on connection name"),
+      name_filter: z
+        .string()
+        .optional()
+        .describe("Substring match on connection name"),
     },
     async handler(a, ctx) {
       ctx.info("Listing BGP connections");
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
-      const result = await executeMikrotikCommand(`/routing bgp connection print detail${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/routing bgp connection print detail${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No BGP connections found." : `BGP CONNECTIONS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No BGP connections found."
+        : `BGP CONNECTIONS:\n\n${result}`;
     },
   }),
 
@@ -34,7 +55,8 @@ export const routingBgpTools: ToolModule = [
     name: "get_bgp_connection",
     title: "Get BGP Connection",
     annotations: READ,
-    description: "Gets detailed configuration for a specific BGP connection by name.",
+    description:
+      "Gets detailed configuration for a specific BGP connection by name.",
     inputSchema: { name: z.string().describe("BGP connection name") },
     async handler(a, ctx) {
       ctx.info(`Getting BGP connection: ${a.name}`);
@@ -43,7 +65,9 @@ export const routingBgpTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? `BGP connection '${a.name}' not found.` : `BGP CONNECTION:\n\n${result}`;
+      return isEmpty(result)
+        ? `BGP connection '${a.name}' not found.`
+        : `BGP CONNECTION:\n\n${result}`;
     },
   }),
 
@@ -58,26 +82,56 @@ export const routingBgpTools: ToolModule = [
     inputSchema: {
       name: z.string().describe("Unique connection name"),
       remote_address: z.string().describe("Peer IP address (remote.address)"),
-      remote_as: z.number().int().optional().describe("Peer AS number (remote.as)"),
+      remote_as: z
+        .number()
+        .int()
+        .optional()
+        .describe("Peer AS number (remote.as)"),
       as: z.number().int().optional().describe("Local AS number"),
       local_role: z
         .string()
         .optional()
-        .describe("local.role: ebgp, ibgp, ebgp-customer, ebgp-provider, ibgp-rr, ibgp-rr-client, …"),
-      local_address: z.string().optional().describe("Local source address (local.address)"),
-      router_id: z.string().optional().describe("Override router-id for this connection"),
-      templates: z.string().optional().describe("Template name(s) to inherit settings from"),
+        .describe(
+          "local.role: ebgp, ibgp, ebgp-customer, ebgp-provider, ibgp-rr, ibgp-rr-client, …",
+        ),
+      local_address: z
+        .string()
+        .optional()
+        .describe("Local source address (local.address)"),
+      router_id: z
+        .string()
+        .optional()
+        .describe("Override router-id for this connection"),
+      templates: z
+        .string()
+        .optional()
+        .describe("Template name(s) to inherit settings from"),
       address_families: z
         .string()
         .optional()
         .describe('Comma list, e.g. "ip" or "ip,ipv6,l2vpn"'),
       hold_time: z.string().optional().describe('e.g. "3m" or "180s"'),
       keepalive_time: z.string().optional(),
-      multihop: z.boolean().optional().describe("Allow non-directly-connected peers"),
-      nexthop_choice: z.string().optional().describe("default, force-self, or propagate"),
-      input_filter: z.string().optional().describe("Routing filter chain for inbound routes (input.filter)"),
-      output_filter: z.string().optional().describe("Routing filter chain for outbound routes (output.filter)"),
-      routing_table: z.string().optional().describe("RIB to install learned routes into"),
+      multihop: z
+        .boolean()
+        .optional()
+        .describe("Allow non-directly-connected peers"),
+      nexthop_choice: z
+        .string()
+        .optional()
+        .describe("default, force-self, or propagate"),
+      input_filter: z
+        .string()
+        .optional()
+        .describe("Routing filter chain for inbound routes (input.filter)"),
+      output_filter: z
+        .string()
+        .optional()
+        .describe("Routing filter chain for outbound routes (output.filter)"),
+      routing_table: z
+        .string()
+        .optional()
+        .describe("RIB to install learned routes into"),
       vrf: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -108,7 +162,8 @@ export const routingBgpTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to add BGP connection: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add BGP connection: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing bgp connection print detail where name="${a.name}"`,
         ctx,
@@ -165,7 +220,8 @@ export const routingBgpTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to update BGP connection: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update BGP connection: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing bgp connection print detail where name="${a.name}"`,
         ctx,
@@ -187,7 +243,8 @@ export const routingBgpTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to remove BGP connection: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove BGP connection: ${result}`;
       return `BGP connection '${a.name}' removed successfully.`;
     },
   }),
@@ -208,7 +265,8 @@ export const routingBgpTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to update BGP connection: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update BGP connection: ${result}`;
       return `BGP connection '${a.name}' ${a.enabled ? "enabled" : "disabled"}.`;
     },
   }),
@@ -223,9 +281,14 @@ export const routingBgpTools: ToolModule = [
       "filters, timers) that connections inherit via their `templates` property.",
     async handler(_a, ctx) {
       ctx.info("Listing BGP templates");
-      const result = await executeMikrotikCommand("/routing bgp template print detail", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing bgp template print detail",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No BGP templates found." : `BGP TEMPLATES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No BGP templates found."
+        : `BGP TEMPLATES:\n\n${result}`;
     },
   }),
 
@@ -261,7 +324,8 @@ export const routingBgpTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to add BGP template: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add BGP template: ${result}`;
       return `BGP template '${a.name}' added successfully.`;
     },
   }),
@@ -279,7 +343,8 @@ export const routingBgpTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to remove BGP template: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove BGP template: ${result}`;
       return `BGP template '${a.name}' removed successfully.`;
     },
   }),
@@ -293,15 +358,23 @@ export const routingBgpTools: ToolModule = [
       "Lists active BGP sessions (`/routing bgp session`): negotiated state (established/idle/…), remote AS, " +
       "uptime and prefix counts. Read-only — the authoritative view of which peerings are actually up.",
     inputSchema: {
-      established_only: z.boolean().default(false).describe("Show only established sessions"),
+      established_only: z
+        .boolean()
+        .default(false)
+        .describe("Show only established sessions"),
     },
     async handler(a, ctx) {
       ctx.info("Listing BGP sessions");
       const filters: string[] = [];
       if (a.established_only) filters.push("established=yes");
-      const result = await executeMikrotikCommand(`/routing bgp session print detail${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/routing bgp session print detail${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No BGP sessions found." : `BGP SESSIONS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No BGP sessions found."
+        : `BGP SESSIONS:\n\n${result}`;
     },
   }),
 
@@ -313,7 +386,10 @@ export const routingBgpTools: ToolModule = [
       "Lists prefixes advertised to BGP peers (`/routing bgp advertisements`). Read-only — useful to confirm " +
       "exactly what this router is sending to a given peer after output filters are applied.",
     inputSchema: {
-      peer_filter: z.string().optional().describe("Substring match on the peer name"),
+      peer_filter: z
+        .string()
+        .optional()
+        .describe("Substring match on the peer name"),
     },
     async handler(a, ctx) {
       ctx.info("Listing BGP advertisements");
@@ -324,7 +400,9 @@ export const routingBgpTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No BGP advertisements found." : `BGP ADVERTISEMENTS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No BGP advertisements found."
+        : `BGP ADVERTISEMENTS:\n\n${result}`;
     },
   }),
 ];

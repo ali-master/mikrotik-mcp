@@ -10,9 +10,16 @@ import { stderr } from "node:process";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
-const LEVELS: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
+const LEVELS: Record<LogLevel, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+};
 
-const ENV_LEVEL = (process.env.MIKROTIK_LOG_LEVEL ?? "info").toLowerCase() as LogLevel;
+const ENV_LEVEL = (
+  process.env.MIKROTIK_LOG_LEVEL ?? "info"
+).toLowerCase() as LogLevel;
 const THRESHOLD = LEVELS[ENV_LEVEL] ?? LEVELS.info;
 
 const COLORS: Record<LogLevel, string> = {
@@ -26,7 +33,9 @@ const useColor = stderr.isTTY ?? false;
 
 function emit(level: LogLevel, message: string): void {
   if (LEVELS[level] < THRESHOLD) return;
-  const tag = useColor ? `${COLORS[level]}${level.toUpperCase()}${RESET}` : level.toUpperCase();
+  const tag = useColor
+    ? `${COLORS[level]}${level.toUpperCase()}${RESET}`
+    : level.toUpperCase();
   stderr.write(`[mikrotik-mcp] ${tag} ${message}\n`);
 }
 

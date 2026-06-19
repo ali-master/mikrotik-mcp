@@ -27,7 +27,12 @@ async function runOnce(command: string, deviceName?: string): Promise<string> {
   });
   try {
     if (!(await ssh.connect())) {
-      const authMode = dc.keyFilename || dc.privateKey ? "SSH key" : dc.password ? "password" : "no credentials";
+      const authMode =
+        dc.keyFilename || dc.privateKey
+          ? "SSH key"
+          : dc.password
+            ? "password"
+            : "no credentials";
       const reason = ssh.lastError ? ` — ${ssh.lastError}` : "";
       // Throwing (vs. returning an "Error:" string) makes this a real tool
       // error: the registry catches it and marks the result isError, instead of
@@ -53,7 +58,10 @@ async function runOnce(command: string, deviceName?: string): Promise<string> {
  * @param command  Fully-formed RouterOS CLI command (e.g. `/ip address print`).
  * @param ctx      Per-call context carrying the target device.
  */
-export async function executeMikrotikCommand(command: string, ctx: ToolContext): Promise<string> {
+export async function executeMikrotikCommand(
+  command: string,
+  ctx: ToolContext,
+): Promise<string> {
   const deviceName = resolveDeviceName(ctx.device);
   const safe = getSafeModeManager(deviceName);
 

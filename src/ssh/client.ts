@@ -86,13 +86,16 @@ export class MikroTikSSHClient {
           cfg.privateKey = readFileSync(this.opts.keyFilename);
         } catch (e) {
           this.lastError = `could not read key file ${this.opts.keyFilename}: ${e instanceof Error ? e.message : String(e)}`;
-          logger.error(`Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`);
+          logger.error(
+            `Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`,
+          );
           resolve(false);
           return;
         }
       }
       // Passphrase only applies to a private key; ssh2 ignores it otherwise.
-      if (cfg.privateKey && this.opts.keyPassphrase) cfg.passphrase = this.opts.keyPassphrase;
+      if (cfg.privateKey && this.opts.keyPassphrase)
+        cfg.passphrase = this.opts.keyPassphrase;
       // A password may still be supplied as a fallback (ssh2 tries key first).
       if (this.opts.password) cfg.password = this.opts.password;
 

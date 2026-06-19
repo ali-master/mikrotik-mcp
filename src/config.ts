@@ -93,7 +93,10 @@ function parseFlags(argv: string[]): Record<string, string> {
 }
 
 /** Parse a multi-device source (JSON file or inline JSON) into a devices map. */
-function parseDevicesSource(raw: string, fromFile: boolean): {
+function parseDevicesSource(
+  raw: string,
+  fromFile: boolean,
+): {
   devices: Record<string, unknown>;
   defaultDevice?: string;
 } {
@@ -110,7 +113,8 @@ function parseDevicesSource(raw: string, fromFile: boolean): {
   const obj = json as Record<string, unknown>;
   // Accept either { devices: {...}, defaultDevice } or a bare { name: {...} } map.
   const devices = (obj.devices ?? obj) as Record<string, unknown>;
-  const defaultDevice = typeof obj.defaultDevice === "string" ? obj.defaultDevice : undefined;
+  const defaultDevice =
+    typeof obj.defaultDevice === "string" ? obj.defaultDevice : undefined;
   return { devices, defaultDevice };
 }
 
@@ -118,9 +122,12 @@ function parseDevicesSource(raw: string, fromFile: boolean): {
  * Build the effective configuration from the environment and CLI flags.
  * `argv` defaults to the process arguments (after `bun run <file>`).
  */
-export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConfig {
+export function loadConfig(
+  argv: string[] = process.argv.slice(2),
+): MikrotikConfig {
   const flags = parseFlags(argv);
-  const pick = (flag: string, ...envNames: string[]) => flags[flag] ?? env(...envNames);
+  const pick = (flag: string, ...envNames: string[]) =>
+    flags[flag] ?? env(...envNames);
 
   // 1) Single-device fields (legacy MIKROTIK_* / flags) → the "default" device.
   const single = {
@@ -159,7 +166,10 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     host: pick("mcp-host", "MIKROTIK_MCP__HOST"),
     port: pick("mcp-port", "MIKROTIK_MCP__PORT"),
     allowedHosts: pick("mcp-allowed-hosts", "MIKROTIK_MCP__ALLOWED_HOSTS"),
-    allowedOrigins: pick("mcp-allowed-origins", "MIKROTIK_MCP__ALLOWED_ORIGINS"),
+    allowedOrigins: pick(
+      "mcp-allowed-origins",
+      "MIKROTIK_MCP__ALLOWED_ORIGINS",
+    ),
   };
 
   const raw = {

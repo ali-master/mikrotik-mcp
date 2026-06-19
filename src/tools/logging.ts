@@ -1,8 +1,8 @@
 /** System logging rules and actions — `/system logging`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 export const systemLoggingTools: ToolModule = [
@@ -16,12 +16,20 @@ export const systemLoggingTools: ToolModule = [
       topics: z
         .string()
         .describe('Comma-separated log topics, e.g. "info", "firewall,!debug"'),
-      action: z.string().optional().describe("Logging action name (default 'memory')"),
-      prefix: z.string().optional().describe("Text prepended to each matching log message"),
+      action: z
+        .string()
+        .optional()
+        .describe("Logging action name (default 'memory')"),
+      prefix: z
+        .string()
+        .optional()
+        .describe("Text prepended to each matching log message"),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Adding logging rule: topics=${a.topics}, action=${a.action ?? "memory"}`);
+      ctx.info(
+        `Adding logging rule: topics=${a.topics}, action=${a.action ?? "memory"}`,
+      );
       const cmd = new Cmd("/system logging add")
         .set("topics", a.topics)
         .opt("action", a.action)
@@ -30,7 +38,8 @@ export const systemLoggingTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to add logging rule: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add logging rule: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/system logging print detail where topics="${a.topics}"`,
@@ -61,7 +70,9 @@ export const systemLoggingTools: ToolModule = [
         `/system logging print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result) ? "No logging rules found matching the criteria." : `LOGGING RULES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No logging rules found matching the criteria."
+        : `LOGGING RULES:\n\n${result}`;
     },
   }),
 
@@ -70,7 +81,11 @@ export const systemLoggingTools: ToolModule = [
     title: "Remove Logging Rule",
     annotations: DESTRUCTIVE,
     description: "Removes a system logging rule by its internal id.",
-    inputSchema: { rule_id: z.string().describe("Internal .id of the logging rule, e.g. '*1'") },
+    inputSchema: {
+      rule_id: z
+        .string()
+        .describe("Internal .id of the logging rule, e.g. '*1'"),
+    },
     async handler(a, ctx) {
       ctx.info(`Removing logging rule: rule_id=${a.rule_id}`);
       const count = await executeMikrotikCommand(
@@ -83,7 +98,8 @@ export const systemLoggingTools: ToolModule = [
         `/system logging remove [find .id="${a.rule_id}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to remove logging rule: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove logging rule: ${result}`;
       return `Logging rule '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -99,15 +115,35 @@ export const systemLoggingTools: ToolModule = [
       target: z
         .enum(["memory", "disk", "echo", "remote", "email"])
         .describe("Where log messages are written"),
-      remote: z.string().optional().describe("Remote syslog server address (target=remote)"),
-      remote_port: z.number().int().optional().describe("Remote syslog UDP port"),
-      bsd_syslog: z.boolean().optional().describe("Use BSD-style syslog format"),
+      remote: z
+        .string()
+        .optional()
+        .describe("Remote syslog server address (target=remote)"),
+      remote_port: z
+        .number()
+        .int()
+        .optional()
+        .describe("Remote syslog UDP port"),
+      bsd_syslog: z
+        .boolean()
+        .optional()
+        .describe("Use BSD-style syslog format"),
       syslog_facility: z.string().optional(),
       syslog_severity: z.string().optional(),
-      disk_file_name: z.string().optional().describe("File name for target=disk"),
+      disk_file_name: z
+        .string()
+        .optional()
+        .describe("File name for target=disk"),
       disk_lines_per_file: z.number().int().optional(),
-      memory_lines: z.number().int().optional().describe("Lines kept for target=memory"),
-      email_to: z.string().optional().describe("Recipient address for target=email"),
+      memory_lines: z
+        .number()
+        .int()
+        .optional()
+        .describe("Lines kept for target=memory"),
+      email_to: z
+        .string()
+        .optional()
+        .describe("Recipient address for target=email"),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
@@ -128,7 +164,8 @@ export const systemLoggingTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to add logging action: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add logging action: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/system logging action print detail where name="${a.name}"`,
@@ -145,7 +182,9 @@ export const systemLoggingTools: ToolModule = [
     title: "List Logging Actions",
     annotations: READ,
     description: "Lists system logging actions on the MikroTik device.",
-    inputSchema: { name_filter: z.string().optional().describe("Partial name match") },
+    inputSchema: {
+      name_filter: z.string().optional().describe("Partial name match"),
+    },
     async handler(a, ctx) {
       ctx.info("Listing logging actions");
       const filters: string[] = [];
@@ -155,7 +194,9 @@ export const systemLoggingTools: ToolModule = [
         `/system logging action print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result) ? "No logging actions found matching the criteria." : `LOGGING ACTIONS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No logging actions found matching the criteria."
+        : `LOGGING ACTIONS:\n\n${result}`;
     },
   }),
 
@@ -164,7 +205,9 @@ export const systemLoggingTools: ToolModule = [
     title: "Remove Logging Action",
     annotations: DESTRUCTIVE,
     description: "Removes a system logging action by name.",
-    inputSchema: { name: z.string().describe("Name of the logging action to remove") },
+    inputSchema: {
+      name: z.string().describe("Name of the logging action to remove"),
+    },
     async handler(a, ctx) {
       ctx.info(`Removing logging action: name=${a.name}`);
       const count = await executeMikrotikCommand(
@@ -177,7 +220,8 @@ export const systemLoggingTools: ToolModule = [
         `/system logging action remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to remove logging action: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove logging action: ${result}`;
       return `Logging action '${a.name}' removed successfully.`;
     },
   }),

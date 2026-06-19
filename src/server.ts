@@ -44,10 +44,10 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
   const instructions =
     names.length > 1
       ? INSTRUCTIONS +
-        MULTI_DEVICE_INSTRUCTIONS.replace("{{names}}", names.join(", ")).replace(
-          "{{default}}",
-          defaultDevice,
-        )
+        MULTI_DEVICE_INSTRUCTIONS.replace(
+          "{{names}}",
+          names.join(", "),
+        ).replace("{{default}}", defaultDevice)
       : INSTRUCTIONS;
 
   const server = new McpServer(

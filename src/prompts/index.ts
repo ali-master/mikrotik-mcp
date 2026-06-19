@@ -64,14 +64,16 @@ function parseFrontmatter(raw: string): ParsedPrompt | null {
       }
       const prop = line.match(/^[ \t]+(description|required):[ \t]*(\S.*)$/);
       if (prop && cur) {
-        if (prop[1] === "required") cur.required = /^(true|yes)$/i.test(prop[2].trim());
+        if (prop[1] === "required")
+          cur.required = /^(true|yes)$/i.test(prop[2].trim());
         else cur.description = prop[2].trim().replace(/^["']|["']$/g, "");
         continue;
       }
       if (/^\S/.test(line)) inArgs = false; // a non-indented key ends the list
     }
     const kv = line.match(/^(\w+):[ \t]*(\S.*)?$/);
-    if (kv && !inArgs) meta[kv[1]] = (kv[2] ?? "").trim().replace(/^["']|["']$/g, "");
+    if (kv && !inArgs)
+      meta[kv[1]] = (kv[2] ?? "").trim().replace(/^["']|["']$/g, "");
   }
   if (cur) args.push(cur);
 
@@ -128,7 +130,10 @@ export function registerPrompts(server: McpServer): number {
         messages: [
           {
             role: "user" as const,
-            content: { type: "text" as const, text: substitute(parsed.body, args) },
+            content: {
+              type: "text" as const,
+              text: substitute(parsed.body, args),
+            },
           },
         ],
       }),

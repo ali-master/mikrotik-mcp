@@ -9,11 +9,14 @@
  * funnels failures through a single error path.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ToolAnnotations, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  ToolAnnotations,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { ZodRawShape } from "zod";
-import {   createContext } from "./context";
-import type {ToolContext, SendLog} from "./context";
+import { createContext } from "./context";
+import type { ToolContext, SendLog } from "./context";
 import { containsRawParserError } from "./routeros";
 
 /** Options threaded into every tool registration. */
@@ -25,9 +28,16 @@ export interface RegisterOptions {
 
 // ── Behaviour presets (MCP §Tool Annotations) ──────────────────────────────
 /** Read-only, side-effect free, repeatable. */
-export const READ: ToolAnnotations = { readOnlyHint: true, idempotentHint: true, openWorldHint: false };
+export const READ: ToolAnnotations = {
+  readOnlyHint: true,
+  idempotentHint: true,
+  openWorldHint: false,
+};
 /** Creates/changes state; not inherently destructive; not idempotent. */
-export const WRITE: ToolAnnotations = { destructiveHint: false, openWorldHint: false };
+export const WRITE: ToolAnnotations = {
+  destructiveHint: false,
+  openWorldHint: false,
+};
 /** Changes state but converges to the same result if repeated (set/enable/disable). */
 export const WRITE_IDEMPOTENT: ToolAnnotations = {
   destructiveHint: false,
@@ -41,7 +51,10 @@ export const DESTRUCTIVE: ToolAnnotations = {
   openWorldHint: false,
 };
 /** High blast radius and not safely repeatable (restore, import, factory setup). */
-export const DANGEROUS: ToolAnnotations = { destructiveHint: true, openWorldHint: false };
+export const DANGEROUS: ToolAnnotations = {
+  destructiveHint: true,
+  openWorldHint: false,
+};
 
 export interface ToolDef<Shape extends ZodRawShape> {
   /** Stable tool id exposed to MCP clients (snake_case, matches the Python names). */
@@ -67,7 +80,9 @@ export interface RegisterableTool {
   register: (server: McpServer, opts?: RegisterOptions) => void;
 }
 
-export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): RegisterableTool {
+export function defineTool<Shape extends ZodRawShape>(
+  def: ToolDef<Shape>,
+): RegisterableTool {
   return {
     name: def.name,
     title: def.title,
@@ -93,10 +108,15 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
           }
         : def.inputSchema;
 
-      const callback = async (args: Record<string, unknown>): Promise<CallToolResult> => {
+      const callback = async (
+        args: Record<string, unknown>,
+      ): Promise<CallToolResult> => {
         // Peel the injected selector off before handing args to the handler.
         const { device, ...rest } = args as { device?: unknown };
-        const ctx = createContext(sendLog, typeof device === "string" ? device : undefined);
+        const ctx = createContext(
+          sendLog,
+          typeof device === "string" ? device : undefined,
+        );
         try {
           const text = await def.handler(rest, ctx);
           // Backstop: if a handler returned a raw RouterOS parser error (an
@@ -110,7 +130,10 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           ctx.error(msg);
-          return { content: [{ type: "text", text: `Error: ${msg}` }], isError: true };
+          return {
+            content: [{ type: "text", text: `Error: ${msg}` }],
+            isError: true,
+          };
         }
       };
 

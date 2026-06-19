@@ -3,7 +3,12 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+import {
+  looksLikeError,
+  isEmpty,
+  commandUnsupported,
+  Cmd,
+} from "../core/routeros";
 
 const UNSUPPORTED =
   "Routing settings are not available on this device (requires RouterOS v7 with the routing package).";
@@ -20,9 +25,14 @@ export const routingSettingsTools: ToolModule = [
       "and whether VRFs are treated as interfaces.",
     async handler(_a, ctx) {
       ctx.info("Getting routing settings");
-      const result = await executeMikrotikCommand("/routing settings print", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing settings print",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No routing settings reported." : `ROUTING SETTINGS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No routing settings reported."
+        : `ROUTING SETTINGS:\n\n${result}`;
     },
   }),
 
@@ -51,8 +61,12 @@ export const routingSettingsTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to update routing settings: ${result}`;
-      const details = await executeMikrotikCommand("/routing settings print", ctx);
+      if (looksLikeError(result))
+        return `Failed to update routing settings: ${result}`;
+      const details = await executeMikrotikCommand(
+        "/routing settings print",
+        ctx,
+      );
       return `Routing settings updated:\n\n${details}`;
     },
   }),

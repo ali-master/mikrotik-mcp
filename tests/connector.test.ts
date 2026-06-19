@@ -26,17 +26,25 @@ describe("connector error handling", () => {
   test("a connection failure throws with an actionable message", async () => {
     pointAtClosedPort();
     const promise = executeMikrotikCommand("/interface print", createContext());
-    await expect(promise).rejects.toThrow(/Failed to connect to MikroTik device 'default' at 127\.0\.0\.1:1/);
+    await expect(promise).rejects.toThrow(
+      /Failed to connect to MikroTik device 'default' at 127\.0\.0\.1:1/,
+    );
     await expect(promise).rejects.toThrow(/auth: no credentials/);
   });
 
   test("list_interfaces does NOT return connection errors as success text", async () => {
     pointAtClosedPort();
-    const listInterfaces = interfaceTools.find((t) => t.name === "list_interfaces")!;
+    const listInterfaces = interfaceTools.find(
+      (t) => t.name === "list_interfaces",
+    )!;
     // Drive the tool through the registry wrapper and capture the protocol result.
     let result: any;
     const fakeServer = {
-      registerTool: (_name: string, _cfg: unknown, cb: (args: any) => Promise<any>) => {
+      registerTool: (
+        _name: string,
+        _cfg: unknown,
+        cb: (args: any) => Promise<any>,
+      ) => {
         result = cb;
       },
     };

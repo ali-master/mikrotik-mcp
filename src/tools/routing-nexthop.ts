@@ -18,7 +18,10 @@ export const routingNexthopTools: ToolModule = [
       "it shows how each gateway resolves to a concrete interface + immediate gateway, which routes reference it, " +
       "and whether it is currently active. Read-only and diagnostic — useful for debugging recursive/BGP next-hops.",
     inputSchema: {
-      gateway_filter: z.string().optional().describe("Substring match on the resolved gateway address"),
+      gateway_filter: z
+        .string()
+        .optional()
+        .describe("Substring match on the resolved gateway address"),
       active_only: z.boolean().default(false),
     },
     async handler(a, ctx) {
@@ -26,9 +29,14 @@ export const routingNexthopTools: ToolModule = [
       const filters: string[] = [];
       if (a.gateway_filter) filters.push(`gateway~"${a.gateway_filter}"`);
       if (a.active_only) filters.push("active=yes");
-      const result = await executeMikrotikCommand(`/routing nexthop print detail${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/routing nexthop print detail${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No routing next-hops found." : `ROUTING NEXT-HOPS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No routing next-hops found."
+        : `ROUTING NEXT-HOPS:\n\n${result}`;
     },
   }),
 
@@ -36,10 +44,14 @@ export const routingNexthopTools: ToolModule = [
     name: "get_routing_nexthop_stats",
     title: "Routing Next-hop Statistics",
     annotations: READ,
-    description: "Summarises the routing next-hop table: total vs active next-hop count.",
+    description:
+      "Summarises the routing next-hop table: total vs active next-hop count.",
     async handler(_a, ctx) {
       ctx.info("Getting routing next-hop statistics");
-      const total = await executeMikrotikCommand("/routing nexthop print count-only", ctx);
+      const total = await executeMikrotikCommand(
+        "/routing nexthop print count-only",
+        ctx,
+      );
       if (commandUnsupported(total)) return UNSUPPORTED;
       const active = await executeMikrotikCommand(
         "/routing nexthop print count-only where active=yes",

@@ -24,8 +24,14 @@ interface SecuritySettings {
 }
 
 function buildSecurity(mcp: McpServerSettings): SecuritySettings {
-  const hosts = mcp.allowedHosts.split(",").map((h) => h.trim()).filter(Boolean);
-  const origins = mcp.allowedOrigins.split(",").map((o) => o.trim()).filter(Boolean);
+  const hosts = mcp.allowedHosts
+    .split(",")
+    .map((h) => h.trim())
+    .filter(Boolean);
+  const origins = mcp.allowedOrigins
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
 
   if (hosts.includes("*")) {
     logger.warn(
@@ -34,14 +40,24 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
     return { enableDnsRebindingProtection: false };
   }
   if (hosts.length || origins.length) {
-    logger.info(`DNS-rebinding protection enabled for hosts=[${hosts}] origins=[${origins}]`);
-    return { enableDnsRebindingProtection: true, allowedHosts: hosts, allowedOrigins: origins };
+    logger.info(
+      `DNS-rebinding protection enabled for hosts=[${hosts}] origins=[${origins}]`,
+    );
+    return {
+      enableDnsRebindingProtection: true,
+      allowedHosts: hosts,
+      allowedOrigins: origins,
+    };
   }
   if (LOCALHOST.has(mcp.host) && mcp.host !== "0.0.0.0") {
     return {
       enableDnsRebindingProtection: true,
       allowedHosts: ["127.0.0.1:*", "localhost:*", "[::1]:*"],
-      allowedOrigins: ["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*"],
+      allowedOrigins: [
+        "http://127.0.0.1:*",
+        "http://localhost:*",
+        "http://[::1]:*",
+      ],
     };
   }
   logger.warn(
@@ -71,7 +87,9 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
     async fetch(req) {
       const url = new URL(req.url);
       if (url.pathname === "/health") {
-        return new Response("OK", { headers: { "content-type": "text/plain" } });
+        return new Response("OK", {
+          headers: { "content-type": "text/plain" },
+        });
       }
       if (url.pathname === mcpPath || url.pathname === `${mcpPath}/`) {
         return transport.handleRequest(req);

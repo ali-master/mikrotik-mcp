@@ -6,8 +6,14 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 /** Mask password values in printed output (mirrors the users.ts redaction pattern). */
@@ -25,8 +31,13 @@ export const pptpTools: ToolModule = [
       "Gets the PPTP server configuration. NOTE: PPTP is legacy/weak — prefer L2TP/IPsec, SSTP, or WireGuard.",
     async handler(_a, ctx) {
       ctx.info("Getting PPTP server configuration");
-      const result = await executeMikrotikCommand("/interface pptp-server server print", ctx);
-      return isEmpty(result) ? "PPTP server configuration not available." : `PPTP SERVER:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        "/interface pptp-server server print",
+        ctx,
+      );
+      return isEmpty(result)
+        ? "PPTP server configuration not available."
+        : `PPTP SERVER:\n\n${result}`;
     },
   }),
 
@@ -37,9 +48,15 @@ export const pptpTools: ToolModule = [
     description:
       "Configures the PPTP server. NOTE: PPTP is legacy/weak — prefer L2TP/IPsec, SSTP, or WireGuard for new deployments.",
     inputSchema: {
-      enabled: z.boolean().optional().describe("Enable or disable the PPTP server"),
+      enabled: z
+        .boolean()
+        .optional()
+        .describe("Enable or disable the PPTP server"),
       default_profile: z.string().optional(),
-      authentication: z.string().optional().describe("Comma-separated, e.g. 'mschap2,mschap1'"),
+      authentication: z
+        .string()
+        .optional()
+        .describe("Comma-separated, e.g. 'mschap2,mschap1'"),
       max_mtu: z.number().int().optional(),
       max_mru: z.number().int().optional(),
     },
@@ -53,12 +70,17 @@ export const pptpTools: ToolModule = [
         .opt("max-mru", a.max_mru)
         .build();
 
-      if (cmd.trim() === "/interface pptp-server server set") return "No updates specified.";
+      if (cmd.trim() === "/interface pptp-server server set")
+        return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to configure PPTP server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to configure PPTP server: ${result}`;
 
-      const details = await executeMikrotikCommand("/interface pptp-server server print", ctx);
+      const details = await executeMikrotikCommand(
+        "/interface pptp-server server print",
+        ctx,
+      );
       return `PPTP server configured successfully:\n\n${details}`;
     },
   }),
@@ -81,7 +103,9 @@ export const pptpTools: ToolModule = [
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Creating PPTP client: name=${a.name}, connect_to=${a.connect_to}`);
+      ctx.info(
+        `Creating PPTP client: name=${a.name}, connect_to=${a.connect_to}`,
+      );
       const cmd = new Cmd("/interface pptp-client add")
         .set("name", a.name)
         .set("connect-to", a.connect_to)
@@ -94,7 +118,8 @@ export const pptpTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to create PPTP client: ${redact(result)}`;
+      if (looksLikeError(result))
+        return `Failed to create PPTP client: ${redact(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface pptp-client print detail where name="${a.name}"`,
@@ -119,8 +144,13 @@ export const pptpTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/interface pptp-client print${whereClause(filters)}`, ctx);
-      return isEmpty(result) ? "No PPTP clients found matching the criteria." : `PPTP CLIENTS:\n\n${redact(result)}`;
+      const result = await executeMikrotikCommand(
+        `/interface pptp-client print${whereClause(filters)}`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No PPTP clients found matching the criteria."
+        : `PPTP CLIENTS:\n\n${redact(result)}`;
     },
   }),
 
@@ -128,7 +158,8 @@ export const pptpTools: ToolModule = [
     name: "get_pptp_client",
     title: "Get PPTP Client",
     annotations: READ,
-    description: "Gets detailed information about a specific PPTP client. The password is redacted.",
+    description:
+      "Gets detailed information about a specific PPTP client. The password is redacted.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting PPTP client details: name=${a.name}`);
@@ -136,7 +167,9 @@ export const pptpTools: ToolModule = [
         `/interface pptp-client print detail where name="${a.name}"`,
         ctx,
       );
-      return isEmpty(result) ? `PPTP client '${a.name}' not found.` : `PPTP CLIENT DETAILS:\n\n${redact(result)}`;
+      return isEmpty(result)
+        ? `PPTP client '${a.name}' not found.`
+        : `PPTP CLIENT DETAILS:\n\n${redact(result)}`;
     },
   }),
 
@@ -154,8 +187,12 @@ export const pptpTools: ToolModule = [
       );
       if (count.trim() === "0") return `PPTP client '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(`/interface pptp-client remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove PPTP client: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/interface pptp-client remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove PPTP client: ${result}`;
       return `PPTP client '${a.name}' removed successfully.`;
     },
   }),

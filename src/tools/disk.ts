@@ -1,20 +1,28 @@
 /** Storage / disk management — `/disk`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {  READ, defineTool, DANGEROUS } from "../core/registry";
-import type {ToolModule} from "../core/registry";
-import { quoteValue, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+import { READ, defineTool, DANGEROUS } from "../core/registry";
+import type { ToolModule } from "../core/registry";
+import {
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  commandUnsupported,
+  Cmd,
+} from "../core/routeros";
 
 export const diskTools: ToolModule = [
   defineTool({
     name: "list_disks",
     title: "List Disks",
     annotations: READ,
-    description: "Lists storage disks (USB, NVMe, internal flash) attached to the MikroTik device.",
+    description:
+      "Lists storage disks (USB, NVMe, internal flash) attached to the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Listing disks");
       const result = await executeMikrotikCommand("/disk print", ctx);
-      if (commandUnsupported(result)) return "Disk management is not available on this device.";
+      if (commandUnsupported(result))
+        return "Disk management is not available on this device.";
       return isEmpty(result) ? "No disks found." : `DISKS:\n\n${result}`;
     },
   }),
@@ -31,8 +39,11 @@ export const diskTools: ToolModule = [
         `/disk print detail where name="${a.name}"`,
         ctx,
       );
-      if (commandUnsupported(result)) return "Disk management is not available on this device.";
-      return isEmpty(result) ? `Disk '${a.name}' not found.` : `DISK DETAILS:\n\n${result}`;
+      if (commandUnsupported(result))
+        return "Disk management is not available on this device.";
+      return isEmpty(result)
+        ? `Disk '${a.name}' not found.`
+        : `DISK DETAILS:\n\n${result}`;
     },
   }),
 
@@ -53,7 +64,8 @@ export const diskTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Format disk requested: name=${a.name}, confirm=${a.confirm}`);
-      if (!a.confirm) return "Format not confirmed. Pass confirm=true to ERASE the disk.";
+      if (!a.confirm)
+        return "Format not confirmed. Pass confirm=true to ERASE the disk.";
 
       const cmd = new Cmd(`/disk format-drive ${quoteValue(a.name)}`)
         .opt("file-system", a.file_system)
@@ -61,7 +73,8 @@ export const diskTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (commandUnsupported(result)) return "Disk management is not available on this device.";
+      if (commandUnsupported(result))
+        return "Disk management is not available on this device.";
       if (looksLikeError(result)) return `Failed to format disk: ${result}`;
       return `Formatting disk '${a.name}'...\n\n${result}`;
     },

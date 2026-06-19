@@ -59,7 +59,7 @@
     "inspect:built": "bun run build && bunx @modelcontextprotocol/inspector bun dist/cli.js serve",
     "inspect:config": "bunx @modelcontextprotocol/inspector --config mcp-inspector.config.json --server mikrotik",
     "inspect:cli": "bunx @modelcontextprotocol/inspector --cli bun run src/cli.ts serve --method tools/list",
-    "inspect:config:local": "bunx @modelcontextprotocol/inspector --config mcp-inspector.config.local.json --server mikrotik",
+    "inspect:config:local": "bunx @modelcontextprotocol/inspector --config /var/open-source/mikrotik-mcp/mcp-inspector.config.local.json --server mikrotik",
     "test": "bun test",
     "release": "release-it",
     "test:types": "tsc --noEmit",

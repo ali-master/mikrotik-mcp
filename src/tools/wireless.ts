@@ -8,8 +8,14 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
@@ -31,7 +37,9 @@ function commandUnsupported(result: string): boolean {
  * Detects the wireless interface command path supported by the device, trying the
  * v7 paths first and falling back to the legacy ones. Returns null if none work.
  */
-async function detectWirelessInterfaceType(ctx: ToolContext): Promise<string | null> {
+async function detectWirelessInterfaceType(
+  ctx: ToolContext,
+): Promise<string | null> {
   ctx.info("Detecting wireless interface type");
 
   const interfaceTypes = [
@@ -42,7 +50,10 @@ async function detectWirelessInterfaceType(ctx: ToolContext): Promise<string | n
   ];
 
   for (const interfaceType of interfaceTypes) {
-    const result = await executeMikrotikCommand(`${interfaceType} print count-only`, ctx);
+    const result = await executeMikrotikCommand(
+      `${interfaceType} print count-only`,
+      ctx,
+    );
     if (result && !commandUnsupported(result)) {
       ctx.info(`Detected wireless interface type: ${interfaceType}`);
       return interfaceType;
@@ -65,7 +76,10 @@ export const wirelessTools: ToolModule = [
       ssid: z.string().optional(),
       disabled: z.boolean().default(false),
       comment: z.string().optional(),
-      radio_name: z.string().optional().describe("Required for legacy wireless systems, e.g. 'wlan1'"),
+      radio_name: z
+        .string()
+        .optional()
+        .describe("Required for legacy wireless systems, e.g. 'wlan1'"),
       mode: z
         .enum([
           "ap-bridge",
@@ -94,7 +108,14 @@ export const wirelessTools: ToolModule = [
         ])
         .optional(),
       channel_width: z
-        .enum(["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"])
+        .enum([
+          "20mhz",
+          "40mhz",
+          "80mhz",
+          "160mhz",
+          "20/40mhz-eC",
+          "20/40mhz-Ce",
+        ])
         .optional(),
       security_profile: z.string().optional(),
     },
@@ -102,10 +123,14 @@ export const wirelessTools: ToolModule = [
       ctx.info(`Creating wireless interface: name=${a.name}, ssid=${a.ssid}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       let cmd: string;
-      if (interfaceType === "/interface wifi" || interfaceType === "/interface wifiwave2") {
+      if (
+        interfaceType === "/interface wifi" ||
+        interfaceType === "/interface wifiwave2"
+      ) {
         // RouterOS v7.x syntax (wifi / wifiwave2) — simplified.
         cmd = new Cmd(`${interfaceType} add`)
           .set("name", a.name)
@@ -134,7 +159,8 @@ export const wirelessTools: ToolModule = [
 
       ctx.info(`Executing command: ${cmd}`);
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to create wireless interface: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to create wireless interface: ${result}`;
 
       const details = await executeMikrotikCommand(
         `${interfaceType} print detail where name="${a.name}"`,
@@ -155,7 +181,9 @@ export const wirelessTools: ToolModule = [
       running_only: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Listing wireless interfaces with filters: name=${a.name_filter}`);
+      ctx.info(
+        `Listing wireless interfaces with filters: name=${a.name_filter}`,
+      );
 
       // Try multiple interface types to ensure we find all wireless interfaces.
       const interfaceTypesToTry = [
@@ -175,7 +203,7 @@ export const wirelessTools: ToolModule = [
         if (a.running_only) filters.push("running=yes");
 
         let cmd = `${interfaceType} print`;
-        if (filters.length) cmd += ` where ${  filters.join(" and ")}`;
+        if (filters.length) cmd += ` where ${filters.join(" and ")}`;
 
         const result = await executeMikrotikCommand(cmd, ctx);
 
@@ -186,11 +214,14 @@ export const wirelessTools: ToolModule = [
       }
 
       if (allResults.length) {
-        return `WIRELESS INTERFACES:\n\n${  allResults.join("\n\n")}`;
+        return `WIRELESS INTERFACES:\n\n${allResults.join("\n\n")}`;
       }
 
       // If no results found, show all interfaces to help debug.
-      const allInterfaces = await executeMikrotikCommand("/interface print", ctx);
+      const allInterfaces = await executeMikrotikCommand(
+        "/interface print",
+        ctx,
+      );
       return `No wireless interfaces found matching the criteria.
 
 DEBUGGING INFO:
@@ -207,13 +238,15 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
     name: "get_wireless_interface",
     title: "Get Wireless Interface",
     annotations: READ,
-    description: "Gets detailed information about a specific wireless interface.",
+    description:
+      "Gets detailed information about a specific wireless interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting wireless interface details: name=${a.name}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       const result = await executeMikrotikCommand(
         `${interfaceType} print detail where name="${a.name}"`,
@@ -235,19 +268,22 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
       ctx.info(`Removing wireless interface: name=${a.name}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       const count = await executeMikrotikCommand(
         `${interfaceType} print count-only where name="${a.name}"`,
         ctx,
       );
-      if (count.trim() === "0") return `Wireless interface '${a.name}' not found.`;
+      if (count.trim() === "0")
+        return `Wireless interface '${a.name}' not found.`;
 
       const result = await executeMikrotikCommand(
         `${interfaceType} remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to remove wireless interface: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove wireless interface: ${result}`;
 
       return `Wireless interface '${a.name}' removed successfully.`;
     },
@@ -263,13 +299,15 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
       ctx.info(`Enabling wireless interface: ${a.name}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       const result = await executeMikrotikCommand(
         `${interfaceType} enable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to enable wireless interface: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to enable wireless interface: ${result}`;
 
       return `Wireless interface '${a.name}' enabled successfully.`;
     },
@@ -285,13 +323,15 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
       ctx.info(`Disabling wireless interface: ${a.name}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       const result = await executeMikrotikCommand(
         `${interfaceType} disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to disable wireless interface: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to disable wireless interface: ${result}`;
 
       return `Wireless interface '${a.name}' disabled successfully.`;
     },
@@ -301,7 +341,8 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
     name: "scan_wireless_networks",
     title: "Scan Wireless Networks",
     annotations: READ,
-    description: "Scans for nearby wireless networks using the specified interface.",
+    description:
+      "Scans for nearby wireless networks using the specified interface.",
     inputSchema: {
       interface: z.string(),
       duration: z.number().int().default(5),
@@ -310,7 +351,8 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
       ctx.info(`Scanning wireless networks on interface: ${a.interface}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       const scanCmd = new Cmd(`${interfaceType} scan`)
         .raw(a.interface)
@@ -318,7 +360,8 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
         .build();
 
       const result = await executeMikrotikCommand(scanCmd, ctx);
-      if (looksLikeError(result)) return `Failed to scan wireless networks: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to scan wireless networks: ${result}`;
 
       return `WIRELESS NETWORK SCAN RESULTS:\n\n${result}`;
     },
@@ -334,10 +377,13 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
       interface: z.string().optional(),
     },
     async handler(a, ctx) {
-      ctx.info(`Getting wireless registration table for interface: ${a.interface}`);
+      ctx.info(
+        `Getting wireless registration table for interface: ${a.interface}`,
+      );
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       let cmd = `${interfaceType} registration-table print`;
       if (a.interface) cmd += ` where interface="${a.interface}"`;
@@ -358,9 +404,18 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
     async handler(_a, ctx) {
       ctx.info("Checking wireless support");
 
-      const versionResult = await executeMikrotikCommand("/system resource print", ctx);
-      const packageResult = await executeMikrotikCommand("/system package print", ctx);
-      const interfaceResult = await executeMikrotikCommand("/interface print", ctx);
+      const versionResult = await executeMikrotikCommand(
+        "/system resource print",
+        ctx,
+      );
+      const packageResult = await executeMikrotikCommand(
+        "/system package print",
+        ctx,
+      );
+      const interfaceResult = await executeMikrotikCommand(
+        "/interface print",
+        ctx,
+      );
       const wirelessType = await detectWirelessInterfaceType(ctx);
 
       return `WIRELESS SUPPORT CHECK:
@@ -529,13 +584,15 @@ For legacy systems:
       ctx.info(`Updating wireless interface: name=${a.name}`);
 
       const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      if (!interfaceType)
+        return "Error: No wireless interface support detected on this device.";
 
       const count = await executeMikrotikCommand(
         `${interfaceType} print count-only where name="${a.name}"`,
         ctx,
       );
-      if (count.trim() === "0") return `Wireless interface '${a.name}' not found.`;
+      if (count.trim() === "0")
+        return `Wireless interface '${a.name}' not found.`;
 
       const cmd = new Cmd(`${interfaceType} set [find name="${a.name}"]`)
         .opt("name", a.new_name)
@@ -548,7 +605,8 @@ For legacy systems:
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to update wireless interface: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update wireless interface: ${result}`;
 
       const targetName = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(

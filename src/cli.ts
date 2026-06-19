@@ -61,7 +61,8 @@ TRANSPORT OPTIONS
 `;
 
 function warnIfPlaintextPasswordInContainer(anyPassword: boolean): void {
-  const inContainer = existsSync("/.dockerenv") || process.env.container === "docker";
+  const inContainer =
+    existsSync("/.dockerenv") || process.env.container === "docker";
   if (inContainer && anyPassword) {
     logger.warn(
       "Security notice: running inside a container with a plaintext password in the environment. " +
@@ -77,27 +78,39 @@ function listTools(): void {
   for (const mod of allToolModules) {
     for (const t of mod) {
       total++;
-      process.stdout.write(`${risk(t.annotations).padEnd(12)} ${t.name.padEnd(34)} ${t.title}\n`);
+      process.stdout.write(
+        `${risk(t.annotations).padEnd(12)} ${t.name.padEnd(34)} ${t.title}\n`,
+      );
     }
   }
-  process.stdout.write(`\n${total} tools across ${allToolModules.length} modules\n`);
+  process.stdout.write(
+    `\n${total} tools across ${allToolModules.length} modules\n`,
+  );
 }
 
 function listDevicesCli(): void {
   const cfg = loadConfig();
   for (const [name, d] of Object.entries(cfg.devices)) {
     const tag = name === cfg.defaultDevice ? " (default)" : "";
-    const auth = d.keyFilename || d.privateKey ? "key" : d.password ? "password" : "none";
+    const auth =
+      d.keyFilename || d.privateKey ? "key" : d.password ? "password" : "none";
     const desc = d.description ? ` — ${d.description}` : "";
-    process.stdout.write(`${name}${tag}\t${d.username}@${d.host}:${d.port} [auth: ${auth}]${desc}\n`);
+    process.stdout.write(
+      `${name}${tag}\t${d.username}@${d.host}:${d.port} [auth: ${auth}]${desc}\n`,
+    );
   }
   process.stdout.write(`\n${Object.keys(cfg.devices).length} device(s)\n`);
 }
 
 /** Probe one device; returns true on success. */
-async function probeDevice(name: string, d: import("./config").DeviceConfig): Promise<boolean> {
+async function probeDevice(
+  name: string,
+  d: import("./config").DeviceConfig,
+): Promise<boolean> {
   const authMode = d.keyFilename || d.privateKey ? "SSH key" : "password";
-  logger.info(`[${name}] Connecting to ${d.username}@${d.host}:${d.port} (auth: ${authMode}) …`);
+  logger.info(
+    `[${name}] Connecting to ${d.username}@${d.host}:${d.port} (auth: ${authMode}) …`,
+  );
   const ssh = new MikroTikSSHClient({
     host: d.host,
     username: d.username,
@@ -109,7 +122,9 @@ async function probeDevice(name: string, d: import("./config").DeviceConfig): Pr
     timeoutMs: d.timeoutMs,
   });
   if (!(await ssh.connect())) {
-    logger.error(`[${name}] Connection FAILED. Check host/credentials/reachability.`);
+    logger.error(
+      `[${name}] Connection FAILED. Check host/credentials/reachability.`,
+    );
     return false;
   }
   try {
@@ -160,7 +175,9 @@ async function main(): Promise<void> {
   // serve
   const cfg = loadConfig();
   setConfig(cfg);
-  warnIfPlaintextPasswordInContainer(Object.values(cfg.devices).some((d) => !!d.password));
+  warnIfPlaintextPasswordInContainer(
+    Object.values(cfg.devices).some((d) => !!d.password),
+  );
   const deviceNames = Object.keys(cfg.devices);
   logger.info(
     `Starting ${SERVER_NAME} v${VERSION} (transport=${cfg.mcp.transport}, ` +
@@ -175,6 +192,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((e) => {
-  logger.error(`Fatal: ${e instanceof Error ? e.stack ?? e.message : String(e)}`);
+  logger.error(
+    `Fatal: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`,
+  );
   process.exit(1);
 });

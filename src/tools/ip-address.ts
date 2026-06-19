@@ -1,8 +1,8 @@
 /** IP addresses — `/ip address`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 export const ipAddressTools: ToolModule = [
@@ -20,7 +20,9 @@ export const ipAddressTools: ToolModule = [
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Adding IP address: address=${a.address}, interface=${a.interface}`);
+      ctx.info(
+        `Adding IP address: address=${a.address}, interface=${a.interface}`,
+      );
       const cmd = new Cmd("/ip address add")
         .set("address", a.address)
         .set("interface", a.interface)
@@ -61,8 +63,13 @@ export const ipAddressTools: ToolModule = [
       if (a.disabled_only) filters.push("disabled=yes");
       if (a.dynamic_only) filters.push("dynamic=yes");
 
-      const result = await executeMikrotikCommand(`/ip address print${whereClause(filters)}`, ctx);
-      return isEmpty(result) ? "No IP addresses found matching the criteria." : `IP ADDRESSES:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/ip address print${whereClause(filters)}`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No IP addresses found matching the criteria."
+        : `IP ADDRESSES:\n\n${result}`;
     },
   }),
 
@@ -70,8 +77,13 @@ export const ipAddressTools: ToolModule = [
     name: "get_ip_address",
     title: "Get IP Address",
     annotations: READ,
-    description: "Gets detailed information about a specific IP address by ID or address value.",
-    inputSchema: { address_id: z.string().describe("RouterOS .id (e.g. '*1') or the address value") },
+    description:
+      "Gets detailed information about a specific IP address by ID or address value.",
+    inputSchema: {
+      address_id: z
+        .string()
+        .describe("RouterOS .id (e.g. '*1') or the address value"),
+    },
     async handler(a, ctx) {
       ctx.info(`Getting IP address details: address_id=${a.address_id}`);
       let result = await executeMikrotikCommand(
@@ -84,7 +96,9 @@ export const ipAddressTools: ToolModule = [
           ctx,
         );
       }
-      return isEmpty(result) ? `IP address '${a.address_id}' not found.` : `IP ADDRESS DETAILS:\n\n${result}`;
+      return isEmpty(result)
+        ? `IP address '${a.address_id}' not found.`
+        : `IP ADDRESS DETAILS:\n\n${result}`;
     },
   }),
 
@@ -92,7 +106,8 @@ export const ipAddressTools: ToolModule = [
     name: "remove_ip_address",
     title: "Remove IP Address",
     annotations: DESTRUCTIVE,
-    description: "Removes an IP address from the MikroTik device by ID or address value.",
+    description:
+      "Removes an IP address from the MikroTik device by ID or address value.",
     inputSchema: { address_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IP address: address_id=${a.address_id}`);
@@ -107,11 +122,18 @@ export const ipAddressTools: ToolModule = [
           `/ip address print count-only where address="${a.address_id}"`,
           ctx,
         );
-        if (count.trim() === "0") return `IP address '${a.address_id}' not found.`;
+        if (count.trim() === "0")
+          return `IP address '${a.address_id}' not found.`;
       }
-      const selector = byId ? `.id="${a.address_id}"` : `address="${a.address_id}"`;
-      const result = await executeMikrotikCommand(`/ip address remove [find ${selector}]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove IP address: ${result}`;
+      const selector = byId
+        ? `.id="${a.address_id}"`
+        : `address="${a.address_id}"`;
+      const result = await executeMikrotikCommand(
+        `/ip address remove [find ${selector}]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove IP address: ${result}`;
       return `IP address '${a.address_id}' removed successfully.`;
     },
   }),

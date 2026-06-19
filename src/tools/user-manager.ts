@@ -8,9 +8,21 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  looksLikeError,
+  isEmpty,
+  commandUnsupported,
+  Cmd,
+} from "../core/routeros";
 
 /** Mask password / shared-secret values in printed output. */
 function redact(text: string): string {
@@ -19,7 +31,8 @@ function redact(text: string): string {
     .replace(/shared-secret="[^"]*"/g, 'shared-secret="***"');
 }
 
-const NOT_AVAILABLE = "User Manager is not available on this device (package not installed).";
+const NOT_AVAILABLE =
+  "User Manager is not available on this device (package not installed).";
 
 export const userManagerTools: ToolModule = [
   // ── SETTINGS `/user-manager` ──────────────────────────────────────────────
@@ -27,12 +40,15 @@ export const userManagerTools: ToolModule = [
     name: "get_user_manager_settings",
     title: "Get User Manager Settings",
     annotations: READ,
-    description: "Gets the User Manager settings (enabled, certificate, use-profiles).",
+    description:
+      "Gets the User Manager settings (enabled, certificate, use-profiles).",
     async handler(_a, ctx) {
       ctx.info("Getting User Manager settings");
       const result = await executeMikrotikCommand("/user-manager print", ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager settings found." : `USER MANAGER SETTINGS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No User Manager settings found."
+        : `USER MANAGER SETTINGS:\n\n${result}`;
     },
   }),
 
@@ -42,9 +58,18 @@ export const userManagerTools: ToolModule = [
     annotations: WRITE_IDEMPOTENT,
     description: "Updates the User Manager settings.",
     inputSchema: {
-      enabled: z.boolean().optional().describe("Enable or disable the User Manager server"),
-      certificate: z.string().optional().describe("TLS certificate name for RADIUS over TLS"),
-      use_profiles: z.boolean().optional().describe("Enable the profile/payment subsystem"),
+      enabled: z
+        .boolean()
+        .optional()
+        .describe("Enable or disable the User Manager server"),
+      certificate: z
+        .string()
+        .optional()
+        .describe("TLS certificate name for RADIUS over TLS"),
+      use_profiles: z
+        .boolean()
+        .optional()
+        .describe("Enable the profile/payment subsystem"),
     },
     async handler(a, ctx) {
       ctx.info("Updating User Manager settings");
@@ -57,7 +82,8 @@ export const userManagerTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      if (looksLikeError(result)) return `Failed to update User Manager settings: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update User Manager settings: ${result}`;
 
       const details = await executeMikrotikCommand("/user-manager print", ctx);
       return `User Manager settings updated successfully:\n\n${details}`;
@@ -74,7 +100,11 @@ export const userManagerTools: ToolModule = [
       name: z.string().describe("Login name for the user"),
       password: z.string().describe("Login password for the user"),
       group: z.string().optional(),
-      shared_users: z.number().int().optional().describe("Max simultaneous sessions"),
+      shared_users: z
+        .number()
+        .int()
+        .optional()
+        .describe("Max simultaneous sessions"),
       attributes: z.string().optional().describe("Custom RADIUS attributes"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -93,7 +123,8 @@ export const userManagerTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      if (looksLikeError(result)) return `Failed to add User Manager user: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add User Manager user: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/user-manager user print detail where name="${a.name}"`,
@@ -118,9 +149,14 @@ export const userManagerTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/user-manager user print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/user-manager user print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager users found matching the criteria." : `USER MANAGER USERS:\n\n${redact(result)}`;
+      return isEmpty(result)
+        ? "No User Manager users found matching the criteria."
+        : `USER MANAGER USERS:\n\n${redact(result)}`;
     },
   }),
 
@@ -128,7 +164,8 @@ export const userManagerTools: ToolModule = [
     name: "get_user_manager_user",
     title: "Get User Manager User",
     annotations: READ,
-    description: "Gets detailed information about a specific User Manager user.",
+    description:
+      "Gets detailed information about a specific User Manager user.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting User Manager user details: name=${a.name}`);
@@ -137,7 +174,9 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? `User Manager user '${a.name}' not found.` : `USER MANAGER USER DETAILS:\n\n${redact(result)}`;
+      return isEmpty(result)
+        ? `User Manager user '${a.name}' not found.`
+        : `USER MANAGER USER DETAILS:\n\n${redact(result)}`;
     },
   }),
 
@@ -171,7 +210,8 @@ export const userManagerTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      if (looksLikeError(result)) return `Failed to update User Manager user: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update User Manager user: ${result}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -195,10 +235,15 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(count)) return NOT_AVAILABLE;
-      if (count.trim() === "0") return `User Manager user '${a.name}' not found.`;
+      if (count.trim() === "0")
+        return `User Manager user '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(`/user-manager user remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove User Manager user: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/user-manager user remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove User Manager user: ${result}`;
       return `User Manager user '${a.name}' removed successfully.`;
     },
   }),
@@ -211,7 +256,10 @@ export const userManagerTools: ToolModule = [
     description: "Adds a User Manager profile (a billing/service plan).",
     inputSchema: {
       name: z.string().describe("Profile name"),
-      name_for_users: z.string().optional().describe("Display name shown to users"),
+      name_for_users: z
+        .string()
+        .optional()
+        .describe("Display name shown to users"),
       validity: z.string().optional().describe("Validity period, e.g. '30d'"),
       price: z.number().optional(),
       starts_when: z.enum(["assigned", "first-auth"]).optional(),
@@ -232,7 +280,8 @@ export const userManagerTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      if (looksLikeError(result)) return `Failed to add User Manager profile: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add User Manager profile: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/user-manager profile print detail where name="${a.name}"`,
@@ -257,9 +306,14 @@ export const userManagerTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/user-manager profile print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/user-manager profile print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager profiles found matching the criteria." : `USER MANAGER PROFILES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No User Manager profiles found matching the criteria."
+        : `USER MANAGER PROFILES:\n\n${result}`;
     },
   }),
 
@@ -276,10 +330,15 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(count)) return NOT_AVAILABLE;
-      if (count.trim() === "0") return `User Manager profile '${a.name}' not found.`;
+      if (count.trim() === "0")
+        return `User Manager profile '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(`/user-manager profile remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove User Manager profile: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/user-manager profile remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove User Manager profile: ${result}`;
       return `User Manager profile '${a.name}' removed successfully.`;
     },
   }),
@@ -321,9 +380,14 @@ export const userManagerTools: ToolModule = [
       const filters: string[] = [];
       if (a.user_filter) filters.push(`user~"${a.user_filter}"`);
 
-      const result = await executeMikrotikCommand(`/user-manager user-profile print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/user-manager user-profile print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager user-profiles found matching the criteria." : `USER MANAGER USER-PROFILES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No User Manager user-profiles found matching the criteria."
+        : `USER MANAGER USER-PROFILES:\n\n${result}`;
     },
   }),
 
@@ -332,16 +396,23 @@ export const userManagerTools: ToolModule = [
     name: "add_user_manager_router",
     title: "Add User Manager Router",
     annotations: WRITE,
-    description: "Adds a RADIUS client (router/NAS) that authenticates against User Manager.",
+    description:
+      "Adds a RADIUS client (router/NAS) that authenticates against User Manager.",
     inputSchema: {
       name: z.string().describe("Friendly name for the RADIUS client"),
       address: z.string().describe("IP address of the RADIUS client"),
       shared_secret: z.string().describe("Shared secret for the RADIUS client"),
-      coa_port: z.number().int().optional().describe("Change-of-Authorization port"),
+      coa_port: z
+        .number()
+        .int()
+        .optional()
+        .describe("Change-of-Authorization port"),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Adding User Manager router: name=${a.name}, address=${a.address}`);
+      ctx.info(
+        `Adding User Manager router: name=${a.name}, address=${a.address}`,
+      );
       const cmd = new Cmd("/user-manager router add")
         .set("name", a.name)
         .set("address", a.address)
@@ -352,7 +423,8 @@ export const userManagerTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      if (looksLikeError(result)) return `Failed to add User Manager router: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add User Manager router: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/user-manager router print detail where name="${a.name}"`,
@@ -368,7 +440,8 @@ export const userManagerTools: ToolModule = [
     name: "list_user_manager_routers",
     title: "List User Manager Routers",
     annotations: READ,
-    description: "Lists RADIUS clients (routers/NAS) configured in User Manager.",
+    description:
+      "Lists RADIUS clients (routers/NAS) configured in User Manager.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -377,9 +450,14 @@ export const userManagerTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/user-manager router print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/user-manager router print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager routers found matching the criteria." : `USER MANAGER ROUTERS:\n\n${redact(result)}`;
+      return isEmpty(result)
+        ? "No User Manager routers found matching the criteria."
+        : `USER MANAGER ROUTERS:\n\n${redact(result)}`;
     },
   }),
 
@@ -396,10 +474,15 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(count)) return NOT_AVAILABLE;
-      if (count.trim() === "0") return `User Manager router '${a.name}' not found.`;
+      if (count.trim() === "0")
+        return `User Manager router '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(`/user-manager router remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove User Manager router: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/user-manager router remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove User Manager router: ${result}`;
       return `User Manager router '${a.name}' removed successfully.`;
     },
   }),
@@ -409,12 +492,22 @@ export const userManagerTools: ToolModule = [
     name: "add_user_manager_limitation",
     title: "Add User Manager Limitation",
     annotations: WRITE,
-    description: "Adds a User Manager limitation (rate/transfer/uptime limits).",
+    description:
+      "Adds a User Manager limitation (rate/transfer/uptime limits).",
     inputSchema: {
       name: z.string().describe("Limitation name"),
-      rate_limit_rx: z.string().optional().describe("Download rate limit, e.g. '10M'"),
-      rate_limit_tx: z.string().optional().describe("Upload rate limit, e.g. '10M'"),
-      transfer_limit: z.string().optional().describe("Total transfer cap, e.g. '10G'"),
+      rate_limit_rx: z
+        .string()
+        .optional()
+        .describe("Download rate limit, e.g. '10M'"),
+      rate_limit_tx: z
+        .string()
+        .optional()
+        .describe("Upload rate limit, e.g. '10M'"),
+      transfer_limit: z
+        .string()
+        .optional()
+        .describe("Total transfer cap, e.g. '10G'"),
       uptime_limit: z.string().optional().describe("Uptime cap, e.g. '1d'"),
       comment: z.string().optional(),
     },
@@ -431,7 +524,8 @@ export const userManagerTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      if (looksLikeError(result)) return `Failed to add User Manager limitation: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add User Manager limitation: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/user-manager limitation print detail where name="${a.name}"`,
@@ -456,9 +550,14 @@ export const userManagerTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/user-manager limitation print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/user-manager limitation print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager limitations found matching the criteria." : `USER MANAGER LIMITATIONS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No User Manager limitations found matching the criteria."
+        : `USER MANAGER LIMITATIONS:\n\n${result}`;
     },
   }),
 
@@ -475,10 +574,15 @@ export const userManagerTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(count)) return NOT_AVAILABLE;
-      if (count.trim() === "0") return `User Manager limitation '${a.name}' not found.`;
+      if (count.trim() === "0")
+        return `User Manager limitation '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(`/user-manager limitation remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove User Manager limitation: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/user-manager limitation remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove User Manager limitation: ${result}`;
       return `User Manager limitation '${a.name}' removed successfully.`;
     },
   }),
@@ -491,7 +595,10 @@ export const userManagerTools: ToolModule = [
     description: "Lists User Manager accounting sessions.",
     inputSchema: {
       user_filter: z.string().optional().describe("Partial user match"),
-      active_only: z.boolean().default(false).describe("Only show currently active sessions"),
+      active_only: z
+        .boolean()
+        .default(false)
+        .describe("Only show currently active sessions"),
     },
     async handler(a, ctx) {
       ctx.info("Listing User Manager sessions");
@@ -499,9 +606,14 @@ export const userManagerTools: ToolModule = [
       if (a.user_filter) filters.push(`user~"${a.user_filter}"`);
       if (a.active_only) filters.push("active=yes");
 
-      const result = await executeMikrotikCommand(`/user-manager session print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/user-manager session print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return NOT_AVAILABLE;
-      return isEmpty(result) ? "No User Manager sessions found matching the criteria." : `USER MANAGER SESSIONS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No User Manager sessions found matching the criteria."
+        : `USER MANAGER SESSIONS:\n\n${result}`;
     },
   }),
 ];

@@ -1,7 +1,13 @@
 /** RADIUS client — `/radius`. The router authenticates against external RADIUS servers. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -17,13 +23,16 @@ export const radiusTools: ToolModule = [
     name: "add_radius_server",
     title: "Add RADIUS Server",
     annotations: WRITE,
-    description: "Adds a RADIUS server entry that the router uses to authenticate clients.",
+    description:
+      "Adds a RADIUS server entry that the router uses to authenticate clients.",
     inputSchema: {
       address: z.string().describe("RADIUS server IP address or hostname"),
       secret: z.string().describe("Shared secret used with the RADIUS server"),
       service: z
         .string()
-        .describe('Comma-separated services, e.g. "login,ppp,hotspot,wireless,dhcp,ipsec,dot1x"'),
+        .describe(
+          'Comma-separated services, e.g. "login,ppp,hotspot,wireless,dhcp,ipsec,dot1x"',
+        ),
       authentication_port: z.number().int().default(1812),
       accounting_port: z.number().int().default(1813),
       timeout: z.string().optional().describe('Request timeout, e.g. "300ms"'),
@@ -35,7 +44,9 @@ export const radiusTools: ToolModule = [
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Adding RADIUS server: address=${a.address}, service=${a.service}`);
+      ctx.info(
+        `Adding RADIUS server: address=${a.address}, service=${a.service}`,
+      );
       const cmd = new Cmd("/radius add")
         .set("address", a.address)
         .set("secret", a.secret)
@@ -52,7 +63,8 @@ export const radiusTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to add RADIUS server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add RADIUS server: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/radius print detail where address="${a.address}"`,
@@ -79,7 +91,10 @@ export const radiusTools: ToolModule = [
       if (a.service_filter) filters.push(`service~"${a.service_filter}"`);
       if (a.address_filter) filters.push(`address~"${a.address_filter}"`);
 
-      const result = await executeMikrotikCommand(`/radius print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/radius print${whereClause(filters)}`,
+        ctx,
+      );
       return isEmpty(result)
         ? "No RADIUS servers found matching the criteria."
         : `RADIUS SERVERS:\n\n${redact(result)}`;
@@ -90,7 +105,8 @@ export const radiusTools: ToolModule = [
     name: "get_radius_server",
     title: "Get RADIUS Server",
     annotations: READ,
-    description: "Gets detailed information about a specific RADIUS server by its internal id.",
+    description:
+      "Gets detailed information about a specific RADIUS server by its internal id.",
     inputSchema: {
       radius_id: z.string().describe("RADIUS entry internal .id, e.g. '*1'"),
     },
@@ -147,7 +163,8 @@ export const radiusTools: ToolModule = [
       if (!cmd.includes("=")) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to update RADIUS server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update RADIUS server: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/radius print detail where .id="${a.radius_id}"`,
@@ -171,13 +188,15 @@ export const radiusTools: ToolModule = [
         `/radius print count-only where .id="${a.radius_id}"`,
         ctx,
       );
-      if (count.trim() === "0") return `RADIUS server '${a.radius_id}' not found.`;
+      if (count.trim() === "0")
+        return `RADIUS server '${a.radius_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/radius remove [find .id="${a.radius_id}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to remove RADIUS server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove RADIUS server: ${result}`;
       return `RADIUS server '${a.radius_id}' removed successfully.`;
     },
   }),
@@ -196,7 +215,8 @@ export const radiusTools: ToolModule = [
         `/radius enable [find .id="${a.radius_id}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to enable RADIUS server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to enable RADIUS server: ${result}`;
       return `RADIUS server '${a.radius_id}' enabled successfully.`;
     },
   }),
@@ -215,7 +235,8 @@ export const radiusTools: ToolModule = [
         `/radius disable [find .id="${a.radius_id}"]`,
         ctx,
       );
-      if (looksLikeError(result)) return `Failed to disable RADIUS server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to disable RADIUS server: ${result}`;
       return `RADIUS server '${a.radius_id}' disabled successfully.`;
     },
   }),
@@ -224,10 +245,14 @@ export const radiusTools: ToolModule = [
     name: "get_radius_incoming",
     title: "Get RADIUS Incoming",
     annotations: READ,
-    description: "Gets the RADIUS incoming (Change of Authorization / CoA) settings.",
+    description:
+      "Gets the RADIUS incoming (Change of Authorization / CoA) settings.",
     async handler(_a, ctx) {
       ctx.info("Getting RADIUS incoming (CoA) settings");
-      const result = await executeMikrotikCommand("/radius incoming print", ctx);
+      const result = await executeMikrotikCommand(
+        "/radius incoming print",
+        ctx,
+      );
       return isEmpty(result)
         ? "No RADIUS incoming settings found."
         : `RADIUS INCOMING (CoA):\n\n${result}`;
@@ -238,10 +263,18 @@ export const radiusTools: ToolModule = [
     name: "set_radius_incoming",
     title: "Set RADIUS Incoming",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures RADIUS incoming (Change of Authorization / CoA) settings.",
+    description:
+      "Configures RADIUS incoming (Change of Authorization / CoA) settings.",
     inputSchema: {
-      accept: z.boolean().optional().describe("Whether to accept incoming CoA requests"),
-      port: z.number().int().optional().describe("UDP port to listen on for CoA requests"),
+      accept: z
+        .boolean()
+        .optional()
+        .describe("Whether to accept incoming CoA requests"),
+      port: z
+        .number()
+        .int()
+        .optional()
+        .describe("UDP port to listen on for CoA requests"),
     },
     async handler(a, ctx) {
       ctx.info("Setting RADIUS incoming (CoA) settings");
@@ -254,9 +287,13 @@ export const radiusTools: ToolModule = [
       if (!cmd.includes("=")) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to set RADIUS incoming: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to set RADIUS incoming: ${result}`;
 
-      const details = await executeMikrotikCommand("/radius incoming print", ctx);
+      const details = await executeMikrotikCommand(
+        "/radius incoming print",
+        ctx,
+      );
       return `RADIUS incoming updated successfully:\n\n${details}`;
     },
   }),
@@ -268,8 +305,12 @@ export const radiusTools: ToolModule = [
     description: "Resets the RADIUS request/response counters.",
     async handler(_a, ctx) {
       ctx.info("Resetting RADIUS counters");
-      const result = await executeMikrotikCommand("/radius reset-counters", ctx);
-      if (looksLikeError(result)) return `Failed to reset RADIUS counters: ${result}`;
+      const result = await executeMikrotikCommand(
+        "/radius reset-counters",
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to reset RADIUS counters: ${result}`;
       return "RADIUS counters reset.";
     },
   }),

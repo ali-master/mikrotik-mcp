@@ -15,7 +15,8 @@ export const safeModeTools: ToolModule = [
     name: "safe_mode_status",
     title: "Safe Mode Status",
     annotations: READ,
-    description: "Returns whether MikroTik Safe Mode is currently active (for the targeted device).",
+    description:
+      "Returns whether MikroTik Safe Mode is currently active (for the targeted device).",
     handler(_a, ctx) {
       const device = resolveDeviceName(ctx.device);
       ctx.info(`[${device}] Checking safe mode status`);

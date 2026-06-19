@@ -1,9 +1,22 @@
 /** OSPF — `/routing ospf` (instance, area, area-range, interface-template, neighbor, lsa) — RouterOS v7. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE, WRITE_IDEMPOTENT, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import {
+  WRITE,
+  WRITE_IDEMPOTENT,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { yesno, whereClause, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+import {
+  yesno,
+  whereClause,
+  looksLikeError,
+  isEmpty,
+  commandUnsupported,
+  Cmd,
+} from "../core/routeros";
 
 const UNSUPPORTED =
   "OSPF is not available on this device (requires RouterOS v7 with the routing package).";
@@ -19,9 +32,14 @@ export const routingOspfTools: ToolModule = [
       "version (2 for IPv4, 3 for IPv6), router-id, redistribution and import/export filter chains.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF instances");
-      const result = await executeMikrotikCommand("/routing ospf instance print detail", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing ospf instance print detail",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No OSPF instances found." : `OSPF INSTANCES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No OSPF instances found."
+        : `OSPF INSTANCES:\n\n${result}`;
     },
   }),
 
@@ -34,13 +52,34 @@ export const routingOspfTools: ToolModule = [
       "'main', or the name of a `/routing id`. `redistribute` is a comma list (connected,static,rip,bgp,…).",
     inputSchema: {
       name: z.string().describe("Unique instance name"),
-      version: z.number().int().min(2).max(3).default(2).describe("2 = OSPFv2, 3 = OSPFv3"),
-      router_id: z.string().optional().describe("IPv4 address, 'main', or a /routing id name"),
+      version: z
+        .number()
+        .int()
+        .min(2)
+        .max(3)
+        .default(2)
+        .describe("2 = OSPFv2, 3 = OSPFv3"),
+      router_id: z
+        .string()
+        .optional()
+        .describe("IPv4 address, 'main', or a /routing id name"),
       vrf: z.string().optional(),
-      redistribute: z.string().optional().describe('Comma list, e.g. "connected,static"'),
-      in_filter_chain: z.string().optional().describe("Routing filter chain for received routes"),
-      out_filter_chain: z.string().optional().describe("Routing filter chain for redistributed routes"),
-      originate_default: z.string().optional().describe("never, if-installed, or always"),
+      redistribute: z
+        .string()
+        .optional()
+        .describe('Comma list, e.g. "connected,static"'),
+      in_filter_chain: z
+        .string()
+        .optional()
+        .describe("Routing filter chain for received routes"),
+      out_filter_chain: z
+        .string()
+        .optional()
+        .describe("Routing filter chain for redistributed routes"),
+      originate_default: z
+        .string()
+        .optional()
+        .describe("never, if-installed, or always"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -61,7 +100,8 @@ export const routingOspfTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to add OSPF instance: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add OSPF instance: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing ospf instance print detail where name="${a.name}"`,
         ctx,
@@ -102,7 +142,8 @@ export const routingOspfTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to update OSPF instance: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to update OSPF instance: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing ospf instance print detail where name="${a.name}"`,
         ctx,
@@ -124,7 +165,8 @@ export const routingOspfTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to remove OSPF instance: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove OSPF instance: ${result}`;
       return `OSPF instance '${a.name}' removed successfully.`;
     },
   }),
@@ -139,9 +181,14 @@ export const routingOspfTools: ToolModule = [
       "flooding (default/backbone, stub, nssa).",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF areas");
-      const result = await executeMikrotikCommand("/routing ospf area print detail", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing ospf area print detail",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No OSPF areas found." : `OSPF AREAS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No OSPF areas found."
+        : `OSPF AREAS:\n\n${result}`;
     },
   }),
 
@@ -149,13 +196,19 @@ export const routingOspfTools: ToolModule = [
     name: "add_ospf_area",
     title: "Add OSPF Area",
     annotations: WRITE,
-    description: "Adds an OSPF area to an instance. The backbone is area-id 0.0.0.0.",
+    description:
+      "Adds an OSPF area to an instance. The backbone is area-id 0.0.0.0.",
     inputSchema: {
       name: z.string().describe("Unique area name"),
-      area_id: z.string().describe('Area id in IPv4 notation, e.g. "0.0.0.0" for backbone'),
+      area_id: z
+        .string()
+        .describe('Area id in IPv4 notation, e.g. "0.0.0.0" for backbone'),
       instance: z.string().describe("OSPF instance name this area belongs to"),
       type: z.enum(["default", "stub", "nssa"]).optional(),
-      no_summaries: z.boolean().optional().describe("Make a totally-stubby/NSSA area (block summary LSAs)"),
+      no_summaries: z
+        .boolean()
+        .optional()
+        .describe("Make a totally-stubby/NSSA area (block summary LSAs)"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -166,7 +219,8 @@ export const routingOspfTools: ToolModule = [
         .set("area-id", a.area_id)
         .set("instance", a.instance)
         .opt("type", a.type);
-      if (a.no_summaries !== undefined) cmd.bool("no-summaries", a.no_summaries);
+      if (a.no_summaries !== undefined)
+        cmd.bool("no-summaries", a.no_summaries);
       cmd.opt("comment", a.comment).flag("disabled", a.disabled);
 
       const result = await executeMikrotikCommand(cmd.build(), ctx);
@@ -184,9 +238,13 @@ export const routingOspfTools: ToolModule = [
     inputSchema: { name: z.string().describe("OSPF area name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing OSPF area: ${a.name}`);
-      const result = await executeMikrotikCommand(`/routing ospf area remove [find name="${a.name}"]`, ctx);
+      const result = await executeMikrotikCommand(
+        `/routing ospf area remove [find name="${a.name}"]`,
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to remove OSPF area: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove OSPF area: ${result}`;
       return `OSPF area '${a.name}' removed successfully.`;
     },
   }),
@@ -201,9 +259,14 @@ export const routingOspfTools: ToolModule = [
       "to summarise intra-area routes.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF area ranges");
-      const result = await executeMikrotikCommand("/routing ospf area range print detail", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing ospf area range print detail",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No OSPF area ranges found." : `OSPF AREA RANGES:\n\n${result}`;
+      return isEmpty(result)
+        ? "No OSPF area ranges found."
+        : `OSPF AREA RANGES:\n\n${result}`;
     },
   }),
 
@@ -215,7 +278,10 @@ export const routingOspfTools: ToolModule = [
     inputSchema: {
       area: z.string().describe("OSPF area name"),
       prefix: z.string().describe('Aggregate prefix, e.g. "10.10.0.0/16"'),
-      advertise: z.boolean().default(true).describe("Advertise the summary (false suppresses it)"),
+      advertise: z
+        .boolean()
+        .default(true)
+        .describe("Advertise the summary (false suppresses it)"),
       cost: z.number().int().optional(),
       comment: z.string().optional(),
     },
@@ -231,7 +297,8 @@ export const routingOspfTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to add OSPF area range: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add OSPF area range: ${result}`;
       return `OSPF area range '${a.prefix}' added to area '${a.area}'.`;
     },
   }),
@@ -244,9 +311,13 @@ export const routingOspfTools: ToolModule = [
     inputSchema: { range_id: z.string().describe('Range id, e.g. "*1"') },
     async handler(a, ctx) {
       ctx.info(`Removing OSPF area range ${a.range_id}`);
-      const result = await executeMikrotikCommand(`/routing ospf area range remove ${a.range_id}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/routing ospf area range remove ${a.range_id}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to remove OSPF area range: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove OSPF area range: ${result}`;
       return `OSPF area range '${a.range_id}' removed successfully.`;
     },
   }),
@@ -261,7 +332,10 @@ export const routingOspfTools: ToolModule = [
       "to an area and sets per-link parameters (cost, type, timers, authentication, passive).",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF interface templates");
-      const result = await executeMikrotikCommand("/routing ospf interface-template print detail", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing ospf interface-template print detail",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
       return isEmpty(result)
         ? "No OSPF interface templates found."
@@ -278,17 +352,37 @@ export const routingOspfTools: ToolModule = [
       "(broadcast/ptp/nbma/ptmp), `passive` advertises the subnet without forming adjacencies, and the `auth_*` " +
       "fields enable per-interface authentication.",
     inputSchema: {
-      area: z.string().describe("OSPF area name to attach matched interfaces to"),
-      interfaces: z.string().optional().describe("Interface or interface-list name"),
-      networks: z.string().optional().describe('Network prefix(es) to enable OSPF on, e.g. "10.0.0.0/24"'),
+      area: z
+        .string()
+        .describe("OSPF area name to attach matched interfaces to"),
+      interfaces: z
+        .string()
+        .optional()
+        .describe("Interface or interface-list name"),
+      networks: z
+        .string()
+        .optional()
+        .describe('Network prefix(es) to enable OSPF on, e.g. "10.0.0.0/24"'),
       cost: z.number().int().optional().describe("Output cost / metric"),
-      priority: z.number().int().optional().describe("DR election priority (0 = never DR)"),
-      type: z.enum(["broadcast", "ptp", "nbma", "ptmp", "virtual-link"]).optional(),
+      priority: z
+        .number()
+        .int()
+        .optional()
+        .describe("DR election priority (0 = never DR)"),
+      type: z
+        .enum(["broadcast", "ptp", "nbma", "ptmp", "virtual-link"])
+        .optional(),
       passive: z.boolean().optional(),
       hello_interval: z.string().optional().describe('e.g. "10s"'),
       dead_interval: z.string().optional().describe('e.g. "40s"'),
-      auth: z.enum(["simple", "md5", "sha1", "sha256", "sha384", "sha512"]).optional(),
-      auth_id: z.number().int().optional().describe("Key id for keyed authentication"),
+      auth: z
+        .enum(["simple", "md5", "sha1", "sha256", "sha384", "sha512"])
+        .optional(),
+      auth_id: z
+        .number()
+        .int()
+        .optional()
+        .describe("Key id for keyed authentication"),
       auth_key: z.string().optional().describe("Authentication key/password"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -313,9 +407,12 @@ export const routingOspfTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd.build(), ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to add OSPF interface template: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to add OSPF interface template: ${result}`;
       const t = result.trim();
-      return t ? `OSPF interface template added (id ${t}).` : "OSPF interface template added successfully.";
+      return t
+        ? `OSPF interface template added (id ${t}).`
+        : "OSPF interface template added successfully.";
     },
   }),
 
@@ -332,7 +429,8 @@ export const routingOspfTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result)) return `Failed to remove OSPF interface template: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to remove OSPF interface template: ${result}`;
       return `OSPF interface template '${a.template_id}' removed successfully.`;
     },
   }),
@@ -347,9 +445,14 @@ export const routingOspfTools: ToolModule = [
       "address. Read-only — the key health check for OSPF adjacencies.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF neighbors");
-      const result = await executeMikrotikCommand("/routing ospf neighbor print detail", ctx);
+      const result = await executeMikrotikCommand(
+        "/routing ospf neighbor print detail",
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "No OSPF neighbors found." : `OSPF NEIGHBORS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No OSPF neighbors found."
+        : `OSPF NEIGHBORS:\n\n${result}`;
     },
   }),
 
@@ -361,15 +464,23 @@ export const routingOspfTools: ToolModule = [
       "Lists the OSPF link-state database (`/routing ospf lsa`): every LSA the router holds, by type, area and " +
       "originator. Read-only — used to inspect topology and diagnose flooding/summarisation problems.",
     inputSchema: {
-      area_filter: z.string().optional().describe("Show only LSAs for this area"),
+      area_filter: z
+        .string()
+        .optional()
+        .describe("Show only LSAs for this area"),
     },
     async handler(a, ctx) {
       ctx.info("Listing OSPF LSAs");
       const filters: string[] = [];
       if (a.area_filter) filters.push(`area="${a.area_filter}"`);
-      const result = await executeMikrotikCommand(`/routing ospf lsa print${whereClause(filters)}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/routing ospf lsa print${whereClause(filters)}`,
+        ctx,
+      );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result) ? "OSPF link-state database is empty." : `OSPF LSAs:\n\n${result}`;
+      return isEmpty(result)
+        ? "OSPF link-state database is empty."
+        : `OSPF LSAs:\n\n${result}`;
     },
   }),
 ];

@@ -16,7 +16,8 @@ const BARE_SAFE = /^[\w.\-:/,*@]+$/;
 
 /** Quote and escape a value for the RouterOS console if it isn't a bare token. */
 export function quoteValue(value: string | number | boolean): string {
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
   if (value !== "" && BARE_SAFE.test(value)) return value;
   const escaped = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   return `"${escaped}"`;
@@ -155,7 +156,12 @@ const PARSER_ERROR_HEAD =
  */
 export function containsRawParserError(text: string): boolean {
   // Strip a leading "HEADER:\n\n" that tools prepend to raw device output.
-  const body = text.includes("\n\n") ? text.slice(text.indexOf("\n\n") + 2) : text;
+  const body = text.includes("\n\n")
+    ? text.slice(text.indexOf("\n\n") + 2)
+    : text;
   const firstLine = body.trimStart().split("\n", 1)[0] ?? "";
-  return PARSER_ERROR_HEAD.test(firstLine) && /\(line \d+ column \d+\)/.test(firstLine);
+  return (
+    PARSER_ERROR_HEAD.test(firstLine) &&
+    /\(line \d+ column \d+\)/.test(firstLine)
+  );
 }

@@ -1,8 +1,14 @@
 /** L2TP VPN server and clients — `/interface l2tp-server` and `/interface l2tp-client`. Users come from `/ppp secret`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
+import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 /** Mask password values in printed output (mirrors the users.ts redaction pattern). */
@@ -22,8 +28,13 @@ export const l2tpTools: ToolModule = [
     description: "Gets the L2TP server configuration on the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Getting L2TP server configuration");
-      const result = await executeMikrotikCommand("/interface l2tp-server server print", ctx);
-      return isEmpty(result) ? "L2TP server configuration not available." : `L2TP SERVER:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        "/interface l2tp-server server print",
+        ctx,
+      );
+      return isEmpty(result)
+        ? "L2TP server configuration not available."
+        : `L2TP SERVER:\n\n${result}`;
     },
   }),
 
@@ -34,11 +45,20 @@ export const l2tpTools: ToolModule = [
     description:
       "Configures the L2TP server. For L2TP/IPsec road-warrior setups, set use_ipsec='required' and supply ipsec_secret.",
     inputSchema: {
-      enabled: z.boolean().optional().describe("Enable or disable the L2TP server"),
+      enabled: z
+        .boolean()
+        .optional()
+        .describe("Enable or disable the L2TP server"),
       default_profile: z.string().optional(),
-      authentication: z.string().optional().describe("Comma-separated, e.g. 'mschap2,mschap1'"),
+      authentication: z
+        .string()
+        .optional()
+        .describe("Comma-separated, e.g. 'mschap2,mschap1'"),
       use_ipsec: UseIpsecServer.optional(),
-      ipsec_secret: z.string().optional().describe("Pre-shared key for L2TP/IPsec"),
+      ipsec_secret: z
+        .string()
+        .optional()
+        .describe("Pre-shared key for L2TP/IPsec"),
       max_mtu: z.number().int().optional(),
       max_mru: z.number().int().optional(),
     },
@@ -54,12 +74,17 @@ export const l2tpTools: ToolModule = [
         .opt("max-mru", a.max_mru)
         .build();
 
-      if (cmd.trim() === "/interface l2tp-server server set") return "No updates specified.";
+      if (cmd.trim() === "/interface l2tp-server server set")
+        return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to configure L2TP server: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to configure L2TP server: ${result}`;
 
-      const details = await executeMikrotikCommand("/interface l2tp-server server print", ctx);
+      const details = await executeMikrotikCommand(
+        "/interface l2tp-server server print",
+        ctx,
+      );
       return `L2TP server configured successfully:\n\n${details}`;
     },
   }),
@@ -69,7 +94,8 @@ export const l2tpTools: ToolModule = [
     name: "create_l2tp_client",
     title: "Create L2TP Client",
     annotations: WRITE,
-    description: "Creates an L2TP client interface that dials out to a remote L2TP server.",
+    description:
+      "Creates an L2TP client interface that dials out to a remote L2TP server.",
     inputSchema: {
       name: z.string().describe("Name for the new L2TP client interface"),
       connect_to: z.string().describe("Remote L2TP server address"),
@@ -78,12 +104,17 @@ export const l2tpTools: ToolModule = [
       profile: z.string().default("default-encryption"),
       add_default_route: z.boolean().optional(),
       use_ipsec: UseIpsecClient.optional(),
-      ipsec_secret: z.string().optional().describe("Pre-shared key for L2TP/IPsec"),
+      ipsec_secret: z
+        .string()
+        .optional()
+        .describe("Pre-shared key for L2TP/IPsec"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Creating L2TP client: name=${a.name}, connect_to=${a.connect_to}`);
+      ctx.info(
+        `Creating L2TP client: name=${a.name}, connect_to=${a.connect_to}`,
+      );
       const cmd = new Cmd("/interface l2tp-client add")
         .set("name", a.name)
         .set("connect-to", a.connect_to)
@@ -98,7 +129,8 @@ export const l2tpTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to create L2TP client: ${redact(result)}`;
+      if (looksLikeError(result))
+        return `Failed to create L2TP client: ${redact(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface l2tp-client print detail where name="${a.name}"`,
@@ -123,8 +155,13 @@ export const l2tpTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/interface l2tp-client print${whereClause(filters)}`, ctx);
-      return isEmpty(result) ? "No L2TP clients found matching the criteria." : `L2TP CLIENTS:\n\n${redact(result)}`;
+      const result = await executeMikrotikCommand(
+        `/interface l2tp-client print${whereClause(filters)}`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No L2TP clients found matching the criteria."
+        : `L2TP CLIENTS:\n\n${redact(result)}`;
     },
   }),
 
@@ -132,7 +169,8 @@ export const l2tpTools: ToolModule = [
     name: "get_l2tp_client",
     title: "Get L2TP Client",
     annotations: READ,
-    description: "Gets detailed information about a specific L2TP client. The password is redacted.",
+    description:
+      "Gets detailed information about a specific L2TP client. The password is redacted.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting L2TP client details: name=${a.name}`);
@@ -140,7 +178,9 @@ export const l2tpTools: ToolModule = [
         `/interface l2tp-client print detail where name="${a.name}"`,
         ctx,
       );
-      return isEmpty(result) ? `L2TP client '${a.name}' not found.` : `L2TP CLIENT DETAILS:\n\n${redact(result)}`;
+      return isEmpty(result)
+        ? `L2TP client '${a.name}' not found.`
+        : `L2TP CLIENT DETAILS:\n\n${redact(result)}`;
     },
   }),
 
@@ -158,8 +198,12 @@ export const l2tpTools: ToolModule = [
       );
       if (count.trim() === "0") return `L2TP client '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(`/interface l2tp-client remove [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to remove L2TP client: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/interface l2tp-client remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to remove L2TP client: ${result}`;
       return `L2TP client '${a.name}' removed successfully.`;
     },
   }),
@@ -172,8 +216,12 @@ export const l2tpTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling L2TP client: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/interface l2tp-client enable [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to enable L2TP client: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/interface l2tp-client enable [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to enable L2TP client: ${result}`;
       return `L2TP client '${a.name}' enabled successfully.`;
     },
   }),
@@ -186,8 +234,12 @@ export const l2tpTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling L2TP client: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/interface l2tp-client disable [find name="${a.name}"]`, ctx);
-      if (looksLikeError(result)) return `Failed to disable L2TP client: ${result}`;
+      const result = await executeMikrotikCommand(
+        `/interface l2tp-client disable [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result))
+        return `Failed to disable L2TP client: ${result}`;
       return `L2TP client '${a.name}' disabled successfully.`;
     },
   }),

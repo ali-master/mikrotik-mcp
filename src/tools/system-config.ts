@@ -10,9 +10,21 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE, READ, defineTool, DANGEROUS } from "../core/registry";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  defineTool,
+  DANGEROUS,
+} from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  looksLikeError,
+  isEmpty,
+  commandUnsupported,
+  Cmd,
+} from "../core/routeros";
 
 export const systemConfigTools: ToolModule = [
   // ── Console `/system console` ───────────────────────────────────────────
@@ -24,7 +36,9 @@ export const systemConfigTools: ToolModule = [
     async handler(_a, ctx) {
       ctx.info("Listing system console");
       const result = await executeMikrotikCommand("/system console print", ctx);
-      return isEmpty(result) ? "No system console entries found." : `SYSTEM CONSOLE:\n\n${result}`;
+      return isEmpty(result)
+        ? "No system console entries found."
+        : `SYSTEM CONSOLE:\n\n${result}`;
     },
   }),
 
@@ -33,11 +47,14 @@ export const systemConfigTools: ToolModule = [
     name: "list_leds",
     title: "List LEDs",
     annotations: READ,
-    description: "Lists the configured LEDs and their triggers (`/system leds`).",
+    description:
+      "Lists the configured LEDs and their triggers (`/system leds`).",
     async handler(_a, ctx) {
       ctx.info("Listing LEDs");
       const result = await executeMikrotikCommand("/system leds print", ctx);
-      return isEmpty(result) ? "No LEDs found on this device." : `LEDS:\n\n${result}`;
+      return isEmpty(result)
+        ? "No LEDs found on this device."
+        : `LEDS:\n\n${result}`;
     },
   }),
 
@@ -48,8 +65,13 @@ export const systemConfigTools: ToolModule = [
     description: "Gets the global LED settings (`/system leds settings`).",
     async handler(_a, ctx) {
       ctx.info("Getting LED settings");
-      const result = await executeMikrotikCommand("/system leds settings print", ctx);
-      return isEmpty(result) ? "No LED settings found." : `LED SETTINGS:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        "/system leds settings print",
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No LED settings found."
+        : `LED SETTINGS:\n\n${result}`;
     },
   }),
 
@@ -57,7 +79,8 @@ export const systemConfigTools: ToolModule = [
     name: "set_leds_settings",
     title: "Set LED Settings",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates the global LED settings, e.g. dark-mode scheduling via all-leds-off.",
+    description:
+      "Updates the global LED settings, e.g. dark-mode scheduling via all-leds-off.",
     inputSchema: {
       all_leds_off: z
         .enum(["never", "immediate", "after-1h", "after-1min"])
@@ -68,11 +91,17 @@ export const systemConfigTools: ToolModule = [
       ctx.info("Setting LED settings");
       if (a.all_leds_off === undefined) return "No updates specified.";
 
-      const cmd = new Cmd("/system leds settings set").opt("all-leds-off", a.all_leds_off).build();
+      const cmd = new Cmd("/system leds settings set")
+        .opt("all-leds-off", a.all_leds_off)
+        .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to set LED settings: ${result}`;
+      if (looksLikeError(result))
+        return `Failed to set LED settings: ${result}`;
 
-      const details = await executeMikrotikCommand("/system leds settings print", ctx);
+      const details = await executeMikrotikCommand(
+        "/system leds settings print",
+        ctx,
+      );
       return `LED settings updated successfully:\n\n${details}`;
     },
   }),
@@ -87,8 +116,11 @@ export const systemConfigTools: ToolModule = [
     async handler(_a, ctx) {
       ctx.info("Getting system license");
       const result = await executeMikrotikCommand("/system license print", ctx);
-      if (commandUnsupported(result)) return "License info not available on this device.";
-      return isEmpty(result) ? "No license information found." : `LICENSE:\n\n${result}`;
+      if (commandUnsupported(result))
+        return "License info not available on this device.";
+      return isEmpty(result)
+        ? "No license information found."
+        : `LICENSE:\n\n${result}`;
     },
   }),
 
@@ -101,7 +133,9 @@ export const systemConfigTools: ToolModule = [
     async handler(_a, ctx) {
       ctx.info("Getting system note");
       const result = await executeMikrotikCommand("/system note print", ctx);
-      return isEmpty(result) ? "No system note found." : `SYSTEM NOTE:\n\n${result}`;
+      return isEmpty(result)
+        ? "No system note found."
+        : `SYSTEM NOTE:\n\n${result}`;
     },
   }),
 
@@ -116,7 +150,8 @@ export const systemConfigTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info("Setting system note");
-      if (a.note === undefined && a.show_at_login === undefined) return "No updates specified.";
+      if (a.note === undefined && a.show_at_login === undefined)
+        return "No updates specified.";
 
       const cmd = new Cmd("/system note set")
         .opt("note", a.note)
@@ -135,12 +170,19 @@ export const systemConfigTools: ToolModule = [
     name: "get_ntp_server",
     title: "Get NTP Server",
     annotations: READ,
-    description: "Gets the NTP server configuration (`/system ntp server`, RouterOS 7).",
+    description:
+      "Gets the NTP server configuration (`/system ntp server`, RouterOS 7).",
     async handler(_a, ctx) {
       ctx.info("Getting NTP server configuration");
-      const result = await executeMikrotikCommand("/system ntp server print", ctx);
-      if (commandUnsupported(result)) return "NTP server is not available on this RouterOS version.";
-      return isEmpty(result) ? "No NTP server information found." : `NTP SERVER:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        "/system ntp server print",
+        ctx,
+      );
+      if (commandUnsupported(result))
+        return "NTP server is not available on this RouterOS version.";
+      return isEmpty(result)
+        ? "No NTP server information found."
+        : `NTP SERVER:\n\n${result}`;
     },
   }),
 
@@ -148,13 +190,20 @@ export const systemConfigTools: ToolModule = [
     name: "set_ntp_server",
     title: "Set NTP Server",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures the built-in NTP server (enable, broadcast/multicast/manycast modes).",
+    description:
+      "Configures the built-in NTP server (enable, broadcast/multicast/manycast modes).",
     inputSchema: {
-      enabled: z.boolean().optional().describe("Enable or disable the NTP server"),
+      enabled: z
+        .boolean()
+        .optional()
+        .describe("Enable or disable the NTP server"),
       broadcast: z.boolean().optional(),
       multicast: z.boolean().optional(),
       manycast: z.boolean().optional(),
-      broadcast_address: z.string().optional().describe("Broadcast address for NTP broadcasts"),
+      broadcast_address: z
+        .string()
+        .optional()
+        .describe("Broadcast address for NTP broadcasts"),
     },
     async handler(a, ctx) {
       ctx.info("Setting NTP server configuration");
@@ -178,7 +227,10 @@ export const systemConfigTools: ToolModule = [
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set NTP server: ${result}`;
 
-      const details = await executeMikrotikCommand("/system ntp server print", ctx);
+      const details = await executeMikrotikCommand(
+        "/system ntp server print",
+        ctx,
+      );
       return `NTP server updated successfully:\n\n${details}`;
     },
   }),
@@ -203,7 +255,8 @@ export const systemConfigTools: ToolModule = [
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       // Never echo the passwords back, even in the error path.
-      if (looksLikeError(result)) return "Failed to change password: the device rejected the request (check the old password and password policy).";
+      if (looksLikeError(result))
+        return "Failed to change password: the device rejected the request (check the old password and password policy).";
       return "Password changed successfully.";
     },
   }),
@@ -222,8 +275,13 @@ export const systemConfigTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(`/port print${whereClause(filters)}`, ctx);
-      return isEmpty(result) ? "No serial ports found matching the criteria." : `SERIAL PORTS:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/port print${whereClause(filters)}`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No serial ports found matching the criteria."
+        : `SERIAL PORTS:\n\n${result}`;
     },
   }),
 
@@ -232,11 +290,18 @@ export const systemConfigTools: ToolModule = [
     title: "Get Serial Port",
     annotations: READ,
     description: "Gets detailed information about a specific serial port.",
-    inputSchema: { name: z.string().describe("Serial port name, e.g. 'serial0'") },
+    inputSchema: {
+      name: z.string().describe("Serial port name, e.g. 'serial0'"),
+    },
     async handler(a, ctx) {
       ctx.info(`Getting serial port details: name=${a.name}`);
-      const result = await executeMikrotikCommand(`/port print detail where name="${a.name}"`, ctx);
-      return isEmpty(result) ? `Serial port '${a.name}' not found.` : `SERIAL PORT DETAILS:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/port print detail where name="${a.name}"`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? `Serial port '${a.name}' not found.`
+        : `SERIAL PORT DETAILS:\n\n${result}`;
     },
   }),
 
@@ -244,7 +309,8 @@ export const systemConfigTools: ToolModule = [
     name: "set_port",
     title: "Set Serial Port",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a serial port's line settings (baud rate, data/stop bits, parity, flow control).",
+    description:
+      "Updates a serial port's line settings (baud rate, data/stop bits, parity, flow control).",
     inputSchema: {
       name: z.string().describe("Serial port name to update"),
       baud_rate: z.string().optional().describe("e.g. '115200' or 'auto'"),
@@ -275,7 +341,10 @@ export const systemConfigTools: ToolModule = [
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set serial port: ${result}`;
 
-      const details = await executeMikrotikCommand(`/port print detail where name="${a.name}"`, ctx);
+      const details = await executeMikrotikCommand(
+        `/port print detail where name="${a.name}"`,
+        ctx,
+      );
       return `Serial port updated successfully:\n\n${details}`;
     },
   }),
@@ -289,7 +358,10 @@ export const systemConfigTools: ToolModule = [
       "Surfaces the wireless regulatory/country domain. RouterOS has no `/system regulatory` menu; this reads `/interface wifi radio` (wifiwave2), which exposes the country and regulatory settings of the radios.",
     async handler(_a, ctx) {
       ctx.info("Getting wireless regulatory / country information");
-      const result = await executeMikrotikCommand("/interface wifi radio print", ctx);
+      const result = await executeMikrotikCommand(
+        "/interface wifi radio print",
+        ctx,
+      );
       if (commandUnsupported(result)) {
         return "No wireless regulatory/country information is available on this device (no Wi-Fi interface, or a different wireless package).";
       }
@@ -307,14 +379,29 @@ export const systemConfigTools: ToolModule = [
     description:
       "Factory-resets the device configuration (`/system reset-configuration`). Requires confirm=true; the device reboots into a default configuration and the connection will drop.",
     inputSchema: {
-      confirm: z.boolean().describe("Must be true to actually ERASE the configuration"),
-      keep_users: z.boolean().optional().describe("Keep existing user accounts after reset"),
-      no_defaults: z.boolean().optional().describe("Do not load the default configuration"),
-      skip_backup: z.boolean().optional().describe("Skip the automatic backup before reset"),
-      run_after_reset: z.string().optional().describe("Script file to run after reset"),
+      confirm: z
+        .boolean()
+        .describe("Must be true to actually ERASE the configuration"),
+      keep_users: z
+        .boolean()
+        .optional()
+        .describe("Keep existing user accounts after reset"),
+      no_defaults: z
+        .boolean()
+        .optional()
+        .describe("Do not load the default configuration"),
+      skip_backup: z
+        .boolean()
+        .optional()
+        .describe("Skip the automatic backup before reset"),
+      run_after_reset: z
+        .string()
+        .optional()
+        .describe("Script file to run after reset"),
     },
     async handler(a, ctx) {
-      if (!a.confirm) return "Reset not confirmed. Pass confirm=true to ERASE the configuration.";
+      if (!a.confirm)
+        return "Reset not confirmed. Pass confirm=true to ERASE the configuration.";
       ctx.info("Resetting device configuration");
       const cmd = new Cmd("/system reset-configuration")
         .flag("keep-users", a.keep_users)
@@ -332,12 +419,19 @@ export const systemConfigTools: ToolModule = [
     name: "list_special_login",
     title: "List Special Login",
     annotations: READ,
-    description: "Lists special-login entries, e.g. serial-console auto-login (`/system special-login`).",
+    description:
+      "Lists special-login entries, e.g. serial-console auto-login (`/system special-login`).",
     async handler(_a, ctx) {
       ctx.info("Listing special login");
-      const result = await executeMikrotikCommand("/system special-login print", ctx);
-      if (commandUnsupported(result)) return "Special login is not available on this device.";
-      return isEmpty(result) ? "No special-login entries found." : `SPECIAL LOGIN:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        "/system special-login print",
+        ctx,
+      );
+      if (commandUnsupported(result))
+        return "Special login is not available on this device.";
+      return isEmpty(result)
+        ? "No special-login entries found."
+        : `SPECIAL LOGIN:\n\n${result}`;
     },
   }),
 
@@ -346,11 +440,17 @@ export const systemConfigTools: ToolModule = [
     name: "get_watchdog",
     title: "Get Watchdog",
     annotations: READ,
-    description: "Gets the hardware/software watchdog configuration (`/system watchdog`).",
+    description:
+      "Gets the hardware/software watchdog configuration (`/system watchdog`).",
     async handler(_a, ctx) {
       ctx.info("Getting watchdog configuration");
-      const result = await executeMikrotikCommand("/system watchdog print", ctx);
-      return isEmpty(result) ? "No watchdog information found." : `WATCHDOG:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        "/system watchdog print",
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No watchdog information found."
+        : `WATCHDOG:\n\n${result}`;
     },
   }),
 
@@ -358,14 +458,27 @@ export const systemConfigTools: ToolModule = [
     name: "set_watchdog",
     title: "Set Watchdog",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures the watchdog timer and the host it pings to detect a hung device.",
+    description:
+      "Configures the watchdog timer and the host it pings to detect a hung device.",
     inputSchema: {
-      watchdog_timer: z.boolean().optional().describe("Enable the hardware watchdog timer"),
-      watch_address: z.string().optional().describe("Address to ping; reboot if unreachable"),
+      watchdog_timer: z
+        .boolean()
+        .optional()
+        .describe("Enable the hardware watchdog timer"),
+      watch_address: z
+        .string()
+        .optional()
+        .describe("Address to ping; reboot if unreachable"),
       ping_timeout: z.string().optional().describe("e.g. '1m'"),
       no_ping_delay: z.string().optional().describe("e.g. '5m'"),
-      automatic_supout: z.boolean().optional().describe("Generate a supout.rif on software failure"),
-      auto_send_supout: z.boolean().optional().describe("Email the generated supout.rif"),
+      automatic_supout: z
+        .boolean()
+        .optional()
+        .describe("Generate a supout.rif on software failure"),
+      auto_send_supout: z
+        .boolean()
+        .optional()
+        .describe("Email the generated supout.rif"),
     },
     async handler(a, ctx) {
       ctx.info("Setting watchdog configuration");
@@ -391,7 +504,10 @@ export const systemConfigTools: ToolModule = [
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set watchdog: ${result}`;
 
-      const details = await executeMikrotikCommand("/system watchdog print", ctx);
+      const details = await executeMikrotikCommand(
+        "/system watchdog print",
+        ctx,
+      );
       return `Watchdog updated successfully:\n\n${details}`;
     },
   }),

@@ -1,9 +1,21 @@
 /** Firewall NAT rules — `/ip firewall nat`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import { WRITE_IDEMPOTENT, WRITE,  READ, DESTRUCTIVE, defineTool } from "../core/registry";
-import type {ToolModule} from "../core/registry";
-import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  WRITE_IDEMPOTENT,
+  WRITE,
+  READ,
+  DESTRUCTIVE,
+  defineTool,
+} from "../core/registry";
+import type { ToolModule } from "../core/registry";
+import {
+  whereClause,
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  Cmd,
+} from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -51,10 +63,12 @@ async function updateNatRule(
   put("to-addresses", a.to_addresses);
   put("to-ports", a.to_ports);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
-  if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
+  if (a.disabled !== undefined)
+    updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
     updates.push(`log=${a.log ? "yes" : "no"}`);
-    if (a.log && a.log_prefix) updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
+    if (a.log && a.log_prefix)
+      updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
   }
 
   if (updates.length === 0) return "No updates specified.";
@@ -90,13 +104,22 @@ export const firewallNatTools: ToolModule = [
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
-      to_addresses: z.string().optional().describe('Single IP or range e.g. "10.0.0.1" or "10.0.0.1-10.0.0.10"'),
-      to_ports: z.string().optional().describe('Single port or range e.g. "8080" or "8080-8090"'),
+      to_addresses: z
+        .string()
+        .optional()
+        .describe('Single IP or range e.g. "10.0.0.1" or "10.0.0.1-10.0.0.10"'),
+      to_ports: z
+        .string()
+        .optional()
+        .describe('Single port or range e.g. "8080" or "8080-8090"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
       log_prefix: z.string().optional(),
-      place_before: z.string().optional().describe('Rule number or ID (*N) to insert before e.g. "0" or "*3"'),
+      place_before: z
+        .string()
+        .optional()
+        .describe('Rule number or ID (*N) to insert before e.g. "0" or "*3"'),
     },
     async handler(a, ctx) {
       ctx.info(`Creating NAT rule: chain=${a.chain}, action=${a.action}`);
@@ -170,7 +193,10 @@ export const firewallNatTools: ToolModule = [
       }
 
       // No output might mean success — verify by fetching the last rule.
-      const count = await executeMikrotikCommand("/ip firewall nat print detail count-only", ctx);
+      const count = await executeMikrotikCommand(
+        "/ip firewall nat print detail count-only",
+        ctx,
+      );
       const c = count.trim();
       if (isDigits(c) && Number.parseInt(c, 10) > 0) {
         const details = await executeMikrotikCommand(
@@ -199,22 +225,33 @@ export const firewallNatTools: ToolModule = [
       invalid_only: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(`Listing NAT rules with filters: chain=${a.chain_filter}, action=${a.action_filter}`);
+      ctx.info(
+        `Listing NAT rules with filters: chain=${a.chain_filter}, action=${a.action_filter}`,
+      );
 
       const filters: string[] = [];
       if (a.chain_filter) filters.push(`chain=${a.chain_filter}`);
       if (a.action_filter) filters.push(`action=${a.action_filter}`);
-      if (a.src_address_filter) filters.push(`src-address~"${a.src_address_filter}"`);
-      if (a.dst_address_filter) filters.push(`dst-address~"${a.dst_address_filter}"`);
+      if (a.src_address_filter)
+        filters.push(`src-address~"${a.src_address_filter}"`);
+      if (a.dst_address_filter)
+        filters.push(`dst-address~"${a.dst_address_filter}"`);
       if (a.protocol_filter) filters.push(`protocol=${a.protocol_filter}`);
       if (a.interface_filter) {
-        filters.push(`(in-interface~"${a.interface_filter}" or out-interface~"${a.interface_filter}")`);
+        filters.push(
+          `(in-interface~"${a.interface_filter}" or out-interface~"${a.interface_filter}")`,
+        );
       }
       if (a.disabled_only) filters.push("disabled=yes");
       if (a.invalid_only) filters.push("invalid=yes");
 
-      const result = await executeMikrotikCommand(`/ip firewall nat print${whereClause(filters)}`, ctx);
-      return isEmpty(result) ? "No NAT rules found matching the criteria." : `NAT RULES:\n\n${result}`;
+      const result = await executeMikrotikCommand(
+        `/ip firewall nat print${whereClause(filters)}`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No NAT rules found matching the criteria."
+        : `NAT RULES:\n\n${result}`;
     },
   }),
 
@@ -225,7 +262,9 @@ export const firewallNatTools: ToolModule = [
     description:
       "Gets detailed information about a specific NAT rule. " +
       'rule_id: use the ID from list output e.g. "*1" or "0".',
-    inputSchema: { rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"') },
+    inputSchema: {
+      rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
+    },
     async handler(a, ctx) {
       ctx.info(`Getting NAT rule details: rule_id=${a.rule_id}`);
       const result = await executeMikrotikCommand(
@@ -286,9 +325,13 @@ export const firewallNatTools: ToolModule = [
         `/ip firewall nat print count-only where .id=${a.rule_id}`,
         ctx,
       );
-      if (count.trim() === "0") return `NAT rule with ID '${a.rule_id}' not found.`;
+      if (count.trim() === "0")
+        return `NAT rule with ID '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(`/ip firewall nat remove ${a.rule_id}`, ctx);
+      const result = await executeMikrotikCommand(
+        `/ip firewall nat remove ${a.rule_id}`,
+        ctx,
+      );
       if (looksLikeError(result)) return `Failed to remove NAT rule: ${result}`;
       return `NAT rule with ID '${a.rule_id}' removed successfully.`;
     },
@@ -307,13 +350,16 @@ export const firewallNatTools: ToolModule = [
       destination: z.number().int().describe("0-based target position index"),
     },
     async handler(a, ctx) {
-      ctx.info(`Moving NAT rule: rule_id=${a.rule_id} to position ${a.destination}`);
+      ctx.info(
+        `Moving NAT rule: rule_id=${a.rule_id} to position ${a.destination}`,
+      );
 
       const count = await executeMikrotikCommand(
         `/ip firewall nat print count-only where .id=${a.rule_id}`,
         ctx,
       );
-      if (count.trim() === "0") return `NAT rule with ID '${a.rule_id}' not found.`;
+      if (count.trim() === "0")
+        return `NAT rule with ID '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ip firewall nat move ${a.rule_id} destination=${a.destination}`,
