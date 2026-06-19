@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_bfd_configuration_enabled",
+  "type": "object",
+  "properties": {
+    "config_id": {
+      "type": "string",
+      "description": "Configuration id, e.g. \"*1\""
+    },
+    "enabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "config_id",
+    "enabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_routing_ids",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "description": "Substring match on the instance name",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

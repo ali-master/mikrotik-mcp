@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ospf_lsa",
+  "type": "object",
+  "properties": {
+    "area_filter": {
+      "description": "Show only LSAs for this area",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_bfd_configuration",
+  "type": "object",
+  "properties": {
+    "interfaces": {
+      "type": "string",
+      "description": "Interface or interface-list name BFD runs on"
+    },
+    "vrf": {
+      "description": "VRF (default 'main')",
+      "type": "string"
+    },
+    "min_rx": {
+      "description": "Desired min RX interval, e.g. \"200ms\"",
+      "type": "string"
+    },
+    "min_tx": {
+      "description": "Desired min TX interval, e.g. \"200ms\"",
+      "type": "string"
+    },
+    "multiplier": {
+      "description": "Detection multiplier, e.g. 5",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interfaces",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_rip_interface_template",
+  "type": "object",
+  "properties": {
+    "instance": {
+      "type": "string",
+      "description": "RIP instance name"
+    },
+    "interfaces": {
+      "type": "string",
+      "description": "Interface or interface-list name"
+    },
+    "passive": {
+      "type": "boolean"
+    },
+    "key_chain": {
+      "description": "Key-chain name for authentication",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "instance",
+    "interfaces",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

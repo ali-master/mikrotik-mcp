@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_rpki_session_enabled",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Session id, e.g. \"*1\""
+    },
+    "enabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "session_id",
+    "enabled"
+  ],
+  "additionalProperties": false
+}

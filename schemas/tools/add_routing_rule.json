@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_routing_rule",
+  "type": "object",
+  "properties": {
+    "action": {
+      "default": "lookup",
+      "type": "string",
+      "enum": [
+        "lookup",
+        "lookup-only-in-table",
+        "drop",
+        "unreachable"
+      ]
+    },
+    "table": {
+      "description": "Target routing table for lookup actions",
+      "type": "string"
+    },
+    "src_address": {
+      "description": "Source prefix, e.g. \"192.168.10.0/24\"",
+      "type": "string"
+    },
+    "dst_address": {
+      "description": "Destination prefix",
+      "type": "string"
+    },
+    "routing_mark": {
+      "description": "Match packets carrying this routing-mark",
+      "type": "string"
+    },
+    "interface": {
+      "description": "Match this incoming interface",
+      "type": "string"
+    },
+    "min_prefix": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_prefix": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "place_before": {
+      "description": "Insert before this rule id to control ordering",
+      "type": "string"
+    }
+  },
+  "required": [
+    "action",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

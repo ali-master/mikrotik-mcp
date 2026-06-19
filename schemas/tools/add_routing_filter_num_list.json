@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_routing_filter_num_list",
+  "type": "object",
+  "properties": {
+    "list": {
+      "type": "string",
+      "description": "Num-list name to add to"
+    },
+    "range": {
+      "type": "string",
+      "description": "Numeric range or single value, e.g. \"65000-65010\" or \"100\""
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "list",
+    "range"
+  ],
+  "additionalProperties": false
+}

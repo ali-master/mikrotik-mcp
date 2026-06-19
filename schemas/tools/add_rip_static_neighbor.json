@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_rip_static_neighbor",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Neighbor IP address"
+    },
+    "instance": {
+      "description": "RIP instance name",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

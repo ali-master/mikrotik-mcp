@@ -1,21 +1,21 @@
 <div align="center">
   <img src="assets/logo.svg" alt="@usex/mikrotik-mcp" width="440" />
-  <p><strong>A Bun-native MCP server that turns one or more MikroTik routers into 367 tools your AI can drive.</strong><br/>
+  <p><strong>A Bun-native MCP server that turns one or more MikroTik routers into 466 tools your AI can drive.</strong><br/>
   Firewall · routing · DHCP/DNS · wireless · QoS · and a complete VPN suite — over SSH, with transactional Safe Mode.</p>
 
   <p>
     <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-7C3AED.svg"></a>
     <img alt="Runtime: Bun" src="https://img.shields.io/badge/runtime-Bun%20%E2%89%A5%201.3-06B6D4.svg">
     <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-6366F1.svg">
-    <img alt="MCP" src="https://img.shields.io/badge/MCP-367%20tools-1F2937.svg">
+    <img alt="MCP" src="https://img.shields.io/badge/MCP-466%20tools-1F2937.svg">
     <a href="docs/"><img alt="Docs" src="https://img.shields.io/badge/docs-reference-7C3AED.svg"></a>
   </p>
 </div>
 
 ---
 
-`@usex/mikrotik-mcp` exposes **MikroTik RouterOS** as **367 [Model Context Protocol](https://modelcontextprotocol.io)
-tools across 37 modules**, so an AI client (Claude Desktop, Claude Code, any MCP
+`@usex/mikrotik-mcp` exposes **MikroTik RouterOS** as **466 [Model Context Protocol](https://modelcontextprotocol.io)
+tools across 51 modules**, so an AI client (Claude Desktop, Claude Code, any MCP
 client) can read and configure your router in plain language. It speaks to the
 device over **SSH** — no agent, no API package to install on RouterOS — runs on
 **[Bun](https://bun.sh)**, and validates every tool call against a Zod schema.
@@ -46,7 +46,7 @@ in memory and auto-reverts if your session drops, so you can't lock yourself out
 
 ## Why it's different
 
-- 🧰 **Breadth** — 367 tools covering the whole device: L2 (bridge, VLAN, wireless,
+- 🧰 **Breadth** — 466 tools covering the whole device: L2 (bridge, VLAN, wireless,
   PoE), L3 (addressing, routing, DHCP, DNS), security (firewall, NAT, address-lists,
   certificates), QoS (queues), and system ops (users, logs, backups, scheduler).
 - 🔐 **A complete VPN suite** — WireGuard, IPsec (IKEv1/IKEv2), L2TP, PPTP, SSTP,
@@ -89,7 +89,7 @@ mikrotik-mcp serve
 against the server (from source):
 
 ```bash
-bun run inspect        # opens the Inspector UI to browse/run all 367 tools
+bun run inspect        # opens the Inspector UI to browse/run all 466 tools
 ```
 
 **Prefer SSH keys over a password?** Point the server at a key file instead — and
@@ -117,13 +117,14 @@ bun run build            # bundle to dist/
 
 ## The tool catalog
 
-**367 tools across 37 modules.** Full, always-current reference (parameters +
+**466 tools across 51 modules.** Full, always-current reference (parameters +
 risk per tool) is generated from source: **[docs/tools-reference.md](docs/tools-reference.md)**.
 
 | Group | Tools | Modules |
 |-------|------:|---------|
 | **Interfaces** | 41 | interfaces, VLAN, bridge, wireless, PoE |
 | **Addressing & Routing** | 46 | IP addresses, IP pools, routing, DHCP, DNS |
+| **Dynamic Routing** | 99 | router-id, settings, tables, rules, next-hops, filters, BFD, BGP, OSPF, RIP, PIM-SM, IGMP proxy, GMP, RPKI |
 | **Security** | 34 | firewall filter, NAT, address-lists, certificates, IP services |
 | **VPN & Tunneling** | 96 | WireGuard, IPsec, PPP, L2TP, PPTP, SSTP, OpenVPN, GRE/IPIP/EoIP/VXLAN |
 | **QoS** | 19 | queue types, queue trees, simple queues |
@@ -243,7 +244,7 @@ Full table (incl. HTTP host, allow-lists, timeouts, `MIKROTIK_LOG_LEVEL`):
 `schemas/` ships machine-readable JSON Schemas, **generated from the TypeScript
 source** (`bun run gen:schemas`) so they can never drift:
 
-- `schemas/tool-catalog.json` — all 367 tools with risk, description, and input schema
+- `schemas/tool-catalog.json` — all 466 tools with risk, description, and input schema
 - `schemas/tools/<name>.json` — per-tool input schema
 - `schemas/config.schema.json` — the runtime configuration
 
@@ -271,7 +272,7 @@ reference.
 | [Prompts](docs/prompts.md) | The 9 guided workflows |
 | [Architecture](docs/architecture.md) | How it's built |
 | [Security](docs/security.md) | Credentials, risk gating |
-| [Tool reference](docs/tools-reference.md) | All 367 tools |
+| [Tool reference](docs/tools-reference.md) | All 466 tools |
 | [MCP Inspector](docs/inspector.md) | Test tools/prompts in the UI or CLI |
 | [Development](docs/development.md) · [Docker](docs/docker.md) | Build, test, deploy |
 

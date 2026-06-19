@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_bgp_template",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name"
+    },
+    "as": {
+      "description": "Local AS number",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "router_id": {
+      "type": "string"
+    },
+    "address_families": {
+      "description": "e.g. \"ip,ipv6\"",
+      "type": "string"
+    },
+    "input_filter": {
+      "type": "string"
+    },
+    "output_filter": {
+      "type": "string"
+    },
+    "routing_table": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

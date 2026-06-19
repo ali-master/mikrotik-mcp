@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_routing_rules",
+  "type": "object",
+  "properties": {
+    "table_filter": {
+      "description": "Match rules targeting this table",
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only"
+  ],
+  "additionalProperties": false
+}

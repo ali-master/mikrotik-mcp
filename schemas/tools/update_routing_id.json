@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_routing_id",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Existing Router-ID instance name"
+    },
+    "id": {
+      "description": "IPv4 router-id, or \"\" to clear",
+      "type": "string"
+    },
+    "select_dynamic_id": {
+      "description": "Interface/loopback name, or \"\" to clear",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_bfd_configuration",
+  "type": "object",
+  "properties": {
+    "config_id": {
+      "type": "string",
+      "description": "Configuration id, e.g. \"*1\""
+    }
+  },
+  "required": [
+    "config_id"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_routing_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "description": "Rule id from list output, e.g. \"*3\""
+    }
+  },
+  "required": [
+    "rule_id"
+  ],
+  "additionalProperties": false
+}

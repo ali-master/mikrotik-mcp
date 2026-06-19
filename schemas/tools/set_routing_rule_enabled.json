@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_routing_rule_enabled",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "description": "Rule id, e.g. \"*3\""
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "true to enable, false to disable"
+    }
+  },
+  "required": [
+    "rule_id",
+    "enabled"
+  ],
+  "additionalProperties": false
+}

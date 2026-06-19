@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_routing_table",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique table name, referenced by routes and routing rules"
+    },
+    "fib": {
+      "default": true,
+      "description": "Install routes into the FIB (forwarding plane)",
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "fib",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

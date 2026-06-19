@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_routing_table_def",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Routing table name"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

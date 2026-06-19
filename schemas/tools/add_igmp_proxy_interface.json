@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_igmp_proxy_interface",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Interface name"
+    },
+    "upstream": {
+      "default": false,
+      "description": "true = upstream (toward source), false = downstream",
+      "type": "boolean"
+    },
+    "alternative_subnets": {
+      "description": "Comma list of source subnets, e.g. \"10.0.0.0/8\"",
+      "type": "string"
+    },
+    "threshold": {
+      "description": "Minimum TTL to forward",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "upstream",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

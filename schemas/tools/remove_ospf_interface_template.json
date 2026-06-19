@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ospf_interface_template",
+  "type": "object",
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "description": "Template id, e.g. \"*2\""
+    }
+  },
+  "required": [
+    "template_id"
+  ],
+  "additionalProperties": false
+}

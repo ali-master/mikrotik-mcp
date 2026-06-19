@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_igmp_proxy_interface_enabled",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "IGMP-proxy interface name"
+    },
+    "enabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "enabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_rpki_session",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Session id, e.g. \"*1\""
+    },
+    "address": {
+      "type": "string"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "refresh_interval": {
+      "type": "string"
+    },
+    "expire_interval": {
+      "type": "string"
+    },
+    "retry_interval": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "session_id"
+  ],
+  "additionalProperties": false
+}

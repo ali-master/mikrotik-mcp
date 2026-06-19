@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_bfd_configuration",
+  "type": "object",
+  "properties": {
+    "config_id": {
+      "type": "string",
+      "description": "Configuration id, e.g. \"*1\""
+    },
+    "interfaces": {
+      "type": "string"
+    },
+    "vrf": {
+      "type": "string"
+    },
+    "min_rx": {
+      "type": "string"
+    },
+    "min_tx": {
+      "type": "string"
+    },
+    "multiplier": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "config_id"
+  ],
+  "additionalProperties": false
+}

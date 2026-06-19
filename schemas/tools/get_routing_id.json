@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_routing_id",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Router-ID instance name"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

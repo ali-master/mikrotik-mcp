@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_gmp_group_memberships",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "description": "Show only memberships on this interface",
+      "type": "string"
+    },
+    "group_filter": {
+      "description": "Substring match on the multicast group address",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

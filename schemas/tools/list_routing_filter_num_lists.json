@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_routing_filter_num_lists",
+  "type": "object",
+  "properties": {
+    "list_filter": {
+      "description": "Show only entries of this named list",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

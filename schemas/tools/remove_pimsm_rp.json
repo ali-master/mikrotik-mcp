@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_pimsm_rp",
+  "type": "object",
+  "properties": {
+    "rp_id": {
+      "type": "string",
+      "description": "RP id, e.g. \"*1\""
+    }
+  },
+  "required": [
+    "rp_id"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ospf_interface_template",
+  "type": "object",
+  "properties": {
+    "area": {
+      "type": "string",
+      "description": "OSPF area name to attach matched interfaces to"
+    },
+    "interfaces": {
+      "description": "Interface or interface-list name",
+      "type": "string"
+    },
+    "networks": {
+      "description": "Network prefix(es) to enable OSPF on, e.g. \"10.0.0.0/24\"",
+      "type": "string"
+    },
+    "cost": {
+      "description": "Output cost / metric",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "priority": {
+      "description": "DR election priority (0 = never DR)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "broadcast",
+        "ptp",
+        "nbma",
+        "ptmp",
+        "virtual-link"
+      ]
+    },
+    "passive": {
+      "type": "boolean"
+    },
+    "hello_interval": {
+      "description": "e.g. \"10s\"",
+      "type": "string"
+    },
+    "dead_interval": {
+      "description": "e.g. \"40s\"",
+      "type": "string"
+    },
+    "auth": {
+      "type": "string",
+      "enum": [
+        "simple",
+        "md5",
+        "sha1",
+        "sha256",
+        "sha384",
+        "sha512"
+      ]
+    },
+    "auth_id": {
+      "description": "Key id for keyed authentication",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "auth_key": {
+      "description": "Authentication key/password",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "area",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

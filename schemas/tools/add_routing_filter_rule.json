@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_routing_filter_rule",
+  "type": "object",
+  "properties": {
+    "chain": {
+      "type": "string",
+      "description": "Filter chain name, e.g. 'bgp-in'"
+    },
+    "rule": {
+      "type": "string",
+      "description": "Match/action expression, e.g. \"if (dst-len <= 24) { accept } else { reject }\""
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "place_before": {
+      "description": "Insert before this rule id to control ordering",
+      "type": "string"
+    }
+  },
+  "required": [
+    "chain",
+    "rule",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_pimsm_instance",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique instance name"
+    },
+    "afi": {
+      "default": "ipv4",
+      "description": "Address family",
+      "type": "string",
+      "enum": [
+        "ipv4",
+        "ipv6"
+      ]
+    },
+    "vrf": {
+      "type": "string"
+    },
+    "rp_set": {
+      "description": "Static RP-set name, if used",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "afi",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

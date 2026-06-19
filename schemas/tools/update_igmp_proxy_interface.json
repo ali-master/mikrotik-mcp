@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_igmp_proxy_interface",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Existing IGMP-proxy interface name"
+    },
+    "upstream": {
+      "type": "boolean"
+    },
+    "alternative_subnets": {
+      "type": "string"
+    },
+    "threshold": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface"
+  ],
+  "additionalProperties": false
+}

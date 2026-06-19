@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_bgp_connection",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique connection name"
+    },
+    "remote_address": {
+      "type": "string",
+      "description": "Peer IP address (remote.address)"
+    },
+    "remote_as": {
+      "description": "Peer AS number (remote.as)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "as": {
+      "description": "Local AS number",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "local_role": {
+      "description": "local.role: ebgp, ibgp, ebgp-customer, ebgp-provider, ibgp-rr, ibgp-rr-client, …",
+      "type": "string"
+    },
+    "local_address": {
+      "description": "Local source address (local.address)",
+      "type": "string"
+    },
+    "router_id": {
+      "description": "Override router-id for this connection",
+      "type": "string"
+    },
+    "templates": {
+      "description": "Template name(s) to inherit settings from",
+      "type": "string"
+    },
+    "address_families": {
+      "description": "Comma list, e.g. \"ip\" or \"ip,ipv6,l2vpn\"",
+      "type": "string"
+    },
+    "hold_time": {
+      "description": "e.g. \"3m\" or \"180s\"",
+      "type": "string"
+    },
+    "keepalive_time": {
+      "type": "string"
+    },
+    "multihop": {
+      "description": "Allow non-directly-connected peers",
+      "type": "boolean"
+    },
+    "nexthop_choice": {
+      "description": "default, force-self, or propagate",
+      "type": "string"
+    },
+    "input_filter": {
+      "description": "Routing filter chain for inbound routes (input.filter)",
+      "type": "string"
+    },
+    "output_filter": {
+      "description": "Routing filter chain for outbound routes (output.filter)",
+      "type": "string"
+    },
+    "routing_table": {
+      "description": "RIB to install learned routes into",
+      "type": "string"
+    },
+    "vrf": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "remote_address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

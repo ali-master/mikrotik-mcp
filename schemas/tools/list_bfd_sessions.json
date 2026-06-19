@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_bfd_sessions",
+  "type": "object",
+  "properties": {
+    "up_only": {
+      "default": false,
+      "description": "Show only sessions currently up",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "up_only"
+  ],
+  "additionalProperties": false
+}

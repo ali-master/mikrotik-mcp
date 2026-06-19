@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_bgp_advertisements",
+  "type": "object",
+  "properties": {
+    "peer_filter": {
+      "description": "Substring match on the peer name",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

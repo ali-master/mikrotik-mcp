@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_routing_filter_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "description": "Rule id, e.g. \"*3\""
+    },
+    "chain": {
+      "type": "string"
+    },
+    "rule": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "rule_id"
+  ],
+  "additionalProperties": false
+}

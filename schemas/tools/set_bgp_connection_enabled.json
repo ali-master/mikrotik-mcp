@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_bgp_connection_enabled",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "BGP connection name"
+    },
+    "enabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "enabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_routing_filter_rules",
+  "type": "object",
+  "properties": {
+    "chain_filter": {
+      "description": "Show only rules in this chain",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

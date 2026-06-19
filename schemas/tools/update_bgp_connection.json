@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_bgp_connection",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Existing BGP connection name"
+    },
+    "remote_address": {
+      "type": "string"
+    },
+    "remote_as": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "as": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "local_role": {
+      "type": "string"
+    },
+    "local_address": {
+      "type": "string"
+    },
+    "router_id": {
+      "type": "string"
+    },
+    "address_families": {
+      "type": "string"
+    },
+    "hold_time": {
+      "type": "string"
+    },
+    "keepalive_time": {
+      "type": "string"
+    },
+    "multihop": {
+      "type": "boolean"
+    },
+    "input_filter": {
+      "type": "string"
+    },
+    "output_filter": {
+      "type": "string"
+    },
+    "routing_table": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

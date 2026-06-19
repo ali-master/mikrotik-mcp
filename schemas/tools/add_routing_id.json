@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_routing_id",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique instance name, referenced by OSPF/BGP"
+    },
+    "id": {
+      "description": "Fixed router-id as an IPv4 address, e.g. '10.0.0.1'",
+      "type": "string"
+    },
+    "select_dynamic_id": {
+      "description": "Interface/loopback name to auto-derive the id from when `id` is omitted",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

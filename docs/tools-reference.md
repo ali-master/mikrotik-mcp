@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**367 tools** across **37 modules**. A `*` marks a required parameter.
+**466 tools** across **51 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -17,9 +17,23 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [PoE](#poe) | Interfaces | 3 | Power-over-Ethernet status and configuration (`/interface ethernet poe`). |
 | [IP Addresses](#ip-address) | Addressing & Routing | 4 | Interface IP addressing (`/ip address`). |
 | [IP Pools](#ip-pool) | Addressing & Routing | 7 | Address pools for DHCP/PPP (`/ip pool`). |
-| [Routing](#routes) | Addressing & Routing | 14 | Static routes, routing table, route checks and cache (`/ip route`). |
+| [Routing — Static](#routes) | Addressing & Routing | 14 | Static routes, routing table, route checks and cache (`/ip route`). |
 | [DHCP](#dhcp) | Addressing & Routing | 6 | DHCP servers, networks and pools (`/ip dhcp-server`). |
 | [DNS](#dns) | Addressing & Routing | 15 | DNS settings, static records, cache and regexp (`/ip dns`). |
+| [Router ID](#routing-id) | Dynamic Routing | 6 | Router-ID instances for OSPF/BGP (`/routing id`). |
+| [Routing Settings](#routing-settings) | Dynamic Routing | 2 | Global routing settings: ECMP hash policy, VRF-as-interface (`/routing settings`). |
+| [Routing Tables](#routing-table) | Dynamic Routing | 6 | Named routing tables / FIBs (`/routing table`). |
+| [Routing Rules](#routing-rule) | Dynamic Routing | 6 | Policy routing rules selecting a table by src/dst/interface/mark (`/routing rule`). |
+| [Next-hops](#routing-nexthop) | Dynamic Routing | 2 | Resolved recursive next-hop table, read-only diagnostics (`/routing nexthop`). |
+| [Routing Filters](#routing-filter) | Dynamic Routing | 9 | Route filter rules, select-rules and num-lists (`/routing filter`). |
+| [BFD](#routing-bfd) | Dynamic Routing | 6 | Bidirectional Forwarding Detection config + sessions (`/routing bfd`). |
+| [BGP](#routing-bgp) | Dynamic Routing | 11 | BGP connections, templates, sessions and advertisements (`/routing bgp`). |
+| [OSPF](#routing-ospf) | Dynamic Routing | 15 | OSPF instances, areas, ranges, interface-templates, neighbors and LSAs (`/routing ospf`). |
+| [RIP](#routing-rip) | Dynamic Routing | 11 | RIP instances, interface-templates, static + dynamic neighbors (`/routing rip`). |
+| [PIM-SM](#routing-pimsm) | Dynamic Routing | 10 | PIM Sparse-Mode instances, interface-templates, RPs and neighbors (`/routing pimsm`). |
+| [IGMP Proxy](#routing-igmp-proxy) | Dynamic Routing | 8 | IGMP proxy settings, interfaces and forwarding cache (`/routing igmp-proxy`). |
+| [GMP](#routing-gmp) | Dynamic Routing | 2 | Group Management Protocol (IGMP/MLD) interfaces and memberships (`/routing gmp`). |
+| [RPKI](#routing-rpki) | Dynamic Routing | 5 | RPKI validator sessions for BGP origin validation (`/routing rpki`). |
 | [Firewall — Filter](#firewall-filter) | Security | 9 | Filter rules and a guided basic setup (`/ip firewall filter`). |
 | [Firewall — NAT](#firewall-nat) | Security | 8 | NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`). |
 | [Address Lists](#address-list) | Security | 6 | Firewall address-lists (`/ip firewall address-list`). |
@@ -149,7 +163,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `list_ip_pool_used` | 🟢 read | `pool_name`, `address_filter`, `mac_filter`, `info_filter` | Lists currently used (allocated) addresses from IP pools. |
 | `expand_ip_pool` | 🟡 write·idem | `name`*, `additional_ranges`* | Expands an existing IP pool by appending additional address ranges. |
 
-## Routing
+## Routing — Static
 
 <a id="routes"></a>Static routes, routing table, route checks and cache (`/ip route`).
 
@@ -204,6 +218,203 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `add_dns_regexp` | 🟡 write | `regexp`*, `address`*, `ttl`*, `comment`, `disabled`* | Adds a DNS regexp entry. |
 | `test_dns_query` | 🟢 read | `name`*, `server`, `type`* | Tests a DNS query. |
 | `export_dns_config` | 🟢 read | `filename` | Exports DNS configuration to a file. |
+
+## Router ID
+
+<a id="routing-id"></a>Router-ID instances for OSPF/BGP (`/routing id`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_routing_ids` | 🟢 read | `name_filter` | Lists Router-ID instances (`/routing id`). Each instance assigns a stable 32-bit router identifier to a routing process (OSPF/BGP) and can auto-select the ID from a chosen interface or loopback. |
+| `get_routing_id` | 🟢 read | `name`* | Gets detailed information about a specific Router-ID instance by name. |
+| `add_routing_id` | 🟡 write | `name`*, `id`, `select_dynamic_id`, `comment`, `disabled`* | Adds a Router-ID instance. Either pin a fixed `id` (an IPv4 address) or let RouterOS pick one dynamically from an interface/loopback via `select_dynamic_id`. |
+| `update_routing_id` | 🟡 write·idem | `name`*, `id`, `select_dynamic_id`, `comment`, `disabled` | Updates a Router-ID instance. Pass "" to `id` or `select_dynamic_id` to clear that property. |
+| `remove_routing_id` | 🔴 destructive | `name`* | Removes a Router-ID instance by name. |
+| `set_routing_id_enabled` | 🟡 write·idem | `name`*, `enabled`* | Enables or disables a Router-ID instance by name. |
+
+## Routing Settings
+
+<a id="routing-settings"></a>Global routing settings: ECMP hash policy, VRF-as-interface (`/routing settings`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_routing_settings` | 🟢 read | _none_ | Shows global routing settings (`/routing settings`): ECMP/multipath hash policy for IPv4 and IPv6 and whether VRFs are treated as interfaces. |
+| `update_routing_settings` | 🟡 write·idem | `ipv4_multipath_hash_policy`, `ipv6_multipath_hash_policy`, `ipv4_vrf_as_interface` | Updates global routing settings. `*_multipath_hash_policy` controls how ECMP next-hops are chosen (l3 = src/dst IP, l3-inner = inner header for tunnels, l4 = include L4 ports). `ipv4_vrf_as_interface` exposes VRFs as interfaces to the rest of the config. |
+
+## Routing Tables
+
+<a id="routing-table"></a>Named routing tables / FIBs (`/routing table`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_routing_tables` | 🟢 read | `name_filter` | Lists routing tables (`/routing table`). Each named table is a separate RIB; set `fib` on a table to also install its routes into the forwarding plane (FIB). The built-in `main` table is always present. |
+| `get_routing_table_def` | 🟢 read | `name`* | Gets detailed information about a specific routing table definition by name. |
+| `add_routing_table` | 🟡 write | `name`*, `fib`*, `comment`, `disabled`* | Adds a named routing table. Enable `fib` to install the table's routes into the forwarding plane (otherwise the table is RIB-only and used purely for lookups by routing rules/marks). |
+| `update_routing_table` | 🟡 write·idem | `name`*, `fib`, `comment`, `disabled` | Updates a routing table's fib flag, comment, or disabled state. |
+| `remove_routing_table` | 🔴 destructive | `name`* | Removes a routing table by name. The built-in `main` table cannot be removed. |
+| `set_routing_table_enabled` | 🟡 write·idem | `name`*, `enabled`* | Enables or disables a routing table by name. |
+
+## Routing Rules
+
+<a id="routing-rule"></a>Policy routing rules selecting a table by src/dst/interface/mark (`/routing rule`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_routing_rules` | 🟢 read | `table_filter`, `disabled_only`* | Lists policy routing rules (`/routing rule`). Rules are evaluated top-down and pick which routing table a packet is looked up in based on source/destination, interface or routing-mark. |
+| `get_routing_rule` | 🟢 read | `rule_id`* | Gets detailed information about a specific routing rule by its internal id. |
+| `add_routing_rule` | 🟡 write | `action`*, `table`, `src_address`, `dst_address`, `routing_mark`, `interface`, `min_prefix`, `max_prefix`, `comment`, `disabled`*, `place_before` | Adds a policy routing rule. Match on source/destination prefix, incoming interface and/or routing-mark; `action=lookup` resolves in `table` (and continues to lower-priority tables if no match), `lookup-only-in-table` stops at that table, `drop`/`unreachable` discard the packet. |
+| `update_routing_rule` | 🟡 write·idem | `rule_id`*, `action`, `table`, `src_address`, `dst_address`, `routing_mark`, `interface`, `comment`, `disabled` | Updates a routing rule by id. Pass "" to src_address, dst_address, routing_mark, interface or table to clear. |
+| `remove_routing_rule` | 🔴 destructive | `rule_id`* | Removes a routing rule by id. |
+| `set_routing_rule_enabled` | 🟡 write·idem | `rule_id`*, `enabled`* | Enables or disables a routing rule by id. |
+
+## Next-hops
+
+<a id="routing-nexthop"></a>Resolved recursive next-hop table, read-only diagnostics (`/routing nexthop`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_routing_nexthops` | 🟢 read | `gateway_filter`, `active_only`* | Lists resolved routing next-hops (`/routing nexthop`). This is the recursive next-hop resolution table: it shows how each gateway resolves to a concrete interface + immediate gateway, which routes reference it, and whether it is currently active. Read-only and diagnostic — useful for debugging recursive/BGP next-hops. |
+| `get_routing_nexthop_stats` | 🟢 read | _none_ | Summarises the routing next-hop table: total vs active next-hop count. |
+
+## Routing Filters
+
+<a id="routing-filter"></a>Route filter rules, select-rules and num-lists (`/routing filter`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_routing_filter_rules` | 🟢 read | `chain_filter` | Lists routing filter rules (`/routing filter rule`). Rules belong to a named chain and are written as a script-like expression, e.g. `if (dst in 10.0.0.0/8) { set distance 30; accept }`. Chains are referenced by BGP/OSPF as input/output filters and by `select-rule` matchers. |
+| `add_routing_filter_rule` | 🟡 write | `chain`*, `rule`*, `comment`, `disabled`*, `place_before` | Adds a routing filter rule to a chain. `rule` is the full match/action expression; create the chain implicitly by naming it here, then reference it from a BGP/OSPF input/output filter. |
+| `update_routing_filter_rule` | 🟡 write·idem | `rule_id`*, `chain`, `rule`, `comment`, `disabled` | Updates a routing filter rule's chain, expression, comment, or disabled state by id. |
+| `remove_routing_filter_rule` | 🔴 destructive | `rule_id`* | Removes a routing filter rule by id. |
+| `set_routing_filter_rule_enabled` | 🟡 write·idem | `rule_id`*, `enabled`* | Enables or disables a routing filter rule by id. |
+| `list_routing_filter_select_rules` | 🟢 read | _none_ | Lists routing filter select-rules (`/routing filter select-rule`). Select-rules choose which filter `chain` to jump into based on prefix/length conditions — the structured front-end to the script chains. |
+| `list_routing_filter_num_lists` | 🟢 read | `list_filter` | Lists routing filter num-lists (`/routing filter num-list`). A num-list is a named set of numeric ranges (AS numbers, communities, prefix lengths) that filter rules can match against by name. |
+| `add_routing_filter_num_list` | 🟡 write | `list`*, `range`*, `comment` | Adds a numeric range entry to a named num-list. |
+| `remove_routing_filter_num_list` | 🔴 destructive | `entry_id`* | Removes a num-list entry by id. |
+
+## BFD
+
+<a id="routing-bfd"></a>Bidirectional Forwarding Detection config + sessions (`/routing bfd`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_bfd_configurations` | 🟢 read | _none_ | Lists BFD configuration entries (`/routing bfd configuration`). BFD gives sub-second failure detection for a link/neighbor so routing protocols (OSPF/BGP) can tear down a session far faster than their own hold timers. Each entry binds timers to a set of interfaces in a VRF. |
+| `add_bfd_configuration` | 🟡 write | `interfaces`*, `vrf`, `min_rx`, `min_tx`, `multiplier`, `comment`, `disabled`* | Adds a BFD configuration. `interfaces` selects where BFD runs (an interface or interface-list); `min_rx`/`min_tx` are the desired minimum receive/transmit intervals and `multiplier` is how many missed packets declare the session down (detection time ≈ interval × multiplier). |
+| `update_bfd_configuration` | 🟡 write·idem | `config_id`*, `interfaces`, `vrf`, `min_rx`, `min_tx`, `multiplier`, `comment`, `disabled` | Updates a BFD configuration entry by id. |
+| `remove_bfd_configuration` | 🔴 destructive | `config_id`* | Removes a BFD configuration entry by id. |
+| `set_bfd_configuration_enabled` | 🟡 write·idem | `config_id`*, `enabled`* | Enables or disables a BFD configuration entry by id. |
+| `list_bfd_sessions` | 🟢 read | `up_only`* | Lists live BFD sessions (`/routing bfd session`): each neighbor's state (up/down), local/remote discriminators and negotiated timers. Read-only — use it to confirm BFD is actually up before relying on it for fast failover. |
+
+## BGP
+
+<a id="routing-bgp"></a>BGP connections, templates, sessions and advertisements (`/routing bgp`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_bgp_connections` | 🟢 read | `name_filter` | Lists BGP connections (`/routing bgp connection`). In RouterOS v7 a 'connection' is one configured peer (or listener) that pulls common settings from optional templates. Shows local/remote AS, addresses and role. |
+| `get_bgp_connection` | 🟢 read | `name`* | Gets detailed configuration for a specific BGP connection by name. |
+| `add_bgp_connection` | 🟡 write | `name`*, `remote_address`*, `remote_as`, `as`, `local_role`, `local_address`, `router_id`, `templates`, `address_families`, `hold_time`, `keepalive_time`, `multihop`, `nexthop_choice`, `input_filter`, `output_filter`, `routing_table`, `vrf`, `comment`, `disabled`* | Adds a BGP connection (peer). At minimum give `name`, the peer `remote_address`/`remote_as`, the local `as` and a `local_role` (ebgp or ibgp). Input/output route filters reference `/routing filter` chains. Common settings can be factored into a template referenced via `templates`. |
+| `update_bgp_connection` | 🟡 write·idem | `name`*, `remote_address`, `remote_as`, `as`, `local_role`, `local_address`, `router_id`, `address_families`, `hold_time`, `keepalive_time`, `multihop`, `input_filter`, `output_filter`, `routing_table`, `comment`, `disabled` | Updates settings of an existing BGP connection by name. |
+| `remove_bgp_connection` | 🔴 destructive | `name`* | Removes a BGP connection by name (tears down the peering). |
+| `set_bgp_connection_enabled` | 🟡 write·idem | `name`*, `enabled`* | Enables or disables a BGP connection by name. |
+| `list_bgp_templates` | 🟢 read | _none_ | Lists BGP templates (`/routing bgp template`). Templates hold shared settings (AS, address-families, filters, timers) that connections inherit via their `templates` property. |
+| `add_bgp_template` | 🟡 write | `name`*, `as`, `router_id`, `address_families`, `input_filter`, `output_filter`, `routing_table`, `comment`, `disabled`* | Adds a BGP template carrying shared peer settings. |
+| `remove_bgp_template` | 🔴 destructive | `name`* | Removes a BGP template by name. |
+| `list_bgp_sessions` | 🟢 read | `established_only`* | Lists active BGP sessions (`/routing bgp session`): negotiated state (established/idle/…), remote AS, uptime and prefix counts. Read-only — the authoritative view of which peerings are actually up. |
+| `list_bgp_advertisements` | 🟢 read | `peer_filter` | Lists prefixes advertised to BGP peers (`/routing bgp advertisements`). Read-only — useful to confirm exactly what this router is sending to a given peer after output filters are applied. |
+
+## OSPF
+
+<a id="routing-ospf"></a>OSPF instances, areas, ranges, interface-templates, neighbors and LSAs (`/routing ospf`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_ospf_instances` | 🟢 read | _none_ | Lists OSPF instances (`/routing ospf instance`). An instance is one OSPF process: it fixes the protocol version (2 for IPv4, 3 for IPv6), router-id, redistribution and import/export filter chains. |
+| `add_ospf_instance` | 🟡 write | `name`*, `version`*, `router_id`, `vrf`, `redistribute`, `in_filter_chain`, `out_filter_chain`, `originate_default`, `comment`, `disabled`* | Adds an OSPF instance. `version` 2 = OSPFv2 (IPv4), 3 = OSPFv3 (IPv6). `router_id` may be an IPv4 address, 'main', or the name of a `/routing id`. `redistribute` is a comma list (connected,static,rip,bgp,…). |
+| `update_ospf_instance` | 🟡 write·idem | `name`*, `router_id`, `redistribute`, `in_filter_chain`, `out_filter_chain`, `originate_default`, `comment`, `disabled` | Updates an OSPF instance by name. |
+| `remove_ospf_instance` | 🔴 destructive | `name`* | Removes an OSPF instance by name. |
+| `list_ospf_areas` | 🟢 read | _none_ | Lists OSPF areas (`/routing ospf area`). An area groups links inside an instance; `type` controls LSA flooding (default/backbone, stub, nssa). |
+| `add_ospf_area` | 🟡 write | `name`*, `area_id`*, `instance`*, `type`, `no_summaries`, `comment`, `disabled`* | Adds an OSPF area to an instance. The backbone is area-id 0.0.0.0. |
+| `remove_ospf_area` | 🔴 destructive | `name`* | Removes an OSPF area by name. |
+| `list_ospf_area_ranges` | 🟢 read | _none_ | Lists OSPF area ranges (`/routing ospf area range`): aggregate prefixes advertised at an area boundary to summarise intra-area routes. |
+| `add_ospf_area_range` | 🟡 write | `area`*, `prefix`*, `advertise`*, `cost`, `comment` | Adds a summarisation range to an OSPF area. |
+| `remove_ospf_area_range` | 🔴 destructive | `range_id`* | Removes an OSPF area range by id. |
+| `list_ospf_interface_templates` | 🟢 read | _none_ | Lists OSPF interface templates (`/routing ospf interface-template`). A template binds interfaces/networks to an area and sets per-link parameters (cost, type, timers, authentication, passive). |
+| `add_ospf_interface_template` | 🟡 write | `area`*, `interfaces`, `networks`, `cost`, `priority`, `type`, `passive`, `hello_interval`, `dead_interval`, `auth`, `auth_id`, `auth_key`, `comment`, `disabled`* | Adds an OSPF interface template. Match links via `interfaces` and/or `networks`; `type` sets the link model (broadcast/ptp/nbma/ptmp), `passive` advertises the subnet without forming adjacencies, and the `auth_*` fields enable per-interface authentication. |
+| `remove_ospf_interface_template` | 🔴 destructive | `template_id`* | Removes an OSPF interface template by id. |
+| `list_ospf_neighbors` | 🟢 read | _none_ | Lists OSPF neighbors (`/routing ospf neighbor`): adjacency state (Full/2-Way/…), neighbor router-id and address. Read-only — the key health check for OSPF adjacencies. |
+| `list_ospf_lsa` | 🟢 read | `area_filter` | Lists the OSPF link-state database (`/routing ospf lsa`): every LSA the router holds, by type, area and originator. Read-only — used to inspect topology and diagnose flooding/summarisation problems. |
+
+## RIP
+
+<a id="routing-rip"></a>RIP instances, interface-templates, static + dynamic neighbors (`/routing rip`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_rip_instances` | 🟢 read | _none_ | Lists RIP instances (`/routing rip instance`). An instance is one RIP process with its own router-id, redistribution and import/export filter chains. |
+| `add_rip_instance` | 🟡 write | `name`*, `router_id`, `vrf`, `redistribute`, `in_filter_chain`, `out_filter_chain`, `originate_default`, `comment`, `disabled`* | Adds a RIP instance. `redistribute` is a comma list (connected,static,ospf,bgp,…); filter chains reference `/routing filter`. |
+| `update_rip_instance` | 🟡 write·idem | `name`*, `router_id`, `redistribute`, `in_filter_chain`, `out_filter_chain`, `originate_default`, `comment`, `disabled` | Updates a RIP instance by name. |
+| `remove_rip_instance` | 🔴 destructive | `name`* | Removes a RIP instance by name. |
+| `list_rip_interface_templates` | 🟢 read | _none_ | Lists RIP interface templates (`/routing rip interface-template`): which interfaces participate in an instance and their per-link options (passive, authentication, key-chain). |
+| `add_rip_interface_template` | 🟡 write | `instance`*, `interfaces`*, `passive`, `key_chain`, `comment`, `disabled`* | Adds a RIP interface template binding interfaces to an instance. `passive` advertises without sending updates; `key_chain` enables authentication. |
+| `remove_rip_interface_template` | 🔴 destructive | `template_id`* | Removes a RIP interface template by id. |
+| `list_rip_static_neighbors` | 🟢 read | _none_ | Lists statically-configured RIP neighbors (`/routing rip static-neighbor`) — used to unicast RIP updates to peers across non-broadcast links. |
+| `add_rip_static_neighbor` | 🟡 write | `address`*, `instance`, `comment`, `disabled`* | Adds a static RIP neighbor to unicast updates to. |
+| `remove_rip_static_neighbor` | 🔴 destructive | `neighbor_id`* | Removes a RIP static neighbor by id. |
+| `list_rip_neighbors` | 🟢 read | _none_ | Lists discovered RIP neighbors (`/routing rip neighbor`): peers this router is exchanging routes with, with last-update timing. Read-only. |
+
+## PIM-SM
+
+<a id="routing-pimsm"></a>PIM Sparse-Mode instances, interface-templates, RPs and neighbors (`/routing pimsm`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_pimsm_instances` | 🟢 read | _none_ | Lists PIM Sparse-Mode instances (`/routing pimsm instance`). PIM-SM builds multicast distribution trees rooted at a Rendezvous Point (RP). An instance fixes the address family and VRF the protocol runs in. |
+| `add_pimsm_instance` | 🟡 write | `name`*, `afi`*, `vrf`, `rp_set`, `comment`, `disabled`* | Adds a PIM Sparse-Mode instance. |
+| `remove_pimsm_instance` | 🔴 destructive | `name`* | Removes a PIM-SM instance by name. |
+| `list_pimsm_interface_templates` | 🟢 read | _none_ | Lists PIM-SM interface templates (`/routing pimsm interface-template`): which interfaces run PIM and their hello/priority settings (DR election). |
+| `add_pimsm_interface_template` | 🟡 write | `instance`*, `interfaces`*, `priority`, `hello_period`, `comment`, `disabled`* | Adds a PIM-SM interface template binding interfaces to an instance. |
+| `remove_pimsm_interface_template` | 🔴 destructive | `template_id`* | Removes a PIM-SM interface template by id. |
+| `list_pimsm_rps` | 🟢 read | _none_ | Lists PIM-SM Rendezvous Points (`/routing pimsm rp`): the RP addresses and the multicast group ranges each serves as the root of the shared tree. |
+| `add_pimsm_rp` | 🟡 write | `instance`*, `address`*, `group`, `comment`, `disabled`* | Adds a static Rendezvous Point for a multicast group range. |
+| `remove_pimsm_rp` | 🔴 destructive | `rp_id`* | Removes a PIM-SM Rendezvous Point by id. |
+| `list_pimsm_neighbors` | 🟢 read | _none_ | Lists PIM-SM neighbors (`/routing pimsm neighbor`): adjacent PIM routers discovered via Hello messages, with their DR priority and timers. Read-only. |
+
+## IGMP Proxy
+
+<a id="routing-igmp-proxy"></a>IGMP proxy settings, interfaces and forwarding cache (`/routing igmp-proxy`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_igmp_proxy_settings` | 🟢 read | _none_ | Shows global IGMP-proxy settings (`/routing igmp-proxy`). IGMP proxy forwards multicast between a single upstream and one or more downstream interfaces without a full multicast routing protocol — ideal for IPTV. |
+| `update_igmp_proxy_settings` | 🟡 write·idem | `quick_leave`, `query_interval`, `query_response_interval` | Updates global IGMP-proxy settings. `quick_leave` prunes a group immediately on leave (good for IPTV channel zapping); query intervals tune membership refresh behaviour. |
+| `list_igmp_proxy_interfaces` | 🟢 read | _none_ | Lists IGMP-proxy interfaces (`/routing igmp-proxy interface`). Exactly one interface should be `upstream` (toward the multicast source); the rest are downstream toward receivers. |
+| `add_igmp_proxy_interface` | 🟡 write | `interface`*, `upstream`*, `alternative_subnets`, `threshold`, `comment`, `disabled`* | Adds an interface to the IGMP proxy. Set `upstream=true` for the interface facing the multicast source; `alternative_subnets` whitelists extra source subnets reachable through this interface. |
+| `update_igmp_proxy_interface` | 🟡 write·idem | `interface`*, `upstream`, `alternative_subnets`, `threshold`, `comment`, `disabled` | Updates an IGMP-proxy interface by its interface name. |
+| `remove_igmp_proxy_interface` | 🔴 destructive | `interface`* | Removes an IGMP-proxy interface by its interface name. |
+| `set_igmp_proxy_interface_enabled` | 🟡 write·idem | `interface`*, `enabled`* | Enables or disables an IGMP-proxy interface by name. |
+| `list_igmp_proxy_mfc` | 🟢 read | _none_ | Lists the IGMP-proxy multicast forwarding cache (`/routing igmp-proxy mfc`): active (source, group) entries and which downstream interfaces each is being forwarded to. Read-only — the live multicast forwarding state. |
+
+## GMP
+
+<a id="routing-gmp"></a>Group Management Protocol (IGMP/MLD) interfaces and memberships (`/routing gmp`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_gmp_interfaces` | 🟢 read | _none_ | Lists GMP interfaces (`/routing gmp interface`). GMP is RouterOS's shared Group Management Protocol layer (IGMP for IPv4, MLD for IPv6) used by PIM-SM and IGMP-proxy to learn receiver group memberships. Read-only — shows the querier role, version and timers per interface. |
+| `list_gmp_group_memberships` | 🟢 read | `interface_filter`, `group_filter` | Lists GMP group memberships (`/routing gmp group`): the multicast groups currently joined per interface, as learned from IGMP/MLD reports. Read-only — the source of truth for which downstream segments want which groups. |
+
+## RPKI
+
+<a id="routing-rpki"></a>RPKI validator sessions for BGP origin validation (`/routing rpki`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_rpki_sessions` | 🟢 read | `group_filter` | Lists RPKI sessions (`/routing rpki`). Each session is an RTR connection to a validator cache that streams Validated ROA Payloads (VRPs); BGP filters reference the session `group` to mark routes valid/invalid/unknown for Route Origin Validation. Shows connection status and VRP counts. |
+| `add_rpki_session` | 🟡 write | `group`*, `address`*, `port`*, `refresh_interval`, `expire_interval`, `retry_interval`, `vrf`, `comment`, `disabled`* | Adds an RPKI session to a validator cache. `group` is the name BGP filters match against; `address`/`port` point at the RTR cache (port 8282 is the common rpki-rtr default). Tune refresh/retry/expire intervals to control how often VRPs are pulled and when stale data is dropped. |
+| `update_rpki_session` | 🟡 write·idem | `session_id`*, `address`, `port`, `refresh_interval`, `expire_interval`, `retry_interval`, `comment`, `disabled` | Updates an RPKI session by id. |
+| `remove_rpki_session` | 🔴 destructive | `session_id`* | Removes an RPKI session by id (BGP routes using its group fall back to 'unknown'). |
+| `set_rpki_session_enabled` | 🟡 write·idem | `session_id`*, `enabled`* | Enables or disables an RPKI session by id. |
 
 ## Firewall — Filter
 

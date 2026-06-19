@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_pimsm_rp",
+  "type": "object",
+  "properties": {
+    "instance": {
+      "type": "string",
+      "description": "PIM-SM instance name"
+    },
+    "address": {
+      "type": "string",
+      "description": "RP IP address"
+    },
+    "group": {
+      "description": "Multicast group range, e.g. \"239.0.0.0/8\"",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "instance",
+    "address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

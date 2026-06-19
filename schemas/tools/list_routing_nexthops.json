@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_routing_nexthops",
+  "type": "object",
+  "properties": {
+    "gateway_filter": {
+      "description": "Substring match on the resolved gateway address",
+      "type": "string"
+    },
+    "active_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "active_only"
+  ],
+  "additionalProperties": false
+}

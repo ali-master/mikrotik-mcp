@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 367,
+  "toolCount": 466,
   "tools": [
     {
       "name": "list_interfaces",
@@ -2804,6 +2804,3121 @@
             "type": "string"
           }
         },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_ids",
+      "title": "List Routing IDs",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists Router-ID instances (`/routing id`). Each instance assigns a stable 32-bit router identifier to a routing process (OSPF/BGP) and can auto-select the ID from a chosen interface or loopback.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Substring match on the instance name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_routing_id",
+      "title": "Get Routing ID",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed information about a specific Router-ID instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Router-ID instance name"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_routing_id",
+      "title": "Add Routing ID",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a Router-ID instance. Either pin a fixed `id` (an IPv4 address) or let RouterOS pick one dynamically from an interface/loopback via `select_dynamic_id`.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique instance name, referenced by OSPF/BGP"
+          },
+          "id": {
+            "description": "Fixed router-id as an IPv4 address, e.g. '10.0.0.1'",
+            "type": "string"
+          },
+          "select_dynamic_id": {
+            "description": "Interface/loopback name to auto-derive the id from when `id` is omitted",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_routing_id",
+      "title": "Update Routing ID",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a Router-ID instance. Pass \"\" to `id` or `select_dynamic_id` to clear that property.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Existing Router-ID instance name"
+          },
+          "id": {
+            "description": "IPv4 router-id, or \"\" to clear",
+            "type": "string"
+          },
+          "select_dynamic_id": {
+            "description": "Interface/loopback name, or \"\" to clear",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_routing_id",
+      "title": "Remove Routing ID",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a Router-ID instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Router-ID instance name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_routing_id_enabled",
+      "title": "Enable/Disable Routing ID",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables a Router-ID instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Router-ID instance name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "true to enable, false to disable"
+          }
+        },
+        "required": [
+          "name",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_routing_settings",
+      "title": "Get Routing Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Shows global routing settings (`/routing settings`): ECMP/multipath hash policy for IPv4 and IPv6 and whether VRFs are treated as interfaces.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_routing_settings",
+      "title": "Update Routing Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates global routing settings. `*_multipath_hash_policy` controls how ECMP next-hops are chosen (l3 = src/dst IP, l3-inner = inner header for tunnels, l4 = include L4 ports). `ipv4_vrf_as_interface` exposes VRFs as interfaces to the rest of the config.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "ipv4_multipath_hash_policy": {
+            "type": "string",
+            "enum": [
+              "l3",
+              "l3-inner",
+              "l4"
+            ]
+          },
+          "ipv6_multipath_hash_policy": {
+            "type": "string",
+            "enum": [
+              "l3",
+              "l3-inner",
+              "l4"
+            ]
+          },
+          "ipv4_vrf_as_interface": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_tables",
+      "title": "List Routing Tables",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists routing tables (`/routing table`). Each named table is a separate RIB; set `fib` on a table to also install its routes into the forwarding plane (FIB). The built-in `main` table is always present.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Substring match on table name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_routing_table_def",
+      "title": "Get Routing Table",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed information about a specific routing table definition by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Routing table name"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_routing_table",
+      "title": "Add Routing Table",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a named routing table. Enable `fib` to install the table's routes into the forwarding plane (otherwise the table is RIB-only and used purely for lookups by routing rules/marks).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique table name, referenced by routes and routing rules"
+          },
+          "fib": {
+            "default": true,
+            "description": "Install routes into the FIB (forwarding plane)",
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "fib",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_routing_table",
+      "title": "Update Routing Table",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a routing table's fib flag, comment, or disabled state.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Existing routing table name"
+          },
+          "fib": {
+            "description": "Install routes into the FIB",
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_routing_table",
+      "title": "Remove Routing Table",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a routing table by name. The built-in `main` table cannot be removed.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Routing table name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_routing_table_enabled",
+      "title": "Enable/Disable Routing Table",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables a routing table by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Routing table name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "true to enable, false to disable"
+          }
+        },
+        "required": [
+          "name",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_rules",
+      "title": "List Routing Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists policy routing rules (`/routing rule`). Rules are evaluated top-down and pick which routing table a packet is looked up in based on source/destination, interface or routing-mark.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "table_filter": {
+            "description": "Match rules targeting this table",
+            "type": "string"
+          },
+          "disabled_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "disabled_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_routing_rule",
+      "title": "Get Routing Rule",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed information about a specific routing rule by its internal id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id from list output, e.g. \"*3\""
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_routing_rule",
+      "title": "Add Routing Rule",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a policy routing rule. Match on source/destination prefix, incoming interface and/or routing-mark; `action=lookup` resolves in `table` (and continues to lower-priority tables if no match), `lookup-only-in-table` stops at that table, `drop`/`unreachable` discard the packet.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "action": {
+            "default": "lookup",
+            "type": "string",
+            "enum": [
+              "lookup",
+              "lookup-only-in-table",
+              "drop",
+              "unreachable"
+            ]
+          },
+          "table": {
+            "description": "Target routing table for lookup actions",
+            "type": "string"
+          },
+          "src_address": {
+            "description": "Source prefix, e.g. \"192.168.10.0/24\"",
+            "type": "string"
+          },
+          "dst_address": {
+            "description": "Destination prefix",
+            "type": "string"
+          },
+          "routing_mark": {
+            "description": "Match packets carrying this routing-mark",
+            "type": "string"
+          },
+          "interface": {
+            "description": "Match this incoming interface",
+            "type": "string"
+          },
+          "min_prefix": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_prefix": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          },
+          "place_before": {
+            "description": "Insert before this rule id to control ordering",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_routing_rule",
+      "title": "Update Routing Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a routing rule by id. Pass \"\" to src_address, dst_address, routing_mark, interface or table to clear.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id, e.g. \"*3\""
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "lookup",
+              "lookup-only-in-table",
+              "drop",
+              "unreachable"
+            ]
+          },
+          "table": {
+            "type": "string"
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "dst_address": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_routing_rule",
+      "title": "Remove Routing Rule",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a routing rule by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id, e.g. \"*3\""
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_routing_rule_enabled",
+      "title": "Enable/Disable Routing Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables a routing rule by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id, e.g. \"*3\""
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "true to enable, false to disable"
+          }
+        },
+        "required": [
+          "rule_id",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_nexthops",
+      "title": "List Routing Next-hops",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists resolved routing next-hops (`/routing nexthop`). This is the recursive next-hop resolution table: it shows how each gateway resolves to a concrete interface + immediate gateway, which routes reference it, and whether it is currently active. Read-only and diagnostic — useful for debugging recursive/BGP next-hops.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "gateway_filter": {
+            "description": "Substring match on the resolved gateway address",
+            "type": "string"
+          },
+          "active_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_routing_nexthop_stats",
+      "title": "Routing Next-hop Statistics",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Summarises the routing next-hop table: total vs active next-hop count.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_filter_rules",
+      "title": "List Routing Filter Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists routing filter rules (`/routing filter rule`). Rules belong to a named chain and are written as a script-like expression, e.g. `if (dst in 10.0.0.0/8) { set distance 30; accept }`. Chains are referenced by BGP/OSPF as input/output filters and by `select-rule` matchers.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain_filter": {
+            "description": "Show only rules in this chain",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_routing_filter_rule",
+      "title": "Add Routing Filter Rule",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a routing filter rule to a chain. `rule` is the full match/action expression; create the chain implicitly by naming it here, then reference it from a BGP/OSPF input/output filter.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "description": "Filter chain name, e.g. 'bgp-in'"
+          },
+          "rule": {
+            "type": "string",
+            "description": "Match/action expression, e.g. \"if (dst-len <= 24) { accept } else { reject }\""
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          },
+          "place_before": {
+            "description": "Insert before this rule id to control ordering",
+            "type": "string"
+          }
+        },
+        "required": [
+          "chain",
+          "rule",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_routing_filter_rule",
+      "title": "Update Routing Filter Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a routing filter rule's chain, expression, comment, or disabled state by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id, e.g. \"*3\""
+          },
+          "chain": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_routing_filter_rule",
+      "title": "Remove Routing Filter Rule",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a routing filter rule by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id, e.g. \"*3\""
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_routing_filter_rule_enabled",
+      "title": "Enable/Disable Routing Filter Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables a routing filter rule by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule id, e.g. \"*3\""
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rule_id",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_filter_select_rules",
+      "title": "List Routing Filter Select-rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists routing filter select-rules (`/routing filter select-rule`). Select-rules choose which filter `chain` to jump into based on prefix/length conditions — the structured front-end to the script chains.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_routing_filter_num_lists",
+      "title": "List Routing Filter Num-lists",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists routing filter num-lists (`/routing filter num-list`). A num-list is a named set of numeric ranges (AS numbers, communities, prefix lengths) that filter rules can match against by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "list_filter": {
+            "description": "Show only entries of this named list",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_routing_filter_num_list",
+      "title": "Add Routing Filter Num-list Entry",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a numeric range entry to a named num-list.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "description": "Num-list name to add to"
+          },
+          "range": {
+            "type": "string",
+            "description": "Numeric range or single value, e.g. \"65000-65010\" or \"100\""
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "list",
+          "range"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_routing_filter_num_list",
+      "title": "Remove Routing Filter Num-list Entry",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a num-list entry by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "entry_id": {
+            "type": "string",
+            "description": "Entry id, e.g. \"*3\""
+          }
+        },
+        "required": [
+          "entry_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bfd_configurations",
+      "title": "List BFD Configurations",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists BFD configuration entries (`/routing bfd configuration`). BFD gives sub-second failure detection for a link/neighbor so routing protocols (OSPF/BGP) can tear down a session far faster than their own hold timers. Each entry binds timers to a set of interfaces in a VRF.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_bfd_configuration",
+      "title": "Add BFD Configuration",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a BFD configuration. `interfaces` selects where BFD runs (an interface or interface-list); `min_rx`/`min_tx` are the desired minimum receive/transmit intervals and `multiplier` is how many missed packets declare the session down (detection time ≈ interval × multiplier).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interfaces": {
+            "type": "string",
+            "description": "Interface or interface-list name BFD runs on"
+          },
+          "vrf": {
+            "description": "VRF (default 'main')",
+            "type": "string"
+          },
+          "min_rx": {
+            "description": "Desired min RX interval, e.g. \"200ms\"",
+            "type": "string"
+          },
+          "min_tx": {
+            "description": "Desired min TX interval, e.g. \"200ms\"",
+            "type": "string"
+          },
+          "multiplier": {
+            "description": "Detection multiplier, e.g. 5",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interfaces",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_bfd_configuration",
+      "title": "Update BFD Configuration",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a BFD configuration entry by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "config_id": {
+            "type": "string",
+            "description": "Configuration id, e.g. \"*1\""
+          },
+          "interfaces": {
+            "type": "string"
+          },
+          "vrf": {
+            "type": "string"
+          },
+          "min_rx": {
+            "type": "string"
+          },
+          "min_tx": {
+            "type": "string"
+          },
+          "multiplier": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "config_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_bfd_configuration",
+      "title": "Remove BFD Configuration",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a BFD configuration entry by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "config_id": {
+            "type": "string",
+            "description": "Configuration id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "config_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_bfd_configuration_enabled",
+      "title": "Enable/Disable BFD Configuration",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables a BFD configuration entry by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "config_id": {
+            "type": "string",
+            "description": "Configuration id, e.g. \"*1\""
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "config_id",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bfd_sessions",
+      "title": "List BFD Sessions",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists live BFD sessions (`/routing bfd session`): each neighbor's state (up/down), local/remote discriminators and negotiated timers. Read-only — use it to confirm BFD is actually up before relying on it for fast failover.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "up_only": {
+            "default": false,
+            "description": "Show only sessions currently up",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "up_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bgp_connections",
+      "title": "List BGP Connections",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists BGP connections (`/routing bgp connection`). In RouterOS v7 a 'connection' is one configured peer (or listener) that pulls common settings from optional templates. Shows local/remote AS, addresses and role.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Substring match on connection name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_bgp_connection",
+      "title": "Get BGP Connection",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed configuration for a specific BGP connection by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "BGP connection name"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_bgp_connection",
+      "title": "Add BGP Connection",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a BGP connection (peer). At minimum give `name`, the peer `remote_address`/`remote_as`, the local `as` and a `local_role` (ebgp or ibgp). Input/output route filters reference `/routing filter` chains. Common settings can be factored into a template referenced via `templates`.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique connection name"
+          },
+          "remote_address": {
+            "type": "string",
+            "description": "Peer IP address (remote.address)"
+          },
+          "remote_as": {
+            "description": "Peer AS number (remote.as)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "as": {
+            "description": "Local AS number",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "local_role": {
+            "description": "local.role: ebgp, ibgp, ebgp-customer, ebgp-provider, ibgp-rr, ibgp-rr-client, …",
+            "type": "string"
+          },
+          "local_address": {
+            "description": "Local source address (local.address)",
+            "type": "string"
+          },
+          "router_id": {
+            "description": "Override router-id for this connection",
+            "type": "string"
+          },
+          "templates": {
+            "description": "Template name(s) to inherit settings from",
+            "type": "string"
+          },
+          "address_families": {
+            "description": "Comma list, e.g. \"ip\" or \"ip,ipv6,l2vpn\"",
+            "type": "string"
+          },
+          "hold_time": {
+            "description": "e.g. \"3m\" or \"180s\"",
+            "type": "string"
+          },
+          "keepalive_time": {
+            "type": "string"
+          },
+          "multihop": {
+            "description": "Allow non-directly-connected peers",
+            "type": "boolean"
+          },
+          "nexthop_choice": {
+            "description": "default, force-self, or propagate",
+            "type": "string"
+          },
+          "input_filter": {
+            "description": "Routing filter chain for inbound routes (input.filter)",
+            "type": "string"
+          },
+          "output_filter": {
+            "description": "Routing filter chain for outbound routes (output.filter)",
+            "type": "string"
+          },
+          "routing_table": {
+            "description": "RIB to install learned routes into",
+            "type": "string"
+          },
+          "vrf": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "remote_address",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_bgp_connection",
+      "title": "Update BGP Connection",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates settings of an existing BGP connection by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Existing BGP connection name"
+          },
+          "remote_address": {
+            "type": "string"
+          },
+          "remote_as": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "as": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "local_role": {
+            "type": "string"
+          },
+          "local_address": {
+            "type": "string"
+          },
+          "router_id": {
+            "type": "string"
+          },
+          "address_families": {
+            "type": "string"
+          },
+          "hold_time": {
+            "type": "string"
+          },
+          "keepalive_time": {
+            "type": "string"
+          },
+          "multihop": {
+            "type": "boolean"
+          },
+          "input_filter": {
+            "type": "string"
+          },
+          "output_filter": {
+            "type": "string"
+          },
+          "routing_table": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_bgp_connection",
+      "title": "Remove BGP Connection",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a BGP connection by name (tears down the peering).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "BGP connection name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_bgp_connection_enabled",
+      "title": "Enable/Disable BGP Connection",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables a BGP connection by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "BGP connection name"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bgp_templates",
+      "title": "List BGP Templates",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists BGP templates (`/routing bgp template`). Templates hold shared settings (AS, address-families, filters, timers) that connections inherit via their `templates` property.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_bgp_template",
+      "title": "Add BGP Template",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a BGP template carrying shared peer settings.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "as": {
+            "description": "Local AS number",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "router_id": {
+            "type": "string"
+          },
+          "address_families": {
+            "description": "e.g. \"ip,ipv6\"",
+            "type": "string"
+          },
+          "input_filter": {
+            "type": "string"
+          },
+          "output_filter": {
+            "type": "string"
+          },
+          "routing_table": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_bgp_template",
+      "title": "Remove BGP Template",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a BGP template by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "BGP template name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bgp_sessions",
+      "title": "List BGP Sessions",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists active BGP sessions (`/routing bgp session`): negotiated state (established/idle/…), remote AS, uptime and prefix counts. Read-only — the authoritative view of which peerings are actually up.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "established_only": {
+            "default": false,
+            "description": "Show only established sessions",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "established_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bgp_advertisements",
+      "title": "List BGP Advertisements",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists prefixes advertised to BGP peers (`/routing bgp advertisements`). Read-only — useful to confirm exactly what this router is sending to a given peer after output filters are applied.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "peer_filter": {
+            "description": "Substring match on the peer name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ospf_instances",
+      "title": "List OSPF Instances",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists OSPF instances (`/routing ospf instance`). An instance is one OSPF process: it fixes the protocol version (2 for IPv4, 3 for IPv6), router-id, redistribution and import/export filter chains.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_ospf_instance",
+      "title": "Add OSPF Instance",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an OSPF instance. `version` 2 = OSPFv2 (IPv4), 3 = OSPFv3 (IPv6). `router_id` may be an IPv4 address, 'main', or the name of a `/routing id`. `redistribute` is a comma list (connected,static,rip,bgp,…).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique instance name"
+          },
+          "version": {
+            "default": 2,
+            "description": "2 = OSPFv2, 3 = OSPFv3",
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 3
+          },
+          "router_id": {
+            "description": "IPv4 address, 'main', or a /routing id name",
+            "type": "string"
+          },
+          "vrf": {
+            "type": "string"
+          },
+          "redistribute": {
+            "description": "Comma list, e.g. \"connected,static\"",
+            "type": "string"
+          },
+          "in_filter_chain": {
+            "description": "Routing filter chain for received routes",
+            "type": "string"
+          },
+          "out_filter_chain": {
+            "description": "Routing filter chain for redistributed routes",
+            "type": "string"
+          },
+          "originate_default": {
+            "description": "never, if-installed, or always",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_ospf_instance",
+      "title": "Update OSPF Instance",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an OSPF instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Existing OSPF instance name"
+          },
+          "router_id": {
+            "type": "string"
+          },
+          "redistribute": {
+            "type": "string"
+          },
+          "in_filter_chain": {
+            "type": "string"
+          },
+          "out_filter_chain": {
+            "type": "string"
+          },
+          "originate_default": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_ospf_instance",
+      "title": "Remove OSPF Instance",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an OSPF instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "OSPF instance name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ospf_areas",
+      "title": "List OSPF Areas",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists OSPF areas (`/routing ospf area`). An area groups links inside an instance; `type` controls LSA flooding (default/backbone, stub, nssa).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_ospf_area",
+      "title": "Add OSPF Area",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an OSPF area to an instance. The backbone is area-id 0.0.0.0.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique area name"
+          },
+          "area_id": {
+            "type": "string",
+            "description": "Area id in IPv4 notation, e.g. \"0.0.0.0\" for backbone"
+          },
+          "instance": {
+            "type": "string",
+            "description": "OSPF instance name this area belongs to"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "default",
+              "stub",
+              "nssa"
+            ]
+          },
+          "no_summaries": {
+            "description": "Make a totally-stubby/NSSA area (block summary LSAs)",
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "area_id",
+          "instance",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_ospf_area",
+      "title": "Remove OSPF Area",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an OSPF area by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "OSPF area name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ospf_area_ranges",
+      "title": "List OSPF Area Ranges",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists OSPF area ranges (`/routing ospf area range`): aggregate prefixes advertised at an area boundary to summarise intra-area routes.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_ospf_area_range",
+      "title": "Add OSPF Area Range",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a summarisation range to an OSPF area.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string",
+            "description": "OSPF area name"
+          },
+          "prefix": {
+            "type": "string",
+            "description": "Aggregate prefix, e.g. \"10.10.0.0/16\""
+          },
+          "advertise": {
+            "default": true,
+            "description": "Advertise the summary (false suppresses it)",
+            "type": "boolean"
+          },
+          "cost": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "prefix",
+          "advertise"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_ospf_area_range",
+      "title": "Remove OSPF Area Range",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an OSPF area range by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "range_id": {
+            "type": "string",
+            "description": "Range id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "range_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ospf_interface_templates",
+      "title": "List OSPF Interface Templates",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists OSPF interface templates (`/routing ospf interface-template`). A template binds interfaces/networks to an area and sets per-link parameters (cost, type, timers, authentication, passive).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_ospf_interface_template",
+      "title": "Add OSPF Interface Template",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an OSPF interface template. Match links via `interfaces` and/or `networks`; `type` sets the link model (broadcast/ptp/nbma/ptmp), `passive` advertises the subnet without forming adjacencies, and the `auth_*` fields enable per-interface authentication.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string",
+            "description": "OSPF area name to attach matched interfaces to"
+          },
+          "interfaces": {
+            "description": "Interface or interface-list name",
+            "type": "string"
+          },
+          "networks": {
+            "description": "Network prefix(es) to enable OSPF on, e.g. \"10.0.0.0/24\"",
+            "type": "string"
+          },
+          "cost": {
+            "description": "Output cost / metric",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "priority": {
+            "description": "DR election priority (0 = never DR)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "broadcast",
+              "ptp",
+              "nbma",
+              "ptmp",
+              "virtual-link"
+            ]
+          },
+          "passive": {
+            "type": "boolean"
+          },
+          "hello_interval": {
+            "description": "e.g. \"10s\"",
+            "type": "string"
+          },
+          "dead_interval": {
+            "description": "e.g. \"40s\"",
+            "type": "string"
+          },
+          "auth": {
+            "type": "string",
+            "enum": [
+              "simple",
+              "md5",
+              "sha1",
+              "sha256",
+              "sha384",
+              "sha512"
+            ]
+          },
+          "auth_id": {
+            "description": "Key id for keyed authentication",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "auth_key": {
+            "description": "Authentication key/password",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "area",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_ospf_interface_template",
+      "title": "Remove OSPF Interface Template",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an OSPF interface template by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Template id, e.g. \"*2\""
+          }
+        },
+        "required": [
+          "template_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ospf_neighbors",
+      "title": "List OSPF Neighbors",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists OSPF neighbors (`/routing ospf neighbor`): adjacency state (Full/2-Way/…), neighbor router-id and address. Read-only — the key health check for OSPF adjacencies.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ospf_lsa",
+      "title": "List OSPF LSAs",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the OSPF link-state database (`/routing ospf lsa`): every LSA the router holds, by type, area and originator. Read-only — used to inspect topology and diagnose flooding/summarisation problems.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "area_filter": {
+            "description": "Show only LSAs for this area",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_rip_instances",
+      "title": "List RIP Instances",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists RIP instances (`/routing rip instance`). An instance is one RIP process with its own router-id, redistribution and import/export filter chains.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_rip_instance",
+      "title": "Add RIP Instance",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a RIP instance. `redistribute` is a comma list (connected,static,ospf,bgp,…); filter chains reference `/routing filter`.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique instance name"
+          },
+          "router_id": {
+            "description": "IPv4 address, 'main', or a /routing id name",
+            "type": "string"
+          },
+          "vrf": {
+            "type": "string"
+          },
+          "redistribute": {
+            "description": "Comma list, e.g. \"connected,static\"",
+            "type": "string"
+          },
+          "in_filter_chain": {
+            "type": "string"
+          },
+          "out_filter_chain": {
+            "type": "string"
+          },
+          "originate_default": {
+            "description": "never, if-installed, or always",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_rip_instance",
+      "title": "Update RIP Instance",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a RIP instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Existing RIP instance name"
+          },
+          "router_id": {
+            "type": "string"
+          },
+          "redistribute": {
+            "type": "string"
+          },
+          "in_filter_chain": {
+            "type": "string"
+          },
+          "out_filter_chain": {
+            "type": "string"
+          },
+          "originate_default": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_rip_instance",
+      "title": "Remove RIP Instance",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a RIP instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "RIP instance name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_rip_interface_templates",
+      "title": "List RIP Interface Templates",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists RIP interface templates (`/routing rip interface-template`): which interfaces participate in an instance and their per-link options (passive, authentication, key-chain).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_rip_interface_template",
+      "title": "Add RIP Interface Template",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a RIP interface template binding interfaces to an instance. `passive` advertises without sending updates; `key_chain` enables authentication.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "RIP instance name"
+          },
+          "interfaces": {
+            "type": "string",
+            "description": "Interface or interface-list name"
+          },
+          "passive": {
+            "type": "boolean"
+          },
+          "key_chain": {
+            "description": "Key-chain name for authentication",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "instance",
+          "interfaces",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_rip_interface_template",
+      "title": "Remove RIP Interface Template",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a RIP interface template by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Template id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "template_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_rip_static_neighbors",
+      "title": "List RIP Static Neighbors",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists statically-configured RIP neighbors (`/routing rip static-neighbor`) — used to unicast RIP updates to peers across non-broadcast links.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_rip_static_neighbor",
+      "title": "Add RIP Static Neighbor",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a static RIP neighbor to unicast updates to.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "Neighbor IP address"
+          },
+          "instance": {
+            "description": "RIP instance name",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "address",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_rip_static_neighbor",
+      "title": "Remove RIP Static Neighbor",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a RIP static neighbor by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "neighbor_id": {
+            "type": "string",
+            "description": "Static-neighbor id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "neighbor_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_rip_neighbors",
+      "title": "List RIP Neighbors",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists discovered RIP neighbors (`/routing rip neighbor`): peers this router is exchanging routes with, with last-update timing. Read-only.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_pimsm_instances",
+      "title": "List PIM-SM Instances",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists PIM Sparse-Mode instances (`/routing pimsm instance`). PIM-SM builds multicast distribution trees rooted at a Rendezvous Point (RP). An instance fixes the address family and VRF the protocol runs in.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_pimsm_instance",
+      "title": "Add PIM-SM Instance",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a PIM Sparse-Mode instance.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique instance name"
+          },
+          "afi": {
+            "default": "ipv4",
+            "description": "Address family",
+            "type": "string",
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ]
+          },
+          "vrf": {
+            "type": "string"
+          },
+          "rp_set": {
+            "description": "Static RP-set name, if used",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "afi",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_pimsm_instance",
+      "title": "Remove PIM-SM Instance",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a PIM-SM instance by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "PIM-SM instance name to remove"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_pimsm_interface_templates",
+      "title": "List PIM-SM Interface Templates",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists PIM-SM interface templates (`/routing pimsm interface-template`): which interfaces run PIM and their hello/priority settings (DR election).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_pimsm_interface_template",
+      "title": "Add PIM-SM Interface Template",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a PIM-SM interface template binding interfaces to an instance.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "PIM-SM instance name"
+          },
+          "interfaces": {
+            "type": "string",
+            "description": "Interface or interface-list name"
+          },
+          "priority": {
+            "description": "DR election priority",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "hello_period": {
+            "description": "Hello interval, e.g. \"30s\"",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "instance",
+          "interfaces",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_pimsm_interface_template",
+      "title": "Remove PIM-SM Interface Template",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a PIM-SM interface template by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "description": "Template id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "template_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_pimsm_rps",
+      "title": "List PIM-SM Rendezvous Points",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists PIM-SM Rendezvous Points (`/routing pimsm rp`): the RP addresses and the multicast group ranges each serves as the root of the shared tree.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_pimsm_rp",
+      "title": "Add PIM-SM Rendezvous Point",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a static Rendezvous Point for a multicast group range.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "instance": {
+            "type": "string",
+            "description": "PIM-SM instance name"
+          },
+          "address": {
+            "type": "string",
+            "description": "RP IP address"
+          },
+          "group": {
+            "description": "Multicast group range, e.g. \"239.0.0.0/8\"",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "instance",
+          "address",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_pimsm_rp",
+      "title": "Remove PIM-SM Rendezvous Point",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a PIM-SM Rendezvous Point by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rp_id": {
+            "type": "string",
+            "description": "RP id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "rp_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_pimsm_neighbors",
+      "title": "List PIM-SM Neighbors",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists PIM-SM neighbors (`/routing pimsm neighbor`): adjacent PIM routers discovered via Hello messages, with their DR priority and timers. Read-only.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_igmp_proxy_settings",
+      "title": "Get IGMP Proxy Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Shows global IGMP-proxy settings (`/routing igmp-proxy`). IGMP proxy forwards multicast between a single upstream and one or more downstream interfaces without a full multicast routing protocol — ideal for IPTV.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_igmp_proxy_settings",
+      "title": "Update IGMP Proxy Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates global IGMP-proxy settings. `quick_leave` prunes a group immediately on leave (good for IPTV channel zapping); query intervals tune membership refresh behaviour.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "quick_leave": {
+            "type": "boolean"
+          },
+          "query_interval": {
+            "description": "e.g. \"125s\"",
+            "type": "string"
+          },
+          "query_response_interval": {
+            "description": "e.g. \"10s\"",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_igmp_proxy_interfaces",
+      "title": "List IGMP Proxy Interfaces",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists IGMP-proxy interfaces (`/routing igmp-proxy interface`). Exactly one interface should be `upstream` (toward the multicast source); the rest are downstream toward receivers.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_igmp_proxy_interface",
+      "title": "Add IGMP Proxy Interface",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an interface to the IGMP proxy. Set `upstream=true` for the interface facing the multicast source; `alternative_subnets` whitelists extra source subnets reachable through this interface.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Interface name"
+          },
+          "upstream": {
+            "default": false,
+            "description": "true = upstream (toward source), false = downstream",
+            "type": "boolean"
+          },
+          "alternative_subnets": {
+            "description": "Comma list of source subnets, e.g. \"10.0.0.0/8\"",
+            "type": "string"
+          },
+          "threshold": {
+            "description": "Minimum TTL to forward",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface",
+          "upstream",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_igmp_proxy_interface",
+      "title": "Update IGMP Proxy Interface",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an IGMP-proxy interface by its interface name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Existing IGMP-proxy interface name"
+          },
+          "upstream": {
+            "type": "boolean"
+          },
+          "alternative_subnets": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_igmp_proxy_interface",
+      "title": "Remove IGMP Proxy Interface",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an IGMP-proxy interface by its interface name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "IGMP-proxy interface name to remove"
+          }
+        },
+        "required": [
+          "interface"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_igmp_proxy_interface_enabled",
+      "title": "Enable/Disable IGMP Proxy Interface",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables an IGMP-proxy interface by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "IGMP-proxy interface name"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface",
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_igmp_proxy_mfc",
+      "title": "List IGMP Proxy Forwarding Cache",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the IGMP-proxy multicast forwarding cache (`/routing igmp-proxy mfc`): active (source, group) entries and which downstream interfaces each is being forwarded to. Read-only — the live multicast forwarding state.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_gmp_interfaces",
+      "title": "List GMP Interfaces",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists GMP interfaces (`/routing gmp interface`). GMP is RouterOS's shared Group Management Protocol layer (IGMP for IPv4, MLD for IPv6) used by PIM-SM and IGMP-proxy to learn receiver group memberships. Read-only — shows the querier role, version and timers per interface.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_gmp_group_memberships",
+      "title": "List GMP Group Memberships",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists GMP group memberships (`/routing gmp group`): the multicast groups currently joined per interface, as learned from IGMP/MLD reports. Read-only — the source of truth for which downstream segments want which groups.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "description": "Show only memberships on this interface",
+            "type": "string"
+          },
+          "group_filter": {
+            "description": "Substring match on the multicast group address",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_rpki_sessions",
+      "title": "List RPKI Sessions",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists RPKI sessions (`/routing rpki`). Each session is an RTR connection to a validator cache that streams Validated ROA Payloads (VRPs); BGP filters reference the session `group` to mark routes valid/invalid/unknown for Route Origin Validation. Shows connection status and VRP counts.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "group_filter": {
+            "description": "Show only sessions in this group",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_rpki_session",
+      "title": "Add RPKI Session",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an RPKI session to a validator cache. `group` is the name BGP filters match against; `address`/`port` point at the RTR cache (port 8282 is the common rpki-rtr default). Tune refresh/retry/expire intervals to control how often VRPs are pulled and when stale data is dropped.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string",
+            "description": "RPKI group name referenced by BGP route filters"
+          },
+          "address": {
+            "type": "string",
+            "description": "Validator (RTR cache) IP address or hostname"
+          },
+          "port": {
+            "default": 8282,
+            "description": "RTR port, e.g. 8282 or 323",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "refresh_interval": {
+            "description": "e.g. \"10m\"",
+            "type": "string"
+          },
+          "expire_interval": {
+            "description": "e.g. \"2h\"",
+            "type": "string"
+          },
+          "retry_interval": {
+            "description": "e.g. \"30s\"",
+            "type": "string"
+          },
+          "vrf": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "group",
+          "address",
+          "port",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_rpki_session",
+      "title": "Update RPKI Session",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an RPKI session by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Session id, e.g. \"*1\""
+          },
+          "address": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "refresh_interval": {
+            "type": "string"
+          },
+          "expire_interval": {
+            "type": "string"
+          },
+          "retry_interval": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_rpki_session",
+      "title": "Remove RPKI Session",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an RPKI session by id (BGP routes using its group fall back to 'unknown').",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Session id, e.g. \"*1\""
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_rpki_session_enabled",
+      "title": "Enable/Disable RPKI Session",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables an RPKI session by id.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Session id, e.g. \"*1\""
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "session_id",
+          "enabled"
+        ],
         "additionalProperties": false
       }
     },

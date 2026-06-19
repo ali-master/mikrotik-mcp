@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_igmp_proxy_settings",
+  "type": "object",
+  "properties": {
+    "quick_leave": {
+      "type": "boolean"
+    },
+    "query_interval": {
+      "description": "e.g. \"125s\"",
+      "type": "string"
+    },
+    "query_response_interval": {
+      "description": "e.g. \"10s\"",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

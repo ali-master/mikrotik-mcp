@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_routing_filter_num_list",
+  "type": "object",
+  "properties": {
+    "entry_id": {
+      "type": "string",
+      "description": "Entry id, e.g. \"*3\""
+    }
+  },
+  "required": [
+    "entry_id"
+  ],
+  "additionalProperties": false
+}

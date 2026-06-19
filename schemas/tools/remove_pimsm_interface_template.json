@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_pimsm_interface_template",
+  "type": "object",
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "description": "Template id, e.g. \"*1\""
+    }
+  },
+  "required": [
+    "template_id"
+  ],
+  "additionalProperties": false
+}

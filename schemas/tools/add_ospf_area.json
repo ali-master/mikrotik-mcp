@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ospf_area",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique area name"
+    },
+    "area_id": {
+      "type": "string",
+      "description": "Area id in IPv4 notation, e.g. \"0.0.0.0\" for backbone"
+    },
+    "instance": {
+      "type": "string",
+      "description": "OSPF instance name this area belongs to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "default",
+        "stub",
+        "nssa"
+      ]
+    },
+    "no_summaries": {
+      "description": "Make a totally-stubby/NSSA area (block summary LSAs)",
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "area_id",
+    "instance",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

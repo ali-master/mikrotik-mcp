@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ospf_instance",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique instance name"
+    },
+    "version": {
+      "default": 2,
+      "description": "2 = OSPFv2, 3 = OSPFv3",
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 3
+    },
+    "router_id": {
+      "description": "IPv4 address, 'main', or a /routing id name",
+      "type": "string"
+    },
+    "vrf": {
+      "type": "string"
+    },
+    "redistribute": {
+      "description": "Comma list, e.g. \"connected,static\"",
+      "type": "string"
+    },
+    "in_filter_chain": {
+      "description": "Routing filter chain for received routes",
+      "type": "string"
+    },
+    "out_filter_chain": {
+      "description": "Routing filter chain for redistributed routes",
+      "type": "string"
+    },
+    "originate_default": {
+      "description": "never, if-installed, or always",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

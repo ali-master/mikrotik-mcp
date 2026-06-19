@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_rpki_session",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Session id, e.g. \"*1\""
+    }
+  },
+  "required": [
+    "session_id"
+  ],
+  "additionalProperties": false
+}
