@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "export_dns_config",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_nat_rule",
+  "type": "object",
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": [
+        "srcnat",
+        "dstnat"
+      ]
+    },
+    "action": {
+      "type": "string"
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "in_interface": {
+      "type": "string"
+    },
+    "out_interface": {
+      "type": "string"
+    },
+    "to_addresses": {
+      "description": "Single IP or range e.g. \"10.0.0.1\" or \"10.0.0.1-10.0.0.10\"",
+      "type": "string"
+    },
+    "to_ports": {
+      "description": "Single port or range e.g. \"8080\" or \"8080-8090\"",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log_prefix": {
+      "type": "string"
+    },
+    "place_before": {
+      "description": "Rule number or ID (*N) to insert before e.g. \"0\" or \"*3\"",
+      "type": "string"
+    }
+  },
+  "required": [
+    "chain",
+    "action",
+    "disabled",
+    "log"
+  ],
+  "additionalProperties": false
+}

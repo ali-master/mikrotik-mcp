@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_routing_table",
+  "type": "object",
+  "properties": {
+    "table_name": {
+      "default": "main",
+      "type": "string"
+    },
+    "protocol_filter": {
+      "type": "string"
+    },
+    "active_only": {
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "table_name",
+    "active_only"
+  ],
+  "additionalProperties": false
+}

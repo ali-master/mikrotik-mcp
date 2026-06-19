@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_queue_type",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "kind": {
+      "default": "cake",
+      "type": "string",
+      "enum": [
+        "cake",
+        "fq-codel",
+        "sfq",
+        "red",
+        "pcq",
+        "pfifo",
+        "bfifo",
+        "pfifo-bpf",
+        "mq-pfifo",
+        "none"
+      ]
+    },
+    "cake_flowmode": {
+      "type": "string",
+      "enum": [
+        "triple-isolate",
+        "dual-srchost",
+        "dual-dsthost",
+        "host",
+        "flow",
+        "none"
+      ]
+    },
+    "cake_nat": {
+      "type": "boolean"
+    },
+    "cake_overhead": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "cake_mpu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "cake_diffserv": {
+      "type": "string",
+      "enum": [
+        "besteffort",
+        "diffserv3",
+        "diffserv4",
+        "diffserv8"
+      ]
+    },
+    "cake_ack_filter": {
+      "type": "string",
+      "enum": [
+        "filter",
+        "aggressive",
+        "none"
+      ]
+    },
+    "cake_rtt": {
+      "description": "Round-trip time e.g. \"50ms\", \"100ms\"",
+      "type": "string"
+    },
+    "cake_wash": {
+      "type": "boolean"
+    },
+    "cake_overhead_scheme": {
+      "type": "string"
+    },
+    "pcq_rate": {
+      "description": "Bandwidth per flow e.g. \"1M\", \"512k\"",
+      "type": "string"
+    },
+    "pcq_limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pcq_classifier": {
+      "description": "Comma-separated classifiers e.g. \"src-address,dst-address\"",
+      "type": "string"
+    },
+    "pfifo_limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "bfifo_limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "sfq_perturb": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "sfq_allot": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "fq_codel_limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "fq_codel_quantum": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "fq_codel_target": {
+      "description": "Time e.g. \"5ms\", \"100ms\"",
+      "type": "string"
+    },
+    "fq_codel_interval": {
+      "description": "Time e.g. \"5ms\", \"100ms\"",
+      "type": "string"
+    },
+    "red_limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "red_min_threshold": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "red_max_threshold": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "red_burst": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "red_avg_packet": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "name",
+    "kind"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_certificate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the certificate"
+    },
+    "common_name": {
+      "type": "string",
+      "description": "Common name (CN), e.g. a hostname or domain"
+    },
+    "key_size": {
+      "default": 2048,
+      "description": "RSA key size in bits",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "days_valid": {
+      "default": 365,
+      "description": "Validity period in days",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "key_usage": {
+      "description": "Comma-separated key usages, e.g. 'tls-server'",
+      "type": "string"
+    },
+    "country": {
+      "description": "Country code (C), e.g. 'US'",
+      "type": "string"
+    },
+    "organization": {
+      "description": "Organization (O)",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "common_name",
+    "key_size",
+    "days_valid"
+  ],
+  "additionalProperties": false
+}

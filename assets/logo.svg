@@ -1,0 +1,47 @@
+<svg width="560" height="160" viewBox="0 0 560 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MikroTik MCP">
+  <defs>
+    <linearGradient id="tile" x1="28" y1="28" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="0.55" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="30" y1="28" x2="110" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="node" cx="0.35" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#E5EDFF"/>
+    </radialGradient>
+    <linearGradient id="mcp" x1="392" y1="86" x2="500" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- icon tile -->
+  <g transform="translate(16,20)">
+    <rect x="0" y="0" width="120" height="120" rx="30" fill="url(#tile)"/>
+    <rect x="0" y="0" width="120" height="120" rx="30" fill="url(#sheen)"/>
+    <g stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.95">
+      <line x1="60" y1="60" x2="37" y2="34"/>
+      <line x1="60" y1="60" x2="86" y2="36"/>
+      <line x1="60" y1="60" x2="36" y2="87"/>
+      <line x1="60" y1="60" x2="87" y2="86"/>
+    </g>
+    <circle cx="60" cy="60" r="11" fill="url(#node)"/>
+    <circle cx="37" cy="34" r="6.5" fill="url(#node)"/>
+    <circle cx="86" cy="36" r="6.5" fill="url(#node)"/>
+    <circle cx="36" cy="87" r="6.5" fill="url(#node)"/>
+    <circle cx="87" cy="86" r="6.5" fill="url(#node)"/>
+    <path d="M56 56 L60.5 60.5 L56 65" fill="none" stroke="#6366F1" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- wordmark -->
+  <g font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif">
+    <text x="164" y="82" font-size="46" font-weight="800" fill="#0F172A" letter-spacing="-1.5">mikrotik</text>
+    <text x="164" y="120" font-size="22" font-weight="600" fill="#64748B" letter-spacing="0.5">RouterOS&#160;·&#160;MCP&#160;server</text>
+    <rect x="392" y="50" width="92" height="40" rx="12" fill="url(#mcp)"/>
+    <text x="438" y="78" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="1">MCP</text>
+  </g>
+</svg>

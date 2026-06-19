@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_wireguard_peer",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "public_key": {
+      "type": "string"
+    },
+    "allowed_address": {
+      "type": "string",
+      "description": "CIDR, comma-separated for multiple e.g. \"10.0.0.2/32\" or \"10.0.0.0/24,192.168.0.0/24\""
+    },
+    "endpoint_address": {
+      "description": "remote host IP or hostname e.g. \"203.0.113.1\"",
+      "type": "string"
+    },
+    "endpoint_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "preshared_key": {
+      "type": "string"
+    },
+    "persistent_keepalive": {
+      "description": "seconds as string e.g. \"25\"",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "public_key",
+    "allowed_address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

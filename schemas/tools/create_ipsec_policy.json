@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipsec_policy",
+  "type": "object",
+  "properties": {
+    "peer": {
+      "description": "Peer name this policy applies to",
+      "type": "string"
+    },
+    "src_address": {
+      "description": "Source subnet, e.g. '10.0.0.0/24'",
+      "type": "string"
+    },
+    "dst_address": {
+      "description": "Destination subnet, e.g. '10.0.1.0/24'",
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "action": {
+      "default": "encrypt",
+      "type": "string",
+      "enum": [
+        "encrypt",
+        "discard",
+        "none"
+      ]
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "require",
+        "unique",
+        "use"
+      ]
+    },
+    "proposal": {
+      "description": "Phase-2 proposal name",
+      "type": "string"
+    },
+    "tunnel": {
+      "default": true,
+      "description": "Tunnel mode (vs transport)",
+      "type": "boolean"
+    },
+    "sa_src_address": {
+      "type": "string"
+    },
+    "sa_dst_address": {
+      "type": "string"
+    },
+    "template": {
+      "description": "Policy template (for dynamic policies)",
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "action",
+    "tunnel"
+  ],
+  "additionalProperties": false
+}

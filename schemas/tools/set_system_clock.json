@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_system_clock",
+  "type": "object",
+  "properties": {
+    "time_zone_name": {
+      "description": "e.g. 'Europe/Amsterdam' or 'manual'",
+      "type": "string"
+    },
+    "date": {
+      "description": "e.g. 'jun/19/2026'",
+      "type": "string"
+    },
+    "time": {
+      "description": "e.g. '13:45:00'",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_dhcp_servers",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "type": "string"
+    },
+    "interface_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "invalid_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only",
+    "invalid_only"
+  ],
+  "additionalProperties": false
+}

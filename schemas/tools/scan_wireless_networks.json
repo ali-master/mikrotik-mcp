@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "scan_wireless_networks",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "duration": {
+      "default": 5,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "interface",
+    "duration"
+  ],
+  "additionalProperties": false
+}

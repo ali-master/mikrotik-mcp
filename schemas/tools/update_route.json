@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_route",
+  "type": "object",
+  "properties": {
+    "route_id": {
+      "type": "string",
+      "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
+    },
+    "dst_address": {
+      "description": "CIDR e.g. \"192.168.1.0/24\"",
+      "type": "string"
+    },
+    "gateway": {
+      "type": "string"
+    },
+    "distance": {
+      "description": "1-255",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "scope": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "target_scope": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "routing_mark": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    },
+    "vrf_interface": {
+      "type": "string"
+    },
+    "pref_src": {
+      "type": "string"
+    },
+    "check_gateway": {
+      "description": "\"ping\" or \"arp\"",
+      "type": "string"
+    }
+  },
+  "required": [
+    "route_id"
+  ],
+  "additionalProperties": false
+}

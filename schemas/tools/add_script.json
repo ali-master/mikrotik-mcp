@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_script",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the script"
+    },
+    "source": {
+      "type": "string",
+      "description": "Script source code (may contain spaces/semicolons)"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "dont_require_permissions": {
+      "default": false,
+      "description": "Run without checking the policy permissions of the caller",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "source",
+    "dont_require_permissions"
+  ],
+  "additionalProperties": false
+}

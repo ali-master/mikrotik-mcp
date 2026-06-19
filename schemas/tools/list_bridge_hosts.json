@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_bridge_hosts",
+  "type": "object",
+  "properties": {
+    "bridge_filter": {
+      "description": "Exact bridge name",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

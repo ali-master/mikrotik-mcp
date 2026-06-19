@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_routes",
+  "type": "object",
+  "properties": {
+    "dst_filter": {
+      "type": "string"
+    },
+    "gateway_filter": {
+      "type": "string"
+    },
+    "routing_mark_filter": {
+      "type": "string"
+    },
+    "distance_filter": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "active_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "dynamic_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "static_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "active_only",
+    "disabled_only",
+    "dynamic_only",
+    "static_only"
+  ],
+  "additionalProperties": false
+}

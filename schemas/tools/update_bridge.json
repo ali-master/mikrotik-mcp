@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_bridge",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Current name of the bridge to update"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "vlan_filtering": {
+      "type": "boolean"
+    },
+    "protocol_mode": {
+      "type": "string",
+      "enum": [
+        "none",
+        "rstp",
+        "stp",
+        "mstp"
+      ]
+    },
+    "disabled": {
+      "type": "boolean"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

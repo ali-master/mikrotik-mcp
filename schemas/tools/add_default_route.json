@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_default_route",
+  "type": "object",
+  "properties": {
+    "gateway": {
+      "type": "string"
+    },
+    "distance": {
+      "default": 1,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "check_gateway": {
+      "default": "ping",
+      "type": "string"
+    }
+  },
+  "required": [
+    "gateway",
+    "distance",
+    "check_gateway"
+  ],
+  "additionalProperties": false
+}

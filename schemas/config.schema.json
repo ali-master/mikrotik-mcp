@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MikrotikConfig",
+  "type": "object",
+  "properties": {
+    "host": {
+      "default": "127.0.0.1",
+      "type": "string"
+    },
+    "username": {
+      "default": "admin",
+      "type": "string"
+    },
+    "password": {
+      "default": "",
+      "type": "string"
+    },
+    "port": {
+      "default": 22,
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "keyFilename": {
+      "type": "string"
+    },
+    "privateKey": {
+      "type": "string"
+    },
+    "keyPassphrase": {
+      "type": "string"
+    },
+    "timeoutMs": {
+      "default": 10000,
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "mcp": {
+      "default": {
+        "transport": "stdio",
+        "host": "0.0.0.0",
+        "port": 8000,
+        "allowedHosts": "",
+        "allowedOrigins": ""
+      },
+      "type": "object",
+      "properties": {
+        "transport": {
+          "default": "stdio",
+          "type": "string",
+          "enum": [
+            "stdio",
+            "sse",
+            "streamable-http"
+          ]
+        },
+        "host": {
+          "default": "0.0.0.0",
+          "type": "string"
+        },
+        "port": {
+          "default": 8000,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "allowedHosts": {
+          "default": "",
+          "type": "string"
+        },
+        "allowedOrigins": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transport",
+        "host",
+        "port",
+        "allowedHosts",
+        "allowedOrigins"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "host",
+    "username",
+    "password",
+    "port",
+    "timeoutMs",
+    "mcp"
+  ],
+  "additionalProperties": false
+}

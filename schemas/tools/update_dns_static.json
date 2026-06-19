@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_dns_static",
+  "type": "object",
+  "properties": {
+    "entry_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "cname": {
+      "type": "string"
+    },
+    "mx_preference": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mx_exchange": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "srv_priority": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "srv_weight": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "srv_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "srv_target": {
+      "type": "string"
+    },
+    "ttl": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    },
+    "regexp": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "entry_id"
+  ],
+  "additionalProperties": false
+}

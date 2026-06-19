@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipsec_identities",
+  "type": "object",
+  "properties": {
+    "peer_filter": {
+      "description": "Partial peer name match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

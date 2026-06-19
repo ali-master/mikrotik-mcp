@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_vxlan_tunnel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new VXLAN interface, e.g. 'vxlan1'"
+    },
+    "vni": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "VXLAN Network Identifier (VNI)"
+    },
+    "port": {
+      "default": 8472,
+      "description": "UDP port (default 8472)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "local_address": {
+      "description": "Local source IP address",
+      "type": "string"
+    },
+    "interface": {
+      "description": "Source interface",
+      "type": "string"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "vni",
+    "port",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

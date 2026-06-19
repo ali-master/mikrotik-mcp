@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_pptp_server",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "description": "Enable or disable the PPTP server",
+      "type": "boolean"
+    },
+    "default_profile": {
+      "type": "string"
+    },
+    "authentication": {
+      "description": "Comma-separated, e.g. 'mschap2,mschap1'",
+      "type": "string"
+    },
+    "max_mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_mru": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}

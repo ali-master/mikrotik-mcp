@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_wireguard_peer",
+  "type": "object",
+  "properties": {
+    "peer_id": {
+      "type": "string",
+      "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
+    },
+    "allowed_address": {
+      "type": "string"
+    },
+    "endpoint_address": {
+      "type": "string"
+    },
+    "endpoint_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "preshared_key": {
+      "type": "string"
+    },
+    "persistent_keepalive": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "peer_id"
+  ],
+  "additionalProperties": false
+}

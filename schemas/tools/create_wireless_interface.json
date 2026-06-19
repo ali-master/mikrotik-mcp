@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_wireless_interface",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "ssid": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "radio_name": {
+      "description": "Required for legacy wireless systems, e.g. 'wlan1'",
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "ap-bridge",
+        "bridge",
+        "station",
+        "station-pseudobridge",
+        "station-bridge",
+        "station-wds",
+        "ap-bridge-wds",
+        "alignment-only"
+      ]
+    },
+    "frequency": {
+      "type": "string"
+    },
+    "band": {
+      "type": "string",
+      "enum": [
+        "2ghz-b",
+        "2ghz-b/g",
+        "2ghz-b/g/n",
+        "5ghz-a",
+        "5ghz-a/n",
+        "5ghz-a/n/ac",
+        "2ghz-g",
+        "2ghz-n",
+        "5ghz-n",
+        "5ghz-ac"
+      ]
+    },
+    "channel_width": {
+      "type": "string",
+      "enum": [
+        "20mhz",
+        "40mhz",
+        "80mhz",
+        "160mhz",
+        "20/40mhz-eC",
+        "20/40mhz-Ce"
+      ]
+    },
+    "security_profile": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

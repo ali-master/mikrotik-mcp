@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "import_configuration",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    },
+    "run_after_reset": {
+      "default": false,
+      "type": "boolean"
+    },
+    "verbose": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "filename",
+    "run_after_reset",
+    "verbose"
+  ],
+  "additionalProperties": false
+}

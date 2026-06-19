@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_gre_tunnel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new GRE tunnel interface, e.g. 'gre-to-hq'"
+    },
+    "remote_address": {
+      "type": "string",
+      "description": "Remote endpoint IP address"
+    },
+    "local_address": {
+      "description": "Local endpoint IP address",
+      "type": "string"
+    },
+    "keepalive": {
+      "description": "Keepalive interval/retries, e.g. '10s,3'",
+      "type": "string"
+    },
+    "dont_fragment": {
+      "description": "Don't-fragment behavior",
+      "type": "string",
+      "enum": [
+        "inherit",
+        "no"
+      ]
+    },
+    "clamp_tcp_mss": {
+      "description": "Clamp TCP MSS to the tunnel MTU",
+      "type": "boolean"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "remote_address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

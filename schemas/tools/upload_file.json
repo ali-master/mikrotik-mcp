@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "upload_file",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    },
+    "content_base64": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "filename",
+    "content_base64"
+  ],
+  "additionalProperties": false
+}

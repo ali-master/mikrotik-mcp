@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_pptp_client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new PPTP client interface"
+    },
+    "connect_to": {
+      "type": "string",
+      "description": "Remote PPTP server address"
+    },
+    "user": {
+      "type": "string",
+      "description": "Username for authentication"
+    },
+    "password": {
+      "type": "string",
+      "description": "Password for authentication"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "add_default_route": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "connect_to",
+    "user",
+    "password",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

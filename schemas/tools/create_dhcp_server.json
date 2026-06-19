@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_dhcp_server",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "lease_time": {
+      "default": "1d",
+      "description": "Lease duration e.g. \"1d\", \"12h\", \"30m\", \"1h30m\"",
+      "type": "string"
+    },
+    "address_pool": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "authoritative": {
+      "default": "yes",
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "after-2sec-delay"
+      ]
+    },
+    "delay_threshold": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "interface",
+    "lease_time",
+    "disabled",
+    "authoritative"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_user_group",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "policy": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skin": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

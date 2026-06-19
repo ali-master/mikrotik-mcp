@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_poe_monitor",
+  "type": "object",
+  "properties": {
+    "interfaces": {
+      "type": "string",
+      "description": "Comma-separated ethernet interface name(s), e.g. 'ether1' or 'ether9,ether10'"
+    }
+  },
+  "required": [
+    "interfaces"
+  ],
+  "additionalProperties": false
+}

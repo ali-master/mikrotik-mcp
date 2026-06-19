@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sign_certificate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the certificate to sign"
+    },
+    "ca": {
+      "description": "Name of the CA certificate to sign with (omit to self-sign)",
+      "type": "string"
+    },
+    "common_name": {
+      "description": "Override the common name when signing",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

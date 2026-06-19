@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_address_lists",
+  "type": "object",
+  "properties": {
+    "list_filter": {
+      "description": "Partial list-name match",
+      "type": "string"
+    },
+    "address_filter": {
+      "description": "Partial address match",
+      "type": "string"
+    },
+    "dynamic_only": {
+      "default": false,
+      "description": "Only show dynamically-added entries",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "dynamic_only"
+  ],
+  "additionalProperties": false
+}

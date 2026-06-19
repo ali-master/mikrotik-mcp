@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_filter_rule",
+  "type": "object",
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": [
+        "input",
+        "forward",
+        "output"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "drop",
+        "reject",
+        "jump",
+        "log",
+        "passthrough",
+        "return",
+        "tarpit",
+        "fasttrack-connection"
+      ]
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "in_interface": {
+      "type": "string"
+    },
+    "out_interface": {
+      "type": "string"
+    },
+    "connection_state": {
+      "description": "Comma-separated e.g. \"established,related,new,invalid\"",
+      "type": "string"
+    },
+    "connection_nat_state": {
+      "type": "string"
+    },
+    "src_address_list": {
+      "type": "string"
+    },
+    "dst_address_list": {
+      "type": "string"
+    },
+    "limit": {
+      "description": "RouterOS rate/burst string e.g. \"10,5:packet\"",
+      "type": "string"
+    },
+    "tcp_flags": {
+      "description": "RouterOS flag expression e.g. \"syn,!ack\"",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log_prefix": {
+      "type": "string"
+    },
+    "place_before": {
+      "description": "Rule number or ID (*N) to insert before e.g. \"0\" or \"*3\"",
+      "type": "string"
+    }
+  },
+  "required": [
+    "chain",
+    "action",
+    "disabled",
+    "log"
+  ],
+  "additionalProperties": false
+}

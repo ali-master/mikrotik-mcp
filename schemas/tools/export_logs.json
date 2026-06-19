@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "export_logs",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    },
+    "topics": {
+      "type": "string"
+    },
+    "time_filter": {
+      "type": "string"
+    },
+    "format": {
+      "default": "plain",
+      "type": "string",
+      "enum": [
+        "plain",
+        "csv"
+      ]
+    }
+  },
+  "required": [
+    "format"
+  ],
+  "additionalProperties": false
+}

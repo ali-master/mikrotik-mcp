@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_interfaces",
+  "type": "object",
+  "properties": {
+    "type_filter": {
+      "description": "RouterOS interface type, e.g. 'ether', 'bridge'",
+      "type": "string",
+      "enum": [
+        "ether",
+        "wg",
+        "bridge",
+        "vlan",
+        "pppoe-out",
+        "pppoe-server",
+        "wifi",
+        "wireless",
+        "lte",
+        "loopback",
+        "sfp",
+        "sfp-sfpplus"
+      ]
+    },
+    "name_filter": {
+      "description": "Partial name match, e.g. 'ether'",
+      "type": "string"
+    },
+    "running_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "running_only",
+    "disabled_only"
+  ],
+  "additionalProperties": false
+}

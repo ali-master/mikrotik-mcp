@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_queue_tree",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "parent": {
+      "type": "string",
+      "description": "Interface name e.g. \"ether1\" or parent queue name"
+    },
+    "queue": {
+      "type": "string"
+    },
+    "packet_mark": {
+      "type": "string"
+    },
+    "max_limit": {
+      "description": "Bandwidth e.g. \"10M\", \"512k\", \"1G\"",
+      "type": "string"
+    },
+    "limit_at": {
+      "description": "Bandwidth e.g. \"10M\", \"512k\", \"1G\"",
+      "type": "string"
+    },
+    "burst_limit": {
+      "description": "Bandwidth e.g. \"10M\", \"512k\", \"1G\"",
+      "type": "string"
+    },
+    "burst_threshold": {
+      "description": "Bandwidth e.g. \"10M\", \"512k\", \"1G\"",
+      "type": "string"
+    },
+    "burst_time": {
+      "description": "Duration e.g. \"8s\"",
+      "type": "string"
+    },
+    "bucket_size": {
+      "type": "string"
+    },
+    "priority": {
+      "description": "1 (highest) – 8 (lowest)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "parent",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

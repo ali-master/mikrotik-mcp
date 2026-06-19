@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ppp_profile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Current name of the PPP profile to update"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "local_address": {
+      "type": "string"
+    },
+    "remote_address": {
+      "type": "string"
+    },
+    "dns_server": {
+      "type": "string"
+    },
+    "rate_limit": {
+      "type": "string"
+    },
+    "use_encryption": {
+      "type": "string",
+      "enum": [
+        "default",
+        "yes",
+        "no",
+        "required"
+      ]
+    },
+    "change_tcp_mss": {
+      "type": "string",
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
+    },
+    "only_one": {
+      "type": "string",
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
+    },
+    "bridge": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

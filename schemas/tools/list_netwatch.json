@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_netwatch",
+  "type": "object",
+  "properties": {
+    "host_filter": {
+      "description": "Partial host match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

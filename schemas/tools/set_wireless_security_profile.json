@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_wireless_security_profile",
+  "type": "object",
+  "properties": {
+    "interface_name": {
+      "type": "string"
+    },
+    "security_profile": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "interface_name",
+    "security_profile"
+  ],
+  "additionalProperties": false
+}

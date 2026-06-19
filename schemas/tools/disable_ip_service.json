@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "disable_ip_service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Service name to disable, e.g. 'telnet'"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

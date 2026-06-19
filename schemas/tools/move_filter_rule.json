@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "move_filter_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "0-based target position index"
+    }
+  },
+  "required": [
+    "rule_id",
+    "destination"
+  ],
+  "additionalProperties": false
+}

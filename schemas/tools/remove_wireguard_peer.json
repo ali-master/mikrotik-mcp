@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_wireguard_peer",
+  "type": "object",
+  "properties": {
+    "peer_id": {
+      "type": "string",
+      "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
+    }
+  },
+  "required": [
+    "peer_id"
+  ],
+  "additionalProperties": false
+}

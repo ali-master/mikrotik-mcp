@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "flush_route_cache",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

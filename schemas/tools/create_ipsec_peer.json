@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipsec_peer",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new IPsec peer"
+    },
+    "address": {
+      "description": "Remote address, e.g. '203.0.113.1' or '0.0.0.0/0' for responder",
+      "type": "string"
+    },
+    "profile": {
+      "description": "Phase-1 profile name",
+      "type": "string"
+    },
+    "exchange_mode": {
+      "default": "ike2",
+      "description": "IKE exchange mode",
+      "type": "string",
+      "enum": [
+        "main",
+        "aggressive",
+        "ike2"
+      ]
+    },
+    "local_address": {
+      "type": "string"
+    },
+    "passive": {
+      "description": "Passive (responder only)",
+      "type": "boolean"
+    },
+    "send_initial_contact": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "exchange_mode",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

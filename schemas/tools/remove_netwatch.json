@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_netwatch",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "host"
+  ],
+  "additionalProperties": false
+}

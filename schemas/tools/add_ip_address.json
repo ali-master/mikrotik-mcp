@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ip_address",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Address with CIDR, e.g. '192.168.1.1/24'"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "network": {
+      "type": "string"
+    },
+    "broadcast": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "address",
+    "interface",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

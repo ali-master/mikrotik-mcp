@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "download_file",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    },
+    "file_type": {
+      "default": "backup",
+      "type": "string",
+      "enum": [
+        "backup",
+        "export"
+      ]
+    }
+  },
+  "required": [
+    "filename",
+    "file_type"
+  ],
+  "additionalProperties": false
+}

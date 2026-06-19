@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "disconnect_user",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "additionalProperties": false
+}

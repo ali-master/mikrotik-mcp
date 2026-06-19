@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_wireless_interfaces",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "running_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only",
+    "running_only"
+  ],
+  "additionalProperties": false
+}

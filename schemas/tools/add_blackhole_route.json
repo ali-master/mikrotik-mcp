@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_blackhole_route",
+  "type": "object",
+  "properties": {
+    "dst_address": {
+      "type": "string",
+      "description": "CIDR e.g. \"10.0.0.0/8\""
+    },
+    "distance": {
+      "default": 1,
+      "description": "1-255",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "dst_address",
+    "distance"
+  ],
+  "additionalProperties": false
+}

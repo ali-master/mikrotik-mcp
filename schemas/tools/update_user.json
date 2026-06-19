@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_user",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "group": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

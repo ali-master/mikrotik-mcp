@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "shutdown_system",
+  "type": "object",
+  "properties": {
+    "confirm": {
+      "type": "boolean",
+      "description": "Must be true to actually shut down the device"
+    }
+  },
+  "required": [
+    "confirm"
+  ],
+  "additionalProperties": false
+}

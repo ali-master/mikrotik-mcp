@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_simple_queue",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string",
+      "description": "IP/CIDR or interface e.g. \"192.168.1.0/24\" or \"ether1\""
+    },
+    "dst": {
+      "type": "string"
+    },
+    "max_limit": {
+      "description": "Upload/download bandwidth as \"UL/DL\" e.g. \"10M/10M\", or single value e.g. \"10M\"",
+      "type": "string"
+    },
+    "limit_at": {
+      "description": "Upload/download bandwidth as \"UL/DL\" e.g. \"10M/10M\", or single value e.g. \"10M\"",
+      "type": "string"
+    },
+    "burst_limit": {
+      "description": "Upload/download bandwidth as \"UL/DL\" e.g. \"10M/10M\", or single value e.g. \"10M\"",
+      "type": "string"
+    },
+    "burst_threshold": {
+      "description": "Upload/download bandwidth as \"UL/DL\" e.g. \"10M/10M\", or single value e.g. \"10M\"",
+      "type": "string"
+    },
+    "burst_time": {
+      "description": "Duration e.g. \"8s\"",
+      "type": "string"
+    },
+    "bucket_size": {
+      "type": "string"
+    },
+    "queue": {
+      "type": "string"
+    },
+    "parent": {
+      "type": "string"
+    },
+    "priority": {
+      "description": "1 (highest) – 8 (lowest)",
+      "type": "string"
+    },
+    "packet_marks": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "target",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

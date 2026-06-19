@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_backups",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "type": "string"
+    },
+    "include_exports": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "include_exports"
+  ],
+  "additionalProperties": false
+}

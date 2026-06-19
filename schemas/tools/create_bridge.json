@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_bridge",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new bridge, e.g. 'bridge1'"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "vlan_filtering": {
+      "default": false,
+      "description": "Enable 802.1Q VLAN filtering on the bridge",
+      "type": "boolean"
+    },
+    "protocol_mode": {
+      "description": "Spanning-tree protocol mode",
+      "type": "string",
+      "enum": [
+        "none",
+        "rstp",
+        "stp",
+        "mstp"
+      ]
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "name",
+    "vlan_filtering",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_vlan_interfaces",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "description": "Partial name match",
+      "type": "string"
+    },
+    "vlan_id_filter": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "interface_filter": {
+      "description": "Exact parent interface name",
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only"
+  ],
+  "additionalProperties": false
+}

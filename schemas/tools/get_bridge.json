@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_bridge",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

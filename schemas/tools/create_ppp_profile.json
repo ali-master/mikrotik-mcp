@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ppp_profile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new PPP profile"
+    },
+    "local_address": {
+      "description": "Server-side tunnel IP or pool name",
+      "type": "string"
+    },
+    "remote_address": {
+      "description": "Client IP or address pool name",
+      "type": "string"
+    },
+    "dns_server": {
+      "type": "string"
+    },
+    "rate_limit": {
+      "description": "Rate limit, e.g. '10M/10M'",
+      "type": "string"
+    },
+    "use_encryption": {
+      "type": "string",
+      "enum": [
+        "default",
+        "yes",
+        "no",
+        "required"
+      ]
+    },
+    "change_tcp_mss": {
+      "type": "string",
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
+    },
+    "only_one": {
+      "description": "Allow only one session per user",
+      "type": "string",
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
+    },
+    "bridge": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

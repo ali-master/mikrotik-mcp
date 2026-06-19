@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_bridge_ports",
+  "type": "object",
+  "properties": {
+    "bridge_filter": {
+      "description": "Exact bridge name",
+      "type": "string"
+    },
+    "interface_filter": {
+      "description": "Exact interface name",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

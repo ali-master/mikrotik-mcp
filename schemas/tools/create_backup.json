@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_backup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "dont_encrypt": {
+      "default": false,
+      "type": "boolean"
+    },
+    "include_password": {
+      "default": true,
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "dont_encrypt",
+    "include_password"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_queue_type",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "cake_flowmode": {
+      "type": "string"
+    },
+    "cake_nat": {
+      "type": "boolean"
+    },
+    "cake_overhead": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "cake_mpu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "cake_diffserv": {
+      "type": "string"
+    },
+    "cake_ack_filter": {
+      "type": "string"
+    },
+    "cake_rtt": {
+      "type": "string"
+    },
+    "cake_wash": {
+      "type": "boolean"
+    },
+    "cake_overhead_scheme": {
+      "type": "string"
+    },
+    "pcq_rate": {
+      "type": "string"
+    },
+    "pcq_limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pcq_classifier": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

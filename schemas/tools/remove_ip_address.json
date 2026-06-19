@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ip_address",
+  "type": "object",
+  "properties": {
+    "address_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "address_id"
+  ],
+  "additionalProperties": false
+}

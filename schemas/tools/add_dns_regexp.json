@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_dns_regexp",
+  "type": "object",
+  "properties": {
+    "regexp": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "ttl": {
+      "default": "1d",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "regexp",
+    "address",
+    "ttl",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

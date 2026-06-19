@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_dns_servers",
+  "type": "object",
+  "properties": {
+    "servers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "DNS server IP addresses"
+    },
+    "allow_remote_requests": {
+      "default": false,
+      "type": "boolean"
+    },
+    "max_udp_packet_size": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_concurrent_queries": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "cache_size": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "cache_max_ttl": {
+      "type": "string"
+    },
+    "use_doh": {
+      "default": false,
+      "type": "boolean"
+    },
+    "doh_server": {
+      "type": "string"
+    },
+    "verify_doh_cert": {
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "servers",
+    "allow_remote_requests",
+    "use_doh",
+    "verify_doh_cert"
+  ],
+  "additionalProperties": false
+}

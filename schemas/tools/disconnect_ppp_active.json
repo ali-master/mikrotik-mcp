@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "disconnect_ppp_active",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Username of the active session to disconnect"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

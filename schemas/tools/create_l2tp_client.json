@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_l2tp_client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new L2TP client interface"
+    },
+    "connect_to": {
+      "type": "string",
+      "description": "Remote L2TP server address"
+    },
+    "user": {
+      "type": "string",
+      "description": "Username for authentication"
+    },
+    "password": {
+      "type": "string",
+      "description": "Password for authentication"
+    },
+    "profile": {
+      "default": "default-encryption",
+      "type": "string"
+    },
+    "add_default_route": {
+      "type": "boolean"
+    },
+    "use_ipsec": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "ipsec_secret": {
+      "description": "Pre-shared key for L2TP/IPsec",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "connect_to",
+    "user",
+    "password",
+    "profile",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

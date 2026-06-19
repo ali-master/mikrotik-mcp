@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_l2tp_server",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "description": "Enable or disable the L2TP server",
+      "type": "boolean"
+    },
+    "default_profile": {
+      "type": "string"
+    },
+    "authentication": {
+      "description": "Comma-separated, e.g. 'mschap2,mschap1'",
+      "type": "string"
+    },
+    "use_ipsec": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "required"
+      ]
+    },
+    "ipsec_secret": {
+      "description": "Pre-shared key for L2TP/IPsec",
+      "type": "string"
+    },
+    "max_mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_mru": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}

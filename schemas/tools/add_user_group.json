@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_user_group",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "policy": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skin": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "policy"
+  ],
+  "additionalProperties": false
+}

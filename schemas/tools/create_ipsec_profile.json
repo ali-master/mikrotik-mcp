@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipsec_profile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new IPsec profile"
+    },
+    "dh_group": {
+      "default": "modp2048",
+      "description": "Diffie-Hellman group, e.g. 'modp2048'",
+      "type": "string"
+    },
+    "enc_algorithm": {
+      "description": "Encryption algorithm, e.g. 'aes-256'",
+      "type": "string"
+    },
+    "hash_algorithm": {
+      "default": "sha256",
+      "description": "Hash algorithm, e.g. 'sha256'",
+      "type": "string"
+    },
+    "lifetime": {
+      "description": "Phase-1 lifetime, e.g. '1d'",
+      "type": "string"
+    },
+    "nat_traversal": {
+      "description": "Enable NAT-T",
+      "type": "boolean"
+    },
+    "dpd_interval": {
+      "description": "Dead peer detection interval, e.g. '2m'",
+      "type": "string"
+    },
+    "dpd_maximum_failures": {
+      "description": "DPD max failures before drop",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "name",
+    "dh_group",
+    "hash_algorithm"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "search_logs",
+  "type": "object",
+  "properties": {
+    "search_term": {
+      "type": "string"
+    },
+    "time_filter": {
+      "type": "string"
+    },
+    "case_sensitive": {
+      "default": false,
+      "type": "boolean"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "search_term",
+    "case_sensitive"
+  ],
+  "additionalProperties": false
+}

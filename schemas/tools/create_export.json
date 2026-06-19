@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_export",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "file_format": {
+      "default": "rsc",
+      "type": "string",
+      "enum": [
+        "rsc",
+        "json",
+        "xml"
+      ]
+    },
+    "export_type": {
+      "default": "full",
+      "type": "string",
+      "enum": [
+        "full",
+        "compact",
+        "verbose"
+      ]
+    },
+    "hide_sensitive": {
+      "default": true,
+      "type": "boolean"
+    },
+    "verbose": {
+      "default": false,
+      "type": "boolean"
+    },
+    "compact": {
+      "default": false,
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "file_format",
+    "export_type",
+    "hide_sensitive",
+    "verbose",
+    "compact"
+  ],
+  "additionalProperties": false
+}

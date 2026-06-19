@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "import_certificate",
+  "type": "object",
+  "properties": {
+    "file_name": {
+      "type": "string",
+      "description": "Name of the certificate/key file to import"
+    },
+    "passphrase": {
+      "description": "Passphrase protecting the imported key, if any",
+      "type": "string"
+    },
+    "name": {
+      "description": "Name to assign to the imported certificate",
+      "type": "string"
+    }
+  },
+  "required": [
+    "file_name"
+  ],
+  "additionalProperties": false
+}

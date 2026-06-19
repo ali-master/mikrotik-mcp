@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "generate_wireguard_client_config",
+  "type": "object",
+  "properties": {
+    "client_private_key": {
+      "type": "string"
+    },
+    "client_address": {
+      "type": "string"
+    },
+    "server_public_key": {
+      "type": "string"
+    },
+    "server_endpoint": {
+      "type": "string"
+    },
+    "server_port": {
+      "default": 51820,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "allowed_ips": {
+      "default": "0.0.0.0/0",
+      "type": "string"
+    },
+    "dns": {
+      "type": "string"
+    },
+    "persistent_keepalive": {
+      "default": 25,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "client_private_key",
+    "client_address",
+    "server_public_key",
+    "server_endpoint",
+    "server_port",
+    "allowed_ips",
+    "persistent_keepalive"
+  ],
+  "additionalProperties": false
+}

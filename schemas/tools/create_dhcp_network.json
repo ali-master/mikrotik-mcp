@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_dhcp_network",
+  "type": "object",
+  "properties": {
+    "network": {
+      "type": "string"
+    },
+    "gateway": {
+      "type": "string"
+    },
+    "netmask": {
+      "type": "string"
+    },
+    "dns_servers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domain": {
+      "type": "string"
+    },
+    "wins_servers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ntp_servers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dhcp_option": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "network",
+    "gateway"
+  ],
+  "additionalProperties": false
+}

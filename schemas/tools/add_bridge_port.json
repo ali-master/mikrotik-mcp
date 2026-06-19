@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_bridge_port",
+  "type": "object",
+  "properties": {
+    "bridge": {
+      "type": "string",
+      "description": "Bridge to add the port to"
+    },
+    "interface": {
+      "type": "string",
+      "description": "Interface to enslave to the bridge"
+    },
+    "pvid": {
+      "description": "Port VLAN ID for untagged ingress",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4094
+    },
+    "comment": {
+      "type": "string"
+    },
+    "hw": {
+      "description": "Use hardware offload for this port",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "bridge",
+    "interface"
+  ],
+  "additionalProperties": false
+}

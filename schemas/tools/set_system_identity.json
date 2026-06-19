@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_system_identity",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "New system identity / hostname"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

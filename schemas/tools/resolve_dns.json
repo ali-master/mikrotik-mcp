@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "resolve_dns",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "DNS name to resolve, e.g. 'example.com'"
+    },
+    "server": {
+      "description": "Specific DNS server to query (informational; :resolve uses the system resolver)",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

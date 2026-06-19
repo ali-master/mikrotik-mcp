@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_poe_settings",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Exact ethernet interface name, e.g. 'ether1'"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

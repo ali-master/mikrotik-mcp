@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_bridge_vlan",
+  "type": "object",
+  "properties": {
+    "bridge": {
+      "type": "string",
+      "description": "Bridge to add the VLAN entry to"
+    },
+    "vlan_ids": {
+      "type": "string",
+      "description": "VLAN ID(s), e.g. '100' or '100,200'"
+    },
+    "tagged": {
+      "description": "Comma-separated tagged interfaces",
+      "type": "string"
+    },
+    "untagged": {
+      "description": "Comma-separated untagged interfaces",
+      "type": "string"
+    }
+  },
+  "required": [
+    "bridge",
+    "vlan_ids"
+  ],
+  "additionalProperties": false
+}

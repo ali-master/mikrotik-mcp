@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_route",
+  "type": "object",
+  "properties": {
+    "dst_address": {
+      "type": "string",
+      "description": "CIDR e.g. \"0.0.0.0/0\", \"192.168.1.0/24\""
+    },
+    "gateway": {
+      "type": "string"
+    },
+    "distance": {
+      "description": "1-255 (lower = higher priority)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "scope": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "target_scope": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "routing_mark": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "vrf_interface": {
+      "type": "string"
+    },
+    "pref_src": {
+      "type": "string"
+    },
+    "check_gateway": {
+      "description": "\"ping\" or \"arp\"",
+      "type": "string"
+    }
+  },
+  "required": [
+    "dst_address",
+    "gateway",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "reboot_system",
+  "type": "object",
+  "properties": {
+    "confirm": {
+      "type": "boolean",
+      "description": "Must be true to actually reboot the device"
+    }
+  },
+  "required": [
+    "confirm"
+  ],
+  "additionalProperties": false
+}

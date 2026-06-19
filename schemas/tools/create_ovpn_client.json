@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ovpn_client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new OpenVPN client interface"
+    },
+    "connect_to": {
+      "type": "string",
+      "description": "Remote OpenVPN server address"
+    },
+    "port": {
+      "default": 1194,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "user": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "certificate": {
+      "type": "string"
+    },
+    "cipher": {
+      "type": "string"
+    },
+    "auth": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "ip",
+        "ethernet"
+      ]
+    },
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "tcp",
+        "udp"
+      ]
+    },
+    "profile": {
+      "type": "string"
+    },
+    "add_default_route": {
+      "type": "boolean"
+    },
+    "verify_server_certificate": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "connect_to",
+    "port",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

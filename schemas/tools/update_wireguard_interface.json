@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_wireguard_interface",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "listen_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "private_key": {
+      "type": "string"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

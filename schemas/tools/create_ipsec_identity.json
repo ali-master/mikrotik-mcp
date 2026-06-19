@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipsec_identity",
+  "type": "object",
+  "properties": {
+    "peer": {
+      "type": "string",
+      "description": "Peer name this identity authenticates"
+    },
+    "auth_method": {
+      "default": "pre-shared-key",
+      "description": "Authentication method",
+      "type": "string",
+      "enum": [
+        "pre-shared-key",
+        "rsa-signature",
+        "digital-signature",
+        "eap",
+        "eap-radius"
+      ]
+    },
+    "secret": {
+      "description": "Pre-shared key secret",
+      "type": "string"
+    },
+    "my_id": {
+      "type": "string"
+    },
+    "remote_id": {
+      "type": "string"
+    },
+    "generate_policy": {
+      "type": "string",
+      "enum": [
+        "no",
+        "port-override",
+        "port-strict"
+      ]
+    },
+    "mode_config": {
+      "type": "string"
+    },
+    "policy_template_group": {
+      "type": "string"
+    },
+    "certificate": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "peer",
+    "auth_method"
+  ],
+  "additionalProperties": false
+}

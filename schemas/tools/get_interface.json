@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_interface",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Exact interface name, e.g. 'ether1', 'wg0'"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

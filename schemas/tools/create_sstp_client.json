@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_sstp_client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new SSTP client interface"
+    },
+    "connect_to": {
+      "type": "string",
+      "description": "Remote SSTP server address (host:port or IP)"
+    },
+    "user": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "certificate": {
+      "description": "Client TLS certificate name",
+      "type": "string"
+    },
+    "verify_server_certificate": {
+      "type": "boolean"
+    },
+    "add_default_route": {
+      "type": "boolean"
+    },
+    "http_proxy": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "connect_to",
+    "user",
+    "password",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

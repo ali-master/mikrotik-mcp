@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_wireless_interface",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "ssid": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

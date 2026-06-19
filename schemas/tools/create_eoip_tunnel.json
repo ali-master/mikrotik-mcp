@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_eoip_tunnel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name for the new EoIP tunnel interface, e.g. 'eoip-to-hq'"
+    },
+    "remote_address": {
+      "type": "string",
+      "description": "Remote endpoint IP address"
+    },
+    "tunnel_id": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "Unique tunnel ID, must match on both peers"
+    },
+    "local_address": {
+      "description": "Local endpoint IP address",
+      "type": "string"
+    },
+    "keepalive": {
+      "description": "Keepalive interval/retries, e.g. '10s,3'",
+      "type": "string"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "remote_address",
+    "tunnel_id",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

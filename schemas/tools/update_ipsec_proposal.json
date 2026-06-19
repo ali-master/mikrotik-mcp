@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ipsec_proposal",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Current name of the IPsec proposal to update"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "auth_algorithms": {
+      "type": "string"
+    },
+    "enc_algorithms": {
+      "type": "string"
+    },
+    "pfs_group": {
+      "type": "string"
+    },
+    "lifetime": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

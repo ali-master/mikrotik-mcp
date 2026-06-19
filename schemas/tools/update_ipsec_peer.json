@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ipsec_peer",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Current name of the IPsec peer to update"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "exchange_mode": {
+      "type": "string",
+      "enum": [
+        "main",
+        "aggressive",
+        "ike2"
+      ]
+    },
+    "local_address": {
+      "type": "string"
+    },
+    "passive": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

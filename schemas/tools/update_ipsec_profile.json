@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ipsec_profile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Current name of the IPsec profile to update"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "dh_group": {
+      "type": "string"
+    },
+    "enc_algorithm": {
+      "type": "string"
+    },
+    "hash_algorithm": {
+      "type": "string"
+    },
+    "lifetime": {
+      "type": "string"
+    },
+    "nat_traversal": {
+      "type": "boolean"
+    },
+    "dpd_interval": {
+      "type": "string"
+    },
+    "dpd_maximum_failures": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

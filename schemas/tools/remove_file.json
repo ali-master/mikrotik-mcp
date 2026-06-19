@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_file",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "filename"
+  ],
+  "additionalProperties": false
+}

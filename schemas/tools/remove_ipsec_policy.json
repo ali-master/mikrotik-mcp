@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ipsec_policy",
+  "type": "object",
+  "properties": {
+    "policy_id": {
+      "type": "string",
+      "description": "Internal .id from list output, e.g. '*1'"
+    }
+  },
+  "required": [
+    "policy_id"
+  ],
+  "additionalProperties": false
+}

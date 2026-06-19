@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_ovpn_server",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "certificate": {
+      "type": "string"
+    },
+    "auth": {
+      "description": "Comma-separated, e.g. 'sha256,sha1'",
+      "type": "string"
+    },
+    "cipher": {
+      "description": "Comma-separated, e.g. 'aes256-cbc,aes256-gcm'",
+      "type": "string"
+    },
+    "netmask": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "ip",
+        "ethernet"
+      ]
+    },
+    "port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "tcp",
+        "udp"
+      ]
+    },
+    "default_profile": {
+      "type": "string"
+    },
+    "require_client_certificate": {
+      "type": "boolean"
+    },
+    "max_mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}

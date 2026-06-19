@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "traceroute",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Target host or IP to trace"
+    },
+    "count": {
+      "default": 3,
+      "description": "Number of probes per hop (keep small to bound the run)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "use_dns": {
+      "description": "Resolve hop addresses to names",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "address",
+    "count"
+  ],
+  "additionalProperties": false
+}

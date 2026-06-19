@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_user_ssh_keys",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string"
+    },
+    "key_file": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "key_file"
+  ],
+  "additionalProperties": false
+}

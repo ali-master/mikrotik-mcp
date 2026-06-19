@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "disable_route",
+  "type": "object",
+  "properties": {
+    "route_id": {
+      "type": "string",
+      "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
+    }
+  },
+  "required": [
+    "route_id"
+  ],
+  "additionalProperties": false
+}

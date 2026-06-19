@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bandwidth_test",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Target running a bandwidth-test server"
+    },
+    "duration": {
+      "default": 5,
+      "description": "Test duration in seconds",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "direction": {
+      "default": "receive",
+      "type": "string",
+      "enum": [
+        "receive",
+        "transmit",
+        "both"
+      ]
+    },
+    "user": {
+      "description": "Username for the bandwidth-test server",
+      "type": "string"
+    },
+    "password": {
+      "description": "Password for the bandwidth-test server",
+      "type": "string"
+    },
+    "protocol": {
+      "default": "tcp",
+      "type": "string",
+      "enum": [
+        "tcp",
+        "udp"
+      ]
+    }
+  },
+  "required": [
+    "address",
+    "duration",
+    "direction",
+    "protocol"
+  ],
+  "additionalProperties": false
+}

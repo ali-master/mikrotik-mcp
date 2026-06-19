@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "backup_info",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "filename"
+  ],
+  "additionalProperties": false
+}

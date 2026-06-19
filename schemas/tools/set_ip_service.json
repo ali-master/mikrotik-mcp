@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_ip_service",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Service name to update, e.g. 'ssh'"
+    },
+    "port": {
+      "description": "Listening port",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "address": {
+      "description": "Allowed source subnets, comma-separated",
+      "type": "string"
+    },
+    "disabled": {
+      "description": "Disable (true) or enable (false) the service",
+      "type": "boolean"
+    },
+    "certificate": {
+      "description": "Certificate name (for TLS services)",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

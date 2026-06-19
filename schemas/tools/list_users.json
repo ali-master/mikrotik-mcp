@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_users",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "type": "string"
+    },
+    "group_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "active_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only",
+    "active_only"
+  ],
+  "additionalProperties": false
+}

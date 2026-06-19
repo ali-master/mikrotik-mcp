@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_user_ssh_key",
+  "type": "object",
+  "properties": {
+    "key_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "key_id"
+  ],
+  "additionalProperties": false
+}

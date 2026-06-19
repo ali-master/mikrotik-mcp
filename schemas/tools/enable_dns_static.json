@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "enable_dns_static",
+  "type": "object",
+  "properties": {
+    "entry_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "entry_id"
+  ],
+  "additionalProperties": false
+}

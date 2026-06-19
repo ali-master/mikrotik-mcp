@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "monitor_logs",
+  "type": "object",
+  "properties": {
+    "topics": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "duration": {
+      "default": 10,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "duration"
+  ],
+  "additionalProperties": false
+}

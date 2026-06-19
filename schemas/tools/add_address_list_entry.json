@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_address_list_entry",
+  "type": "object",
+  "properties": {
+    "list": {
+      "type": "string",
+      "description": "Address-list name"
+    },
+    "address": {
+      "type": "string",
+      "description": "Address or subnet to add, e.g. '10.0.0.1' or '10.0.0.0/24'"
+    },
+    "timeout": {
+      "description": "Auto-remove timeout, e.g. '1d00:00:00'",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "list",
+    "address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

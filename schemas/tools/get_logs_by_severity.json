@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_logs_by_severity",
+  "type": "object",
+  "properties": {
+    "severity": {
+      "type": "string",
+      "enum": [
+        "debug",
+        "info",
+        "warning",
+        "error",
+        "critical"
+      ]
+    },
+    "time_filter": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "severity"
+  ],
+  "additionalProperties": false
+}

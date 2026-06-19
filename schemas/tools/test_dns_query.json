@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "test_dns_query",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "server": {
+      "type": "string"
+    },
+    "type": {
+      "default": "A",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ],
+  "additionalProperties": false
+}

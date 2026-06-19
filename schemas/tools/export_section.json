@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "export_section",
+  "type": "object",
+  "properties": {
+    "section": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "hide_sensitive": {
+      "default": true,
+      "type": "boolean"
+    },
+    "compact": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "section",
+    "hide_sensitive",
+    "compact"
+  ],
+  "additionalProperties": false
+}

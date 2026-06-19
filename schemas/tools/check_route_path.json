@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_route_path",
+  "type": "object",
+  "properties": {
+    "destination": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "routing_mark": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "destination"
+  ],
+  "additionalProperties": false
+}

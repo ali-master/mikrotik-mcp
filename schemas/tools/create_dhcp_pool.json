@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_dhcp_pool",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "ranges": {
+      "type": "string",
+      "description": "IP range(s) e.g. \"192.168.1.1-192.168.1.100\""
+    },
+    "next_pool": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "ranges"
+  ],
+  "additionalProperties": false
+}

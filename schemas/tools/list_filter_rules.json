@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_filter_rules",
+  "type": "object",
+  "properties": {
+    "chain_filter": {
+      "type": "string"
+    },
+    "action_filter": {
+      "type": "string"
+    },
+    "src_address_filter": {
+      "type": "string"
+    },
+    "dst_address_filter": {
+      "type": "string"
+    },
+    "protocol_filter": {
+      "type": "string"
+    },
+    "interface_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "invalid_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "dynamic_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only",
+    "invalid_only",
+    "dynamic_only"
+  ],
+  "additionalProperties": false
+}
