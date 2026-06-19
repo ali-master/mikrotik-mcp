@@ -159,8 +159,8 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `disable_route` | 🟡 write·idem | `route_id`* | Disables a route. |
 | `get_routing_table` | 🟢 read | `table_name`*, `protocol_filter`, `active_only`* | Gets a specific routing table. |
 | `check_route_path` | 🟢 read | `destination`*, `source`, `routing_mark` | Checks the route path to a destination. |
-| `get_route_cache` | 🟢 read | _none_ | Gets the route cache. |
-| `flush_route_cache` | 🔴 destructive | _none_ | Flushes the route cache. |
+| `get_route_cache` | 🟢 read | _none_ | Shows the route/forwarding cache. Version-aware: on RouterOS v6 it reads the real route cache (`/ip route cache`); on v7+ — which removed the separate cache — it returns the active forwarding table (FIB), i.e. `/ip route` entries with active=yes, the closest equivalent. |
+| `flush_route_cache` | 🔴 destructive | _none_ | Flushes the route cache (`/ip route cache flush`). Version-aware: on RouterOS v6 it flushes the cache; on v7+ there is no separate cache, so it reports a no-op (the FIB is rebuilt from /ip route directly). |
 | `add_default_route` | 🟡 write | `gateway`*, `distance`*, `comment`, `check_gateway`* | Adds a default route. |
 | `add_blackhole_route` | 🟡 write | `dst_address`*, `distance`*, `comment` | Adds a blackhole route. |
 | `get_route_statistics` | 🟢 read | _none_ | Gets routing table statistics. |

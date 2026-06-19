@@ -286,16 +286,23 @@ export const routeTools: ToolModule = [
     title: "Get Route Cache",
     annotations: READ,
     description:
-      "Gets the route cache (`/ip route cache`). Note: the route cache only exists on RouterOS v6; " +
-      "v7 removed it (the FIB is derived from /ip route directly) — on v7 use list_routes / get_routing_table.",
+      "Shows the route/forwarding cache. Version-aware: on RouterOS v6 it reads the real route cache " +
+      "(`/ip route cache`); on v7+ — which removed the separate cache — it returns the active forwarding " +
+      "table (FIB), i.e. `/ip route` entries with active=yes, the closest equivalent.",
     async handler(_a, ctx) {
       ctx.info("Getting route cache");
-      const result = await executeMikrotikCommand("/ip route cache print", ctx);
-      if (commandUnsupported(result)) {
-        return "Route cache is not available on this device. RouterOS v7 removed the separate route cache (the forwarding table is built from /ip route directly). Use list_routes or get_routing_table instead.";
+      // v6: a real per-flow route cache exists.
+      const cache = await executeMikrotikCommand("/ip route cache print", ctx);
+      if (!commandUnsupported(cache)) {
+        if (looksLikeError(cache)) return `Failed to get route cache: ${cache}`;
+        return isEmpty(cache) ? "Route cache is empty." : `ROUTE CACHE:\n\n${cache}`;
       }
-      if (looksLikeError(result)) return `Failed to get route cache: ${result}`;
-      return isEmpty(result) ? "Route cache is empty." : `ROUTE CACHE:\n\n${result}`;
+      // v7+: the cache was removed — the forwarding table is the active routes (FIB).
+      const fib = await executeMikrotikCommand("/ip route print where active=yes", ctx);
+      if (looksLikeError(fib)) return `Failed to read forwarding table: ${fib}`;
+      return isEmpty(fib)
+        ? "No active routes in the forwarding table."
+        : `ACTIVE FORWARDING TABLE (RouterOS v7+ has no separate route cache; showing active /ip route entries):\n\n${fib}`;
     },
   }),
 
@@ -304,12 +311,13 @@ export const routeTools: ToolModule = [
     title: "Flush Route Cache",
     annotations: DESTRUCTIVE,
     description:
-      "Flushes the route cache (`/ip route cache flush`). Only applies to RouterOS v6; v7 has no separate route cache.",
+      "Flushes the route cache (`/ip route cache flush`). Version-aware: on RouterOS v6 it flushes the cache; " +
+      "on v7+ there is no separate cache, so it reports a no-op (the FIB is rebuilt from /ip route directly).",
     async handler(_a, ctx) {
       ctx.info("Flushing route cache");
       const result = await executeMikrotikCommand("/ip route cache flush", ctx);
       if (commandUnsupported(result)) {
-        return "Route cache flushing is not available on this device. RouterOS v7 has no separate route cache to flush.";
+        return "No route cache to flush — RouterOS v7+ has no separate route cache (the forwarding table is rebuilt from /ip route directly), so this is a no-op.";
       }
       if (looksLikeError(result)) return `Failed to flush route cache: ${result}`;
       return result.trim() ? `Flush result: ${result}` : "Route cache flushed successfully.";
