@@ -138,3 +138,24 @@ export function commandUnsupported(result: string): boolean {
     t.includes("invalid command name")
   );
 }
+
+const PARSER_ERROR_HEAD =
+  /^(?:bad command name|no such command|expected end of command|bad parameter|syntax error|ambiguous (?:command|value)|invalid value|input does not match)/i;
+
+/**
+ * Detects a RAW RouterOS console parser error left in a tool's output — e.g. a
+ * read tool that printed "bad command name poe (line 1 column 21)" under a
+ * success header. Used by the registry as a backstop so such results are marked
+ * `isError` instead of looking like success.
+ *
+ * False-positive safe by design: RouterOS parser errors *begin* with the error
+ * phrase AND carry a "(line N column M)" suffix. Neither appears that way in
+ * print output or log lines (which begin with timestamps/flags), so legitimate
+ * data containing the word "error" is never flagged.
+ */
+export function containsRawParserError(text: string): boolean {
+  // Strip a leading "HEADER:\n\n" that tools prepend to raw device output.
+  const body = text.includes("\n\n") ? text.slice(text.indexOf("\n\n") + 2) : text;
+  const firstLine = body.trimStart().split("\n", 1)[0] ?? "";
+  return PARSER_ERROR_HEAD.test(firstLine) && /\(line \d+ column \d+\)/.test(firstLine);
+}

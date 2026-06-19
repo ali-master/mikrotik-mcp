@@ -14,6 +14,7 @@ import { z } from "zod";
 import type { ZodRawShape } from "zod";
 import {   createContext } from "./context";
 import type {ToolContext, SendLog} from "./context";
+import { containsRawParserError } from "./routeros";
 
 /** Options threaded into every tool registration. */
 export interface RegisterOptions {
@@ -98,6 +99,13 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
         const ctx = createContext(sendLog, typeof device === "string" ? device : undefined);
         try {
           const text = await def.handler(rest, ctx);
+          // Backstop: if a handler returned a raw RouterOS parser error (an
+          // unsupported/mistyped command on this device/version), surface it as a
+          // real error instead of a success-looking result.
+          if (containsRawParserError(text)) {
+            ctx.error(`Device rejected the command: ${text.trim()}`);
+            return { content: [{ type: "text", text }], isError: true };
+          }
           return { content: [{ type: "text", text }] };
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);

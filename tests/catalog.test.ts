@@ -4,7 +4,14 @@
  */
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
-import { Cmd, commandUnsupported, looksLikeError, quoteValue, yesno } from "../src/core/routeros";
+import {
+  Cmd,
+  commandUnsupported,
+  containsRawParserError,
+  looksLikeError,
+  quoteValue,
+  yesno,
+} from "../src/core/routeros";
 import { allToolModules, moduleCatalog } from "../src/tools";
 
 const allTools = allToolModules.flat();
@@ -104,6 +111,17 @@ describe("RouterOS command builder", () => {
     // Real output and value-level failures are NOT "command unsupported".
     expect(commandUnsupported("0 D 0.0.0.0/0 gw 10.0.0.1")).toBe(false);
     expect(commandUnsupported("failure: already have such entry")).toBe(false);
+  });
+
+  test("containsRawParserError flags wrapped parser errors but not real data", () => {
+    // The exact symptoms reported by users (error wrapped under a success header).
+    expect(containsRawParserError("POE CONFIGURATION:\n\nbad command name poe (line 1 column 21)")).toBe(true);
+    expect(containsRawParserError("DNS CACHE STATISTICS:\n\nbad parameter stats (line 1 column 26)")).toBe(true);
+    expect(containsRawParserError("ROUTE CACHE:\n\nbad command name cache (line 1 column 11)")).toBe(true);
+    // Must NOT flag legitimate output that merely contains error-ish words.
+    expect(containsRawParserError("LOGS:\n\n12:00:00 system,error login failure for user admin")).toBe(false);
+    expect(containsRawParserError("INTERFACES:\n\n0 R ether1 ... comment=\"syntax error in old note\"")).toBe(false);
+    expect(containsRawParserError("ROUTES:\n\n0 As 0.0.0.0/0 gateway=10.0.0.1")).toBe(false);
   });
 
   test("looksLikeError catches device failures, parser and value errors", () => {
