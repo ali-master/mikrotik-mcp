@@ -1,0 +1,221 @@
+/** Routing filters — `/routing filter rule`, `select-rule`, `num-list` (RouterOS v7). */
+import { z } from "zod";
+import { executeMikrotikCommand } from "../core/connector";
+import { WRITE, WRITE_IDEMPOTENT, READ, DESTRUCTIVE, defineTool } from "../core/registry";
+import type { ToolModule } from "../core/registry";
+import { yesno, whereClause, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
+
+const UNSUPPORTED =
+  "Routing filters are not available on this device (requires RouterOS v7 with the routing package).";
+
+export const routingFilterTools: ToolModule = [
+  // ── Filter rules (chain + script-like rule) ───────────────────────────────
+  defineTool({
+    name: "list_routing_filter_rules",
+    title: "List Routing Filter Rules",
+    annotations: READ,
+    description:
+      "Lists routing filter rules (`/routing filter rule`). Rules belong to a named chain and are written as a " +
+      "script-like expression, e.g. `if (dst in 10.0.0.0/8) { set distance 30; accept }`. Chains are referenced " +
+      "by BGP/OSPF as input/output filters and by `select-rule` matchers.",
+    inputSchema: {
+      chain_filter: z.string().optional().describe("Show only rules in this chain"),
+    },
+    async handler(a, ctx) {
+      ctx.info("Listing routing filter rules");
+      const filters: string[] = [];
+      if (a.chain_filter) filters.push(`chain="${a.chain_filter}"`);
+      const result = await executeMikrotikCommand(`/routing filter rule print detail${whereClause(filters)}`, ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      return isEmpty(result) ? "No routing filter rules found." : `ROUTING FILTER RULES:\n\n${result}`;
+    },
+  }),
+
+  defineTool({
+    name: "add_routing_filter_rule",
+    title: "Add Routing Filter Rule",
+    annotations: WRITE,
+    description:
+      "Adds a routing filter rule to a chain. `rule` is the full match/action expression; create the chain " +
+      "implicitly by naming it here, then reference it from a BGP/OSPF input/output filter.",
+    inputSchema: {
+      chain: z.string().describe("Filter chain name, e.g. 'bgp-in'"),
+      rule: z
+        .string()
+        .describe('Match/action expression, e.g. "if (dst-len <= 24) { accept } else { reject }"'),
+      comment: z.string().optional(),
+      disabled: z.boolean().default(false),
+      place_before: z.string().optional().describe("Insert before this rule id to control ordering"),
+    },
+    async handler(a, ctx) {
+      ctx.info(`Adding routing filter rule to chain ${a.chain}`);
+      const cmd = new Cmd("/routing filter rule add")
+        .set("chain", a.chain)
+        .set("rule", a.rule)
+        .opt("comment", a.comment)
+        .flag("disabled", a.disabled)
+        .opt("place-before", a.place_before)
+        .build();
+
+      const result = await executeMikrotikCommand(cmd, ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      if (looksLikeError(result)) return `Failed to add routing filter rule: ${result}`;
+      const t = result.trim();
+      return t ? `Routing filter rule added (id ${t}).` : "Routing filter rule added successfully.";
+    },
+  }),
+
+  defineTool({
+    name: "update_routing_filter_rule",
+    title: "Update Routing Filter Rule",
+    annotations: WRITE_IDEMPOTENT,
+    description: "Updates a routing filter rule's chain, expression, comment, or disabled state by id.",
+    inputSchema: {
+      rule_id: z.string().describe('Rule id, e.g. "*3"'),
+      chain: z.string().optional(),
+      rule: z.string().optional(),
+      comment: z.string().optional(),
+      disabled: z.boolean().optional(),
+    },
+    async handler(a, ctx) {
+      ctx.info(`Updating routing filter rule ${a.rule_id}`);
+      const base = `/routing filter rule set ${a.rule_id}`;
+      const cmd = new Cmd(base);
+      if (a.chain !== undefined) cmd.set("chain", a.chain);
+      if (a.rule !== undefined) cmd.set("rule", a.rule);
+      if (a.comment !== undefined) cmd.set("comment", a.comment);
+      if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
+
+      const built = cmd.build();
+      if (built === base) return "No updates specified.";
+
+      const result = await executeMikrotikCommand(built, ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      if (looksLikeError(result)) return `Failed to update routing filter rule: ${result}`;
+      const details = await executeMikrotikCommand(
+        `/routing filter rule print detail where .id=${a.rule_id}`,
+        ctx,
+      );
+      return `Routing filter rule updated successfully:\n\n${details}`;
+    },
+  }),
+
+  defineTool({
+    name: "remove_routing_filter_rule",
+    title: "Remove Routing Filter Rule",
+    annotations: DESTRUCTIVE,
+    description: "Removes a routing filter rule by id.",
+    inputSchema: { rule_id: z.string().describe('Rule id, e.g. "*3"') },
+    async handler(a, ctx) {
+      ctx.info(`Removing routing filter rule ${a.rule_id}`);
+      const result = await executeMikrotikCommand(`/routing filter rule remove ${a.rule_id}`, ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      if (looksLikeError(result)) return `Failed to remove routing filter rule: ${result}`;
+      return `Routing filter rule '${a.rule_id}' removed successfully.`;
+    },
+  }),
+
+  defineTool({
+    name: "set_routing_filter_rule_enabled",
+    title: "Enable/Disable Routing Filter Rule",
+    annotations: WRITE_IDEMPOTENT,
+    description: "Enables or disables a routing filter rule by id.",
+    inputSchema: {
+      rule_id: z.string().describe('Rule id, e.g. "*3"'),
+      enabled: z.boolean(),
+    },
+    async handler(a, ctx) {
+      ctx.info(`Setting routing filter rule ${a.rule_id} enabled=${a.enabled}`);
+      const result = await executeMikrotikCommand(
+        `/routing filter rule set ${a.rule_id} disabled=${yesno(!a.enabled)}`,
+        ctx,
+      );
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      if (looksLikeError(result)) return `Failed to update routing filter rule: ${result}`;
+      return `Routing filter rule '${a.rule_id}' ${a.enabled ? "enabled" : "disabled"}.`;
+    },
+  }),
+
+  // ── Select-rules (chain dispatch) ─────────────────────────────────────────
+  defineTool({
+    name: "list_routing_filter_select_rules",
+    title: "List Routing Filter Select-rules",
+    annotations: READ,
+    description:
+      "Lists routing filter select-rules (`/routing filter select-rule`). Select-rules choose which filter " +
+      "`chain` to jump into based on prefix/length conditions — the structured front-end to the script chains.",
+    async handler(_a, ctx) {
+      ctx.info("Listing routing filter select-rules");
+      const result = await executeMikrotikCommand("/routing filter select-rule print detail", ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      return isEmpty(result)
+        ? "No routing filter select-rules found."
+        : `ROUTING FILTER SELECT-RULES:\n\n${result}`;
+    },
+  }),
+
+  // ── Num-lists (named numeric/prefix range lists) ──────────────────────────
+  defineTool({
+    name: "list_routing_filter_num_lists",
+    title: "List Routing Filter Num-lists",
+    annotations: READ,
+    description:
+      "Lists routing filter num-lists (`/routing filter num-list`). A num-list is a named set of numeric ranges " +
+      "(AS numbers, communities, prefix lengths) that filter rules can match against by name.",
+    inputSchema: {
+      list_filter: z.string().optional().describe("Show only entries of this named list"),
+    },
+    async handler(a, ctx) {
+      ctx.info("Listing routing filter num-lists");
+      const filters: string[] = [];
+      if (a.list_filter) filters.push(`list="${a.list_filter}"`);
+      const result = await executeMikrotikCommand(
+        `/routing filter num-list print detail${whereClause(filters)}`,
+        ctx,
+      );
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      return isEmpty(result) ? "No routing filter num-lists found." : `ROUTING FILTER NUM-LISTS:\n\n${result}`;
+    },
+  }),
+
+  defineTool({
+    name: "add_routing_filter_num_list",
+    title: "Add Routing Filter Num-list Entry",
+    annotations: WRITE,
+    description: "Adds a numeric range entry to a named num-list.",
+    inputSchema: {
+      list: z.string().describe("Num-list name to add to"),
+      range: z.string().describe('Numeric range or single value, e.g. "65000-65010" or "100"'),
+      comment: z.string().optional(),
+    },
+    async handler(a, ctx) {
+      ctx.info(`Adding num-list entry to ${a.list}`);
+      const cmd = new Cmd("/routing filter num-list add")
+        .set("list", a.list)
+        .set("range", a.range)
+        .opt("comment", a.comment)
+        .build();
+
+      const result = await executeMikrotikCommand(cmd, ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      if (looksLikeError(result)) return `Failed to add num-list entry: ${result}`;
+      const t = result.trim();
+      return t ? `Num-list entry added (id ${t}).` : "Num-list entry added successfully.";
+    },
+  }),
+
+  defineTool({
+    name: "remove_routing_filter_num_list",
+    title: "Remove Routing Filter Num-list Entry",
+    annotations: DESTRUCTIVE,
+    description: "Removes a num-list entry by id.",
+    inputSchema: { entry_id: z.string().describe('Entry id, e.g. "*3"') },
+    async handler(a, ctx) {
+      ctx.info(`Removing num-list entry ${a.entry_id}`);
+      const result = await executeMikrotikCommand(`/routing filter num-list remove ${a.entry_id}`, ctx);
+      if (commandUnsupported(result)) return UNSUPPORTED;
+      if (looksLikeError(result)) return `Failed to remove num-list entry: ${result}`;
+      return `Num-list entry '${a.entry_id}' removed successfully.`;
+    },
+  }),
+];
