@@ -35,6 +35,7 @@ import { routeTools } from "./routes";
 import { routingBfdTools } from "./routing-bfd";
 import { routingBgpTools } from "./routing-bgp";
 import { routingFilterTools } from "./routing-filter";
+import { routingGmpTools } from "./routing-gmp";
 import { routingIdTools } from "./routing-id";
 import { routingIgmpProxyTools } from "./routing-igmp-proxy";
 import { routingNexthopTools } from "./routing-nexthop";
@@ -94,6 +95,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "RIP", slug: "routing-rip", group: "Dynamic Routing", description: "RIP instances, interface-templates, static + dynamic neighbors (`/routing rip`).", tools: routingRipTools },
   { label: "PIM-SM", slug: "routing-pimsm", group: "Dynamic Routing", description: "PIM Sparse-Mode instances, interface-templates, RPs and neighbors (`/routing pimsm`).", tools: routingPimsmTools },
   { label: "IGMP Proxy", slug: "routing-igmp-proxy", group: "Dynamic Routing", description: "IGMP proxy settings, interfaces and forwarding cache (`/routing igmp-proxy`).", tools: routingIgmpProxyTools },
+  { label: "GMP", slug: "routing-gmp", group: "Dynamic Routing", description: "Group Management Protocol (IGMP/MLD) interfaces and memberships (`/routing gmp`).", tools: routingGmpTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
