@@ -1,7 +1,7 @@
 # Documentation
 
 `@usex/mikrotik-mcp` is a Bun-native [Model Context Protocol](https://modelcontextprotocol.io)
-server that exposes **311 tools across 32 modules** for managing MikroTik
+server that exposes **367 tools across 37 modules** for managing MikroTik
 RouterOS devices over SSH — firewall, NAT, routing, DHCP, DNS, wireless, QoS,
 and a complete **VPN suite** (WireGuard, IPsec, L2TP, PPTP, SSTP, OpenVPN, and
 GRE/IPIP/EoIP/VXLAN tunnels). It can manage **multiple named devices** at once,
@@ -28,7 +28,7 @@ existing deployment can swap binaries without touching its configuration.
 | [Development](./development.md) | Tests, type-checking, building, generating schemas and docs, project layout. |
 | **[MCP Inspector](./inspector.md)** | Test the server's tools and prompts in the official UI / CLI. |
 | [Docker](./docker.md) | A minimal Bun-based image and how to pass `MIKROTIK_*` env vars. |
-| **[Tool reference](./tools-reference.md)** | The full, generated catalog of all 311 tools with parameters and risk levels. |
+| **[Tool reference](./tools-reference.md)** | The full, generated catalog of all 367 tools with parameters and risk levels. |
 
 ## Quick links
 
