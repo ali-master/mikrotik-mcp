@@ -33,6 +33,7 @@ import { queueTools } from "./queue";
 import { radiusTools } from "./radius";
 import { routeTools } from "./routes";
 import { routingIdTools } from "./routing-id";
+import { routingSettingsTools } from "./routing-settings";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
 import { sstpTools } from "./sstp";
@@ -72,6 +73,7 @@ export const moduleCatalog: ModuleInfo[] = [
   { label: "DNS", slug: "dns", group: "Addressing & Routing", description: "DNS settings, static records, cache and regexp (`/ip dns`).", tools: dnsTools },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   { label: "Router ID", slug: "routing-id", group: "Dynamic Routing", description: "Router-ID instances for OSPF/BGP (`/routing id`).", tools: routingIdTools },
+  { label: "Routing Settings", slug: "routing-settings", group: "Dynamic Routing", description: "Global routing settings: ECMP hash policy, VRF-as-interface (`/routing settings`).", tools: routingSettingsTools },
   // ── Security ─────────────────────────────────────────────────────────────
   { label: "Firewall — Filter", slug: "firewall-filter", group: "Security", description: "Filter rules and a guided basic setup (`/ip firewall filter`).", tools: firewallFilterTools },
   { label: "Firewall — NAT", slug: "firewall-nat", group: "Security", description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).", tools: firewallNatTools },
