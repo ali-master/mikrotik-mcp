@@ -45,6 +45,7 @@ import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { floodPingTools } from "./tool-flood-ping";
 import { graphingTools } from "./tool-graphing";
 import { ipScanTools } from "./tool-ip-scan";
+import { macServerTools } from "./tool-mac-server";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -638,6 +639,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Tools",
     description: "Discover live hosts on a range or interface (`/tool ip-scan`).",
     tools: ipScanTools,
+  },
+  {
+    label: "MAC Server",
+    slug: "tool-mac-server",
+    group: "Tools",
+    description:
+      "MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`).",
+    tools: macServerTools,
   },
   {
     label: "Scheduler / Scripts",
