@@ -48,6 +48,7 @@ import { ipScanTools } from "./tool-ip-scan";
 import { macServerTools } from "./tool-mac-server";
 import { snifferTools } from "./tool-sniffer";
 import { profileTools } from "./tool-profile";
+import { romonTools } from "./tool-romon";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -664,6 +665,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Tools",
     description: "CPU usage profiler by subsystem (`/tool profile`).",
     tools: profileTools,
+  },
+  {
+    label: "RoMON",
+    slug: "tool-romon",
+    group: "Tools",
+    description:
+      "Router Management Overlay Network settings and ports (`/tool romon`).",
+    tools: romonTools,
   },
   {
     label: "Scheduler / Scripts",
