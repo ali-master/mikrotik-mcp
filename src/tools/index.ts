@@ -43,6 +43,7 @@ import { systemLoggingTools } from "./logging";
 import { networkToolTools } from "./network-tools";
 import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { floodPingTools } from "./tool-flood-ping";
+import { graphingTools } from "./tool-graphing";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -621,6 +622,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Tools",
     description: "ICMP flood ping with summary statistics (`/tool flood-ping`).",
     tools: floodPingTools,
+  },
+  {
+    label: "Graphing",
+    slug: "tool-graphing",
+    group: "Tools",
+    description:
+      "Interface/queue/resource graphing rules (`/tool graphing`).",
+    tools: graphingTools,
   },
   {
     label: "Scheduler / Scripts",
