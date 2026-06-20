@@ -24,6 +24,7 @@ import { ipv6AddressTools } from "./ipv6-address";
 import { ipv6DhcpClientTools } from "./ipv6-dhcp-client";
 import { ipv6DhcpRelayTools } from "./ipv6-dhcp-relay";
 import { ipv6DhcpServerTools } from "./ipv6-dhcp-server";
+import { ipv6FirewallFilterTools } from "./ipv6-firewall-filter";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -182,6 +183,13 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "DHCPv6 server, static bindings and custom options (`/ipv6 dhcp-server`).",
     tools: ipv6DhcpServerTools,
+  },
+  {
+    label: "IPv6 Firewall — Filter",
+    slug: "ipv6-firewall-filter",
+    group: "IPv6",
+    description: "IPv6 filter rules (`/ipv6 firewall filter`).",
+    tools: ipv6FirewallFilterTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
