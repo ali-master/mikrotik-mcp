@@ -44,6 +44,7 @@ import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
 import { pptpTools } from "./pptp";
 import { queueTools } from "./queue";
+import { queueInterfaceTools } from "./queue-interface";
 import { radiusTools } from "./radius";
 import { routeTools } from "./routes";
 import { routingBfdTools } from "./routing-bfd";
@@ -543,6 +544,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "QoS",
     description: "Queue types, queue trees and simple queues (`/queue`).",
     tools: queueTools,
+  },
+  {
+    label: "Queues — Interface",
+    slug: "queue-interface",
+    group: "QoS",
+    description:
+      "Per-interface queue-type assignment (`/queue interface`).",
+    tools: queueInterfaceTools,
   },
   // ── System / operations ──────────────────────────────────────────────────
   {
