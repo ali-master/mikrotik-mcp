@@ -28,6 +28,7 @@ import { ipv6FirewallFilterTools } from "./ipv6-firewall-filter";
 import { ipv6FirewallNatTools } from "./ipv6-firewall-nat";
 import { ipv6FirewallMangleTools } from "./ipv6-firewall-mangle";
 import { ipv6FirewallRawTools } from "./ipv6-firewall-raw";
+import { ipv6FirewallAddressListTools } from "./ipv6-firewall-address-list";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -217,6 +218,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "IPv6 raw rules: pre-conntrack accept/drop/notrack (`/ipv6 firewall raw`).",
     tools: ipv6FirewallRawTools,
+  },
+  {
+    label: "IPv6 Firewall — Address List",
+    slug: "ipv6-firewall-address-list",
+    group: "IPv6",
+    description:
+      "IPv6 firewall address-lists (`/ipv6 firewall address-list`).",
+    tools: ipv6FirewallAddressListTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
