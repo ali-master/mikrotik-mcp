@@ -49,6 +49,7 @@ import { macServerTools } from "./tool-mac-server";
 import { snifferTools } from "./tool-sniffer";
 import { profileTools } from "./tool-profile";
 import { romonTools } from "./tool-romon";
+import { smsTools } from "./tool-sms";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -673,6 +674,13 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Router Management Overlay Network settings and ports (`/tool romon`).",
     tools: romonTools,
+  },
+  {
+    label: "SMS",
+    slug: "tool-sms",
+    group: "Tools",
+    description: "Send/receive SMS over an LTE modem (`/tool sms`).",
+    tools: smsTools,
   },
   {
     label: "Scheduler / Scripts",
