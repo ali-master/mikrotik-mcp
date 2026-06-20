@@ -46,6 +46,7 @@ import { floodPingTools } from "./tool-flood-ping";
 import { graphingTools } from "./tool-graphing";
 import { ipScanTools } from "./tool-ip-scan";
 import { macServerTools } from "./tool-mac-server";
+import { snifferTools } from "./tool-sniffer";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -647,6 +648,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`).",
     tools: macServerTools,
+  },
+  {
+    label: "Packet Sniffer",
+    slug: "tool-sniffer",
+    group: "Tools",
+    description:
+      "Packet capture: settings, start/stop/save, captured hosts/protocols/packets (`/tool sniffer`).",
+    tools: snifferTools,
   },
   {
     label: "Scheduler / Scripts",
