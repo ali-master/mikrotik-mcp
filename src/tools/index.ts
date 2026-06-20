@@ -23,6 +23,7 @@ import { ipServiceTools } from "./ip-service";
 import { ipv6AddressTools } from "./ipv6-address";
 import { ipv6DhcpClientTools } from "./ipv6-dhcp-client";
 import { ipv6DhcpRelayTools } from "./ipv6-dhcp-relay";
+import { ipv6DhcpServerTools } from "./ipv6-dhcp-server";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -173,6 +174,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "DHCPv6 relay: forward client requests to upstream servers (`/ipv6 dhcp-relay`).",
     tools: ipv6DhcpRelayTools,
+  },
+  {
+    label: "DHCPv6 Server",
+    slug: "ipv6-dhcp-server",
+    group: "IPv6",
+    description:
+      "DHCPv6 server, static bindings and custom options (`/ipv6 dhcp-server`).",
+    tools: ipv6DhcpServerTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
