@@ -29,6 +29,7 @@ import { ipv6FirewallNatTools } from "./ipv6-firewall-nat";
 import { ipv6FirewallMangleTools } from "./ipv6-firewall-mangle";
 import { ipv6FirewallRawTools } from "./ipv6-firewall-raw";
 import { ipv6FirewallAddressListTools } from "./ipv6-firewall-address-list";
+import { ipv6NdTools } from "./ipv6-nd";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -226,6 +227,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "IPv6 firewall address-lists (`/ipv6 firewall address-list`).",
     tools: ipv6FirewallAddressListTools,
+  },
+  {
+    label: "IPv6 ND",
+    slug: "ipv6-nd",
+    group: "IPv6",
+    description:
+      "Neighbor Discovery / Router Advertisement config and advertised prefixes (`/ipv6 nd`).",
+    tools: ipv6NdTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
