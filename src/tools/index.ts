@@ -65,6 +65,7 @@ import { schedulerTools } from "./scheduler";
 import { sstpTools } from "./sstp";
 import { switchSettingsTools } from "./switch-settings";
 import { switchPortTools } from "./switch-port";
+import { switchPortIsolationTools } from "./switch-port-isolation";
 import { systemConfigTools } from "./system-config";
 import { systemTools } from "./system";
 import { tunnelTools } from "./tunnels";
@@ -142,6 +143,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Per-port switch chip VLAN settings (`/interface ethernet switch port`).",
     tools: switchPortTools,
+  },
+  {
+    label: "Switch — Port Isolation",
+    slug: "switch-port-isolation",
+    group: "Switch",
+    description:
+      "Hardware port isolation / forwarding overrides (`/interface ethernet switch port-isolation`).",
+    tools: switchPortIsolationTools,
   },
   // ── Layer 3 / addressing & routing ───────────────────────────────────────
   {
