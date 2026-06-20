@@ -31,6 +31,7 @@ import { ipv6FirewallRawTools } from "./ipv6-firewall-raw";
 import { ipv6FirewallAddressListTools } from "./ipv6-firewall-address-list";
 import { ipv6NdTools } from "./ipv6-nd";
 import { ipv6NeighborTools } from "./ipv6-neighbor";
+import { ipv6PoolTools } from "./ipv6-pool";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -244,6 +245,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "IPv6 neighbor cache (ND-discovered addresses), read + flush (`/ipv6 neighbor`).",
     tools: ipv6NeighborTools,
+  },
+  {
+    label: "IPv6 Pool",
+    slug: "ipv6-pool",
+    group: "IPv6",
+    description:
+      "IPv6 address/prefix pools for delegation and addressing (`/ipv6 pool`).",
+    tools: ipv6PoolTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
