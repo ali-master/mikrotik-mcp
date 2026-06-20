@@ -41,6 +41,7 @@ import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
 import { systemLoggingTools } from "./logging";
 import { networkToolTools } from "./network-tools";
+import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -603,6 +604,15 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).",
     tools: networkToolTools,
+  },
+  // ── Tools (`/tool`) ──────────────────────────────────────────────────────
+  {
+    label: "Btest Server",
+    slug: "tool-bandwidth-server",
+    group: "Tools",
+    description:
+      "Bandwidth-test server settings and sessions (`/tool bandwidth-server`).",
+    tools: bandwidthServerTools,
   },
   {
     label: "Scheduler / Scripts",
