@@ -47,6 +47,7 @@ import { graphingTools } from "./tool-graphing";
 import { ipScanTools } from "./tool-ip-scan";
 import { macServerTools } from "./tool-mac-server";
 import { snifferTools } from "./tool-sniffer";
+import { profileTools } from "./tool-profile";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -656,6 +657,13 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Packet capture: settings, start/stop/save, captured hosts/protocols/packets (`/tool sniffer`).",
     tools: snifferTools,
+  },
+  {
+    label: "Profile",
+    slug: "tool-profile",
+    group: "Tools",
+    description: "CPU usage profiler by subsystem (`/tool profile`).",
+    tools: profileTools,
   },
   {
     label: "Scheduler / Scripts",
