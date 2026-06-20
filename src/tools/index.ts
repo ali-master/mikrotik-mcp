@@ -50,6 +50,7 @@ import { snifferTools } from "./tool-sniffer";
 import { profileTools } from "./tool-profile";
 import { romonTools } from "./tool-romon";
 import { smsTools } from "./tool-sms";
+import { speedTestTools } from "./tool-speed-test";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -681,6 +682,13 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Tools",
     description: "Send/receive SMS over an LTE modem (`/tool sms`).",
     tools: smsTools,
+  },
+  {
+    label: "Speed Test",
+    slug: "tool-speed-test",
+    group: "Tools",
+    description: "Latency/throughput test to another RouterOS (`/tool speed-test`).",
+    tools: speedTestTools,
   },
   {
     label: "Scheduler / Scripts",
