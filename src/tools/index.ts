@@ -14,6 +14,7 @@ import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
 import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
+import { dot1xServerTools } from "./dot1x-server";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
 import { interfaceTools } from "./interfaces";
@@ -459,6 +460,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Management service ports — ssh/www/api/telnet (`/ip service`).",
     tools: ipServiceTools,
+  },
+  {
+    label: "802.1X — Server",
+    slug: "dot1x-server",
+    group: "Security",
+    description:
+      "802.1X authenticator: port-based access control via RADIUS (`/interface dot1x server`).",
+    tools: dot1xServerTools,
   },
   // ── VPN / tunneling ──────────────────────────────────────────────────────
   {
