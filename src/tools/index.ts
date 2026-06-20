@@ -27,6 +27,7 @@ import { ipv6DhcpServerTools } from "./ipv6-dhcp-server";
 import { ipv6FirewallFilterTools } from "./ipv6-firewall-filter";
 import { ipv6FirewallNatTools } from "./ipv6-firewall-nat";
 import { ipv6FirewallMangleTools } from "./ipv6-firewall-mangle";
+import { ipv6FirewallRawTools } from "./ipv6-firewall-raw";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -208,6 +209,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "IPv6 mangle rules: connection/packet/routing marks, DSCP, hop-limit (`/ipv6 firewall mangle`).",
     tools: ipv6FirewallMangleTools,
+  },
+  {
+    label: "IPv6 Firewall — Raw",
+    slug: "ipv6-firewall-raw",
+    group: "IPv6",
+    description:
+      "IPv6 raw rules: pre-conntrack accept/drop/notrack (`/ipv6 firewall raw`).",
+    tools: ipv6FirewallRawTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
