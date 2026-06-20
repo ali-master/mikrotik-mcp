@@ -25,6 +25,7 @@ import { ipv6DhcpClientTools } from "./ipv6-dhcp-client";
 import { ipv6DhcpRelayTools } from "./ipv6-dhcp-relay";
 import { ipv6DhcpServerTools } from "./ipv6-dhcp-server";
 import { ipv6FirewallFilterTools } from "./ipv6-firewall-filter";
+import { ipv6FirewallNatTools } from "./ipv6-firewall-nat";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -190,6 +191,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "IPv6",
     description: "IPv6 filter rules (`/ipv6 firewall filter`).",
     tools: ipv6FirewallFilterTools,
+  },
+  {
+    label: "IPv6 Firewall — NAT",
+    slug: "ipv6-firewall-nat",
+    group: "IPv6",
+    description:
+      "IPv6 NAT rules: src-nat, dst-nat, masquerade, netmap (`/ipv6 firewall nat`).",
+    tools: ipv6FirewallNatTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
