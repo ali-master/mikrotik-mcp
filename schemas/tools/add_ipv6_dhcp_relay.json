@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_dhcp_relay",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "interface": {
+      "type": "string",
+      "description": "Interface facing the DHCPv6 clients"
+    },
+    "dhcp_server": {
+      "type": "string",
+      "description": "Comma-separated upstream DHCPv6 server IPv6 address(es)"
+    },
+    "delay_time": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "interface",
+    "dhcp_server",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

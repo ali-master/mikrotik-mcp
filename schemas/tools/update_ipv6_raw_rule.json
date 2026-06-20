@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ipv6_raw_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string"
+    },
+    "chain": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "in_interface": {
+      "type": "string"
+    },
+    "out_interface": {
+      "type": "string"
+    },
+    "src_address_list": {
+      "type": "string"
+    },
+    "dst_address_list": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    },
+    "log": {
+      "type": "boolean"
+    },
+    "log_prefix": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rule_id"
+  ],
+  "additionalProperties": false
+}

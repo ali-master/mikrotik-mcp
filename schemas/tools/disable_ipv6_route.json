@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "disable_ipv6_route",
+  "type": "object",
+  "properties": {
+    "route_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "route_id"
+  ],
+  "additionalProperties": false
+}

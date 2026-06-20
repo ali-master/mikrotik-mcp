@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipv6_mangle_rule",
+  "type": "object",
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": [
+        "prerouting",
+        "input",
+        "forward",
+        "output",
+        "postrouting"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "drop",
+        "mark-connection",
+        "mark-packet",
+        "mark-routing",
+        "change-dscp",
+        "change-hop-limit",
+        "change-mss",
+        "jump",
+        "log",
+        "passthrough",
+        "return",
+        "set-priority",
+        "sniff-tzsp"
+      ]
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "in_interface": {
+      "type": "string"
+    },
+    "out_interface": {
+      "type": "string"
+    },
+    "connection_mark": {
+      "type": "string"
+    },
+    "packet_mark": {
+      "type": "string"
+    },
+    "routing_mark": {
+      "type": "string"
+    },
+    "new_connection_mark": {
+      "type": "string"
+    },
+    "new_packet_mark": {
+      "type": "string"
+    },
+    "new_routing_mark": {
+      "type": "string"
+    },
+    "new_dscp": {
+      "type": "string"
+    },
+    "new_hop_limit": {
+      "description": "e.g. \"decrement\", \"increment\", or \"set:64\"",
+      "type": "string"
+    },
+    "passthrough": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log_prefix": {
+      "type": "string"
+    },
+    "place_before": {
+      "description": "Rule number or ID (*N) to insert before",
+      "type": "string"
+    }
+  },
+  "required": [
+    "chain",
+    "action",
+    "disabled",
+    "log"
+  ],
+  "additionalProperties": false
+}

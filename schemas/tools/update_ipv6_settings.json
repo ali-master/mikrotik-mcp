@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ipv6_settings",
+  "type": "object",
+  "properties": {
+    "disable_ipv6": {
+      "type": "boolean"
+    },
+    "forward": {
+      "type": "boolean"
+    },
+    "accept_redirects": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "yes-if-forwarding-disabled"
+      ]
+    },
+    "accept_router_advertisements": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "yes-if-forwarding-disabled"
+      ]
+    },
+    "max_neighbor_entries": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}

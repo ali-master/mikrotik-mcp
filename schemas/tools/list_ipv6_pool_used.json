@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_pool_used",
+  "type": "object",
+  "properties": {
+    "pool_filter": {
+      "description": "Partial pool-name match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

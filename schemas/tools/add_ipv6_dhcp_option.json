@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_dhcp_option",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "code": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "Numeric DHCPv6 option code"
+    },
+    "value": {
+      "type": "string",
+      "description": "Option value (use '0x...' for raw hex)"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "code",
+    "value"
+  ],
+  "additionalProperties": false
+}

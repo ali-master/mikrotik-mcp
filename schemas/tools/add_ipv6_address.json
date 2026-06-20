@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_address",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "IPv6 address with prefix, e.g. '2001:db8::1/64'"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "advertise": {
+      "description": "Advertise the prefix via Router Advertisements",
+      "type": "boolean"
+    },
+    "eui_64": {
+      "description": "Derive the host part from the interface MAC (EUI-64)",
+      "type": "boolean"
+    },
+    "from_pool": {
+      "description": "IPv6 pool name to take the prefix from",
+      "type": "string"
+    },
+    "no_dad": {
+      "description": "Skip Duplicate Address Detection for this address",
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "address",
+    "interface",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

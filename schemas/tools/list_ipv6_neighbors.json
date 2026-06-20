@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_neighbors",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    },
+    "address_filter": {
+      "type": "string"
+    },
+    "mac_filter": {
+      "type": "string"
+    },
+    "status_filter": {
+      "description": "Match status, e.g. 'reachable', 'stale', 'delay', 'probe'",
+      "type": "string"
+    },
+    "router_only": {
+      "default": false,
+      "description": "Only entries flagged as routers",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "router_only"
+  ],
+  "additionalProperties": false
+}

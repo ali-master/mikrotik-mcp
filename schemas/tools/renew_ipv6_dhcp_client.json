@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "renew_ipv6_dhcp_client",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id"
+  ],
+  "additionalProperties": false
+}

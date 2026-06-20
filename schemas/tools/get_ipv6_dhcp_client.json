@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_ipv6_dhcp_client",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "RouterOS .id (e.g. '*1') or the interface name"
+    }
+  },
+  "required": [
+    "client_id"
+  ],
+  "additionalProperties": false
+}

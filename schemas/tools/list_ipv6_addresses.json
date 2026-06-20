@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_addresses",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    },
+    "address_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "dynamic_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "link_local_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only",
+    "dynamic_only",
+    "link_local_only"
+  ],
+  "additionalProperties": false
+}

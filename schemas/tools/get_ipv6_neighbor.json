@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_ipv6_neighbor",
+  "type": "object",
+  "properties": {
+    "neighbor_id": {
+      "type": "string",
+      "description": "RouterOS .id (e.g. '*1') or the IPv6 address"
+    }
+  },
+  "required": [
+    "neighbor_id"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_nd_prefixes",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    },
+    "prefix_filter": {
+      "type": "string"
+    },
+    "dynamic_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "dynamic_only"
+  ],
+  "additionalProperties": false
+}

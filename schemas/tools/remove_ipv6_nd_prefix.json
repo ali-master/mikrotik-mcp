@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ipv6_nd_prefix",
+  "type": "object",
+  "properties": {
+    "prefix_id": {
+      "type": "string",
+      "description": "RouterOS .id (e.g. '*1') or the prefix"
+    }
+  },
+  "required": [
+    "prefix_id"
+  ],
+  "additionalProperties": false
+}

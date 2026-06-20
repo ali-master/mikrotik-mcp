@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ipv6_nd",
+  "type": "object",
+  "properties": {
+    "nd_id": {
+      "type": "string",
+      "description": "Interface name (e.g. 'all', 'ether1') or '.id'"
+    },
+    "ra_interval": {
+      "type": "string"
+    },
+    "ra_delay": {
+      "type": "string"
+    },
+    "ra_lifetime": {
+      "type": "string"
+    },
+    "ra_preference": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "hop_limit": {
+      "type": "string"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "reachable_time": {
+      "type": "string"
+    },
+    "retransmit_interval": {
+      "type": "string"
+    },
+    "managed_address_configuration": {
+      "type": "boolean"
+    },
+    "other_configuration": {
+      "type": "boolean"
+    },
+    "advertise_dns": {
+      "type": "boolean"
+    },
+    "advertise_mac_address": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "nd_id"
+  ],
+  "additionalProperties": false
+}

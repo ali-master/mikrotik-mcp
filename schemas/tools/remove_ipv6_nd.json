@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ipv6_nd",
+  "type": "object",
+  "properties": {
+    "nd_id": {
+      "type": "string",
+      "description": "Interface name or '.id'"
+    }
+  },
+  "required": [
+    "nd_id"
+  ],
+  "additionalProperties": false
+}

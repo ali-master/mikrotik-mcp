@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ipv6_dhcp_binding",
+  "type": "object",
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "description": "RouterOS .id (e.g. '*1') or the DUID"
+    }
+  },
+  "required": [
+    "binding_id"
+  ],
+  "additionalProperties": false
+}

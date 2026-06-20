@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_ipv6_route",
+  "type": "object",
+  "properties": {
+    "route_id": {
+      "type": "string",
+      "description": "RouterOS .id, e.g. '*5'"
+    }
+  },
+  "required": [
+    "route_id"
+  ],
+  "additionalProperties": false
+}

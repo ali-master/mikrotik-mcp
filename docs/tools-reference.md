@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**466 tools** across **51 modules**. A `*` marks a required parameter.
+**556 tools** across **65 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -20,6 +20,20 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Routing — Static](#routes) | Addressing & Routing | 14 | Static routes, routing table, route checks and cache (`/ip route`). |
 | [DHCP](#dhcp) | Addressing & Routing | 6 | DHCP servers, networks and pools (`/ip dhcp-server`). |
 | [DNS](#dns) | Addressing & Routing | 15 | DNS settings, static records, cache and regexp (`/ip dns`). |
+| [IPv6 Addresses](#ipv6-address) | IPv6 | 4 | Interface IPv6 addressing (`/ipv6 address`). |
+| [DHCPv6 Client](#ipv6-dhcp-client) | IPv6 | 6 | DHCPv6 client: address/prefix delegation requests (`/ipv6 dhcp-client`). |
+| [DHCPv6 Relay](#ipv6-dhcp-relay) | IPv6 | 6 | DHCPv6 relay: forward client requests to upstream servers (`/ipv6 dhcp-relay`). |
+| [DHCPv6 Server](#ipv6-dhcp-server) | IPv6 | 10 | DHCPv6 server, static bindings and custom options (`/ipv6 dhcp-server`). |
+| [IPv6 Firewall — Filter](#ipv6-firewall-filter) | IPv6 | 8 | IPv6 filter rules (`/ipv6 firewall filter`). |
+| [IPv6 Firewall — NAT](#ipv6-firewall-nat) | IPv6 | 8 | IPv6 NAT rules: src-nat, dst-nat, masquerade, netmap (`/ipv6 firewall nat`). |
+| [IPv6 Firewall — Mangle](#ipv6-firewall-mangle) | IPv6 | 8 | IPv6 mangle rules: connection/packet/routing marks, DSCP, hop-limit (`/ipv6 firewall mangle`). |
+| [IPv6 Firewall — Raw](#ipv6-firewall-raw) | IPv6 | 8 | IPv6 raw rules: pre-conntrack accept/drop/notrack (`/ipv6 firewall raw`). |
+| [IPv6 Firewall — Address List](#ipv6-firewall-address-list) | IPv6 | 6 | IPv6 firewall address-lists (`/ipv6 firewall address-list`). |
+| [IPv6 ND](#ipv6-nd) | IPv6 | 8 | Neighbor Discovery / Router Advertisement config and advertised prefixes (`/ipv6 nd`). |
+| [IPv6 Neighbors](#ipv6-neighbor) | IPv6 | 3 | IPv6 neighbor cache (ND-discovered addresses), read + flush (`/ipv6 neighbor`). |
+| [IPv6 Pool](#ipv6-pool) | IPv6 | 6 | IPv6 address/prefix pools for delegation and addressing (`/ipv6 pool`). |
+| [IPv6 Routes](#ipv6-route) | IPv6 | 7 | Static IPv6 routes, incl. default and blackhole/unreachable (`/ipv6 route`). |
+| [IPv6 Settings](#ipv6-settings) | IPv6 | 2 | Global IPv6 settings: forwarding, RA/redirect acceptance, neighbor table (`/ipv6 settings`). |
 | [Router ID](#routing-id) | Dynamic Routing | 6 | Router-ID instances for OSPF/BGP (`/routing id`). |
 | [Routing Settings](#routing-settings) | Dynamic Routing | 2 | Global routing settings: ECMP hash policy, VRF-as-interface (`/routing settings`). |
 | [Routing Tables](#routing-table) | Dynamic Routing | 6 | Named routing tables / FIBs (`/routing table`). |
@@ -218,6 +232,194 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `add_dns_regexp` | 🟡 write | `regexp`*, `address`*, `ttl`*, `comment`, `disabled`* | Adds a DNS regexp entry. |
 | `test_dns_query` | 🟢 read | `name`*, `server`, `type`* | Tests a DNS query. |
 | `export_dns_config` | 🟢 read | `filename` | Exports DNS configuration to a file. |
+
+## IPv6 Addresses
+
+<a id="ipv6-address"></a>Interface IPv6 addressing (`/ipv6 address`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_ipv6_address` | 🟡 write | `address`*, `interface`*, `advertise`, `eui_64`, `from_pool`, `no_dad`, `comment`, `disabled`* | Adds an IPv6 address to an interface on the MikroTik device. |
+| `list_ipv6_addresses` | 🟢 read | `interface_filter`, `address_filter`, `disabled_only`*, `dynamic_only`*, `link_local_only`* | Lists IPv6 addresses on the MikroTik device. |
+| `get_ipv6_address` | 🟢 read | `address_id`* | Gets detailed information about a specific IPv6 address by ID or address value. |
+| `remove_ipv6_address` | 🔴 destructive | `address_id`* | Removes an IPv6 address from the MikroTik device by ID or address value. |
+
+## DHCPv6 Client
+
+<a id="ipv6-dhcp-client"></a>DHCPv6 client: address/prefix delegation requests (`/ipv6 dhcp-client`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_ipv6_dhcp_client` | 🟡 write | `interface`*, `request`*, `pool_name`, `pool_prefix_length`, `prefix_hint`, `add_default_route`, `default_route_distance`, `use_peer_dns`, `rapid_commit`, `dhcp_options`, `comment`, `disabled`* | Adds a DHCPv6 client on an interface on the MikroTik device. |
+| `list_ipv6_dhcp_clients` | 🟢 read | `interface_filter`, `status_filter`, `disabled_only`*, `invalid_only`* | Lists DHCPv6 clients on the MikroTik device. |
+| `get_ipv6_dhcp_client` | 🟢 read | `client_id`* | Gets detailed information about a specific DHCPv6 client by ID or interface. |
+| `release_ipv6_dhcp_client` | 🟡 write·idem | `client_id`* | Releases the current DHCPv6 lease/prefix for a client (by ID or interface). |
+| `renew_ipv6_dhcp_client` | 🟡 write·idem | `client_id`* | Renews the DHCPv6 lease/prefix for a client (by ID or interface). |
+| `remove_ipv6_dhcp_client` | 🔴 destructive | `client_id`* | Removes a DHCPv6 client from the MikroTik device by ID or interface. |
+
+## DHCPv6 Relay
+
+<a id="ipv6-dhcp-relay"></a>DHCPv6 relay: forward client requests to upstream servers (`/ipv6 dhcp-relay`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_ipv6_dhcp_relay` | 🟡 write | `name`*, `interface`*, `dhcp_server`*, `delay_time`, `comment`, `disabled`* | Adds a DHCPv6 relay on the MikroTik device, forwarding client requests from a local interface to upstream DHCPv6 server(s). |
+| `list_ipv6_dhcp_relays` | 🟢 read | `name_filter`, `interface_filter`, `disabled_only`* | Lists DHCPv6 relays on the MikroTik device. |
+| `get_ipv6_dhcp_relay` | 🟢 read | `name`* | Gets detailed information about a specific DHCPv6 relay. |
+| `enable_ipv6_dhcp_relay` | 🟡 write·idem | `name`* | Enables a DHCPv6 relay on the MikroTik device. |
+| `disable_ipv6_dhcp_relay` | 🟡 write·idem | `name`* | Disables a DHCPv6 relay on the MikroTik device. |
+| `remove_ipv6_dhcp_relay` | 🔴 destructive | `name`* | Removes a DHCPv6 relay from the MikroTik device. |
+
+## DHCPv6 Server
+
+<a id="ipv6-dhcp-server"></a>DHCPv6 server, static bindings and custom options (`/ipv6 dhcp-server`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `create_ipv6_dhcp_server` | 🟡 write | `name`*, `interface`*, `address_pool`*, `lease_time`*, `binding_script`, `rapid_commit`, `preference`, `route_distance`, `dhcp_option`, `comment`, `disabled`* | Creates a DHCPv6 server bound to an interface on the MikroTik device. |
+| `list_ipv6_dhcp_servers` | 🟢 read | `name_filter`, `interface_filter`, `disabled_only`*, `invalid_only`* | Lists DHCPv6 servers on the MikroTik device. |
+| `get_ipv6_dhcp_server` | 🟢 read | `name`* | Gets detailed information about a specific DHCPv6 server. |
+| `remove_ipv6_dhcp_server` | 🔴 destructive | `name`* | Removes a DHCPv6 server from the MikroTik device. |
+| `add_ipv6_dhcp_binding` | 🟡 write | `address`, `prefix`, `duid`*, `iaid`, `server`, `life_time`, `comment`, `disabled`* | Adds a DHCPv6 server binding (static prefix/address assignment) on the MikroTik device. |
+| `list_ipv6_dhcp_bindings` | 🟢 read | `server_filter`, `duid_filter`, `dynamic_only`* | Lists DHCPv6 server bindings on the MikroTik device. |
+| `remove_ipv6_dhcp_binding` | 🔴 destructive | `binding_id`* | Removes a DHCPv6 server binding by ID or DUID from the MikroTik device. |
+| `add_ipv6_dhcp_option` | 🟡 write | `name`*, `code`*, `value`*, `comment` | Adds a custom DHCPv6 option on the MikroTik device. |
+| `list_ipv6_dhcp_options` | 🟢 read | `name_filter` | Lists custom DHCPv6 options on the MikroTik device. |
+| `remove_ipv6_dhcp_option` | 🔴 destructive | `name`* | Removes a custom DHCPv6 option by name from the MikroTik device. |
+
+## IPv6 Firewall — Filter
+
+<a id="ipv6-firewall-filter"></a>IPv6 filter rules (`/ipv6 firewall filter`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `create_ipv6_filter_rule` | 🟡 write | `chain`*, `action`*, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `in_interface_list`, `out_interface_list`, `connection_state`, `src_address_list`, `dst_address_list`, `hop_limit`, `limit`, `tcp_flags`, `comment`, `disabled`*, `log`*, `log_prefix`, `place_before` | Creates an IPv6 firewall filter rule in the specified chain on the MikroTik device. connection_state: comma-separated e.g. "established,related,new,invalid". hop_limit: RouterOS hop-limit expression e.g. "equal:1" or "less:64". limit: RouterOS rate/burst string e.g. "10,5:packet". tcp_flags: RouterOS flag expression e.g. "syn,!ack". place_before: rule number or ID (*N) to insert before e.g. "0" or "*3". |
+| `list_ipv6_filter_rules` | 🟢 read | `chain_filter`, `action_filter`, `src_address_filter`, `dst_address_filter`, `protocol_filter`, `interface_filter`, `disabled_only`*, `invalid_only`*, `dynamic_only`* | Lists IPv6 firewall filter rules on the MikroTik device. |
+| `get_ipv6_filter_rule` | 🟢 read | `rule_id`* | Gets detailed information about a specific IPv6 firewall filter rule. rule_id: use the ID from list output e.g. "*1" or "0". |
+| `update_ipv6_filter_rule` | 🟡 write·idem | `rule_id`*, `chain`, `action`, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `in_interface_list`, `out_interface_list`, `connection_state`, `src_address_list`, `dst_address_list`, `hop_limit`, `limit`, `tcp_flags`, `comment`, `disabled`, `log`, `log_prefix` | Updates an existing IPv6 firewall filter rule on the MikroTik device. rule_id: use the ID from list output e.g. "*1" or "0". Pass "" to clear an optional field (e.g. src_address=""). |
+| `remove_ipv6_filter_rule` | 🔴 destructive | `rule_id`* | Removes an IPv6 firewall filter rule from the MikroTik device. rule_id: use the ID from list output e.g. "*1" or "0". |
+| `move_ipv6_filter_rule` | 🟡 write·idem | `rule_id`*, `destination`* | Moves an IPv6 firewall filter rule to a different position in the chain. destination: 0-based target position index. |
+| `enable_ipv6_filter_rule` | 🟡 write·idem | `rule_id`* | Enables an IPv6 firewall filter rule. |
+| `disable_ipv6_filter_rule` | 🟡 write·idem | `rule_id`* | Disables an IPv6 firewall filter rule. |
+
+## IPv6 Firewall — NAT
+
+<a id="ipv6-firewall-nat"></a>IPv6 NAT rules: src-nat, dst-nat, masquerade, netmap (`/ipv6 firewall nat`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `create_ipv6_nat_rule` | 🟡 write | `chain`*, `action`*, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `to_address`, `to_ports`, `src_address_list`, `dst_address_list`, `comment`, `disabled`*, `log`*, `log_prefix`, `place_before` | Creates an IPv6 firewall NAT rule on the MikroTik device. chain: 'srcnat' (after routing) or 'dstnat' (before routing). action: masquerade/src-nat/dst-nat/netmap/redirect/accept/etc. to_address: rewrite target for src-nat/dst-nat/netmap. place_before: rule number or ID (*N) to insert before. |
+| `list_ipv6_nat_rules` | 🟢 read | `chain_filter`, `action_filter`, `src_address_filter`, `dst_address_filter`, `disabled_only`*, `invalid_only`*, `dynamic_only`* | Lists IPv6 firewall NAT rules on the MikroTik device. |
+| `get_ipv6_nat_rule` | 🟢 read | `rule_id`* | Gets detailed information about a specific IPv6 firewall NAT rule. |
+| `update_ipv6_nat_rule` | 🟡 write·idem | `rule_id`*, `chain`, `action`, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `to_address`, `to_ports`, `src_address_list`, `dst_address_list`, `comment`, `disabled`, `log`, `log_prefix` | Updates an existing IPv6 firewall NAT rule. Pass "" to clear an optional field (e.g. to_address=""). |
+| `remove_ipv6_nat_rule` | 🔴 destructive | `rule_id`* | Removes an IPv6 firewall NAT rule from the MikroTik device. |
+| `move_ipv6_nat_rule` | 🟡 write·idem | `rule_id`*, `destination`* | Moves an IPv6 firewall NAT rule to a different position in the chain. |
+| `enable_ipv6_nat_rule` | 🟡 write·idem | `rule_id`* | Enables an IPv6 firewall NAT rule. |
+| `disable_ipv6_nat_rule` | 🟡 write·idem | `rule_id`* | Disables an IPv6 firewall NAT rule. |
+
+## IPv6 Firewall — Mangle
+
+<a id="ipv6-firewall-mangle"></a>IPv6 mangle rules: connection/packet/routing marks, DSCP, hop-limit (`/ipv6 firewall mangle`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `create_ipv6_mangle_rule` | 🟡 write | `chain`*, `action`*, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `connection_mark`, `packet_mark`, `routing_mark`, `new_connection_mark`, `new_packet_mark`, `new_routing_mark`, `new_dscp`, `new_hop_limit`, `passthrough`, `comment`, `disabled`*, `log`*, `log_prefix`, `place_before` | Creates an IPv6 firewall mangle rule on the MikroTik device. chain: prerouting/input/forward/output/postrouting. action: mark-connection/mark-packet/mark-routing/change-dscp/change-hop-limit/change-mss/accept/etc. Set the matching new-*-mark field for mark-* actions and keep passthrough=true to let later rules also match. |
+| `list_ipv6_mangle_rules` | 🟢 read | `chain_filter`, `action_filter`, `connection_mark_filter`, `packet_mark_filter`, `disabled_only`*, `invalid_only`*, `dynamic_only`* | Lists IPv6 firewall mangle rules on the MikroTik device. |
+| `get_ipv6_mangle_rule` | 🟢 read | `rule_id`* | Gets detailed information about a specific IPv6 firewall mangle rule. |
+| `update_ipv6_mangle_rule` | 🟡 write·idem | `rule_id`*, `chain`, `action`, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `connection_mark`, `packet_mark`, `routing_mark`, `new_connection_mark`, `new_packet_mark`, `new_routing_mark`, `new_dscp`, `new_hop_limit`, `passthrough`, `comment`, `disabled`, `log`, `log_prefix` | Updates an existing IPv6 firewall mangle rule. Pass "" to clear an optional field. |
+| `remove_ipv6_mangle_rule` | 🔴 destructive | `rule_id`* | Removes an IPv6 firewall mangle rule from the MikroTik device. |
+| `move_ipv6_mangle_rule` | 🟡 write·idem | `rule_id`*, `destination`* | Moves an IPv6 firewall mangle rule to a different position in the chain. |
+| `enable_ipv6_mangle_rule` | 🟡 write·idem | `rule_id`* | Enables an IPv6 firewall mangle rule. |
+| `disable_ipv6_mangle_rule` | 🟡 write·idem | `rule_id`* | Disables an IPv6 firewall mangle rule. |
+
+## IPv6 Firewall — Raw
+
+<a id="ipv6-firewall-raw"></a>IPv6 raw rules: pre-conntrack accept/drop/notrack (`/ipv6 firewall raw`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `create_ipv6_raw_rule` | 🟡 write | `chain`*, `action`*, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `src_address_list`, `dst_address_list`, `comment`, `disabled`*, `log`*, `log_prefix`, `place_before` | Creates an IPv6 firewall raw rule on the MikroTik device. The raw table runs before connection tracking — use it to bypass tracking (notrack) or drop traffic cheaply. chain: 'prerouting' or 'output'. |
+| `list_ipv6_raw_rules` | 🟢 read | `chain_filter`, `action_filter`, `src_address_filter`, `dst_address_filter`, `disabled_only`*, `invalid_only`*, `dynamic_only`* | Lists IPv6 firewall raw rules on the MikroTik device. |
+| `get_ipv6_raw_rule` | 🟢 read | `rule_id`* | Gets detailed information about a specific IPv6 firewall raw rule. |
+| `update_ipv6_raw_rule` | 🟡 write·idem | `rule_id`*, `chain`, `action`, `src_address`, `dst_address`, `src_port`, `dst_port`, `protocol`, `in_interface`, `out_interface`, `src_address_list`, `dst_address_list`, `comment`, `disabled`, `log`, `log_prefix` | Updates an existing IPv6 firewall raw rule. Pass "" to clear an optional field. |
+| `remove_ipv6_raw_rule` | 🔴 destructive | `rule_id`* | Removes an IPv6 firewall raw rule from the MikroTik device. |
+| `move_ipv6_raw_rule` | 🟡 write·idem | `rule_id`*, `destination`* | Moves an IPv6 firewall raw rule to a different position in the chain. |
+| `enable_ipv6_raw_rule` | 🟡 write·idem | `rule_id`* | Enables an IPv6 firewall raw rule. |
+| `disable_ipv6_raw_rule` | 🟡 write·idem | `rule_id`* | Disables an IPv6 firewall raw rule. |
+
+## IPv6 Firewall — Address List
+
+<a id="ipv6-firewall-address-list"></a>IPv6 firewall address-lists (`/ipv6 firewall address-list`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_ipv6_address_list_entry` | 🟡 write | `list`*, `address`*, `timeout`, `comment`, `disabled`* | Adds an IPv6 address/prefix to an IPv6 firewall address-list. |
+| `list_ipv6_address_lists` | 🟢 read | `list_filter`, `address_filter`, `dynamic_only`* | Lists IPv6 firewall address-list entries with optional filters. |
+| `get_ipv6_address_list_entry` | 🟢 read | `entry_id`* | Gets detailed information about a specific IPv6 address-list entry by its internal id. |
+| `remove_ipv6_address_list_entry` | 🔴 destructive | `entry_id`* | Removes an IPv6 address-list entry by its internal id. |
+| `enable_ipv6_address_list_entry` | 🟡 write·idem | `entry_id`* | Enables an IPv6 address-list entry by its internal id. |
+| `disable_ipv6_address_list_entry` | 🟡 write·idem | `entry_id`* | Disables an IPv6 address-list entry by its internal id. |
+
+## IPv6 ND
+
+<a id="ipv6-nd"></a>Neighbor Discovery / Router Advertisement config and advertised prefixes (`/ipv6 nd`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_ipv6_nd` | 🟡 write | `interface`*, `ra_interval`, `ra_delay`, `ra_lifetime`, `ra_preference`, `hop_limit`, `mtu`, `reachable_time`, `retransmit_interval`, `managed_address_configuration`, `other_configuration`, `advertise_dns`, `advertise_mac_address`, `comment`, `disabled`* | Adds a per-interface IPv6 Neighbor Discovery / Router Advertisement configuration on the MikroTik device. |
+| `list_ipv6_nd` | 🟢 read | `interface_filter`, `disabled_only`* | Lists IPv6 Neighbor Discovery interface configurations on the MikroTik device. |
+| `get_ipv6_nd` | 🟢 read | `nd_id`* | Gets detailed IPv6 ND configuration for an interface (or '.id'). |
+| `update_ipv6_nd` | 🟡 write·idem | `nd_id`*, `ra_interval`, `ra_delay`, `ra_lifetime`, `ra_preference`, `hop_limit`, `mtu`, `reachable_time`, `retransmit_interval`, `managed_address_configuration`, `other_configuration`, `advertise_dns`, `advertise_mac_address`, `comment`, `disabled` | Updates an existing IPv6 ND interface configuration (by interface name or '.id'). Also use this to configure the built-in 'all' entry. |
+| `remove_ipv6_nd` | 🔴 destructive | `nd_id`* | Removes a per-interface IPv6 ND configuration (the built-in 'all' entry cannot be removed). |
+| `add_ipv6_nd_prefix` | 🟡 write | `prefix`*, `interface`, `valid_lifetime`, `preferred_lifetime`, `autonomous`, `comment`, `disabled`* | Adds an advertised IPv6 ND prefix on the MikroTik device. |
+| `list_ipv6_nd_prefixes` | 🟢 read | `interface_filter`, `prefix_filter`, `dynamic_only`* | Lists advertised IPv6 ND prefixes on the MikroTik device. |
+| `remove_ipv6_nd_prefix` | 🔴 destructive | `prefix_id`* | Removes an advertised IPv6 ND prefix by ID or prefix value from the MikroTik device. |
+
+## IPv6 Neighbors
+
+<a id="ipv6-neighbor"></a>IPv6 neighbor cache (ND-discovered addresses), read + flush (`/ipv6 neighbor`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_ipv6_neighbors` | 🟢 read | `interface_filter`, `address_filter`, `mac_filter`, `status_filter`, `router_only`* | Lists IPv6 neighbor cache entries (discovered via Neighbor Discovery) on the MikroTik device. |
+| `get_ipv6_neighbor` | 🟢 read | `neighbor_id`* | Gets detailed information about a specific IPv6 neighbor by ID or address. |
+| `remove_ipv6_neighbor` | 🔴 destructive | `neighbor_id`* | Flushes an IPv6 neighbor cache entry by ID or address. The entry may be re-learned automatically via Neighbor Discovery. |
+
+## IPv6 Pool
+
+<a id="ipv6-pool"></a>IPv6 address/prefix pools for delegation and addressing (`/ipv6 pool`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `create_ipv6_pool` | 🟡 write | `name`*, `prefix`*, `prefix_length`*, `comment` | Creates an IPv6 pool on the MikroTik device. |
+| `list_ipv6_pools` | 🟢 read | `name_filter`, `prefix_filter` | Lists IPv6 pools on the MikroTik device. |
+| `get_ipv6_pool` | 🟢 read | `name`* | Gets detailed information about a specific IPv6 pool. |
+| `list_ipv6_pool_used` | 🟢 read | `pool_filter` | Lists the currently delegated prefixes taken from IPv6 pools (`/ipv6 pool used`). |
+| `update_ipv6_pool` | 🟡 write·idem | `name`*, `new_name`, `prefix`, `prefix_length`, `comment` | Updates an existing IPv6 pool on the MikroTik device. Pass comment="" to clear the comment. |
+| `remove_ipv6_pool` | 🔴 destructive | `name`* | Removes an IPv6 pool from the MikroTik device. |
+
+## IPv6 Routes
+
+<a id="ipv6-route"></a>Static IPv6 routes, incl. default and blackhole/unreachable (`/ipv6 route`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_ipv6_route` | 🟡 write | `dst_address`*, `gateway`, `type`, `distance`, `scope`, `target_scope`, `routing_table`, `pref_src`, `check_gateway`, `vrf_interface`, `comment`, `disabled`* | Adds a static IPv6 route on the MikroTik device. |
+| `add_ipv6_default_route` | 🟡 write | `gateway`*, `distance`, `check_gateway`, `routing_table`, `comment`, `disabled`* | Adds a default IPv6 route (::/0) via the given gateway on the MikroTik device. |
+| `list_ipv6_routes` | 🟢 read | `dst_filter`, `gateway_filter`, `routing_table_filter`, `active_only`*, `disabled_only`*, `dynamic_only`* | Lists IPv6 routes on the MikroTik device. |
+| `get_ipv6_route` | 🟢 read | `route_id`* | Gets detailed information about a specific IPv6 route by ID or destination. |
+| `remove_ipv6_route` | 🔴 destructive | `route_id`* | Removes a static IPv6 route by ID from the MikroTik device. Use the .id from list output (e.g. '*5') to avoid ambiguity when multiple routes share a destination. |
+| `enable_ipv6_route` | 🟡 write·idem | `route_id`* | Enables an IPv6 route by .id. |
+| `disable_ipv6_route` | 🟡 write·idem | `route_id`* | Disables an IPv6 route by .id. |
+
+## IPv6 Settings
+
+<a id="ipv6-settings"></a>Global IPv6 settings: forwarding, RA/redirect acceptance, neighbor table (`/ipv6 settings`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_ipv6_settings` | 🟢 read | _none_ | Gets the global IPv6 settings of the MikroTik device (`/ipv6 settings`). |
+| `update_ipv6_settings` | 🟡 write·idem | `disable_ipv6`, `forward`, `accept_redirects`, `accept_router_advertisements`, `max_neighbor_entries` | Updates the global IPv6 settings of the MikroTik device. |
 
 ## Router ID
 

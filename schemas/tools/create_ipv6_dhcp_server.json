@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipv6_dhcp_server",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "address_pool": {
+      "type": "string",
+      "description": "IPv6 pool name the server delegates from"
+    },
+    "lease_time": {
+      "default": "3d",
+      "description": "Lease duration e.g. '1d', '12h', '30m'",
+      "type": "string"
+    },
+    "binding_script": {
+      "type": "string"
+    },
+    "rapid_commit": {
+      "type": "boolean"
+    },
+    "preference": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "route_distance": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "dhcp_option": {
+      "description": "Custom DHCPv6 option names",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "interface",
+    "address_pool",
+    "lease_time",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_dhcp_binding",
+  "type": "object",
+  "properties": {
+    "address": {
+      "description": "Assigned IPv6 address, if any",
+      "type": "string"
+    },
+    "prefix": {
+      "description": "Delegated prefix, e.g. '2001:db8:1::/64'",
+      "type": "string"
+    },
+    "duid": {
+      "type": "string",
+      "description": "Client DUID the binding matches"
+    },
+    "iaid": {
+      "description": "Identity Association ID",
+      "type": "string"
+    },
+    "server": {
+      "description": "DHCPv6 server name, or 'all'",
+      "type": "string"
+    },
+    "life_time": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "duid",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

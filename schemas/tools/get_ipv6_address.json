@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_ipv6_address",
+  "type": "object",
+  "properties": {
+    "address_id": {
+      "type": "string",
+      "description": "RouterOS .id (e.g. '*1') or the address value"
+    }
+  },
+  "required": [
+    "address_id"
+  ],
+  "additionalProperties": false
+}

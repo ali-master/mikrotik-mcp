@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_dhcp_clients",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    },
+    "status_filter": {
+      "description": "Match status, e.g. 'bound', 'searching', 'stopped'",
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "invalid_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only",
+    "invalid_only"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_routes",
+  "type": "object",
+  "properties": {
+    "dst_filter": {
+      "type": "string"
+    },
+    "gateway_filter": {
+      "type": "string"
+    },
+    "routing_table_filter": {
+      "type": "string"
+    },
+    "active_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    },
+    "dynamic_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "active_only",
+    "disabled_only",
+    "dynamic_only"
+  ],
+  "additionalProperties": false
+}

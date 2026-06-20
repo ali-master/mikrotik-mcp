@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_ipv6_raw_rule",
+  "type": "object",
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": [
+        "prerouting",
+        "output"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "drop",
+        "notrack",
+        "jump",
+        "log",
+        "passthrough",
+        "return"
+      ]
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "in_interface": {
+      "type": "string"
+    },
+    "out_interface": {
+      "type": "string"
+    },
+    "src_address_list": {
+      "type": "string"
+    },
+    "dst_address_list": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log_prefix": {
+      "type": "string"
+    },
+    "place_before": {
+      "description": "Rule number or ID (*N) to insert before",
+      "type": "string"
+    }
+  },
+  "required": [
+    "chain",
+    "action",
+    "disabled",
+    "log"
+  ],
+  "additionalProperties": false
+}

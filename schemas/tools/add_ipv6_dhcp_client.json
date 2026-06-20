@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_dhcp_client",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "request": {
+      "default": "prefix",
+      "type": "string",
+      "enum": [
+        "address",
+        "prefix",
+        "address,prefix"
+      ]
+    },
+    "pool_name": {
+      "description": "Name of the IPv6 pool to expose the delegated prefix as",
+      "type": "string"
+    },
+    "pool_prefix_length": {
+      "description": "Prefix length carved from the delegated pool, e.g. 64",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 128
+    },
+    "prefix_hint": {
+      "description": "Hint the desired delegated prefix, e.g. '::/56'",
+      "type": "string"
+    },
+    "add_default_route": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "special-classless"
+      ]
+    },
+    "default_route_distance": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "use_peer_dns": {
+      "type": "boolean"
+    },
+    "rapid_commit": {
+      "type": "boolean"
+    },
+    "dhcp_options": {
+      "description": "Comma-separated custom DHCP option names",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "request",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

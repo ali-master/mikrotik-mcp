@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_nd",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "ra_interval": {
+      "description": "RA min-max interval range, e.g. '3m20s-10m'",
+      "type": "string"
+    },
+    "ra_delay": {
+      "type": "string"
+    },
+    "ra_lifetime": {
+      "description": "e.g. '30m' or 'none'",
+      "type": "string"
+    },
+    "ra_preference": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "hop_limit": {
+      "description": "Advertised hop limit (0-255 or 'unspecified')",
+      "type": "string"
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "reachable_time": {
+      "type": "string"
+    },
+    "retransmit_interval": {
+      "type": "string"
+    },
+    "managed_address_configuration": {
+      "type": "boolean"
+    },
+    "other_configuration": {
+      "type": "boolean"
+    },
+    "advertise_dns": {
+      "type": "boolean"
+    },
+    "advertise_mac_address": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

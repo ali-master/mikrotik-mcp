@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_route",
+  "type": "object",
+  "properties": {
+    "dst_address": {
+      "type": "string",
+      "description": "Destination prefix, e.g. '2001:db8:1::/64'"
+    },
+    "gateway": {
+      "description": "Next-hop IPv6 address or interface (required for unicast)",
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "unicast",
+        "blackhole",
+        "unreachable",
+        "prohibit"
+      ]
+    },
+    "distance": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 255
+    },
+    "scope": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "target_scope": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "routing_table": {
+      "type": "string"
+    },
+    "pref_src": {
+      "type": "string"
+    },
+    "check_gateway": {
+      "description": "'ping', 'arp', 'bfd' or 'none'",
+      "type": "string"
+    },
+    "vrf_interface": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "dst_address",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

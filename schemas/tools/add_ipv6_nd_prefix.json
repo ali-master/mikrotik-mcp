@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ipv6_nd_prefix",
+  "type": "object",
+  "properties": {
+    "prefix": {
+      "type": "string",
+      "description": "Prefix to advertise, e.g. '2001:db8:1::/64'"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "valid_lifetime": {
+      "type": "string"
+    },
+    "preferred_lifetime": {
+      "type": "string"
+    },
+    "autonomous": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "prefix",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_ipv6_dhcp_relays",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "type": "string"
+    },
+    "interface_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only"
+  ],
+  "additionalProperties": false
+}
