@@ -83,6 +83,14 @@ describe("RouterOS command builder", () => {
     expect(quoteValue("a\\b")).toBe('"a\\\\b"');
   });
 
+  test("quoteValue escapes control chars so multi-line sources stay one command", () => {
+    // A real newline must become the RouterOS `\n` escape, otherwise the SSH
+    // exec channel sees it as end-of-command (e.g. /system script add source=).
+    expect(quoteValue("line1\nline2")).toBe('"line1\\nline2"');
+    expect(quoteValue("a\r\nb")).toBe('"a\\r\\nb"');
+    expect(quoteValue("a\tb")).toBe('"a\\tb"');
+  });
+
   test("Cmd builds add commands with optional/flag/bool fragments", () => {
     const cmd = new Cmd("/interface vlan add")
       .set("name", "vlan100")
