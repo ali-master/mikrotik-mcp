@@ -15,6 +15,7 @@ import { dhcpTools } from "./dhcp";
 import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
 import { dot1xServerTools } from "./dot1x-server";
+import { dot1xClientTools } from "./dot1x-client";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
 import { interfaceTools } from "./interfaces";
@@ -468,6 +469,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "802.1X authenticator: port-based access control via RADIUS (`/interface dot1x server`).",
     tools: dot1xServerTools,
+  },
+  {
+    label: "802.1X — Client",
+    slug: "dot1x-client",
+    group: "Security",
+    description:
+      "802.1X supplicant: authenticate the device to an upstream port (`/interface dot1x client`).",
+    tools: dot1xClientTools,
   },
   // ── VPN / tunneling ──────────────────────────────────────────────────────
   {
