@@ -64,6 +64,7 @@ import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
 import { sstpTools } from "./sstp";
 import { switchSettingsTools } from "./switch-settings";
+import { switchPortTools } from "./switch-port";
 import { systemConfigTools } from "./system-config";
 import { systemTools } from "./system";
 import { tunnelTools } from "./tunnels";
@@ -133,6 +134,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Hardware switch chips: mirroring, CPU flow control (`/interface ethernet switch`).",
     tools: switchSettingsTools,
+  },
+  {
+    label: "Switch — Ports",
+    slug: "switch-port",
+    group: "Switch",
+    description:
+      "Per-port switch chip VLAN settings (`/interface ethernet switch port`).",
+    tools: switchPortTools,
   },
   // ── Layer 3 / addressing & routing ───────────────────────────────────────
   {
