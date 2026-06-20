@@ -44,6 +44,7 @@ import { networkToolTools } from "./network-tools";
 import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { floodPingTools } from "./tool-flood-ping";
 import { graphingTools } from "./tool-graphing";
+import { ipScanTools } from "./tool-ip-scan";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -630,6 +631,13 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Interface/queue/resource graphing rules (`/tool graphing`).",
     tools: graphingTools,
+  },
+  {
+    label: "IP Scan",
+    slug: "tool-ip-scan",
+    group: "Tools",
+    description: "Discover live hosts on a range or interface (`/tool ip-scan`).",
+    tools: ipScanTools,
   },
   {
     label: "Scheduler / Scripts",
