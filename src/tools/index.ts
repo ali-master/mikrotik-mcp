@@ -21,6 +21,7 @@ import { ipAddressTools } from "./ip-address";
 import { ipPoolTools } from "./ip-pool";
 import { ipServiceTools } from "./ip-service";
 import { ipv6AddressTools } from "./ipv6-address";
+import { ipv6DhcpClientTools } from "./ipv6-dhcp-client";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -155,6 +156,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "IPv6",
     description: "Interface IPv6 addressing (`/ipv6 address`).",
     tools: ipv6AddressTools,
+  },
+  {
+    label: "DHCPv6 Client",
+    slug: "ipv6-dhcp-client",
+    group: "IPv6",
+    description:
+      "DHCPv6 client: address/prefix delegation requests (`/ipv6 dhcp-client`).",
+    tools: ipv6DhcpClientTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
