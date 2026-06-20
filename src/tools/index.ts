@@ -53,6 +53,7 @@ import { smsTools } from "./tool-sms";
 import { speedTestTools } from "./tool-speed-test";
 import { trafficGeneratorTools } from "./tool-traffic-generator";
 import { trafficMonitorTools } from "./tool-traffic-monitor";
+import { wolTools } from "./tool-wol";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -707,6 +708,13 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Run scripts when interface traffic crosses a threshold (`/tool traffic-monitor`).",
     tools: trafficMonitorTools,
+  },
+  {
+    label: "Wake-on-LAN",
+    slug: "tool-wol",
+    group: "Tools",
+    description: "Send Wake-on-LAN magic packets (`/tool wol`).",
+    tools: wolTools,
   },
   {
     label: "Scheduler / Scripts",
