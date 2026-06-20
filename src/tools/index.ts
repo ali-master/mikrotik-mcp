@@ -20,6 +20,7 @@ import { interfaceTools } from "./interfaces";
 import { ipAddressTools } from "./ip-address";
 import { ipPoolTools } from "./ip-pool";
 import { ipServiceTools } from "./ip-service";
+import { ipv6AddressTools } from "./ipv6-address";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -146,6 +147,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Addressing & Routing",
     description: "DNS settings, static records, cache and regexp (`/ip dns`).",
     tools: dnsTools,
+  },
+  // ── IPv6 (`/ipv6`) ───────────────────────────────────────────────────────
+  {
+    label: "IPv6 Addresses",
+    slug: "ipv6-address",
+    group: "IPv6",
+    description: "Interface IPv6 addressing (`/ipv6 address`).",
+    tools: ipv6AddressTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
