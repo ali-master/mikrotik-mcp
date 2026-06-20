@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_romon_port",
+  "type": "object",
+  "properties": {
+    "port_id": {
+      "type": "string",
+      "description": "Interface name or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "port_id"
+  ],
+  "additionalProperties": false
+}

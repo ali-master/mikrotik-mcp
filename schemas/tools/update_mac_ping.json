@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_mac_ping",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "description": "Whether MAC-ping is enabled"
+    }
+  },
+  "required": [
+    "enabled"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "save_sniffer",
+  "type": "object",
+  "properties": {
+    "file_name": {
+      "type": "string",
+      "description": "Output file name, e.g. 'capture'"
+    }
+  },
+  "required": [
+    "file_name"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_sniffer_packets",
+  "type": "object",
+  "properties": {
+    "address_filter": {
+      "description": "Partial src/dst address match",
+      "type": "string"
+    },
+    "protocol_filter": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

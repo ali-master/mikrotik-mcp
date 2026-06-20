@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_traffic_generator_stream",
+  "type": "object",
+  "properties": {
+    "stream_id": {
+      "type": "string",
+      "description": "Stream name or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "stream_id"
+  ],
+  "additionalProperties": false
+}

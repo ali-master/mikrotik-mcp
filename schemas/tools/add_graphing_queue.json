@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_graphing_queue",
+  "type": "object",
+  "properties": {
+    "simple_queue": {
+      "default": "all",
+      "description": "Simple queue to graph, or 'all'",
+      "type": "string"
+    },
+    "allow_address": {
+      "type": "string"
+    },
+    "store_on_disk": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "simple_queue"
+  ],
+  "additionalProperties": false
+}

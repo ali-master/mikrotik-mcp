@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_traffic_generator_port",
+  "type": "object",
+  "properties": {
+    "port_id": {
+      "type": "string",
+      "description": "Port name or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "port_id"
+  ],
+  "additionalProperties": false
+}

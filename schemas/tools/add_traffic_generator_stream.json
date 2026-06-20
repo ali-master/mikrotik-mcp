@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_traffic_generator_stream",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "port": {
+      "type": "string",
+      "description": "Traffic-generator port name"
+    },
+    "tx_template": {
+      "description": "Packet-template name to transmit",
+      "type": "string"
+    },
+    "packet_size": {
+      "description": "Packet size or range",
+      "type": "string"
+    },
+    "tx_rate": {
+      "description": "Transmit rate in bits/second",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "port",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

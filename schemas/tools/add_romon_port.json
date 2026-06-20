@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_romon_port",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "default": "all",
+      "description": "Interface, or 'all' for the default entry",
+      "type": "string"
+    },
+    "cost": {
+      "description": "Path cost for the overlay",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "secrets": {
+      "type": "string"
+    },
+    "forbid": {
+      "description": "Forbid RoMON on this interface",
+      "type": "boolean"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

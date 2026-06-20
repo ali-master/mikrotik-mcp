@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_traffic_monitor",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "traffic": {
+      "type": "string",
+      "enum": [
+        "received",
+        "transmitted"
+      ]
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "above",
+        "below",
+        "always"
+      ]
+    },
+    "threshold": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "Rate threshold in bits/second"
+    },
+    "on_event": {
+      "description": "Script source/name to run on trigger",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "interface",
+    "traffic",
+    "trigger",
+    "threshold",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

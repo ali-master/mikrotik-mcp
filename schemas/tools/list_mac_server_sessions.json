@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_mac_server_sessions",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

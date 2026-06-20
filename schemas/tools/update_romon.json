@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_romon",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "id": {
+      "description": "RoMON ID (MAC-style)",
+      "type": "string"
+    },
+    "secrets": {
+      "description": "Comma-separated shared secret(s)",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

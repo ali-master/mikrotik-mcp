@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_graphing_resource",
+  "type": "object",
+  "properties": {
+    "allow_address": {
+      "type": "string"
+    },
+    "store_on_disk": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

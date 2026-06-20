@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_graphing_interface",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "default": "all",
+      "description": "Interface to graph, or 'all'",
+      "type": "string"
+    },
+    "allow_address": {
+      "description": "Subnet allowed to view the graphs, e.g. '0.0.0.0/0'",
+      "type": "string"
+    },
+    "store_on_disk": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface"
+  ],
+  "additionalProperties": false
+}

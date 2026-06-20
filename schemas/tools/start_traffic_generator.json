@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "start_traffic_generator",
+  "type": "object",
+  "properties": {
+    "duration": {
+      "description": "Optional run duration in seconds (else runs until stopped)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_mac_server",
+  "type": "object",
+  "properties": {
+    "allowed_interface_list": {
+      "type": "string",
+      "description": "Interface-list name, or 'all' / 'none'"
+    }
+  },
+  "required": [
+    "allowed_interface_list"
+  ],
+  "additionalProperties": false
+}

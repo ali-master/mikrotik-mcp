@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_sniffer_settings",
+  "type": "object",
+  "properties": {
+    "filter_interface": {
+      "type": "string"
+    },
+    "filter_ip_address": {
+      "description": "Match IP/CIDR, e.g. '10.0.0.0/24'",
+      "type": "string"
+    },
+    "filter_port": {
+      "type": "string"
+    },
+    "filter_mac_protocol": {
+      "type": "string"
+    },
+    "streaming_enabled": {
+      "type": "boolean"
+    },
+    "streaming_server": {
+      "description": "TZSP target, e.g. '192.168.88.2'",
+      "type": "string"
+    },
+    "memory_limit": {
+      "description": "Buffer size, e.g. '10M'",
+      "type": "string"
+    },
+    "file_name": {
+      "description": "Capture file name (.pcap)",
+      "type": "string"
+    },
+    "only_headers": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

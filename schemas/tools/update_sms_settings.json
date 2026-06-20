@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_sms_settings",
+  "type": "object",
+  "properties": {
+    "port": {
+      "description": "LTE/modem port, e.g. 'lte1'",
+      "type": "string"
+    },
+    "receive_enabled": {
+      "type": "boolean"
+    },
+    "secret": {
+      "description": "Secret for remote SMS commands",
+      "type": "string"
+    },
+    "allowed_number": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "sim_pin": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

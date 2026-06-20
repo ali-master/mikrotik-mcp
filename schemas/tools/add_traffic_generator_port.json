@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_traffic_generator_port",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "interface",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

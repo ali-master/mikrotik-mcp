@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 587,
+  "toolCount": 640,
   "tools": [
     {
       "name": "list_interfaces",
@@ -17661,6 +17661,1495 @@
         },
         "required": [
           "host"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_bandwidth_server",
+      "title": "Get Bandwidth Server",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the bandwidth-test server settings of the MikroTik device (`/tool bandwidth-server`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_bandwidth_server",
+      "title": "Update Bandwidth Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the bandwidth-test server settings of the MikroTik device.\n\nNotes:\n    enabled: accept incoming bandwidth-test sessions.\n    authenticate: require valid device credentials from test clients.\n    max_sessions: cap concurrent test sessions.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "authenticate": {
+            "type": "boolean"
+          },
+          "max_sessions": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "allocate_udp_ports_from": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_bandwidth_server_sessions",
+      "title": "List Bandwidth Server Sessions",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists active bandwidth-test server sessions (`/tool bandwidth-server session`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "user_filter": {
+            "description": "Partial user match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "flood_ping",
+      "title": "Flood Ping",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Sends a burst of ICMP echo requests as fast as possible and reports sent/received counts and min/avg/max round-trip times (`/tool flood-ping`). The run is bounded by `count`, so it terminates rather than streaming.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "Target host or IP"
+          },
+          "count": {
+            "default": 1000,
+            "description": "Number of packets to send (bounds the run)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "size": {
+            "description": "Packet size in bytes",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "interface": {
+            "description": "Outgoing interface",
+            "type": "string"
+          },
+          "src_address": {
+            "description": "Source address",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_graphing_interface",
+      "title": "Add Interface Graphing",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an interface graphing rule so the device records traffic graphs for an interface (`/tool graphing interface`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "default": "all",
+            "description": "Interface to graph, or 'all'",
+            "type": "string"
+          },
+          "allow_address": {
+            "description": "Subnet allowed to view the graphs, e.g. '0.0.0.0/0'",
+            "type": "string"
+          },
+          "store_on_disk": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_graphing_queue",
+      "title": "Add Queue Graphing",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a simple-queue graphing rule (`/tool graphing queue`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "simple_queue": {
+            "default": "all",
+            "description": "Simple queue to graph, or 'all'",
+            "type": "string"
+          },
+          "allow_address": {
+            "type": "string"
+          },
+          "store_on_disk": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "simple_queue"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_graphing_resource",
+      "title": "Add Resource Graphing",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a system-resource graphing rule (CPU, memory, disk) (`/tool graphing resource`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "allow_address": {
+            "type": "string"
+          },
+          "store_on_disk": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_graphing",
+      "title": "List Graphing Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists graphing rules of the given kind (interface, queue or resource).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "interface",
+              "queue",
+              "resource"
+            ],
+            "description": "Which graphing table to list"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_graphing",
+      "title": "Remove Graphing Rule",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a graphing rule of the given kind by '.id' (from list output).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "interface",
+              "queue",
+              "resource"
+            ]
+          },
+          "entry_id": {
+            "type": "string",
+            "description": "RouterOS '.id', e.g. '*1'"
+          }
+        },
+        "required": [
+          "kind",
+          "entry_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "ip_scan",
+      "title": "IP Scan",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Scans an address range (or a connected interface's subnet) for live hosts, returning addresses, MACs, response times and discovered DNS names (`/tool ip-scan`). The run is bounded by `duration`.\n\nNotes:\n    Provide address_range, interface, or both. At least one is required.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address_range": {
+            "description": "Range/CIDR to scan, e.g. '192.168.1.0/24'",
+            "type": "string"
+          },
+          "interface": {
+            "description": "Scan the subnet on this interface, e.g. 'ether1'",
+            "type": "string"
+          },
+          "duration": {
+            "default": 5,
+            "description": "Scan duration in seconds (bounds the run)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "duration"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_mac_server",
+      "title": "Get MAC Server",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the MAC-Telnet server settings (`/tool mac-server`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_mac_server",
+      "title": "Update MAC Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the MAC-Telnet server settings of the MikroTik device.\n\nNotes:\n    allowed_interface_list: which interfaces accept MAC-Telnet — an\n        interface-list name, or 'all' / 'none'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "allowed_interface_list": {
+            "type": "string",
+            "description": "Interface-list name, or 'all' / 'none'"
+          }
+        },
+        "required": [
+          "allowed_interface_list"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_mac_winbox",
+      "title": "Get MAC Winbox Server",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the MAC-Winbox server settings (`/tool mac-server mac-winbox`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_mac_winbox",
+      "title": "Update MAC Winbox Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the MAC-Winbox server settings of the MikroTik device (which interfaces accept Winbox over MAC).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "allowed_interface_list": {
+            "type": "string",
+            "description": "Interface-list name, or 'all' / 'none'"
+          }
+        },
+        "required": [
+          "allowed_interface_list"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_mac_ping",
+      "title": "Get MAC Ping",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the MAC-ping server setting (`/tool mac-server ping`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_mac_ping",
+      "title": "Update MAC Ping",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables or disables the MAC-ping server (`/tool mac-server ping`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether MAC-ping is enabled"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_mac_server_sessions",
+      "title": "List MAC Server Sessions",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists active MAC-Telnet sessions (`/tool mac-server session`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_sniffer_settings",
+      "title": "Get Sniffer Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the packet sniffer configuration and running state (`/tool sniffer`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_sniffer_settings",
+      "title": "Update Sniffer Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the packet sniffer configuration on the MikroTik device.\n\nNotes:\n    streaming_enabled + streaming_server: forward captured packets as\n        TZSP to a remote analyzer (e.g. Wireshark).\n    memory_limit: capture buffer size, e.g. '10M'.\n    only_headers: capture packet headers only (smaller buffer).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "filter_interface": {
+            "type": "string"
+          },
+          "filter_ip_address": {
+            "description": "Match IP/CIDR, e.g. '10.0.0.0/24'",
+            "type": "string"
+          },
+          "filter_port": {
+            "type": "string"
+          },
+          "filter_mac_protocol": {
+            "type": "string"
+          },
+          "streaming_enabled": {
+            "type": "boolean"
+          },
+          "streaming_server": {
+            "description": "TZSP target, e.g. '192.168.88.2'",
+            "type": "string"
+          },
+          "memory_limit": {
+            "description": "Buffer size, e.g. '10M'",
+            "type": "string"
+          },
+          "file_name": {
+            "description": "Capture file name (.pcap)",
+            "type": "string"
+          },
+          "only_headers": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "start_sniffer",
+      "title": "Start Sniffer",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Starts the packet sniffer capturing into memory (and a file if configured). Stop it with stop_sniffer to read the results.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "stop_sniffer",
+      "title": "Stop Sniffer",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Stops the packet sniffer.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "save_sniffer",
+      "title": "Save Sniffer Capture",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Saves the current sniffer buffer to a .pcap file on the device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "Output file name, e.g. 'capture'"
+          }
+        },
+        "required": [
+          "file_name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_sniffer_packets",
+      "title": "List Sniffer Packets",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists captured packets (`/tool sniffer packet`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address_filter": {
+            "description": "Partial src/dst address match",
+            "type": "string"
+          },
+          "protocol_filter": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_sniffer_hosts",
+      "title": "List Sniffer Hosts",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists hosts seen by the sniffer with byte/packet counts (`/tool sniffer host`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address_filter": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_sniffer_protocols",
+      "title": "List Sniffer Protocols",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the protocol distribution seen by the sniffer (`/tool sniffer protocol`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_sniffer_connections",
+      "title": "List Sniffer Connections",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists connections observed by the sniffer (`/tool sniffer connection`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "profile_cpu",
+      "title": "Profile CPU",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Profiles CPU usage by process/classifier over a bounded sampling window, showing which subsystems consume CPU (`/tool profile`). The run is bounded by `duration`, so it terminates rather than streaming.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "duration": {
+            "default": 5,
+            "description": "Sampling duration in seconds (bounds the run)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "cpu": {
+            "description": "Limit to a specific CPU core (e.g. '0'), or 'all'",
+            "type": "string"
+          }
+        },
+        "required": [
+          "duration"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_romon",
+      "title": "Get RoMON",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the RoMON settings of the MikroTik device (`/tool romon`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_romon",
+      "title": "Update RoMON",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the RoMON settings of the MikroTik device.\n\nNotes:\n    enabled: turn the Layer-2 RoMON management overlay on/off.\n    id: RoMON ID (defaults to a MAC); secrets: shared secret(s) for the\n        overlay.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "description": "RoMON ID (MAC-style)",
+            "type": "string"
+          },
+          "secrets": {
+            "description": "Comma-separated shared secret(s)",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_romon_port",
+      "title": "Add RoMON Port",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a RoMON port entry controlling which interfaces participate in the overlay (`/tool romon port`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "default": "all",
+            "description": "Interface, or 'all' for the default entry",
+            "type": "string"
+          },
+          "cost": {
+            "description": "Path cost for the overlay",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "secrets": {
+            "type": "string"
+          },
+          "forbid": {
+            "description": "Forbid RoMON on this interface",
+            "type": "boolean"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_romon_ports",
+      "title": "List RoMON Ports",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists RoMON port entries (`/tool romon port`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_romon_port",
+      "title": "Remove RoMON Port",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a RoMON port entry by interface or '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port_id": {
+            "type": "string",
+            "description": "Interface name or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "port_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_sms_settings",
+      "title": "Get SMS Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the SMS settings of the MikroTik device (`/tool sms`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_sms_settings",
+      "title": "Update SMS Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the SMS settings of the MikroTik device.\n\nNotes:\n    port: the LTE/modem interface used for SMS, e.g. 'lte1'.\n    receive_enabled: store incoming SMS in the inbox.\n    allowed_number: only act on remote commands from this number.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port": {
+            "description": "LTE/modem port, e.g. 'lte1'",
+            "type": "string"
+          },
+          "receive_enabled": {
+            "type": "boolean"
+          },
+          "secret": {
+            "description": "Secret for remote SMS commands",
+            "type": "string"
+          },
+          "allowed_number": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "sim_pin": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "send_sms",
+      "title": "Send SMS",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Sends an SMS message via the device's LTE/modem (`/tool sms send`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "string",
+            "description": "LTE/modem port, e.g. 'lte1'"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Destination phone number"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message text"
+          },
+          "smsc": {
+            "description": "SMS service center number",
+            "type": "string"
+          },
+          "channel": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "port",
+          "phone_number",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_sms_inbox",
+      "title": "List SMS Inbox",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists received SMS messages (`/tool sms inbox`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "phone_filter": {
+            "description": "Partial sender match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "speed_test",
+      "title": "Speed Test",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Runs a latency and throughput test to another reachable RouterOS device (`/tool speed-test`). The run is bounded by `duration`, so it terminates rather than streaming.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "Target RouterOS device address"
+          },
+          "duration": {
+            "default": 10,
+            "description": "Test duration in seconds (bounds the run)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "direction": {
+            "default": "both",
+            "type": "string",
+            "enum": [
+              "receive",
+              "transmit",
+              "both"
+            ]
+          },
+          "tcp_connection_count": {
+            "description": "Parallel TCP connections to use",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "user": {
+            "description": "Username for the target device",
+            "type": "string"
+          },
+          "password": {
+            "description": "Password for the target device",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "duration",
+          "direction"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_traffic_generator_port",
+      "title": "Add Traffic Generator Port",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a traffic-generator port binding a name to a physical interface (`/tool traffic-generator port`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "interface",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_traffic_generator_ports",
+      "title": "List Traffic Generator Ports",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists traffic-generator ports (`/tool traffic-generator port`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_traffic_generator_port",
+      "title": "Remove Traffic Generator Port",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a traffic-generator port by name or '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port_id": {
+            "type": "string",
+            "description": "Port name or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "port_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_traffic_generator_stream",
+      "title": "Add Traffic Generator Stream",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a traffic-generator stream describing what to transmit on a port (`/tool traffic-generator stream`).\n\nNotes:\n    tx_template: name of an existing packet-template to send.\n    tx_rate: transmit rate in bits/second.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string",
+            "description": "Traffic-generator port name"
+          },
+          "tx_template": {
+            "description": "Packet-template name to transmit",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "Packet size or range",
+            "type": "string"
+          },
+          "tx_rate": {
+            "description": "Transmit rate in bits/second",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "port",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_traffic_generator_streams",
+      "title": "List Traffic Generator Streams",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists traffic-generator streams (`/tool traffic-generator stream`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "type": "string"
+          },
+          "port_filter": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_traffic_generator_stream",
+      "title": "Remove Traffic Generator Stream",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a traffic-generator stream by name or '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "stream_id": {
+            "type": "string",
+            "description": "Stream name or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "stream_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "start_traffic_generator",
+      "title": "Start Traffic Generator",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Starts the traffic generator, transmitting the configured streams (`/tool traffic-generator start`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "duration": {
+            "description": "Optional run duration in seconds (else runs until stopped)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "stop_traffic_generator",
+      "title": "Stop Traffic Generator",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Stops the traffic generator (`/tool traffic-generator stop`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_traffic_monitor",
+      "title": "Add Traffic Monitor",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a traffic-monitor entry that runs a script when an interface's traffic crosses a threshold (`/tool traffic-monitor`).\n\nNotes:\n    traffic: which direction to watch (received or transmitted).\n    trigger: fire when traffic goes 'above' or 'below' the threshold\n        (or 'always').\n    threshold: rate in bits/second.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          },
+          "traffic": {
+            "type": "string",
+            "enum": [
+              "received",
+              "transmitted"
+            ]
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "above",
+              "below",
+              "always"
+            ]
+          },
+          "threshold": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Rate threshold in bits/second"
+          },
+          "on_event": {
+            "description": "Script source/name to run on trigger",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "interface",
+          "traffic",
+          "trigger",
+          "threshold",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_traffic_monitors",
+      "title": "List Traffic Monitors",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists traffic-monitor entries (`/tool traffic-monitor`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "type": "string"
+          },
+          "interface_filter": {
+            "type": "string"
+          },
+          "disabled_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "disabled_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_traffic_monitor",
+      "title": "Get Traffic Monitor",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets a specific traffic-monitor entry by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_traffic_monitor",
+      "title": "Update Traffic Monitor",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a traffic-monitor entry by name. Pass comment=\"\" to clear the comment.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          },
+          "traffic": {
+            "type": "string",
+            "enum": [
+              "received",
+              "transmitted"
+            ]
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "above",
+              "below",
+              "always"
+            ]
+          },
+          "threshold": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "on_event": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_traffic_monitor",
+      "title": "Remove Traffic Monitor",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a traffic-monitor entry by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enable_traffic_monitor",
+      "title": "Enable Traffic Monitor",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables a traffic-monitor entry by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "disable_traffic_monitor",
+      "title": "Disable Traffic Monitor",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disables a traffic-monitor entry by name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "wake_on_lan",
+      "title": "Wake-on-LAN",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Sends a Wake-on-LAN magic packet to wake a host by MAC address (`/tool wol`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Target MAC address, e.g. 'AA:BB:CC:DD:EE:FF'"
+          },
+          "interface": {
+            "description": "Interface to send the magic packet from",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mac"
         ],
         "additionalProperties": false
       }

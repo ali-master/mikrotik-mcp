@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**587 tools** across **72 modules**. A `*` marks a required parameter.
+**640 tools** across **85 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -75,6 +75,19 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [System](#system) | System & Ops | 14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown. |
 | [System Config](#system-config) | System & Ops | 18 | Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog. |
 | [Network Tools](#network-tools) | System & Ops | 8 | ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`). |
+| [Btest Server](#tool-bandwidth-server) | Tools | 3 | Bandwidth-test server settings and sessions (`/tool bandwidth-server`). |
+| [Flood Ping](#tool-flood-ping) | Tools | 1 | ICMP flood ping with summary statistics (`/tool flood-ping`). |
+| [Graphing](#tool-graphing) | Tools | 5 | Interface/queue/resource graphing rules (`/tool graphing`). |
+| [IP Scan](#tool-ip-scan) | Tools | 1 | Discover live hosts on a range or interface (`/tool ip-scan`). |
+| [MAC Server](#tool-mac-server) | Tools | 7 | MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`). |
+| [Packet Sniffer](#tool-sniffer) | Tools | 9 | Packet capture: settings, start/stop/save, captured hosts/protocols/packets (`/tool sniffer`). |
+| [Profile](#tool-profile) | Tools | 1 | CPU usage profiler by subsystem (`/tool profile`). |
+| [RoMON](#tool-romon) | Tools | 5 | Router Management Overlay Network settings and ports (`/tool romon`). |
+| [SMS](#tool-sms) | Tools | 4 | Send/receive SMS over an LTE modem (`/tool sms`). |
+| [Speed Test](#tool-speed-test) | Tools | 1 | Latency/throughput test to another RouterOS (`/tool speed-test`). |
+| [Traffic Generator](#tool-traffic-generator) | Tools | 8 | Synthetic traffic: ports, streams and run control (`/tool traffic-generator`). |
+| [Traffic Monitor](#tool-traffic-monitor) | Tools | 7 | Run scripts when interface traffic crosses a threshold (`/tool traffic-monitor`). |
+| [Wake-on-LAN](#tool-wol) | Tools | 1 | Send Wake-on-LAN magic packets (`/tool wol`). |
 | [Scheduler / Scripts](#scheduler) | System & Ops | 10 | Scheduled jobs and scripts (`/system scheduler`, `/system script`). |
 | [Users](#users) | System & Ops | 18 | Users, groups, active sessions and SSH keys (`/user`). |
 | [Logs](#logs) | System & Ops | 10 | Log retrieval, search, statistics and export (`/log`). |
@@ -1063,6 +1076,150 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `list_netwatch` | 🟢 read | `host_filter` | Lists netwatch host-monitoring entries. |
 | `get_netwatch` | 🟢 read | `host`* | Gets detailed information about a specific netwatch entry. |
 | `remove_netwatch` | 🔴 destructive | `host`* | Removes a netwatch entry by host. |
+
+## Btest Server
+
+<a id="tool-bandwidth-server"></a>Bandwidth-test server settings and sessions (`/tool bandwidth-server`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_bandwidth_server` | 🟢 read | _none_ | Gets the bandwidth-test server settings of the MikroTik device (`/tool bandwidth-server`). |
+| `update_bandwidth_server` | 🟡 write·idem | `enabled`, `authenticate`, `max_sessions`, `allocate_udp_ports_from` | Updates the bandwidth-test server settings of the MikroTik device. |
+| `list_bandwidth_server_sessions` | 🟢 read | `user_filter` | Lists active bandwidth-test server sessions (`/tool bandwidth-server session`). |
+
+## Flood Ping
+
+<a id="tool-flood-ping"></a>ICMP flood ping with summary statistics (`/tool flood-ping`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `flood_ping` | 🟢 read | `address`*, `count`*, `size`, `interface`, `src_address` | Sends a burst of ICMP echo requests as fast as possible and reports sent/received counts and min/avg/max round-trip times (`/tool flood-ping`). The run is bounded by `count`, so it terminates rather than streaming. |
+
+## Graphing
+
+<a id="tool-graphing"></a>Interface/queue/resource graphing rules (`/tool graphing`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_graphing_interface` | 🟡 write | `interface`*, `allow_address`, `store_on_disk` | Adds an interface graphing rule so the device records traffic graphs for an interface (`/tool graphing interface`). |
+| `add_graphing_queue` | 🟡 write | `simple_queue`*, `allow_address`, `store_on_disk` | Adds a simple-queue graphing rule (`/tool graphing queue`). |
+| `add_graphing_resource` | 🟡 write | `allow_address`, `store_on_disk` | Adds a system-resource graphing rule (CPU, memory, disk) (`/tool graphing resource`). |
+| `list_graphing` | 🟢 read | `kind`* | Lists graphing rules of the given kind (interface, queue or resource). |
+| `remove_graphing` | 🔴 destructive | `kind`*, `entry_id`* | Removes a graphing rule of the given kind by '.id' (from list output). |
+
+## IP Scan
+
+<a id="tool-ip-scan"></a>Discover live hosts on a range or interface (`/tool ip-scan`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `ip_scan` | 🟢 read | `address_range`, `interface`, `duration`* | Scans an address range (or a connected interface's subnet) for live hosts, returning addresses, MACs, response times and discovered DNS names (`/tool ip-scan`). The run is bounded by `duration`. |
+
+## MAC Server
+
+<a id="tool-mac-server"></a>MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_mac_server` | 🟢 read | _none_ | Gets the MAC-Telnet server settings (`/tool mac-server`). |
+| `update_mac_server` | 🟡 write·idem | `allowed_interface_list`* | Updates the MAC-Telnet server settings of the MikroTik device. |
+| `get_mac_winbox` | 🟢 read | _none_ | Gets the MAC-Winbox server settings (`/tool mac-server mac-winbox`). |
+| `update_mac_winbox` | 🟡 write·idem | `allowed_interface_list`* | Updates the MAC-Winbox server settings of the MikroTik device (which interfaces accept Winbox over MAC). |
+| `get_mac_ping` | 🟢 read | _none_ | Gets the MAC-ping server setting (`/tool mac-server ping`). |
+| `update_mac_ping` | 🟡 write·idem | `enabled`* | Enables or disables the MAC-ping server (`/tool mac-server ping`). |
+| `list_mac_server_sessions` | 🟢 read | `interface_filter` | Lists active MAC-Telnet sessions (`/tool mac-server session`). |
+
+## Packet Sniffer
+
+<a id="tool-sniffer"></a>Packet capture: settings, start/stop/save, captured hosts/protocols/packets (`/tool sniffer`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_sniffer_settings` | 🟢 read | _none_ | Gets the packet sniffer configuration and running state (`/tool sniffer`). |
+| `update_sniffer_settings` | 🟡 write·idem | `filter_interface`, `filter_ip_address`, `filter_port`, `filter_mac_protocol`, `streaming_enabled`, `streaming_server`, `memory_limit`, `file_name`, `only_headers` | Updates the packet sniffer configuration on the MikroTik device. |
+| `start_sniffer` | 🟡 write | _none_ | Starts the packet sniffer capturing into memory (and a file if configured). Stop it with stop_sniffer to read the results. |
+| `stop_sniffer` | 🟡 write | _none_ | Stops the packet sniffer. |
+| `save_sniffer` | 🟡 write | `file_name`* | Saves the current sniffer buffer to a .pcap file on the device. |
+| `list_sniffer_packets` | 🟢 read | `address_filter`, `protocol_filter` | Lists captured packets (`/tool sniffer packet`). |
+| `list_sniffer_hosts` | 🟢 read | `address_filter` | Lists hosts seen by the sniffer with byte/packet counts (`/tool sniffer host`). |
+| `list_sniffer_protocols` | 🟢 read | _none_ | Lists the protocol distribution seen by the sniffer (`/tool sniffer protocol`). |
+| `list_sniffer_connections` | 🟢 read | _none_ | Lists connections observed by the sniffer (`/tool sniffer connection`). |
+
+## Profile
+
+<a id="tool-profile"></a>CPU usage profiler by subsystem (`/tool profile`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `profile_cpu` | 🟢 read | `duration`*, `cpu` | Profiles CPU usage by process/classifier over a bounded sampling window, showing which subsystems consume CPU (`/tool profile`). The run is bounded by `duration`, so it terminates rather than streaming. |
+
+## RoMON
+
+<a id="tool-romon"></a>Router Management Overlay Network settings and ports (`/tool romon`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_romon` | 🟢 read | _none_ | Gets the RoMON settings of the MikroTik device (`/tool romon`). |
+| `update_romon` | 🟡 write·idem | `enabled`, `id`, `secrets` | Updates the RoMON settings of the MikroTik device. |
+| `add_romon_port` | 🟡 write | `interface`*, `cost`, `secrets`, `forbid`, `disabled`* | Adds a RoMON port entry controlling which interfaces participate in the overlay (`/tool romon port`). |
+| `list_romon_ports` | 🟢 read | `interface_filter` | Lists RoMON port entries (`/tool romon port`). |
+| `remove_romon_port` | 🔴 destructive | `port_id`* | Removes a RoMON port entry by interface or '.id' from the MikroTik device. |
+
+## SMS
+
+<a id="tool-sms"></a>Send/receive SMS over an LTE modem (`/tool sms`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `get_sms_settings` | 🟢 read | _none_ | Gets the SMS settings of the MikroTik device (`/tool sms`). |
+| `update_sms_settings` | 🟡 write·idem | `port`, `receive_enabled`, `secret`, `allowed_number`, `channel`, `sim_pin` | Updates the SMS settings of the MikroTik device. |
+| `send_sms` | 🟡 write | `port`*, `phone_number`*, `message`*, `smsc`, `channel` | Sends an SMS message via the device's LTE/modem (`/tool sms send`). |
+| `list_sms_inbox` | 🟢 read | `phone_filter` | Lists received SMS messages (`/tool sms inbox`). |
+
+## Speed Test
+
+<a id="tool-speed-test"></a>Latency/throughput test to another RouterOS (`/tool speed-test`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `speed_test` | 🟢 read | `address`*, `duration`*, `direction`*, `tcp_connection_count`, `user`, `password` | Runs a latency and throughput test to another reachable RouterOS device (`/tool speed-test`). The run is bounded by `duration`, so it terminates rather than streaming. |
+
+## Traffic Generator
+
+<a id="tool-traffic-generator"></a>Synthetic traffic: ports, streams and run control (`/tool traffic-generator`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_traffic_generator_port` | 🟡 write | `name`*, `interface`*, `disabled`* | Adds a traffic-generator port binding a name to a physical interface (`/tool traffic-generator port`). |
+| `list_traffic_generator_ports` | 🟢 read | `name_filter` | Lists traffic-generator ports (`/tool traffic-generator port`). |
+| `remove_traffic_generator_port` | 🔴 destructive | `port_id`* | Removes a traffic-generator port by name or '.id' from the MikroTik device. |
+| `add_traffic_generator_stream` | 🟡 write | `name`*, `port`*, `tx_template`, `packet_size`, `tx_rate`, `comment`, `disabled`* | Adds a traffic-generator stream describing what to transmit on a port (`/tool traffic-generator stream`). |
+| `list_traffic_generator_streams` | 🟢 read | `name_filter`, `port_filter` | Lists traffic-generator streams (`/tool traffic-generator stream`). |
+| `remove_traffic_generator_stream` | 🔴 destructive | `stream_id`* | Removes a traffic-generator stream by name or '.id' from the MikroTik device. |
+| `start_traffic_generator` | 🟡 write | `duration` | Starts the traffic generator, transmitting the configured streams (`/tool traffic-generator start`). |
+| `stop_traffic_generator` | 🟡 write | _none_ | Stops the traffic generator (`/tool traffic-generator stop`). |
+
+## Traffic Monitor
+
+<a id="tool-traffic-monitor"></a>Run scripts when interface traffic crosses a threshold (`/tool traffic-monitor`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_traffic_monitor` | 🟡 write | `name`*, `interface`*, `traffic`*, `trigger`*, `threshold`*, `on_event`, `comment`, `disabled`* | Adds a traffic-monitor entry that runs a script when an interface's traffic crosses a threshold (`/tool traffic-monitor`). |
+| `list_traffic_monitors` | 🟢 read | `name_filter`, `interface_filter`, `disabled_only`* | Lists traffic-monitor entries (`/tool traffic-monitor`). |
+| `get_traffic_monitor` | 🟢 read | `name`* | Gets a specific traffic-monitor entry by name. |
+| `update_traffic_monitor` | 🟡 write·idem | `name`*, `interface`, `traffic`, `trigger`, `threshold`, `on_event`, `comment`, `disabled` | Updates a traffic-monitor entry by name. Pass comment="" to clear the comment. |
+| `remove_traffic_monitor` | 🔴 destructive | `name`* | Removes a traffic-monitor entry by name. |
+| `enable_traffic_monitor` | 🟡 write·idem | `name`* | Enables a traffic-monitor entry by name. |
+| `disable_traffic_monitor` | 🟡 write·idem | `name`* | Disables a traffic-monitor entry by name. |
+
+## Wake-on-LAN
+
+<a id="tool-wol"></a>Send Wake-on-LAN magic packets (`/tool wol`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `wake_on_lan` | 🟡 write | `mac`*, `interface` | Sends a Wake-on-LAN magic packet to wake a host by MAC address (`/tool wol`). |
 
 ## Scheduler / Scripts
 

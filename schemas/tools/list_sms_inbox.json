@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_sms_inbox",
+  "type": "object",
+  "properties": {
+    "phone_filter": {
+      "description": "Partial sender match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

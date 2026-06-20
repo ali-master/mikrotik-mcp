@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_romon_ports",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

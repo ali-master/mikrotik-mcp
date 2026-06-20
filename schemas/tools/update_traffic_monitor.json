@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_traffic_monitor",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "traffic": {
+      "type": "string",
+      "enum": [
+        "received",
+        "transmitted"
+      ]
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "above",
+        "below",
+        "always"
+      ]
+    },
+    "threshold": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "on_event": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}

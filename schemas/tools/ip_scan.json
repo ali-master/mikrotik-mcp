@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ip_scan",
+  "type": "object",
+  "properties": {
+    "address_range": {
+      "description": "Range/CIDR to scan, e.g. '192.168.1.0/24'",
+      "type": "string"
+    },
+    "interface": {
+      "description": "Scan the subnet on this interface, e.g. 'ether1'",
+      "type": "string"
+    },
+    "duration": {
+      "default": 5,
+      "description": "Scan duration in seconds (bounds the run)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "duration"
+  ],
+  "additionalProperties": false
+}

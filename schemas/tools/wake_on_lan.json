@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "wake_on_lan",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "description": "Target MAC address, e.g. 'AA:BB:CC:DD:EE:FF'"
+    },
+    "interface": {
+      "description": "Interface to send the magic packet from",
+      "type": "string"
+    }
+  },
+  "required": [
+    "mac"
+  ],
+  "additionalProperties": false
+}

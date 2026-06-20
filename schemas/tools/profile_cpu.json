@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "profile_cpu",
+  "type": "object",
+  "properties": {
+    "duration": {
+      "default": 5,
+      "description": "Sampling duration in seconds (bounds the run)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "cpu": {
+      "description": "Limit to a specific CPU core (e.g. '0'), or 'all'",
+      "type": "string"
+    }
+  },
+  "required": [
+    "duration"
+  ],
+  "additionalProperties": false
+}

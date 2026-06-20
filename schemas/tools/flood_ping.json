@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "flood_ping",
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Target host or IP"
+    },
+    "count": {
+      "default": 1000,
+      "description": "Number of packets to send (bounds the run)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "size": {
+      "description": "Packet size in bytes",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "interface": {
+      "description": "Outgoing interface",
+      "type": "string"
+    },
+    "src_address": {
+      "description": "Source address",
+      "type": "string"
+    }
+  },
+  "required": [
+    "address",
+    "count"
+  ],
+  "additionalProperties": false
+}
