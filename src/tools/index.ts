@@ -26,6 +26,7 @@ import { ipv6DhcpRelayTools } from "./ipv6-dhcp-relay";
 import { ipv6DhcpServerTools } from "./ipv6-dhcp-server";
 import { ipv6FirewallFilterTools } from "./ipv6-firewall-filter";
 import { ipv6FirewallNatTools } from "./ipv6-firewall-nat";
+import { ipv6FirewallMangleTools } from "./ipv6-firewall-mangle";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -199,6 +200,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "IPv6 NAT rules: src-nat, dst-nat, masquerade, netmap (`/ipv6 firewall nat`).",
     tools: ipv6FirewallNatTools,
+  },
+  {
+    label: "IPv6 Firewall — Mangle",
+    slug: "ipv6-firewall-mangle",
+    group: "IPv6",
+    description:
+      "IPv6 mangle rules: connection/packet/routing marks, DSCP, hop-limit (`/ipv6 firewall mangle`).",
+    tools: ipv6FirewallMangleTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
