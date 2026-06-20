@@ -33,6 +33,7 @@ import { ipv6NdTools } from "./ipv6-nd";
 import { ipv6NeighborTools } from "./ipv6-neighbor";
 import { ipv6PoolTools } from "./ipv6-pool";
 import { ipv6RouteTools } from "./ipv6-route";
+import { ipv6SettingsTools } from "./ipv6-settings";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -262,6 +263,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Static IPv6 routes, incl. default and blackhole/unreachable (`/ipv6 route`).",
     tools: ipv6RouteTools,
+  },
+  {
+    label: "IPv6 Settings",
+    slug: "ipv6-settings",
+    group: "IPv6",
+    description:
+      "Global IPv6 settings: forwarding, RA/redirect acceptance, neighbor table (`/ipv6 settings`).",
+    tools: ipv6SettingsTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
