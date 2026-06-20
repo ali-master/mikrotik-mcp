@@ -52,6 +52,7 @@ import { romonTools } from "./tool-romon";
 import { smsTools } from "./tool-sms";
 import { speedTestTools } from "./tool-speed-test";
 import { trafficGeneratorTools } from "./tool-traffic-generator";
+import { trafficMonitorTools } from "./tool-traffic-monitor";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -698,6 +699,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Synthetic traffic: ports, streams and run control (`/tool traffic-generator`).",
     tools: trafficGeneratorTools,
+  },
+  {
+    label: "Traffic Monitor",
+    slug: "tool-traffic-monitor",
+    group: "Tools",
+    description:
+      "Run scripts when interface traffic crosses a threshold (`/tool traffic-monitor`).",
+    tools: trafficMonitorTools,
   },
   {
     label: "Scheduler / Scripts",
