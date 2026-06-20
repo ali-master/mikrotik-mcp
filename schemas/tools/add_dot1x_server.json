@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_dot1x_server",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "auth_types": {
+      "type": "string",
+      "enum": [
+        "dot1x",
+        "mac-auth",
+        "dot1x,mac-auth"
+      ]
+    },
+    "accounting": {
+      "type": "boolean"
+    },
+    "interim_update": {
+      "description": "e.g. '5m' or '0s'",
+      "type": "string"
+    },
+    "mac_auth_mode": {
+      "type": "string",
+      "enum": [
+        "mac-as-username",
+        "mac-as-username-and-password"
+      ]
+    },
+    "guest_vlan_id": {
+      "description": "VLAN id or 'none'",
+      "type": "string"
+    },
+    "reject_vlan_id": {
+      "description": "VLAN id or 'none'",
+      "type": "string"
+    },
+    "server_fail_vlan_id": {
+      "description": "VLAN id or 'none'",
+      "type": "string"
+    },
+    "reauth_timeout": {
+      "description": "Re-auth period or 'none'",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

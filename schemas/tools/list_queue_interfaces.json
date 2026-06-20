@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_queue_interfaces",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "description": "Partial interface-name match",
+      "type": "string"
+    },
+    "queue_filter": {
+      "description": "Partial queue-type-name match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

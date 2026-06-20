@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_queue_interface",
+  "type": "object",
+  "properties": {
+    "interface_id": {
+      "type": "string",
+      "description": "Interface name (e.g. 'ether1') or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "interface_id"
+  ],
+  "additionalProperties": false
+}

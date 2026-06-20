@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_dot1x_client",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Interface name or RouterOS '.id'"
+    },
+    "eap_methods": {
+      "type": "string"
+    },
+    "identity": {
+      "type": "string"
+    },
+    "anonymous_identity": {
+      "type": "string"
+    },
+    "certificate": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "client_id"
+  ],
+  "additionalProperties": false
+}

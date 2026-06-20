@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 574,
+  "toolCount": 587,
   "tools": [
     {
       "name": "list_interfaces",
@@ -11182,6 +11182,396 @@
       }
     },
     {
+      "name": "add_dot1x_server",
+      "title": "Add Dot1x Server",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an 802.1X authenticator (server) on an interface, enforcing port-based network access control against a RADIUS server (`/interface dot1x server`).\n\nNotes:\n    auth_types: 'dot1x' (EAP supplicant), 'mac-auth' (MAC bypass), or\n        both.\n    guest_vlan_id / reject_vlan_id / server_fail_vlan_id: VLAN to assign\n        when there is no supplicant, on auth failure, or when RADIUS is\n        unreachable (number, or 'none').",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string"
+          },
+          "auth_types": {
+            "type": "string",
+            "enum": [
+              "dot1x",
+              "mac-auth",
+              "dot1x,mac-auth"
+            ]
+          },
+          "accounting": {
+            "type": "boolean"
+          },
+          "interim_update": {
+            "description": "e.g. '5m' or '0s'",
+            "type": "string"
+          },
+          "mac_auth_mode": {
+            "type": "string",
+            "enum": [
+              "mac-as-username",
+              "mac-as-username-and-password"
+            ]
+          },
+          "guest_vlan_id": {
+            "description": "VLAN id or 'none'",
+            "type": "string"
+          },
+          "reject_vlan_id": {
+            "description": "VLAN id or 'none'",
+            "type": "string"
+          },
+          "server_fail_vlan_id": {
+            "description": "VLAN id or 'none'",
+            "type": "string"
+          },
+          "reauth_timeout": {
+            "description": "Re-auth period or 'none'",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_dot1x_servers",
+      "title": "List Dot1x Servers",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists 802.1X authenticators on the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "type": "string"
+          },
+          "disabled_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "disabled_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_dot1x_server",
+      "title": "Get Dot1x Server",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets a specific 802.1X authenticator by interface or '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "server_id": {
+            "type": "string",
+            "description": "Interface name (e.g. 'ether2') or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "server_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_dot1x_server",
+      "title": "Update Dot1x Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an 802.1X authenticator (by interface or '.id'). Pass comment=\"\" to clear the comment.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "server_id": {
+            "type": "string",
+            "description": "Interface name or RouterOS '.id'"
+          },
+          "auth_types": {
+            "type": "string",
+            "enum": [
+              "dot1x",
+              "mac-auth",
+              "dot1x,mac-auth"
+            ]
+          },
+          "accounting": {
+            "type": "boolean"
+          },
+          "interim_update": {
+            "type": "string"
+          },
+          "mac_auth_mode": {
+            "type": "string",
+            "enum": [
+              "mac-as-username",
+              "mac-as-username-and-password"
+            ]
+          },
+          "guest_vlan_id": {
+            "type": "string"
+          },
+          "reject_vlan_id": {
+            "type": "string"
+          },
+          "server_fail_vlan_id": {
+            "type": "string"
+          },
+          "reauth_timeout": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "server_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_dot1x_server",
+      "title": "Remove Dot1x Server",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an 802.1X authenticator by interface or '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "server_id": {
+            "type": "string",
+            "description": "Interface name or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "server_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_dot1x_client",
+      "title": "Add Dot1x Client",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an 802.1X supplicant (client) on an interface so the device can authenticate itself to an upstream authenticator (`/interface dot1x client`).\n\nNotes:\n    eap_methods: comma-separated, e.g. 'eap-tls', 'eap-peap',\n        'eap-mschapv2', 'eap-ttls'.\n    certificate: required for eap-tls; identity/password for the\n        password-based methods.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string"
+          },
+          "eap_methods": {
+            "type": "string",
+            "description": "Comma-separated EAP methods, e.g. 'eap-tls' or 'eap-peap,eap-mschapv2'"
+          },
+          "identity": {
+            "description": "EAP identity (username)",
+            "type": "string"
+          },
+          "anonymous_identity": {
+            "type": "string"
+          },
+          "certificate": {
+            "description": "Client certificate name (required for eap-tls)",
+            "type": "string"
+          },
+          "password": {
+            "description": "EAP password (password methods)",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interface",
+          "eap_methods",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_dot1x_clients",
+      "title": "List Dot1x Clients",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists 802.1X supplicants on the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "type": "string"
+          },
+          "status_filter": {
+            "description": "Match status, e.g. 'authenticated', 'authenticating'",
+            "type": "string"
+          },
+          "disabled_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "disabled_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_dot1x_client",
+      "title": "Get Dot1x Client",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets a specific 802.1X supplicant by interface or '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Interface name (e.g. 'ether3') or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_dot1x_client",
+      "title": "Update Dot1x Client",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an 802.1X supplicant (by interface or '.id'). Pass comment=\"\" to clear the comment.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Interface name or RouterOS '.id'"
+          },
+          "eap_methods": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "string"
+          },
+          "anonymous_identity": {
+            "type": "string"
+          },
+          "certificate": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_dot1x_client",
+      "title": "Remove Dot1x Client",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes an 802.1X supplicant by interface or '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "description": "Interface name or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "create_wireguard_interface",
       "title": "Create WireGuard Interface",
       "risk": "write",
@@ -16148,6 +16538,87 @@
         },
         "required": [
           "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_queue_interfaces",
+      "title": "List Queue Interfaces",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists per-interface queue assignments on the MikroTik device (`/queue interface`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "description": "Partial interface-name match",
+            "type": "string"
+          },
+          "queue_filter": {
+            "description": "Partial queue-type-name match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_queue_interface",
+      "title": "Get Queue Interface",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets the queue assignment for a specific interface by name or '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_id": {
+            "type": "string",
+            "description": "Interface name (e.g. 'ether1') or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "interface_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_queue_interface",
+      "title": "Update Queue Interface",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Assigns a queue type to an interface on the MikroTik device.\n\nNotes:\n    queue: the queue-type name to apply, e.g. 'ethernet-default',\n        'only-hardware-queue', or a custom queue type.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_id": {
+            "type": "string",
+            "description": "Interface name (e.g. 'ether1') or RouterOS '.id'"
+          },
+          "queue": {
+            "type": "string",
+            "description": "Queue-type name to apply to the interface"
+          }
+        },
+        "required": [
+          "interface_id",
+          "queue"
         ],
         "additionalProperties": false
       }

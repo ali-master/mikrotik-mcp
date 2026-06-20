@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_dot1x_servers",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only"
+  ],
+  "additionalProperties": false
+}

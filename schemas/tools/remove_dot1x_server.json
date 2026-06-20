@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_dot1x_server",
+  "type": "object",
+  "properties": {
+    "server_id": {
+      "type": "string",
+      "description": "Interface name or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "server_id"
+  ],
+  "additionalProperties": false
+}

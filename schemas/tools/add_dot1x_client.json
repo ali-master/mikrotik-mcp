@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_dot1x_client",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "eap_methods": {
+      "type": "string",
+      "description": "Comma-separated EAP methods, e.g. 'eap-tls' or 'eap-peap,eap-mschapv2'"
+    },
+    "identity": {
+      "description": "EAP identity (username)",
+      "type": "string"
+    },
+    "anonymous_identity": {
+      "type": "string"
+    },
+    "certificate": {
+      "description": "Client certificate name (required for eap-tls)",
+      "type": "string"
+    },
+    "password": {
+      "description": "EAP password (password methods)",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "interface",
+    "eap_methods",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

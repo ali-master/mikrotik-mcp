@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**574 tools** across **69 modules**. A `*` marks a required parameter.
+**587 tools** across **72 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -57,6 +57,8 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Address Lists](#address-list) | Security | 6 | Firewall address-lists (`/ip firewall address-list`). |
 | [Certificates](#certificate) | Security | 6 | X.509 certificate management (`/certificate`). |
 | [IP Services](#ip-service) | Security | 5 | Management service ports — ssh/www/api/telnet (`/ip service`). |
+| [802.1X — Server](#dot1x-server) | Security | 5 | 802.1X authenticator: port-based access control via RADIUS (`/interface dot1x server`). |
+| [802.1X — Client](#dot1x-client) | Security | 5 | 802.1X supplicant: authenticate the device to an upstream port (`/interface dot1x client`). |
 | [WireGuard](#wireguard) | VPN & Tunneling | 15 | WireGuard interfaces, peers and client-config generation. |
 | [IPsec](#ipsec) | VPN & Tunneling | 25 | IPsec IKEv1/IKEv2: profiles, peers, identities, proposals, policies, SAs (`/ip ipsec`). |
 | [PPP](#ppp) | VPN & Tunneling | 12 | Shared PPP backend: profiles, secrets, active sessions (`/ppp`). |
@@ -68,6 +70,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [RADIUS](#radius) | AAA | 10 | RADIUS client servers, incoming CoA, counters (`/radius`). |
 | [User Manager](#user-manager) | AAA | 19 | Built-in RADIUS server: users, profiles, routers (NAS), limitations, sessions (`/user-manager`). |
 | [Queues / QoS](#queue) | QoS | 19 | Queue types, queue trees and simple queues (`/queue`). |
+| [Queues — Interface](#queue-interface) | QoS | 3 | Per-interface queue-type assignment (`/queue interface`). |
 | [Devices](#devices) | System & Ops | 1 | List the configured MikroTik devices the AI can target via the `device` argument. |
 | [System](#system) | System & Ops | 14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown. |
 | [System Config](#system-config) | System & Ops | 18 | Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog. |
@@ -737,6 +740,30 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `enable_ip_service` | 🟡 write·idem | `name`* | Enables a management service. |
 | `disable_ip_service` | 🟡 write·idem | `name`* | Disables a management service (useful for hardening: telnet, ftp, www). |
 
+## 802.1X — Server
+
+<a id="dot1x-server"></a>802.1X authenticator: port-based access control via RADIUS (`/interface dot1x server`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_dot1x_server` | 🟡 write | `interface`*, `auth_types`, `accounting`, `interim_update`, `mac_auth_mode`, `guest_vlan_id`, `reject_vlan_id`, `server_fail_vlan_id`, `reauth_timeout`, `comment`, `disabled`* | Adds an 802.1X authenticator (server) on an interface, enforcing port-based network access control against a RADIUS server (`/interface dot1x server`). |
+| `list_dot1x_servers` | 🟢 read | `interface_filter`, `disabled_only`* | Lists 802.1X authenticators on the MikroTik device. |
+| `get_dot1x_server` | 🟢 read | `server_id`* | Gets a specific 802.1X authenticator by interface or '.id'. |
+| `update_dot1x_server` | 🟡 write·idem | `server_id`*, `auth_types`, `accounting`, `interim_update`, `mac_auth_mode`, `guest_vlan_id`, `reject_vlan_id`, `server_fail_vlan_id`, `reauth_timeout`, `comment`, `disabled` | Updates an 802.1X authenticator (by interface or '.id'). Pass comment="" to clear the comment. |
+| `remove_dot1x_server` | 🔴 destructive | `server_id`* | Removes an 802.1X authenticator by interface or '.id' from the MikroTik device. |
+
+## 802.1X — Client
+
+<a id="dot1x-client"></a>802.1X supplicant: authenticate the device to an upstream port (`/interface dot1x client`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_dot1x_client` | 🟡 write | `interface`*, `eap_methods`*, `identity`, `anonymous_identity`, `certificate`, `password`, `comment`, `disabled`* | Adds an 802.1X supplicant (client) on an interface so the device can authenticate itself to an upstream authenticator (`/interface dot1x client`). |
+| `list_dot1x_clients` | 🟢 read | `interface_filter`, `status_filter`, `disabled_only`* | Lists 802.1X supplicants on the MikroTik device. |
+| `get_dot1x_client` | 🟢 read | `client_id`* | Gets a specific 802.1X supplicant by interface or '.id'. |
+| `update_dot1x_client` | 🟡 write·idem | `client_id`*, `eap_methods`, `identity`, `anonymous_identity`, `certificate`, `password`, `comment`, `disabled` | Updates an 802.1X supplicant (by interface or '.id'). Pass comment="" to clear the comment. |
+| `remove_dot1x_client` | 🔴 destructive | `client_id`* | Removes an 802.1X supplicant by interface or '.id' from the MikroTik device. |
+
 ## WireGuard
 
 <a id="wireguard"></a>WireGuard interfaces, peers and client-config generation.
@@ -957,6 +984,16 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `remove_simple_queue` | 🔴 destructive | `name`* | Removes a simple queue from the MikroTik device. |
 | `enable_simple_queue` | 🟡 write·idem | `name`* | Enables a simple queue. |
 | `disable_simple_queue` | 🟡 write·idem | `name`* | Disables a simple queue. |
+
+## Queues — Interface
+
+<a id="queue-interface"></a>Per-interface queue-type assignment (`/queue interface`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_queue_interfaces` | 🟢 read | `interface_filter`, `queue_filter` | Lists per-interface queue assignments on the MikroTik device (`/queue interface`). |
+| `get_queue_interface` | 🟢 read | `interface_id`* | Gets the queue assignment for a specific interface by name or '.id'. |
+| `update_queue_interface` | 🟡 write·idem | `interface_id`*, `queue`* | Assigns a queue type to an interface on the MikroTik device. |
 
 ## Devices
 

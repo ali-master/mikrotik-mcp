@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_dot1x_server",
+  "type": "object",
+  "properties": {
+    "server_id": {
+      "type": "string",
+      "description": "Interface name or RouterOS '.id'"
+    },
+    "auth_types": {
+      "type": "string",
+      "enum": [
+        "dot1x",
+        "mac-auth",
+        "dot1x,mac-auth"
+      ]
+    },
+    "accounting": {
+      "type": "boolean"
+    },
+    "interim_update": {
+      "type": "string"
+    },
+    "mac_auth_mode": {
+      "type": "string",
+      "enum": [
+        "mac-as-username",
+        "mac-as-username-and-password"
+      ]
+    },
+    "guest_vlan_id": {
+      "type": "string"
+    },
+    "reject_vlan_id": {
+      "type": "string"
+    },
+    "server_fail_vlan_id": {
+      "type": "string"
+    },
+    "reauth_timeout": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "server_id"
+  ],
+  "additionalProperties": false
+}

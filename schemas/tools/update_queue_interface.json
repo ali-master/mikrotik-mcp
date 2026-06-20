@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_queue_interface",
+  "type": "object",
+  "properties": {
+    "interface_id": {
+      "type": "string",
+      "description": "Interface name (e.g. 'ether1') or RouterOS '.id'"
+    },
+    "queue": {
+      "type": "string",
+      "description": "Queue-type name to apply to the interface"
+    }
+  },
+  "required": [
+    "interface_id",
+    "queue"
+  ],
+  "additionalProperties": false
+}
