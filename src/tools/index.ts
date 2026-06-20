@@ -51,6 +51,7 @@ import { profileTools } from "./tool-profile";
 import { romonTools } from "./tool-romon";
 import { smsTools } from "./tool-sms";
 import { speedTestTools } from "./tool-speed-test";
+import { trafficGeneratorTools } from "./tool-traffic-generator";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -689,6 +690,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Tools",
     description: "Latency/throughput test to another RouterOS (`/tool speed-test`).",
     tools: speedTestTools,
+  },
+  {
+    label: "Traffic Generator",
+    slug: "tool-traffic-generator",
+    group: "Tools",
+    description:
+      "Synthetic traffic: ports, streams and run control (`/tool traffic-generator`).",
+    tools: trafficGeneratorTools,
   },
   {
     label: "Scheduler / Scripts",
