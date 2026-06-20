@@ -66,6 +66,7 @@ import { sstpTools } from "./sstp";
 import { switchSettingsTools } from "./switch-settings";
 import { switchPortTools } from "./switch-port";
 import { switchPortIsolationTools } from "./switch-port-isolation";
+import { switchRuleTools } from "./switch-rule";
 import { systemConfigTools } from "./system-config";
 import { systemTools } from "./system";
 import { tunnelTools } from "./tunnels";
@@ -151,6 +152,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Hardware port isolation / forwarding overrides (`/interface ethernet switch port-isolation`).",
     tools: switchPortIsolationTools,
+  },
+  {
+    label: "Switch — Rules",
+    slug: "switch-rule",
+    group: "Switch",
+    description:
+      "Hardware switch ACL/redirect rules (`/interface ethernet switch rule`).",
+    tools: switchRuleTools,
   },
   // ── Layer 3 / addressing & routing ───────────────────────────────────────
   {
