@@ -30,6 +30,7 @@ import { ipv6FirewallMangleTools } from "./ipv6-firewall-mangle";
 import { ipv6FirewallRawTools } from "./ipv6-firewall-raw";
 import { ipv6FirewallAddressListTools } from "./ipv6-firewall-address-list";
 import { ipv6NdTools } from "./ipv6-nd";
+import { ipv6NeighborTools } from "./ipv6-neighbor";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -235,6 +236,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Neighbor Discovery / Router Advertisement config and advertised prefixes (`/ipv6 nd`).",
     tools: ipv6NdTools,
+  },
+  {
+    label: "IPv6 Neighbors",
+    slug: "ipv6-neighbor",
+    group: "IPv6",
+    description:
+      "IPv6 neighbor cache (ND-discovered addresses), read + flush (`/ipv6 neighbor`).",
+    tools: ipv6NeighborTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
