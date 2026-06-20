@@ -32,6 +32,7 @@ import { ipv6FirewallAddressListTools } from "./ipv6-firewall-address-list";
 import { ipv6NdTools } from "./ipv6-nd";
 import { ipv6NeighborTools } from "./ipv6-neighbor";
 import { ipv6PoolTools } from "./ipv6-pool";
+import { ipv6RouteTools } from "./ipv6-route";
 import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
@@ -253,6 +254,14 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "IPv6 address/prefix pools for delegation and addressing (`/ipv6 pool`).",
     tools: ipv6PoolTools,
+  },
+  {
+    label: "IPv6 Routes",
+    slug: "ipv6-route",
+    group: "IPv6",
+    description:
+      "Static IPv6 routes, incl. default and blackhole/unreachable (`/ipv6 route`).",
+    tools: ipv6RouteTools,
   },
   // ── Dynamic routing (`/routing`) ─────────────────────────────────────────
   {
