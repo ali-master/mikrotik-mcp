@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_switch_port_isolation",
+  "type": "object",
+  "properties": {
+    "port_filter": {
+      "description": "Partial source-port match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

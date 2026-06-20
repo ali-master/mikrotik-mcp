@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_switch_port_isolation",
+  "type": "object",
+  "properties": {
+    "isolation_id": {
+      "type": "string",
+      "description": "Source port name or RouterOS '.id'"
+    },
+    "forwarding_override_ports": {
+      "description": "Comma-separated allowed destination ports",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "isolation_id"
+  ],
+  "additionalProperties": false
+}

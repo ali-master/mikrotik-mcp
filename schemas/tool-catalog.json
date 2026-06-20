@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 556,
+  "toolCount": 574,
   "tools": [
     {
       "name": "list_interfaces",
@@ -1251,6 +1251,663 @@
         },
         "required": [
           "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_switches",
+      "title": "List Switches",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists the hardware switch chips on the MikroTik device (`/interface ethernet switch`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial switch-name match",
+            "type": "string"
+          },
+          "type_filter": {
+            "description": "Partial switch-type match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_switch",
+      "title": "Get Switch",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed settings for a specific switch chip by name or '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "switch_id": {
+            "type": "string",
+            "description": "Switch name (e.g. 'switch1') or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "switch_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_switch",
+      "title": "Update Switch Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates settings for a switch chip on the MikroTik device.\n\nNotes:\n    cpu_flow_control: pause CPU-bound traffic when the CPU port is\n        congested.\n    mirror_source / mirror_target: span/mirror a port's traffic to a\n        monitor port (or 'cpu'). Availability is chip-dependent.\n    Pass mirror_source/mirror_target='none' to disable mirroring.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "switch_id": {
+            "type": "string",
+            "description": "Switch name (e.g. 'switch1') or RouterOS '.id'"
+          },
+          "name": {
+            "description": "Rename the switch",
+            "type": "string"
+          },
+          "cpu_flow_control": {
+            "type": "boolean"
+          },
+          "mirror_source": {
+            "description": "Source port to mirror, or 'none'",
+            "type": "string"
+          },
+          "mirror_target": {
+            "description": "Monitor port, 'cpu', or 'none'",
+            "type": "string"
+          },
+          "mirror_egress": {
+            "description": "Egress mirror source port (newer chips), or 'none'",
+            "type": "string"
+          }
+        },
+        "required": [
+          "switch_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_switch_ports",
+      "title": "List Switch Ports",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists switch chip ports on the MikroTik device (`/interface ethernet switch port`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial port-name match",
+            "type": "string"
+          },
+          "switch_filter": {
+            "description": "Filter by owning switch, e.g. 'switch1'",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_switch_port",
+      "title": "Get Switch Port",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets detailed settings for a specific switch port by name or '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port_id": {
+            "type": "string",
+            "description": "Port name (e.g. 'ether1') or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "port_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_switch_port",
+      "title": "Update Switch Port",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a switch port's hardware VLAN settings on the MikroTik device.\n\nNotes:\n    vlan_mode: 'disabled' (ignore VLAN table), 'optional', 'enabled', or\n        'secure' (strict VLAN table enforcement).\n    vlan_header: how the egress VLAN tag is handled — 'leave-as-is',\n        'always-strip', or 'add-if-missing'.\n    default_vlan_id: PVID for untagged ingress ('auto', 'none', or a number).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port_id": {
+            "type": "string",
+            "description": "Port name (e.g. 'ether1') or RouterOS '.id'"
+          },
+          "default_vlan_id": {
+            "description": "PVID: 'auto', 'none', or a VLAN id number",
+            "type": "string"
+          },
+          "vlan_mode": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "optional",
+              "enabled",
+              "secure"
+            ]
+          },
+          "vlan_header": {
+            "type": "string",
+            "enum": [
+              "leave-as-is",
+              "always-strip",
+              "add-if-missing"
+            ]
+          },
+          "force_vlan_id": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "port_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_switch_port_isolation",
+      "title": "Add Switch Port Isolation",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a switch port-isolation entry on the MikroTik device, overriding which ports a given port may forward traffic to (hardware private-VLAN style isolation).\n\nNotes:\n    port: the source port being isolated.\n    forwarding_override_ports: comma-separated list of the only ports\n        this port may forward to (others are blocked in hardware).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "string",
+            "description": "Source port to isolate, e.g. 'ether1'"
+          },
+          "forwarding_override_ports": {
+            "type": "string",
+            "description": "Comma-separated allowed destination ports"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "port",
+          "forwarding_override_ports"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_switch_port_isolation",
+      "title": "List Switch Port Isolation",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists switch port-isolation entries on the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "port_filter": {
+            "description": "Partial source-port match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_switch_port_isolation",
+      "title": "Get Switch Port Isolation",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets a specific switch port-isolation entry by source port or '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "isolation_id": {
+            "type": "string",
+            "description": "Source port name (e.g. 'ether1') or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "isolation_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_switch_port_isolation",
+      "title": "Update Switch Port Isolation",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates a switch port-isolation entry (by source port or '.id'). Pass comment=\"\" to clear the comment.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "isolation_id": {
+            "type": "string",
+            "description": "Source port name or RouterOS '.id'"
+          },
+          "forwarding_override_ports": {
+            "description": "Comma-separated allowed destination ports",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "isolation_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_switch_port_isolation",
+      "title": "Remove Switch Port Isolation",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a switch port-isolation entry by source port or '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "isolation_id": {
+            "type": "string",
+            "description": "Source port name or RouterOS '.id'"
+          }
+        },
+        "required": [
+          "isolation_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_switch_rule",
+      "title": "Add Switch Rule",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a switch ACL/redirect rule on the MikroTik device (`/interface ethernet switch rule`). Rules match traffic in hardware on the listed source ports and apply an action.\n\nNotes:\n    switch: the switch chip the rule belongs to, e.g. 'switch1'.\n    ports: comma-separated source ports the rule matches on.\n    new_dst_ports: redirect matched traffic to these ports; set to an\n        empty string to drop.\n    redirect_to_cpu / copy_to_cpu / mirror: divert, duplicate or span\n        matched traffic.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "switch": {
+            "type": "string",
+            "description": "Owning switch chip, e.g. 'switch1'"
+          },
+          "ports": {
+            "type": "string",
+            "description": "Comma-separated source ports the rule matches"
+          },
+          "src_address": {
+            "description": "Source IP/mask",
+            "type": "string"
+          },
+          "dst_address": {
+            "description": "Destination IP/mask",
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Source MAC/mask",
+            "type": "string"
+          },
+          "dst_mac_address": {
+            "description": "Destination MAC/mask",
+            "type": "string"
+          },
+          "src_port": {
+            "description": "Layer-4 source port(s)",
+            "type": "string"
+          },
+          "dst_port": {
+            "description": "Layer-4 destination port(s)",
+            "type": "string"
+          },
+          "protocol": {
+            "description": "IP protocol, e.g. 'tcp'",
+            "type": "string"
+          },
+          "mac_protocol": {
+            "description": "MAC protocol, e.g. 'ip', 'arp', 'vlan' or a number",
+            "type": "string"
+          },
+          "vlan_id": {
+            "type": "string"
+          },
+          "vlan_priority": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "flow_label": {
+            "description": "IPv6 flow label",
+            "type": "string"
+          },
+          "new_dst_ports": {
+            "description": "Redirect target ports; empty string drops the traffic",
+            "type": "string"
+          },
+          "new_vlan_id": {
+            "type": "string"
+          },
+          "new_vlan_priority": {
+            "type": "string"
+          },
+          "redirect_to_cpu": {
+            "type": "boolean"
+          },
+          "copy_to_cpu": {
+            "type": "boolean"
+          },
+          "mirror": {
+            "type": "boolean"
+          },
+          "rate": {
+            "description": "Rate limit in bits/second",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "switch",
+          "ports",
+          "disabled"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_switch_rules",
+      "title": "List Switch Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists switch ACL/redirect rules on the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "switch_filter": {
+            "type": "string"
+          },
+          "ports_filter": {
+            "type": "string"
+          },
+          "disabled_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "disabled_only"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_switch_rule",
+      "title": "Get Switch Rule",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets a specific switch rule by '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "RouterOS '.id', e.g. '*1' or '0'"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_switch_rule",
+      "title": "Update Switch Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates an existing switch rule on the MikroTik device. Pass \"\" to clear an optional matcher/action field.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          },
+          "switch": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "dst_address": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "dst_mac_address": {
+            "type": "string"
+          },
+          "src_port": {
+            "type": "string"
+          },
+          "dst_port": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "mac_protocol": {
+            "type": "string"
+          },
+          "vlan_id": {
+            "type": "string"
+          },
+          "vlan_priority": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "flow_label": {
+            "type": "string"
+          },
+          "new_dst_ports": {
+            "type": "string"
+          },
+          "new_vlan_id": {
+            "type": "string"
+          },
+          "new_vlan_priority": {
+            "type": "string"
+          },
+          "redirect_to_cpu": {
+            "type": "boolean"
+          },
+          "copy_to_cpu": {
+            "type": "boolean"
+          },
+          "mirror": {
+            "type": "boolean"
+          },
+          "rate": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_switch_rule",
+      "title": "Remove Switch Rule",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a switch rule by '.id' from the MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enable_switch_rule",
+      "title": "Enable Switch Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables a switch rule by '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "disable_switch_rule",
+      "title": "Disable Switch Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disables a switch rule by '.id'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id"
         ],
         "additionalProperties": false
       }

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_switch_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string"
+    },
+    "switch": {
+      "type": "string"
+    },
+    "ports": {
+      "type": "string"
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_mac_address": {
+      "type": "string"
+    },
+    "dst_mac_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "mac_protocol": {
+      "type": "string"
+    },
+    "vlan_id": {
+      "type": "string"
+    },
+    "vlan_priority": {
+      "type": "string"
+    },
+    "dscp": {
+      "type": "string"
+    },
+    "flow_label": {
+      "type": "string"
+    },
+    "new_dst_ports": {
+      "type": "string"
+    },
+    "new_vlan_id": {
+      "type": "string"
+    },
+    "new_vlan_priority": {
+      "type": "string"
+    },
+    "redirect_to_cpu": {
+      "type": "boolean"
+    },
+    "copy_to_cpu": {
+      "type": "boolean"
+    },
+    "mirror": {
+      "type": "boolean"
+    },
+    "rate": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "rule_id"
+  ],
+  "additionalProperties": false
+}

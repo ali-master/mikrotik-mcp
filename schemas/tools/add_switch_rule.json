@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_switch_rule",
+  "type": "object",
+  "properties": {
+    "switch": {
+      "type": "string",
+      "description": "Owning switch chip, e.g. 'switch1'"
+    },
+    "ports": {
+      "type": "string",
+      "description": "Comma-separated source ports the rule matches"
+    },
+    "src_address": {
+      "description": "Source IP/mask",
+      "type": "string"
+    },
+    "dst_address": {
+      "description": "Destination IP/mask",
+      "type": "string"
+    },
+    "src_mac_address": {
+      "description": "Source MAC/mask",
+      "type": "string"
+    },
+    "dst_mac_address": {
+      "description": "Destination MAC/mask",
+      "type": "string"
+    },
+    "src_port": {
+      "description": "Layer-4 source port(s)",
+      "type": "string"
+    },
+    "dst_port": {
+      "description": "Layer-4 destination port(s)",
+      "type": "string"
+    },
+    "protocol": {
+      "description": "IP protocol, e.g. 'tcp'",
+      "type": "string"
+    },
+    "mac_protocol": {
+      "description": "MAC protocol, e.g. 'ip', 'arp', 'vlan' or a number",
+      "type": "string"
+    },
+    "vlan_id": {
+      "type": "string"
+    },
+    "vlan_priority": {
+      "type": "string"
+    },
+    "dscp": {
+      "type": "string"
+    },
+    "flow_label": {
+      "description": "IPv6 flow label",
+      "type": "string"
+    },
+    "new_dst_ports": {
+      "description": "Redirect target ports; empty string drops the traffic",
+      "type": "string"
+    },
+    "new_vlan_id": {
+      "type": "string"
+    },
+    "new_vlan_priority": {
+      "type": "string"
+    },
+    "redirect_to_cpu": {
+      "type": "boolean"
+    },
+    "copy_to_cpu": {
+      "type": "boolean"
+    },
+    "mirror": {
+      "type": "boolean"
+    },
+    "rate": {
+      "description": "Rate limit in bits/second",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "switch",
+    "ports",
+    "disabled"
+  ],
+  "additionalProperties": false
+}

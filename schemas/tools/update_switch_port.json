@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_switch_port",
+  "type": "object",
+  "properties": {
+    "port_id": {
+      "type": "string",
+      "description": "Port name (e.g. 'ether1') or RouterOS '.id'"
+    },
+    "default_vlan_id": {
+      "description": "PVID: 'auto', 'none', or a VLAN id number",
+      "type": "string"
+    },
+    "vlan_mode": {
+      "type": "string",
+      "enum": [
+        "disabled",
+        "optional",
+        "enabled",
+        "secure"
+      ]
+    },
+    "vlan_header": {
+      "type": "string",
+      "enum": [
+        "leave-as-is",
+        "always-strip",
+        "add-if-missing"
+      ]
+    },
+    "force_vlan_id": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "port_id"
+  ],
+  "additionalProperties": false
+}

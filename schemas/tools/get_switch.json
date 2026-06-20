@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_switch",
+  "type": "object",
+  "properties": {
+    "switch_id": {
+      "type": "string",
+      "description": "Switch name (e.g. 'switch1') or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "switch_id"
+  ],
+  "additionalProperties": false
+}

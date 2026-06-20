@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_switch_port_isolation",
+  "type": "object",
+  "properties": {
+    "isolation_id": {
+      "type": "string",
+      "description": "Source port name (e.g. 'ether1') or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "isolation_id"
+  ],
+  "additionalProperties": false
+}

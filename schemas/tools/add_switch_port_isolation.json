@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_switch_port_isolation",
+  "type": "object",
+  "properties": {
+    "port": {
+      "type": "string",
+      "description": "Source port to isolate, e.g. 'ether1'"
+    },
+    "forwarding_override_ports": {
+      "type": "string",
+      "description": "Comma-separated allowed destination ports"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "port",
+    "forwarding_override_ports"
+  ],
+  "additionalProperties": false
+}

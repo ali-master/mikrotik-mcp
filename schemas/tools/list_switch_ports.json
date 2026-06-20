@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_switch_ports",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "description": "Partial port-name match",
+      "type": "string"
+    },
+    "switch_filter": {
+      "description": "Filter by owning switch, e.g. 'switch1'",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

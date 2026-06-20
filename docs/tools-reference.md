@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**556 tools** across **65 modules**. A `*` marks a required parameter.
+**574 tools** across **69 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -15,6 +15,10 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Bridge](#bridge) | Interfaces | 11 | Bridges, ports, host table and bridge VLANs (`/interface bridge`). |
 | [Wireless](#wireless) | Interfaces | 18 | Wireless interfaces, security profiles and access lists (legacy + wifiwave2). |
 | [PoE](#poe) | Interfaces | 3 | Power-over-Ethernet status and configuration (`/interface ethernet poe`). |
+| [Switch — Settings](#switch-settings) | Switch | 3 | Hardware switch chips: mirroring, CPU flow control (`/interface ethernet switch`). |
+| [Switch — Ports](#switch-port) | Switch | 3 | Per-port switch chip VLAN settings (`/interface ethernet switch port`). |
+| [Switch — Port Isolation](#switch-port-isolation) | Switch | 5 | Hardware port isolation / forwarding overrides (`/interface ethernet switch port-isolation`). |
+| [Switch — Rules](#switch-rule) | Switch | 7 | Hardware switch ACL/redirect rules (`/interface ethernet switch rule`). |
 | [IP Addresses](#ip-address) | Addressing & Routing | 4 | Interface IP addressing (`/ip address`). |
 | [IP Pools](#ip-pool) | Addressing & Routing | 7 | Address pools for DHCP/PPP (`/ip pool`). |
 | [Routing — Static](#routes) | Addressing & Routing | 14 | Static routes, routing table, route checks and cache (`/ip route`). |
@@ -151,6 +155,52 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `get_poe_monitor` | 🟢 read | `interfaces`* | Reads real-time Power-over-Ethernet (PoE) monitor data for one or more ethernet interfaces — PoE-out status, voltage, current, and power. Runs `/interface ethernet poe monitor <interfaces> once`. |
 | `list_poe` | 🟢 read | `interface_filter` | Lists the Power-over-Ethernet (PoE) configuration of PoE-capable ethernet interfaces (PoE-out mode, priority). Runs `/interface ethernet poe print`. |
 | `get_poe_settings` | 🟢 read | `name`* | Gets the detailed PoE-out settings of a specific ethernet interface (mode, priority, voltage, thresholds). Runs `/interface ethernet poe print detail where name=<name>`. |
+
+## Switch — Settings
+
+<a id="switch-settings"></a>Hardware switch chips: mirroring, CPU flow control (`/interface ethernet switch`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_switches` | 🟢 read | `name_filter`, `type_filter` | Lists the hardware switch chips on the MikroTik device (`/interface ethernet switch`). |
+| `get_switch` | 🟢 read | `switch_id`* | Gets detailed settings for a specific switch chip by name or '.id'. |
+| `update_switch` | 🟡 write·idem | `switch_id`*, `name`, `cpu_flow_control`, `mirror_source`, `mirror_target`, `mirror_egress` | Updates settings for a switch chip on the MikroTik device. |
+
+## Switch — Ports
+
+<a id="switch-port"></a>Per-port switch chip VLAN settings (`/interface ethernet switch port`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `list_switch_ports` | 🟢 read | `name_filter`, `switch_filter` | Lists switch chip ports on the MikroTik device (`/interface ethernet switch port`). |
+| `get_switch_port` | 🟢 read | `port_id`* | Gets detailed settings for a specific switch port by name or '.id'. |
+| `update_switch_port` | 🟡 write·idem | `port_id`*, `default_vlan_id`, `vlan_mode`, `vlan_header`, `force_vlan_id` | Updates a switch port's hardware VLAN settings on the MikroTik device. |
+
+## Switch — Port Isolation
+
+<a id="switch-port-isolation"></a>Hardware port isolation / forwarding overrides (`/interface ethernet switch port-isolation`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_switch_port_isolation` | 🟡 write | `port`*, `forwarding_override_ports`*, `comment` | Adds a switch port-isolation entry on the MikroTik device, overriding which ports a given port may forward traffic to (hardware private-VLAN style isolation). |
+| `list_switch_port_isolation` | 🟢 read | `port_filter` | Lists switch port-isolation entries on the MikroTik device. |
+| `get_switch_port_isolation` | 🟢 read | `isolation_id`* | Gets a specific switch port-isolation entry by source port or '.id'. |
+| `update_switch_port_isolation` | 🟡 write·idem | `isolation_id`*, `forwarding_override_ports`, `comment` | Updates a switch port-isolation entry (by source port or '.id'). Pass comment="" to clear the comment. |
+| `remove_switch_port_isolation` | 🔴 destructive | `isolation_id`* | Removes a switch port-isolation entry by source port or '.id' from the MikroTik device. |
+
+## Switch — Rules
+
+<a id="switch-rule"></a>Hardware switch ACL/redirect rules (`/interface ethernet switch rule`).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `add_switch_rule` | 🟡 write | `switch`*, `ports`*, `src_address`, `dst_address`, `src_mac_address`, `dst_mac_address`, `src_port`, `dst_port`, `protocol`, `mac_protocol`, `vlan_id`, `vlan_priority`, `dscp`, `flow_label`, `new_dst_ports`, `new_vlan_id`, `new_vlan_priority`, `redirect_to_cpu`, `copy_to_cpu`, `mirror`, `rate`, `comment`, `disabled`* | Adds a switch ACL/redirect rule on the MikroTik device (`/interface ethernet switch rule`). Rules match traffic in hardware on the listed source ports and apply an action. |
+| `list_switch_rules` | 🟢 read | `switch_filter`, `ports_filter`, `disabled_only`* | Lists switch ACL/redirect rules on the MikroTik device. |
+| `get_switch_rule` | 🟢 read | `rule_id`* | Gets a specific switch rule by '.id'. |
+| `update_switch_rule` | 🟡 write·idem | `rule_id`*, `switch`, `ports`, `src_address`, `dst_address`, `src_mac_address`, `dst_mac_address`, `src_port`, `dst_port`, `protocol`, `mac_protocol`, `vlan_id`, `vlan_priority`, `dscp`, `flow_label`, `new_dst_ports`, `new_vlan_id`, `new_vlan_priority`, `redirect_to_cpu`, `copy_to_cpu`, `mirror`, `rate`, `comment`, `disabled` | Updates an existing switch rule on the MikroTik device. Pass "" to clear an optional matcher/action field. |
+| `remove_switch_rule` | 🔴 destructive | `rule_id`* | Removes a switch rule by '.id' from the MikroTik device. |
+| `enable_switch_rule` | 🟡 write·idem | `rule_id`* | Enables a switch rule by '.id'. |
+| `disable_switch_rule` | 🟡 write·idem | `rule_id`* | Disables a switch rule by '.id'. |
 
 ## IP Addresses
 

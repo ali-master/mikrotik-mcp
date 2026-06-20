@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_switch_port_isolation",
+  "type": "object",
+  "properties": {
+    "isolation_id": {
+      "type": "string",
+      "description": "Source port name or RouterOS '.id'"
+    }
+  },
+  "required": [
+    "isolation_id"
+  ],
+  "additionalProperties": false
+}

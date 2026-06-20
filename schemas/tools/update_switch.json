@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_switch",
+  "type": "object",
+  "properties": {
+    "switch_id": {
+      "type": "string",
+      "description": "Switch name (e.g. 'switch1') or RouterOS '.id'"
+    },
+    "name": {
+      "description": "Rename the switch",
+      "type": "string"
+    },
+    "cpu_flow_control": {
+      "type": "boolean"
+    },
+    "mirror_source": {
+      "description": "Source port to mirror, or 'none'",
+      "type": "string"
+    },
+    "mirror_target": {
+      "description": "Monitor port, 'cpu', or 'none'",
+      "type": "string"
+    },
+    "mirror_egress": {
+      "description": "Egress mirror source port (newer chips), or 'none'",
+      "type": "string"
+    }
+  },
+  "required": [
+    "switch_id"
+  ],
+  "additionalProperties": false
+}

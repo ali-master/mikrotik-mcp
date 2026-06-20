@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_switches",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "description": "Partial switch-name match",
+      "type": "string"
+    },
+    "type_filter": {
+      "description": "Partial switch-type match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

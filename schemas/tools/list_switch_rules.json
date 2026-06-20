@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_switch_rules",
+  "type": "object",
+  "properties": {
+    "switch_filter": {
+      "type": "string"
+    },
+    "ports_filter": {
+      "type": "string"
+    },
+    "disabled_only": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "disabled_only"
+  ],
+  "additionalProperties": false
+}
