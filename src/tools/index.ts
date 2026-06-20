@@ -42,6 +42,7 @@ import { logTools } from "./logs";
 import { systemLoggingTools } from "./logging";
 import { networkToolTools } from "./network-tools";
 import { bandwidthServerTools } from "./tool-bandwidth-server";
+import { floodPingTools } from "./tool-flood-ping";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
@@ -613,6 +614,13 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Bandwidth-test server settings and sessions (`/tool bandwidth-server`).",
     tools: bandwidthServerTools,
+  },
+  {
+    label: "Flood Ping",
+    slug: "tool-flood-ping",
+    group: "Tools",
+    description: "ICMP flood ping with summary statistics (`/tool flood-ping`).",
+    tools: floodPingTools,
   },
   {
     label: "Scheduler / Scripts",
