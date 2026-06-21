@@ -1,0 +1,70 @@
+/* MikroTik Interfaces overview — shared base plus interface-card specifics. */
+@import "../shared/base.css";
+
+.if-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.if-card {
+  display: grid;
+  gap: 8px;
+}
+.if-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.if-card__name {
+  font-family: var(--mt-mono);
+  font-weight: 650;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.if-card.is-disabled {
+  opacity: 0.6;
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--mt-text-faint);
+}
+.dot.is-up {
+  background: var(--mt-good);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-good) 22%, transparent);
+}
+.dot.is-down {
+  background: var(--mt-bad);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-bad) 18%, transparent);
+}
+.if-card__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  color: var(--mt-text-dim);
+}
+.if-card__meta b {
+  color: var(--mt-text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+/* Transparent wrapper so each label/value pair flows into the 2-col grid. */
+.if-card__meta .contents {
+  display: contents;
+}
+.badge {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+  background: var(--mt-surface-2);
+  color: var(--mt-text-dim);
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

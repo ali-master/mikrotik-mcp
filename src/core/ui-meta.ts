@@ -30,6 +30,16 @@ export const UI_RESOURCE_URI_LEGACY_KEY = "ui/resourceUri";
 /** OpenAI Apps SDK key recognised by ChatGPT. */
 export const OPENAI_OUTPUT_TEMPLATE_KEY = "openai/outputTemplate";
 
+/**
+ * The `ui://` resource URI for a view id. Pure and dependency-free so the
+ * registration hot path (and the records auto-view) can reference views without
+ * importing the resource-serving layer (`ui-resources.ts`, which pulls in
+ * `node:fs` + the ext-apps server). `ui-resources` re-exports this.
+ */
+export function uiViewUri(id: string): string {
+  return `ui://mikrotik/${id}.html`;
+}
+
 /** Links a tool to an MCP App view resource. */
 export interface UiLink {
   /** `ui://…` resource URI of the HTML view the host should render. */

@@ -1,0 +1,12 @@
+/* MikroTik Records Viewer — shared base plus a couple of view-specific tweaks. */
+@import "../shared/base.css";
+
+.count-pill b {
+  color: var(--mt-accent);
+}
+
+/* Keep the leading index / flags columns tight. */
+table.tbl td.col-num,
+table.tbl th.col-num {
+  width: 1%;
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 647,
+  "toolCount": 649,
   "tools": [
     {
       "name": "list_interfaces",
@@ -19564,6 +19564,40 @@
         "openWorldHint": false
       },
       "description": "Shows a live device health dashboard (CPU, memory, disk, uptime, temperature/voltage, board and RouterOS version) as an interactive view. Use this when the user wants an at-a-glance overview of a MikroTik device.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "show_interfaces",
+      "title": "Interfaces Overview",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Shows all interfaces as an interactive overview: per-port running/disabled status, type, MTU and MAC address, with live refresh. Use this when the user wants a visual at-a-glance view of the device's interfaces.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "show_firewall_filter",
+      "title": "Firewall Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Shows the IP firewall filter rules as an interactive, ordered table: chain, action, key matchers and packet/byte counters, with enabled/disabled state and live refresh. Use this when the user wants to review the firewall ruleset visually.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

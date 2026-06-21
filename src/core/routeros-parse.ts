@@ -28,6 +28,247 @@ export function parseKeyValues(text: string): Record<string, string> {
   return out;
 }
 
+/**
+ * Parse a RouterOS `Flags:` legend line into a `{ letter: meaning }` map.
+ *
+ * Both `print` and `print detail` prepend a legend such as
+ * `Flags: X - disabled, R - running, D - dynamic`. The records view uses it to
+ * expand the terse flag letters carried on each row into readable chips.
+ *
+ * @example
+ *   parseFlagLegend("Flags: X - disabled, R - running")
+ *   // => { X: "disabled", R: "running" }
+ */
+export function parseFlagLegend(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const line = text.split("\n").find((l) => /^\s*Flags:/.test(l));
+  if (!line) return out;
+  const body = line.replace(/^\s*Flags:\s*/, "");
+  for (const part of body.split(",")) {
+    const m = part.match(/^\s*([A-Za-z])\s*-\s*(.+?)\s*$/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
+
+/** Tokenise `key=value` / `key="quoted value"` pairs from one chunk of text. */
+function parseKvTokens(chunk: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const re = /([A-Za-z][\w.-]*)=("(?:[^"\\]|\\.)*"|[^\s]*)/g;
+  for (const m of chunk.matchAll(re)) {
+    const key = m[1];
+    let value = m[2];
+    if (value.startsWith('"') && value.endsWith('"')) {
+      value = value.slice(1, -1).replace(/\\(.)/g, "$1");
+    }
+    if (!(key in out)) out[key] = value;
+  }
+  return out;
+}
+
+/** A parsed multi-record `print` result, ready for the records view. */
+export interface ParsedRecords {
+  /** Which on-wire shape we recognised. */
+  format: "detail" | "columnar" | "keyvalue" | "empty";
+  /** Ordered union of column keys across every row. */
+  columns: string[];
+  /** One object per record; values are always strings. */
+  rows: Record<string, string>[];
+}
+
+/** A record-starting line: leading index, then the rest (flags + key=value run). */
+const INDEX_LINE = /^\s*(\d+)\s+(.*)$/;
+/** Leading flag letters: an uppercase run before the first `key=` token. */
+const LEADING_FLAGS = /^([A-Za-z]+)\s+(?=[\w.-]+=)/;
+
+/** Build the ordered union of keys seen across rows (first-seen order). */
+function unionColumns(rows: Record<string, string>[]): string[] {
+  const seen = new Set<string>();
+  const cols: string[] = [];
+  for (const row of rows) {
+    for (const k of Object.keys(row)) {
+      if (!seen.has(k)) {
+        seen.add(k);
+        cols.push(k);
+      }
+    }
+  }
+  return cols;
+}
+
+/**
+ * Parse `print detail` output: records keyed by a leading index, each a run of
+ * `key=value` pairs that may wrap across indented continuation lines.
+ */
+function parseDetailRecords(lines: string[]): Record<string, string>[] {
+  const rows: Record<string, string>[] = [];
+  let current: { index: string; flags: string; chunk: string } | null = null;
+  const flush = (): void => {
+    if (!current) return;
+    const row: Record<string, string> = { "#": current.index };
+    if (current.flags.trim()) row.flags = current.flags.trim();
+    Object.assign(row, parseKvTokens(current.chunk));
+    rows.push(row);
+    current = null;
+  };
+  for (const line of lines) {
+    const m = line.match(INDEX_LINE);
+    if (m) {
+      flush();
+      const rest = m[2];
+      const fm = rest.match(LEADING_FLAGS);
+      current = fm
+        ? { index: m[1], flags: fm[1], chunk: rest.slice(fm[0].length) }
+        : { index: m[1], flags: "", chunk: rest };
+    } else if (current) {
+      current.chunk += ` ${line}`;
+    }
+  }
+  flush();
+  return rows;
+}
+
+/**
+ * Parse columnar `print` output by slicing each data row at the header's column
+ * start positions (robust to values that contain spaces, unlike a naive split).
+ * The leading `#` column also absorbs any flag letters, which we split back out.
+ */
+function parseColumnarRecords(lines: string[]): Record<string, string>[] {
+  const headerIdx = lines.findIndex(
+    (l) => /\S/.test(l) && !l.includes("=") && /^[\s#]*[#A-Z]/.test(l) && /[A-Z]/.test(l),
+  );
+  if (headerIdx === -1) return [];
+  const header = lines[headerIdx];
+  // Column start = each token's first character position.
+  const starts: { key: string; at: number }[] = [];
+  for (const tok of header.matchAll(/\S+/g)) {
+    starts.push({ key: tok[0].toLowerCase(), at: tok.index });
+  }
+  if (starts.length < 2) return [];
+
+  const rows: Record<string, string>[] = [];
+  for (const line of lines.slice(headerIdx + 1)) {
+    if (!/\S/.test(line)) continue;
+    const row: Record<string, string> = {};
+    for (let i = 0; i < starts.length; i++) {
+      const from = starts[i].at;
+      const to = i + 1 < starts.length ? starts[i + 1].at : line.length;
+      const cell = line.slice(from, to).trim();
+      const key = starts[i].key;
+      // The `#` column carries `<index> <flags>` (e.g. "0 XR") — split them.
+      if (key === "#") {
+        const m = cell.match(/^(\d+)\s*([A-Za-z]*)$/);
+        if (m) {
+          row["#"] = m[1];
+          if (m[2]) row.flags = m[2];
+          continue;
+        }
+      }
+      row[key] = cell;
+    }
+    if (Object.keys(row).length) rows.push(row);
+  }
+  return rows;
+}
+
+/**
+ * Turn raw multi-record `print`/`print detail` text into structured rows for an
+ * MCP App view. Tries the reliable `key=value` detail shape first, then columnar
+ * position slicing, then a single `key: value` record — always degrading to an
+ * empty result (never throwing) so the caller can fall back to the raw text.
+ */
+export function parseRecords(text: string): ParsedRecords {
+  const lines = text.split("\n").filter((l) => !/^\s*Flags:/.test(l));
+  const hasKv = /[A-Za-z][\w.-]*=/.test(text);
+
+  if (hasKv && lines.some((l) => INDEX_LINE.test(l))) {
+    const rows = parseDetailRecords(lines);
+    // Only trust the detail shape if rows actually carried key=value data (not
+    // just an index/flags) — otherwise this was columnar text with a stray `=`.
+    const hasData = rows.some((r) => Object.keys(r).some((k) => k !== "#" && k !== "flags"));
+    if (rows.length && hasData) return { format: "detail", columns: unionColumns(rows), rows };
+  }
+
+  const columnar = parseColumnarRecords(lines);
+  if (columnar.length) {
+    return { format: "columnar", columns: unionColumns(columnar), rows: columnar };
+  }
+
+  if (hasKv) {
+    // A single `print detail` record with no leading index line.
+    const single = parseKvTokens(text);
+    if (Object.keys(single).length) {
+      return { format: "detail", columns: Object.keys(single), rows: [single] };
+    }
+  }
+
+  const kv = parseKeyValues(text);
+  if (Object.keys(kv).length) {
+    return { format: "keyvalue", columns: Object.keys(kv), rows: [kv] };
+  }
+
+  return { format: "empty", columns: [], rows: [] };
+}
+
+/** The `structuredContent` payload the generic `records` MCP App view renders. */
+export interface RecordsView {
+  /** Discriminator so the view recognises a generic-records payload. */
+  __mikrotikView: "records";
+  /** Originating tool name (used by the view's refresh button). */
+  tool: string;
+  /** Human-readable tool title. */
+  title: string;
+  /** `list` = a table of rows; `record` = a single detail object. */
+  kind: "list" | "record";
+  /** The recognised wire format (`detail`/`columnar`/`keyvalue`/`empty`). */
+  format: ParsedRecords["format"];
+  /** Ordered column keys. */
+  columns: string[];
+  /** Parsed rows (possibly empty — then the view shows `raw`). */
+  rows: Record<string, string>[];
+  /** Flag-letter legend, e.g. `{ X: "disabled" }`. */
+  flags: Record<string, string>;
+  /** Number of rows. */
+  count: number;
+  /** Original text (label prefix stripped) — the view's always-available fallback. */
+  raw: string;
+  /** ISO timestamp stamped by the caller at render time. */
+  generatedAt: string;
+}
+
+/** Strip a leading `LABEL:` / `LABEL DETAILS:` banner some handlers prepend. */
+function stripBanner(text: string): string {
+  return text.replace(/^[A-Z][A-Z0-9 _'/().-]*:\s*\n+/, "");
+}
+
+/**
+ * Build the {@link RecordsView} payload for the generic view from a read tool's
+ * text output. Pure and total: any text yields a valid payload (rows may be
+ * empty, in which case the view renders `raw`).
+ */
+export function buildRecordsView(
+  tool: string,
+  title: string,
+  text: string,
+  generatedAt: string,
+): RecordsView {
+  const body = stripBanner(text);
+  const parsed = parseRecords(body);
+  return {
+    __mikrotikView: "records",
+    tool,
+    title,
+    kind: parsed.rows.length === 1 && parsed.format !== "columnar" ? "record" : "list",
+    format: parsed.format,
+    columns: parsed.columns,
+    rows: parsed.rows,
+    flags: parseFlagLegend(text),
+    count: parsed.rows.length,
+    raw: body.trimEnd(),
+    generatedAt,
+  };
+}
+
 /** Strip a trailing unit and return the leading number, or null if none. */
 export function parseLeadingNumber(value: string | undefined): number | null {
   if (!value) return null;

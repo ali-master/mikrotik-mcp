@@ -1,0 +1,37 @@
+/* MikroTik Firewall rules — shared base plus rule-table specifics. */
+@import "../shared/base.css";
+
+.act {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  border: 1px solid var(--mt-border);
+  color: var(--mt-text-dim);
+}
+.act.is-accept {
+  color: var(--mt-good);
+  border-color: color-mix(in srgb, var(--mt-good) 45%, var(--mt-border));
+}
+.act.is-drop {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+}
+.act.is-jump {
+  color: var(--mt-accent);
+  border-color: color-mix(in srgb, var(--mt-accent) 45%, var(--mt-border));
+}
+.matchers {
+  white-space: normal !important;
+  color: var(--mt-text-dim);
+  max-width: 340px;
+}
+.matchers b {
+  color: var(--mt-text);
+  font-weight: 500;
+}
+td.num {
+  text-align: right;
+  color: var(--mt-text-dim);
+}

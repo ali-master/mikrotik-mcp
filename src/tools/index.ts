@@ -744,7 +744,10 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Apps — Dashboards",
     slug: "app-views",
     group: "MCP Apps",
-    description: "Tools that render interactive UI views inline (MCP Apps): the device dashboard.",
+    description:
+      "Tools that render interactive UI views inline (MCP Apps): the device dashboard, " +
+      "the interfaces overview and the firewall-rules table. Every read tool (list_*/get_*) " +
+      "additionally renders in the generic records viewer.",
     tools: appViewTools,
   },
 ];

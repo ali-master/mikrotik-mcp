@@ -8,8 +8,34 @@ import type { ZodRawShape } from "zod";
 import { createContext } from "./context";
 import type { ToolContext, SendLog } from "./context";
 import { containsRawParserError } from "./routeros";
-import { toolUiMeta } from "./ui-meta";
+import { buildRecordsView } from "./routeros-parse";
+import { toolUiMeta, uiViewUri } from "./ui-meta";
 import type { UiLink } from "./ui-meta";
+
+/**
+ * Read tools whose names start with one of these verbs render their output in
+ * the generic `records` MCP App view automatically (a table for lists, detail
+ * cards for a single record). This is what gives every `list_*`/`get_*` base
+ * tool an interactive UI without each handler opting in by hand — the registry
+ * attaches the view and derives `structuredContent` from the handler's text.
+ */
+const AUTO_RECORDS_VERB = /^(list|get|show|print)_/;
+
+/**
+ * The effective UI view for a tool: an explicit `ui` always wins; otherwise a
+ * read tool with a matching verb gets the shared `records` view. `visibility`
+ * includes `app` so the rendered view can call the tool back to refresh.
+ */
+function effectiveUi(def: { name: string; annotations: ToolAnnotations; ui?: UiLink }): {
+  ui: UiLink | undefined;
+  auto: boolean;
+} {
+  if (def.ui) return { ui: def.ui, auto: false };
+  if (def.annotations.readOnlyHint === true && AUTO_RECORDS_VERB.test(def.name)) {
+    return { ui: { resourceUri: uiViewUri("records"), visibility: ["model", "app"] }, auto: true };
+  }
+  return { ui: undefined, auto: false };
+}
 
 /** Options threaded into every tool registration. */
 export interface RegisterOptions {
@@ -110,6 +136,8 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     register(server: McpServer, opts: RegisterOptions = {}) {
       const { sendLog, deviceNames } = opts;
       const multiDevice = !!deviceNames && deviceNames.length > 1;
+      // Resolve the view once: explicit `ui` or the auto `records` view for reads.
+      const { ui, auto } = effectiveUi(def);
 
       // When more than one device is configured, every tool gains an optional
       // `device` selector (a validated enum of the configured names) so the AI
@@ -142,6 +170,17 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
             ctx.error(`Device rejected the command: ${out.text.trim()}`);
             return { content: [{ type: "text", text: out.text }], isError: true };
           }
+          // For an auto-attached records view, derive structured rows from the
+          // handler's text so the table/detail view has data — unless the
+          // handler already supplied its own `structuredContent`.
+          if (auto && !out.structuredContent) {
+            out.structuredContent = buildRecordsView(
+              def.name,
+              def.title,
+              out.text,
+              new Date().toISOString(),
+            ) as unknown as Record<string, unknown>;
+          }
           const result: CallToolResult = {
             content: [{ type: "text", text: out.text }],
           };
@@ -165,9 +204,10 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
           description: def.description,
           inputSchema,
           annotations: { ...def.annotations, title: def.title },
-          // When the tool has an MCP App view, advertise the `ui://` resource so
-          // the host can preload and render it (Claude + ChatGPT compatible).
-          ...(def.ui ? { _meta: toolUiMeta(def.ui) } : {}),
+          // When the tool has an MCP App view (explicit, or the auto records view
+          // for reads), advertise the `ui://` resource so the host can preload and
+          // render it (Claude + ChatGPT compatible).
+          ...(ui ? { _meta: toolUiMeta(ui) } : {}),
         },
         // The SDK derives the callback's arg type from `inputSchema`; our
         // dynamic registry erases that generic, so we assert the known-correct

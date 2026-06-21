@@ -57,13 +57,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "host",
-          "username",
-          "password",
-          "port",
-          "timeoutMs"
-        ],
+        "required": ["host", "username", "password", "port", "timeoutMs"],
         "additionalProperties": false
       }
     },
@@ -77,18 +71,15 @@
         "host": "0.0.0.0",
         "port": 8000,
         "allowedHosts": "",
-        "allowedOrigins": ""
+        "allowedOrigins": "",
+        "corsOrigins": ""
       },
       "type": "object",
       "properties": {
         "transport": {
           "default": "stdio",
           "type": "string",
-          "enum": [
-            "stdio",
-            "sse",
-            "streamable-http"
-          ]
+          "enum": ["stdio", "sse", "streamable-http"]
         },
         "host": {
           "default": "0.0.0.0",
@@ -107,15 +98,13 @@
         "allowedOrigins": {
           "default": "",
           "type": "string"
+        },
+        "corsOrigins": {
+          "default": "",
+          "type": "string"
         }
       },
-      "required": [
-        "transport",
-        "host",
-        "port",
-        "allowedHosts",
-        "allowedOrigins"
-      ],
+      "required": ["transport", "host", "port", "allowedHosts", "allowedOrigins", "corsOrigins"],
       "additionalProperties": false
     },
     "s3": {
@@ -150,17 +139,14 @@
           "maximum": 9007199254740991
         }
       },
-      "required": [
-        "prefix",
-        "presignExpiresIn"
-      ],
+      "required": ["prefix", "presignExpiresIn"],
       "additionalProperties": false
+    },
+    "readOnly": {
+      "default": false,
+      "type": "boolean"
     }
   },
-  "required": [
-    "devices",
-    "defaultDevice",
-    "mcp"
-  ],
+  "required": ["devices", "defaultDevice", "mcp", "readOnly"],
   "additionalProperties": false
 }

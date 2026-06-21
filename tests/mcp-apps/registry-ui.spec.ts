@@ -7,7 +7,7 @@
  * fallback. No device or network is touched.
  */
 import { describe, it, expect } from "vite-plus/test";
-import { defineTool, READ } from "../../src/core/registry";
+import { defineTool, READ, WRITE } from "../../src/core/registry";
 import {
   toolUiMeta,
   UI_RESOURCE_MIME_TYPE,
@@ -130,6 +130,71 @@ describe("defineTool — UI-enabled tools", () => {
     const result = await calls[0].cb({});
     expect(result.content[0].text).toBe("just text");
     expect(result.structuredContent).toBeUndefined();
+  });
+});
+
+describe("defineTool — auto records view for read tools", () => {
+  const recordsUri = uiViewUri("records");
+
+  it("attaches the records view + structuredContent to a list_* read tool", async () => {
+    const tool = defineTool({
+      name: "list_widgets",
+      title: "List Widgets",
+      description: "lists things",
+      annotations: READ,
+      handler: () => 'WIDGETS:\n\n 0 name="a" type="x"\n 1 name="b" type="y"',
+    });
+    const { server, calls } = fakeServer();
+    tool.register(server);
+
+    // Advertised as a UI tool even though the handler returned plain text.
+    expect(calls[0].config._meta.ui.resourceUri).toBe(recordsUri);
+    expect(calls[0].config._meta.ui.visibility).toEqual(["model", "app"]);
+
+    const result = await calls[0].cb({});
+    const sc = result.structuredContent;
+    expect(sc.__mikrotikView).toBe("records");
+    expect(sc.tool).toBe("list_widgets");
+    expect(sc.kind).toBe("list");
+    expect(sc.count).toBe(2);
+    // Text fallback preserved for text-only hosts.
+    expect(result.content[0].text).toMatch(/WIDGETS/);
+  });
+
+  it("does not attach to write tools or to non-verb read tools", () => {
+    const write = defineTool({
+      name: "get_widget_now",
+      title: "Set",
+      description: "writes",
+      annotations: WRITE,
+      handler: () => "ok",
+    });
+    const plainRead = defineTool({
+      name: "ping_host",
+      title: "Ping",
+      description: "reads but not a list/get verb",
+      annotations: READ,
+      handler: () => "ok",
+    });
+    const { server, calls } = fakeServer();
+    write.register(server);
+    plainRead.register(server);
+    expect(calls[0].config._meta).toBeUndefined();
+    expect(calls[1].config._meta).toBeUndefined();
+  });
+
+  it("lets a read tool keep its own structuredContent", async () => {
+    const tool = defineTool({
+      name: "get_special",
+      title: "Get Special",
+      description: "custom structured output",
+      annotations: READ,
+      handler: () => ({ text: "summary", structuredContent: { custom: true } }),
+    });
+    const { server, calls } = fakeServer();
+    tool.register(server);
+    const result = await calls[0].cb({});
+    expect(result.structuredContent).toEqual({ custom: true });
   });
 });
 

@@ -27,6 +27,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         dashboard: resolve(here, "dashboard/index.html"),
+        records: resolve(here, "records/index.html"),
+        interfaces: resolve(here, "interfaces/index.html"),
+        firewall: resolve(here, "firewall/index.html"),
       },
     },
   },

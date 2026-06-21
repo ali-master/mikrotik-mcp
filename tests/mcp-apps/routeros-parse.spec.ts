@@ -6,6 +6,9 @@ import {
   parseKeyValues,
   parseLeadingNumber,
   parseSizeToBytes,
+  parseFlagLegend,
+  parseRecords,
+  buildRecordsView,
 } from "../../src/core/routeros-parse";
 
 describe("parseKeyValues", () => {
@@ -62,5 +65,117 @@ describe("parseSizeToBytes", () => {
     expect(parseSizeToBytes("500")).toBe(500);
     expect(parseSizeToBytes("abc")).toBeNull();
     expect(parseSizeToBytes(undefined)).toBeNull();
+  });
+});
+
+describe("parseFlagLegend", () => {
+  it("maps each flag letter to its meaning", () => {
+    const legend = parseFlagLegend("Flags: X - disabled, R - running, D - dynamic ");
+    expect(legend).toEqual({ X: "disabled", R: "running", D: "dynamic" });
+  });
+  it("returns an empty map when there is no legend", () => {
+    expect(parseFlagLegend("0 name=ether1")).toEqual({});
+  });
+});
+
+describe("parseRecords — detail (key=value) format", () => {
+  it("parses indexed records with flags and quoted values, wrapping continuations", () => {
+    const text = [
+      "Flags: X - disabled, R - running ",
+      ' 0 R  name="ether1" type="ether" mtu=1500 comment="up link"',
+      "      mac-address=AA:BB:CC:DD:EE:FF",
+      ' 1  X name="ether2" type="ether" mtu=1500',
+    ].join("\n");
+    const { format, columns, rows } = parseRecords(text);
+    expect(format).toBe("detail");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      "#": "0",
+      flags: "R",
+      name: "ether1",
+      type: "ether",
+      comment: "up link",
+      "mac-address": "AA:BB:CC:DD:EE:FF",
+    });
+    expect(rows[1]).toMatchObject({ "#": "1", flags: "X", name: "ether2" });
+    expect(columns).toContain("name");
+    expect(columns).toContain("mac-address");
+  });
+
+  it("parses a single detail record with no index line", () => {
+    const { format, rows } = parseRecords('name="home" ttl="1d" address=1.2.3.4');
+    expect(format).toBe("detail");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ name: "home", ttl: "1d", address: "1.2.3.4" });
+  });
+});
+
+describe("parseRecords — columnar format", () => {
+  it("slices rows at the header column positions, keeping spaced values intact", () => {
+    const text = [
+      "Flags: X - disabled, R - running ",
+      " #   NAME      TYPE   ACTUAL-MTU",
+      " 0 R ether1    ether  1500",
+      " 1 X ether2    ether  1500",
+    ].join("\n");
+    const { format, columns, rows } = parseRecords(text);
+    expect(format).toBe("columnar");
+    expect(columns).toEqual(expect.arrayContaining(["#", "name", "type", "actual-mtu"]));
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ "#": "0", flags: "R", name: "ether1", "actual-mtu": "1500" });
+    expect(rows[1]).toMatchObject({ "#": "1", flags: "X", name: "ether2" });
+  });
+});
+
+describe("parseRecords — fallbacks", () => {
+  it("treats single key:value output as one record", () => {
+    const { format, rows } = parseRecords("  uptime: 1w2d\n  version: 7.16.1");
+    expect(format).toBe("keyvalue");
+    expect(rows[0]).toMatchObject({ uptime: "1w2d", version: "7.16.1" });
+  });
+  it("returns an empty result for prose (no records)", () => {
+    expect(parseRecords("Interface 'x' not found.")).toEqual({
+      format: "empty",
+      columns: [],
+      rows: [],
+    });
+  });
+});
+
+describe("buildRecordsView", () => {
+  const at = "2026-06-21T00:00:00.000Z";
+
+  it("strips a banner, classifies a list, and carries the raw fallback", () => {
+    const text = [
+      "INTERFACES:",
+      "",
+      "Flags: R - running ",
+      ' 0 R name="ether1" type="ether"',
+      ' 1 R name="ether2" type="ether"',
+    ].join("\n");
+    const view = buildRecordsView("list_interfaces", "List Interfaces", text, at);
+    expect(view.__mikrotikView).toBe("records");
+    expect(view.kind).toBe("list");
+    expect(view.count).toBe(2);
+    expect(view.flags).toEqual({ R: "running" });
+    expect(view.raw).not.toMatch(/^INTERFACES:/);
+    expect(view.generatedAt).toBe(at);
+  });
+
+  it("classifies a single detail record as `record`", () => {
+    const view = buildRecordsView(
+      "get_interface",
+      "Get Interface",
+      'INTERFACE DETAILS:\n\nname="ether1" type="ether" mtu=1500',
+      at,
+    );
+    expect(view.kind).toBe("record");
+    expect(view.rows[0]).toMatchObject({ name: "ether1" });
+  });
+
+  it("never throws on prose, leaving rows empty with raw text preserved", () => {
+    const view = buildRecordsView("get_interface", "Get Interface", "Interface 'x' not found.", at);
+    expect(view.rows).toEqual([]);
+    expect(view.raw).toBe("Interface 'x' not found.");
   });
 });

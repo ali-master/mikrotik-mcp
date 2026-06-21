@@ -12,7 +12,13 @@ import { READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { resolveDeviceName } from "../core/runtime";
 import { looksLikeError, isEmpty } from "../core/routeros";
-import { parseKeyValues, parseLeadingNumber, parseSizeToBytes } from "../core/routeros-parse";
+import {
+  parseFlagLegend,
+  parseKeyValues,
+  parseLeadingNumber,
+  parseRecords,
+  parseSizeToBytes,
+} from "../core/routeros-parse";
 import { uiViewUri } from "../core/ui-resources";
 
 /** Run a single-record `print` and return its parsed key/values (or {} on error). */
@@ -20,6 +26,16 @@ async function printRecord(cmd: string, ctx: ToolContext): Promise<Record<string
   const out = await executeMikrotikCommand(cmd, ctx);
   if (looksLikeError(out) || isEmpty(out)) return {};
   return parseKeyValues(out);
+}
+
+/** Run a multi-record `print detail` and return parsed rows + the flag legend. */
+async function printRows(
+  cmd: string,
+  ctx: ToolContext,
+): Promise<{ rows: Record<string, string>[]; flags: Record<string, string> }> {
+  const out = await executeMikrotikCommand(cmd, ctx);
+  if (looksLikeError(out) || isEmpty(out)) return { rows: [], flags: {} };
+  return { rows: parseRecords(out).rows, flags: parseFlagLegend(out) };
 }
 
 /** Percentage (0-100, 1 decimal) of `used`/`total`, or null when unknown. */
@@ -90,6 +106,80 @@ export const appViewTools: ToolModule = [
         `Board: ${board}\nRouterOS: ${ver}\nUptime: ${resource.uptime ?? "?"}\n${cpu}, ${mem}${
           derived.temperatureC !== null ? `, ${derived.temperatureC}°C` : ""
         }\n\n(Rendered as an interactive dashboard in hosts that support MCP Apps.)`;
+
+      return { text, structuredContent };
+    },
+  }),
+
+  defineTool({
+    name: "show_interfaces",
+    title: "Interfaces Overview",
+    annotations: READ,
+    ui: { resourceUri: uiViewUri("interfaces"), visibility: ["model", "app"] },
+    description:
+      "Shows all interfaces as an interactive overview: per-port running/disabled " +
+      "status, type, MTU and MAC address, with live refresh. Use this when the user " +
+      "wants a visual at-a-glance view of the device's interfaces.",
+    async handler(_a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      ctx.info(`Building interfaces overview for '${device}'`);
+
+      const { rows, flags } = await printRows("/interface print detail", ctx);
+      const structuredContent = {
+        __mikrotikView: "interfaces" as const,
+        device,
+        rows,
+        flags,
+        generatedAt: new Date().toISOString(),
+      };
+
+      const running = rows.filter((r) => (r.flags ?? "").includes("R")).length;
+      const disabled = rows.filter((r) => (r.flags ?? "").includes("X")).length;
+      const text = `INTERFACES — ${device}\n\n${rows.length} interface(s): ${running} running, ${disabled} disabled.\n${rows
+        .slice(0, 40)
+        .map((r) => `  • ${r.name ?? "?"} (${r.type ?? "?"})${r.flags ? ` [${r.flags}]` : ""}`)
+        .join("\n")}\n\n(Rendered as an interactive overview in hosts that support MCP Apps.)`;
+
+      return { text, structuredContent };
+    },
+  }),
+
+  defineTool({
+    name: "show_firewall_filter",
+    title: "Firewall Rules",
+    annotations: READ,
+    ui: { resourceUri: uiViewUri("firewall"), visibility: ["model", "app"] },
+    description:
+      "Shows the IP firewall filter rules as an interactive, ordered table: chain, " +
+      "action, key matchers and packet/byte counters, with enabled/disabled state and " +
+      "live refresh. Use this when the user wants to review the firewall ruleset visually.",
+    async handler(_a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      ctx.info(`Building firewall overview for '${device}'`);
+
+      const { rows, flags } = await printRows("/ip firewall filter print detail", ctx);
+      const structuredContent = {
+        __mikrotikView: "firewall" as const,
+        device,
+        chain: "filter",
+        rows,
+        flags,
+        generatedAt: new Date().toISOString(),
+      };
+
+      const disabled = rows.filter((r) => (r.flags ?? "").includes("X")).length;
+      const byChain = rows.reduce<Record<string, number>>((acc, r) => {
+        const c = r.chain ?? "?";
+        acc[c] = (acc[c] ?? 0) + 1;
+        return acc;
+      }, {});
+      const chainSummary = Object.entries(byChain)
+        .map(([c, n]) => `${c}=${n}`)
+        .join(", ");
+      const text =
+        `FIREWALL FILTER RULES — ${device}\n\n` +
+        `${rows.length} rule(s)${chainSummary ? ` (${chainSummary})` : ""}, ${disabled} disabled.\n\n` +
+        "(Rendered as an interactive table in hosts that support MCP Apps.)";
 
       return { text, structuredContent };
     },

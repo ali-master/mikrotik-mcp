@@ -15,6 +15,7 @@ import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAppResource, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { UI_DIST_DIR } from "../paths";
+import { uiViewUri } from "./ui-meta";
 
 export interface UiView {
   /** Stable id — used in the resource URI and the built HTML filename. */
@@ -25,10 +26,8 @@ export interface UiView {
   description: string;
 }
 
-/** The `ui://` resource URI for a view id (shared by tools and resources). */
-export function uiViewUri(id: string): string {
-  return `ui://mikrotik/${id}.html`;
-}
+// Re-exported from `ui-meta` (the pure home) so existing imports keep working.
+export { uiViewUri };
 
 /**
  * Every MCP App view the server ships. Add a view here and reference
@@ -40,6 +39,25 @@ export const UI_VIEWS: UiView[] = [
     name: "MikroTik Device Dashboard",
     description:
       "Live device health: CPU load, memory, uptime, temperature, board and RouterOS version.",
+  },
+  {
+    id: "records",
+    name: "MikroTik Records Viewer",
+    description:
+      "Generic searchable/sortable table + detail viewer for any read tool (list_*/get_*): " +
+      "filter, drill into a row, refresh live, and export to CSV/JSON.",
+  },
+  {
+    id: "interfaces",
+    name: "MikroTik Interfaces",
+    description:
+      "Interface overview: per-port status (running/disabled), type, MTU and MAC with live refresh.",
+  },
+  {
+    id: "firewall",
+    name: "MikroTik Firewall Rules",
+    description:
+      "Ordered firewall filter rules: chain, action, matchers, packet/byte counters and enabled state.",
   },
 ];
 
