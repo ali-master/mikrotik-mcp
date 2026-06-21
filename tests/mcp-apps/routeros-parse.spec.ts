@@ -76,6 +76,11 @@ describe("parseFlagLegend", () => {
   it("returns an empty map when there is no legend", () => {
     expect(parseFlagLegend("0 name=ether1")).toEqual({});
   });
+
+  it("splits the v7 legend that mixes `;` and `,` separators", () => {
+    const legend = parseFlagLegend("Flags: D - DYNAMIC; X - DISABLED, R - RUNNING; S - SLAVE");
+    expect(legend).toEqual({ D: "DYNAMIC", X: "DISABLED", R: "RUNNING", S: "SLAVE" });
+  });
 });
 
 describe("parseRecords — detail (key=value) format", () => {
@@ -102,6 +107,25 @@ describe("parseRecords — detail (key=value) format", () => {
     expect(columns).toContain("mac-address");
   });
 
+  it("captures uppercase flags and a `;;;` comment on v7 detail rows", () => {
+    const text = [
+      "Flags: D - DYNAMIC; X - DISABLED, R - RUNNING; S - SLAVE",
+      " 0  RS ;;; defconf",
+      '        name="ether1" default-name="ether1" type="ether" mtu=1500',
+      ' 1  R  name="ether2" type="ether" mtu=1500',
+    ].join("\n");
+    const { format, rows } = parseRecords(text);
+    expect(format).toBe("detail");
+    expect(rows[0]).toMatchObject({
+      "#": "0",
+      flags: "RS",
+      comment: "defconf",
+      name: "ether1",
+      type: "ether",
+    });
+    expect(rows[1]).toMatchObject({ "#": "1", flags: "R", name: "ether2" });
+  });
+
   it("parses a single detail record with no index line", () => {
     const { format, rows } = parseRecords('name="home" ttl="1d" address=1.2.3.4');
     expect(format).toBe("detail");
@@ -124,6 +148,21 @@ describe("parseRecords — columnar format", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ "#": "0", flags: "R", name: "ether1", "actual-mtu": "1500" });
     expect(rows[1]).toMatchObject({ "#": "1", flags: "X", name: "ether2" });
+  });
+
+  it("ignores the v7 `Columns:` hint line instead of slicing on it", () => {
+    const text = [
+      "Flags: D - dynamic; X - disabled, R - running; S - slave",
+      "Columns: NAME, TYPE, ACTUAL-MTU, L2MTU, MAC-ADDRESS",
+      " #    NAME        TYPE    ACTUAL-MTU  L2MTU  MAC-ADDRESS",
+      " 0  R ether1      ether   1500        1598   AA:BB:CC:DD:EE:01",
+      " 1  R ether2      ether   1500        1598   AA:BB:CC:DD:EE:02",
+    ].join("\n");
+    const { format, columns, rows } = parseRecords(text);
+    expect(format).toBe("columnar");
+    expect(columns).toEqual(expect.arrayContaining(["#", "name", "type", "actual-mtu"]));
+    expect(rows[0]).toMatchObject({ "#": "0", flags: "R", name: "ether1", type: "ether" });
+    expect(rows).toHaveLength(2);
   });
 });
 

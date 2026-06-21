@@ -44,7 +44,9 @@ export function parseFlagLegend(text: string): Record<string, string> {
   const line = text.split("\n").find((l) => /^\s*Flags:/.test(l));
   if (!line) return out;
   const body = line.replace(/^\s*Flags:\s*/, "");
-  for (const part of body.split(",")) {
+  // v6 separates legend entries with `,`; v7 mixes `;` and `,`
+  // (e.g. `D - DYNAMIC; X - DISABLED, R - RUNNING`).
+  for (const part of body.split(/[;,]/)) {
     const m = part.match(/^\s*([A-Za-z])\s*-\s*(.+?)\s*$/);
     if (m) out[m[1]] = m[2];
   }
@@ -78,8 +80,13 @@ export interface ParsedRecords {
 
 /** A record-starting line: leading index, then the rest (flags + key=value run). */
 const INDEX_LINE = /^\s*(\d+)\s+(.*)$/;
-/** Leading flag letters: an uppercase run before the first `key=` token. */
-const LEADING_FLAGS = /^([A-Za-z]+)\s+(?=[\w.-]+=)/;
+/**
+ * Leading flag letters on a record line: an uppercase run that is its own token.
+ * RouterOS flags are uppercase (R, X, D, S, I, …); requiring uppercase avoids
+ * eating a lowercase `key=` name, and not requiring a following `key=` means we
+ * still capture flags on rows whose next token is a `;;;` comment or nothing.
+ */
+const LEADING_FLAGS = /^([A-Z]+)(?=\s|$)/;
 
 /** Build the ordered union of keys seen across rows (first-seen order). */
 function unionColumns(rows: Record<string, string>[]): string[] {
@@ -102,11 +109,12 @@ function unionColumns(rows: Record<string, string>[]): string[] {
  */
 function parseDetailRecords(lines: string[]): Record<string, string>[] {
   const rows: Record<string, string>[] = [];
-  let current: { index: string; flags: string; chunk: string } | null = null;
+  let current: { index: string; flags: string; comment: string; chunk: string } | null = null;
   const flush = (): void => {
     if (!current) return;
     const row: Record<string, string> = { "#": current.index };
     if (current.flags.trim()) row.flags = current.flags.trim();
+    if (current.comment.trim()) row.comment = current.comment.trim();
     Object.assign(row, parseKvTokens(current.chunk));
     rows.push(row);
     current = null;
@@ -115,13 +123,30 @@ function parseDetailRecords(lines: string[]): Record<string, string>[] {
     const m = line.match(INDEX_LINE);
     if (m) {
       flush();
-      const rest = m[2];
+      let rest = m[2];
+      let flags = "";
       const fm = rest.match(LEADING_FLAGS);
-      current = fm
-        ? { index: m[1], flags: fm[1], chunk: rest.slice(fm[0].length) }
-        : { index: m[1], flags: "", chunk: rest };
+      if (fm) {
+        flags = fm[1];
+        rest = rest.slice(fm[0].length).replace(/^\s+/, "");
+      }
+      // Pull a RouterOS `;;; comment` (runs to end of this line) out of the
+      // key=value stream so it doesn't corrupt tokenising.
+      let comment = "";
+      const cm = rest.match(/;;;\s*(.*)$/);
+      if (cm) {
+        comment = cm[1];
+        rest = rest.slice(0, cm.index).replace(/\s+$/, "");
+      }
+      current = { index: m[1], flags, comment, chunk: rest };
     } else if (current) {
-      current.chunk += ` ${line}`;
+      const cm = line.match(/;;;\s*(.*)$/);
+      if (cm) {
+        current.comment = `${current.comment} ${cm[1]}`.trim();
+        current.chunk += ` ${line.slice(0, cm.index)}`;
+      } else {
+        current.chunk += ` ${line}`;
+      }
     }
   }
   flush();
@@ -178,7 +203,10 @@ function parseColumnarRecords(lines: string[]): Record<string, string>[] {
  * empty result (never throwing) so the caller can fall back to the raw text.
  */
 export function parseRecords(text: string): ParsedRecords {
-  const lines = text.split("\n").filter((l) => !/^\s*Flags:/.test(l));
+  // Drop the `Flags:` legend and the v7 `Columns:` hint line — the latter is
+  // uppercase and `=`-free, so the columnar header finder would otherwise
+  // mistake it for the real header and slice every row at the wrong offsets.
+  const lines = text.split("\n").filter((l) => !/^\s*(Flags|Columns):/.test(l));
   const hasKv = /[A-Za-z][\w.-]*=/.test(text);
 
   if (hasKv && lines.some((l) => INDEX_LINE.test(l))) {

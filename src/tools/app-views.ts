@@ -58,12 +58,15 @@ export const appViewTools: ToolModule = [
       const device = resolveDeviceName(ctx.device);
       ctx.info(`Building system dashboard for '${device}'`);
 
-      const [identity, resource, health, routerboard] = await Promise.all([
-        printRecord("/system identity print", ctx),
-        printRecord("/system resource print", ctx),
-        printRecord("/system health print", ctx),
-        printRecord("/system routerboard print", ctx),
-      ]);
+      // Sequential, not Promise.all: each printRecord opens its own fresh SSH
+      // connection, and firing four at once can exhaust a router's concurrent
+      // SSH session limit — some connections then return empty, leaving the
+      // dashboard fields blank. One connection at a time is reliable (and a
+      // device overview is not latency-critical).
+      const identity = await printRecord("/system identity print", ctx);
+      const resource = await printRecord("/system resource print", ctx);
+      const health = await printRecord("/system health print", ctx);
+      const routerboard = await printRecord("/system routerboard print", ctx);
 
       const memTotal = parseSizeToBytes(resource["total-memory"]);
       const memFree = parseSizeToBytes(resource["free-memory"]);
