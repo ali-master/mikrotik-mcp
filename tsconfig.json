@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",

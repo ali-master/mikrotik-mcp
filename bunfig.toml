@@ -3,3 +3,4 @@ smol = true
 saveTextLockfile = true
 logLevel = "debug"
 auto = "auto"
+peer = false

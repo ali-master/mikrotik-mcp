@@ -24,7 +24,7 @@ const PROMPT_RE = /\[.+?@.+?\] (?:<SAFE> )?> ?$/m;
 
 /** Strip ANSI/VT escape sequences RouterOS emits on interactive shells. */
 const ANSI_RE =
-  // eslint-disable-next-line no-control-regex
+  // oxlint-disable-next-line no-control-regex
   /\x1B(?:\[[0-9;]*[mA-HJ-MSTfhilnprsu]|[()][0-9A-Za-z]|\[?\?\d+[hl])/g;
 
 function stripAnsi(text: string): string {
