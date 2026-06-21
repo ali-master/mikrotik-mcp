@@ -10,6 +10,7 @@
  * with no allowlist disables the Host check (with a loud warning) so a reverse
  * proxy doesn't get every request rejected with HTTP 421.
  */
+import { serve } from "bun";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import type { McpServerSettings } from "../config";
 import { logger } from "../logger";
@@ -41,7 +42,7 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
   }
   if (hosts.length || origins.length) {
     logger.info(
-      `DNS-rebinding protection enabled for hosts=[${hosts}] origins=[${origins}]`,
+      `DNS-rebinding protection enabled for hosts=[${hosts.join(",")}] origins=[${origins.join(",")}]`,
     );
     return {
       enableDnsRebindingProtection: true,
@@ -53,11 +54,7 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
     return {
       enableDnsRebindingProtection: true,
       allowedHosts: ["127.0.0.1:*", "localhost:*", "[::1]:*"],
-      allowedOrigins: [
-        "http://127.0.0.1:*",
-        "http://localhost:*",
-        "http://[::1]:*",
-      ],
+      allowedOrigins: ["http://127.0.0.1:*", "http://localhost:*", "http://[::1]:*"],
     };
   }
   logger.warn(
@@ -80,7 +77,7 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
   await server.connect(transport);
 
   const mcpPath = "/mcp";
-  Bun.serve({
+  serve({
     hostname: mcp.host,
     port: mcp.port,
     idleTimeout: 0,

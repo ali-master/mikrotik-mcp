@@ -49,8 +49,7 @@ export const s3BackupTools: ToolModule = [
       "backups will be stored.",
     async handler(_a, ctx) {
       ctx.info("Checking S3 backup status");
-      if (!isS3Configured())
-        return `S3 backup storage is DISABLED.\n\n${NOT_CONFIGURED}`;
+      if (!isS3Configured()) return `S3 backup storage is DISABLED.\n\n${NOT_CONFIGURED}`;
       return `S3 backup storage is ENABLED.\n\nTarget: ${s3Target()}`;
     },
   }),
@@ -69,16 +68,8 @@ export const s3BackupTools: ToolModule = [
       "<filename>' so each router's backups are organised separately.",
     inputSchema: {
       filename: z.string().describe("File on the device, e.g. 'daily.backup'"),
-      key: z
-        .string()
-        .optional()
-        .describe("S3 object key (defaults to prefix + filename)"),
-      expires_in: z
-        .number()
-        .int()
-        .min(60)
-        .optional()
-        .describe("Presigned-URL lifetime in seconds"),
+      key: z.string().optional().describe("S3 object key (defaults to prefix + filename)"),
+      expires_in: z.number().int().min(60).optional().describe("Presigned-URL lifetime in seconds"),
     },
     async handler(a, ctx) {
       if (!isS3Configured()) return NOT_CONFIGURED;
@@ -90,8 +81,7 @@ export const s3BackupTools: ToolModule = [
         `/file print count-only where name=${a.filename}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `File '${a.filename}' not found on the device.`;
+      if (count.trim() === "0") return `File '${a.filename}' not found on the device.`;
 
       let url: string;
       try {
@@ -137,12 +127,7 @@ export const s3BackupTools: ToolModule = [
         .string()
         .optional()
         .describe("Device destination filename (defaults to the key basename)"),
-      expires_in: z
-        .number()
-        .int()
-        .min(60)
-        .optional()
-        .describe("Presigned-URL lifetime in seconds"),
+      expires_in: z.number().int().min(60).optional().describe("Presigned-URL lifetime in seconds"),
     },
     async handler(a, ctx) {
       if (!isS3Configured()) return NOT_CONFIGURED;
@@ -184,9 +169,7 @@ export const s3BackupTools: ToolModule = [
       prefix: z
         .string()
         .optional()
-        .describe(
-          "Key prefix to list under (defaults to this device's '<prefix>/<device>/')",
-        ),
+        .describe("Key prefix to list under (defaults to this device's '<prefix>/<device>/')"),
       max_keys: z
         .number()
         .int()
@@ -207,8 +190,7 @@ export const s3BackupTools: ToolModule = [
         const items = res.contents ?? [];
         if (items.length === 0) return "No S3 objects found matching the criteria.";
         const lines = items.map(
-          (o) =>
-            `${o.key}  (${o.size ?? "?"} bytes, modified ${o.lastModified ?? "?"})`,
+          (o) => `${o.key}  (${o.size ?? "?"} bytes, modified ${o.lastModified ?? "?"})`,
         );
         const more = res.isTruncated ? "\n\n(more results available)" : "";
         return `S3 OBJECTS (${s3Target()}):\n\n${lines.join("\n")}${more}`;
@@ -233,15 +215,14 @@ export const s3BackupTools: ToolModule = [
       ctx.info(`Getting S3 object info: key='${a.key}'`);
       try {
         const client = getS3Client();
-        if (!(await client.exists(a.key)))
-          return `S3 object '${a.key}' not found.`;
+        if (!(await client.exists(a.key))) return `S3 object '${a.key}' not found.`;
         const stat = await client.stat(a.key);
         return (
           `S3 OBJECT '${a.key}':\n\n` +
           `size: ${stat.size} bytes\n` +
           `type: ${stat.type}\n` +
           `etag: ${stat.etag}\n` +
-          `lastModified: ${stat.lastModified}`
+          `lastModified: ${stat.lastModified.toISOString()}`
         );
       } catch (e) {
         return `Failed to stat S3 object '${a.key}': ${e instanceof Error ? e.message : String(e)}`;
@@ -262,8 +243,7 @@ export const s3BackupTools: ToolModule = [
       ctx.info(`Deleting S3 object: key='${a.key}'`);
       try {
         const client = getS3Client();
-        if (!(await client.exists(a.key)))
-          return `S3 object '${a.key}' not found.`;
+        if (!(await client.exists(a.key))) return `S3 object '${a.key}' not found.`;
         await client.delete(a.key);
         return `S3 object '${a.key}' deleted successfully.`;
       } catch (e) {

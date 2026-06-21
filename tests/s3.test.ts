@@ -3,9 +3,8 @@
  * bucket is touched; these validate config layering and the opt-in behaviour.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { loadConfig } from "../src/config";
+import { loadConfig, MikrotikConfigSchema } from "../src/config";
 import { setConfig } from "../src/core/runtime";
-import { MikrotikConfigSchema } from "../src/config";
 import {
   isS3Configured,
   s3Key,
@@ -90,17 +89,13 @@ describe("S3 config loading", () => {
 
 describe("S3 helper", () => {
   test("s3Key joins the prefix and trims slashes", () => {
-    setConfig(
-      MikrotikConfigSchema.parse({ s3: { bucket: "b", prefix: "mikrotik/" } }),
-    );
+    setConfig(MikrotikConfigSchema.parse({ s3: { bucket: "b", prefix: "mikrotik/" } }));
     expect(s3Key("daily.backup")).toBe("mikrotik/daily.backup");
     expect(s3Key("/daily.backup")).toBe("mikrotik/daily.backup");
   });
 
   test("s3Key categorises by device", () => {
-    setConfig(
-      MikrotikConfigSchema.parse({ s3: { bucket: "b", prefix: "mikrotik/" } }),
-    );
+    setConfig(MikrotikConfigSchema.parse({ s3: { bucket: "b", prefix: "mikrotik/" } }));
     expect(s3Key("daily.backup", "home")).toBe("mikrotik/home/daily.backup");
     expect(s3DevicePrefix("home")).toBe("mikrotik/home/");
     // Device categorisation works even without a configured prefix.

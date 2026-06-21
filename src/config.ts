@@ -133,8 +133,7 @@ function parseDevicesSource(
   // Accept either { devices: {...}, defaultDevice } or a bare { name: {...} } map.
   const structured = obj.devices !== undefined;
   const devices = (obj.devices ?? obj) as Record<string, unknown>;
-  const defaultDevice =
-    typeof obj.defaultDevice === "string" ? obj.defaultDevice : undefined;
+  const defaultDevice = typeof obj.defaultDevice === "string" ? obj.defaultDevice : undefined;
   // Only read an `s3` block from the structured form, so a device literally
   // named "s3" in a bare map isn't mistaken for storage config.
   const s3 =
@@ -148,12 +147,9 @@ function parseDevicesSource(
  * Build the effective configuration from the environment and CLI flags.
  * `argv` defaults to the process arguments (after `bun run <file>`).
  */
-export function loadConfig(
-  argv: string[] = process.argv.slice(2),
-): MikrotikConfig {
+export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConfig {
   const flags = parseFlags(argv);
-  const pick = (flag: string, ...envNames: string[]) =>
-    flags[flag] ?? env(...envNames);
+  const pick = (flag: string, ...envNames: string[]) => flags[flag] ?? env(...envNames);
 
   // 1) Single-device fields (legacy MIKROTIK_* / flags) → the "default" device.
   const single = {
@@ -178,7 +174,7 @@ export function loadConfig(
   // 2) Multi-device source (file wins over the inline env var).
   const configFile = pick("config", "MIKROTIK_CONFIG_FILE");
   const devicesInline = flags.devices ?? env("MIKROTIK_DEVICES");
-  let fileS3: Record<string, unknown> | undefined;
+  let fileS3: Record<string, unknown> | undefined = {};
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -193,11 +189,7 @@ export function loadConfig(
   // (S3_* then AWS_*); flags and the config-file `s3` block override env.
   const s3 = {
     accessKeyId: pick("s3-access-key-id", "S3_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
-    secretAccessKey: pick(
-      "s3-secret-access-key",
-      "S3_SECRET_ACCESS_KEY",
-      "AWS_SECRET_ACCESS_KEY",
-    ),
+    secretAccessKey: pick("s3-secret-access-key", "S3_SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY"),
     sessionToken: pick("s3-session-token", "S3_SESSION_TOKEN", "AWS_SESSION_TOKEN"),
     region: pick("s3-region", "S3_REGION", "AWS_REGION"),
     endpoint: pick("s3-endpoint", "S3_ENDPOINT", "AWS_ENDPOINT"),
@@ -205,7 +197,7 @@ export function loadConfig(
     prefix: pick("s3-prefix", "MIKROTIK_S3_PREFIX"),
     presignExpiresIn: pick("s3-presign-expires-in", "MIKROTIK_S3_PRESIGN_EXPIRES_IN"),
     // The config-file block overrides anything from env/flags.
-    ...(fileS3 ?? {}),
+    ...fileS3,
   };
 
   const mcp = {
@@ -213,10 +205,7 @@ export function loadConfig(
     host: pick("mcp-host", "MIKROTIK_MCP__HOST"),
     port: pick("mcp-port", "MIKROTIK_MCP__PORT"),
     allowedHosts: pick("mcp-allowed-hosts", "MIKROTIK_MCP__ALLOWED_HOSTS"),
-    allowedOrigins: pick(
-      "mcp-allowed-origins",
-      "MIKROTIK_MCP__ALLOWED_ORIGINS",
-    ),
+    allowedOrigins: pick("mcp-allowed-origins", "MIKROTIK_MCP__ALLOWED_ORIGINS"),
   };
 
   // S3 is opt-in: only attach the block when something meaningful is set, so an

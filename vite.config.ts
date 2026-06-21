@@ -1,38 +1,32 @@
-import { defineConfig } from 'vite-plus';
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   staged: {
-    "*": "vp check --fix"
+    "*": "vp check --fix",
   },
   fmt: {},
   lint: {
-    "plugins": [
-      "oxc",
-      "typescript",
-      "unicorn",
-      "react",
-      "import"
-    ],
-    "jsPlugins": [
+    plugins: ["oxc", "typescript", "unicorn", "react", "import"],
+    jsPlugins: [
       {
-        "name": "vite-plus",
-        "specifier": "vite-plus/oxlint-plugin"
-      }
+        name: "vite-plus",
+        specifier: "vite-plus/oxlint-plugin",
+      },
     ],
-    "categories": {
-      "correctness": "warn"
+    categories: {
+      correctness: "warn",
     },
-    "options": {
-      "typeAware": true,
-      "typeCheck": true
+    options: {
+      typeAware: true,
+      typeCheck: true,
     },
-    "env": {
-      "builtin": true,
-      "es2026": true,
-      "browser": true,
-      "node": true
+    env: {
+      builtin: true,
+      es2026: true,
+      browser: true,
+      node: true,
     },
-    "ignorePatterns": [
+    ignorePatterns: [
       "**/logs",
       "**/_.log",
       "**/npm-debug.log_",
@@ -130,31 +124,28 @@ export default defineConfig({
       "**/.context",
       "**/.agents",
       "**/.*/skills",
-      "**/*.md"
+      "**/*.md",
     ],
-    "rules": {
+    rules: {
       "accessor-pairs": [
         "error",
         {
-          "enforceForClassMembers": true,
-          "setWithoutGet": true
-        }
+          enforceForClassMembers: true,
+          setWithoutGet: true,
+        },
       ],
       "array-callback-return": "error",
       "block-scoped-var": "error",
       "constructor-super": "error",
       "default-case-last": "error",
-      "eqeqeq": [
-        "error",
-        "smart"
-      ],
+      eqeqeq: ["error", "smart"],
       "new-cap": [
         "error",
         {
-          "capIsNew": false,
-          "newIsCap": true,
-          "properties": true
-        }
+          capIsNew: false,
+          newIsCap: true,
+          properties: true,
+        },
       ],
       "no-alert": "error",
       "no-array-constructor": "error",
@@ -163,18 +154,12 @@ export default defineConfig({
       "no-case-declarations": "error",
       "no-class-assign": "error",
       "no-compare-neg-zero": "error",
-      "no-cond-assign": [
-        "error",
-        "always"
-      ],
+      "no-cond-assign": ["error", "always"],
       "no-console": [
         "error",
         {
-          "allow": [
-            "warn",
-            "error"
-          ]
-        }
+          allow: ["warn", "error"],
+        },
       ],
       "no-const-assign": "error",
       "no-control-regex": "error",
@@ -186,8 +171,8 @@ export default defineConfig({
       "no-empty": [
         "error",
         {
-          "allowEmptyCatch": true
-        }
+          allowEmptyCatch: true,
+        },
       ],
       "no-empty-character-class": "error",
       "no-empty-pattern": "error",
@@ -207,9 +192,9 @@ export default defineConfig({
       "no-labels": [
         "error",
         {
-          "allowLoop": false,
-          "allowSwitch": false
-        }
+          allowLoop: false,
+          allowSwitch: false,
+        },
       ],
       "no-lone-blocks": "error",
       "no-loss-of-precision": "error",
@@ -225,49 +210,49 @@ export default defineConfig({
       "no-redeclare": [
         "error",
         {
-          "builtinGlobals": false
-        }
+          builtinGlobals: false,
+        },
       ],
       "no-regex-spaces": "error",
       "no-restricted-globals": [
         "error",
         {
-          "message": "Use `globalThis` instead.",
-          "name": "global"
+          message: "Use `globalThis` instead.",
+          name: "global",
         },
         {
-          "message": "Use `globalThis` instead.",
-          "name": "self"
-        }
+          message: "Use `globalThis` instead.",
+          name: "self",
+        },
       ],
       "no-restricted-properties": [
         "error",
         {
-          "message": "Use `Object.getPrototypeOf` or `Object.setPrototypeOf` instead.",
-          "property": "__proto__"
+          message: "Use `Object.getPrototypeOf` or `Object.setPrototypeOf` instead.",
+          property: "__proto__",
         },
         {
-          "message": "Use `Object.defineProperty` instead.",
-          "property": "__defineGetter__"
+          message: "Use `Object.defineProperty` instead.",
+          property: "__defineGetter__",
         },
         {
-          "message": "Use `Object.defineProperty` instead.",
-          "property": "__defineSetter__"
+          message: "Use `Object.defineProperty` instead.",
+          property: "__defineSetter__",
         },
         {
-          "message": "Use `Object.getOwnPropertyDescriptor` instead.",
-          "property": "__lookupGetter__"
+          message: "Use `Object.getOwnPropertyDescriptor` instead.",
+          property: "__lookupGetter__",
         },
         {
-          "message": "Use `Object.getOwnPropertyDescriptor` instead.",
-          "property": "__lookupSetter__"
-        }
+          message: "Use `Object.getOwnPropertyDescriptor` instead.",
+          property: "__lookupSetter__",
+        },
       ],
       "no-self-assign": [
         "error",
         {
-          "props": true
-        }
+          props: true,
+        },
       ],
       "no-self-compare": "error",
       "no-sequences": "error",
@@ -282,8 +267,8 @@ export default defineConfig({
       "no-unneeded-ternary": [
         "error",
         {
-          "defaultAssignment": false
-        }
+          defaultAssignment: false,
+        },
       ],
       "no-unreachable": "error",
       "no-unsafe-finally": "error",
@@ -291,27 +276,27 @@ export default defineConfig({
       "no-unused-expressions": [
         "error",
         {
-          "allowShortCircuit": true,
-          "allowTaggedTemplates": true,
-          "allowTernary": true
-        }
+          allowShortCircuit: true,
+          allowTaggedTemplates: true,
+          allowTernary: true,
+        },
       ],
       "no-unused-vars": [
         "error",
         {
-          "args": "none",
-          "caughtErrors": "none",
-          "ignoreRestSiblings": true,
-          "vars": "all"
-        }
+          args: "none",
+          caughtErrors: "none",
+          ignoreRestSiblings: true,
+          vars: "all",
+        },
       ],
       "no-use-before-define": [
         "error",
         {
-          "classes": false,
-          "functions": false,
-          "variables": true
-        }
+          classes: false,
+          functions: false,
+          variables: true,
+        },
       ],
       "no-useless-backreference": "error",
       "no-useless-call": "error",
@@ -326,62 +311,53 @@ export default defineConfig({
         "error",
         "always",
         {
-          "avoidQuotes": true,
-          "ignoreConstructors": false
-        }
+          avoidQuotes: true,
+          ignoreConstructors: false,
+        },
       ],
       "prefer-arrow-callback": [
         "error",
         {
-          "allowNamedFunctions": false,
-          "allowUnboundThis": true
-        }
+          allowNamedFunctions: false,
+          allowUnboundThis: true,
+        },
       ],
       "prefer-const": [
         "error",
         {
-          "destructuring": "all",
-          "ignoreReadBeforeAssign": true
-        }
+          destructuring: "all",
+          ignoreReadBeforeAssign: true,
+        },
       ],
       "prefer-exponentiation-operator": "error",
       "prefer-promise-reject-errors": "error",
       "prefer-regex-literals": [
         "error",
         {
-          "disallowRedundantWrapping": true
-        }
+          disallowRedundantWrapping: true,
+        },
       ],
       "prefer-rest-params": "error",
       "prefer-spread": "error",
       "prefer-template": "error",
       "symbol-description": "error",
-      "unicode-bom": [
-        "error",
-        "never"
-      ],
+      "unicode-bom": ["error", "never"],
       "use-isnan": [
         "error",
         {
-          "enforceForIndexOf": true,
-          "enforceForSwitchCase": true
-        }
+          enforceForIndexOf: true,
+          enforceForSwitchCase: true,
+        },
       ],
       "valid-typeof": [
         "error",
         {
-          "requireStringLiterals": true
-        }
+          requireStringLiterals: true,
+        },
       ],
       "vars-on-top": "error",
-      "yoda": [
-        "error",
-        "never"
-      ],
-      "import/consistent-type-specifier-style": [
-        "error",
-        "top-level"
-      ],
+      yoda: ["error", "never"],
+      "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
       "import/first": "error",
       "import/no-duplicates": "error",
       "import/no-mutable-exports": "error",
@@ -404,21 +380,16 @@ export default defineConfig({
       "typescript/dot-notation": [
         "error",
         {
-          "allowKeywords": true
-        }
+          allowKeywords: true,
+        },
       ],
-      "vite-plus/prefer-vite-plus-imports": "error"
+      "vite-plus/prefer-vite-plus-imports": "error",
     },
-    "overrides": [
+    overrides: [
       {
-        "files": [
-          "**/*.?([cm])[jt]s?(x)"
-        ],
-        "rules": {
-          "node/handle-callback-err": [
-            "error",
-            "^(err|error)$"
-          ],
+        files: ["**/*.?([cm])[jt]s?(x)"],
+        rules: {
+          "node/handle-callback-err": ["error", "^(err|error)$"],
           "node/no-exports-assign": "error",
           "node/no-new-require": "error",
           "node/no-path-concat": "error",
@@ -431,19 +402,13 @@ export default defineConfig({
           "jsdoc/require-property": "warn",
           "jsdoc/require-property-description": "warn",
           "jsdoc/require-property-name": "warn",
-          "jsdoc/require-returns-description": "warn"
+          "jsdoc/require-returns-description": "warn",
         },
-        "plugins": [
-          "node",
-          "jsdoc"
-        ]
+        plugins: ["node", "jsdoc"],
       },
       {
-        "files": [
-          "**/*.?([cm])ts",
-          "**/*.?([cm])tsx"
-        ],
-        "rules": {
+        files: ["**/*.?([cm])ts", "**/*.?([cm])tsx"],
+        rules: {
           "constructor-super": "off",
           "getter-return": "off",
           "no-class-assign": "off",
@@ -456,8 +421,8 @@ export default defineConfig({
           "no-redeclare": [
             "error",
             {
-              "builtinGlobals": false
-            }
+              builtinGlobals: false,
+            },
           ],
           "no-setter-return": "off",
           "no-this-before-super": "off",
@@ -469,34 +434,34 @@ export default defineConfig({
           "no-unused-expressions": [
             "error",
             {
-              "allowShortCircuit": true,
-              "allowTaggedTemplates": true,
-              "allowTernary": true
-            }
+              allowShortCircuit: true,
+              allowTaggedTemplates: true,
+              allowTernary: true,
+            },
           ],
           "no-unused-vars": "off",
           "no-useless-constructor": "off",
           "no-use-before-define": [
             "error",
             {
-              "classes": false,
-              "functions": false,
-              "variables": true
-            }
+              classes: false,
+              functions: false,
+              variables: true,
+            },
           ],
           "typescript/ban-ts-comment": [
             "error",
             {
-              "ts-expect-error": "allow-with-description"
-            }
+              "ts-expect-error": "allow-with-description",
+            },
           ],
           "typescript/no-duplicate-enum-values": "error",
           "typescript/no-dynamic-delete": "off",
           "typescript/no-empty-object-type": [
             "error",
             {
-              "allowInterfaces": "always"
-            }
+              allowInterfaces: "always",
+            },
           ],
           "typescript/no-explicit-any": "off",
           "typescript/no-extra-non-null-assertion": "error",
@@ -518,111 +483,86 @@ export default defineConfig({
           "typescript/prefer-namespace-keyword": "error",
           "typescript/triple-slash-reference": "off",
           "typescript/unified-signatures": "off",
-          "typescript/consistent-type-definitions": [
-            "error",
-            "interface"
-          ],
+          "typescript/consistent-type-definitions": ["error", "interface"],
           "typescript/consistent-type-imports": [
             "error",
             {
-              "disallowTypeAnnotations": false,
-              "fixStyle": "separate-type-imports",
-              "prefer": "type-imports"
-            }
+              disallowTypeAnnotations: false,
+              fixStyle: "separate-type-imports",
+              prefer: "type-imports",
+            },
           ],
-          "typescript/method-signature-style": [
-            "error",
-            "property"
-          ],
+          "typescript/method-signature-style": ["error", "property"],
           "typescript/no-import-type-side-effects": "error",
           "typescript/explicit-function-return-type": [
             "error",
             {
-              "allowExpressions": true,
-              "allowHigherOrderFunctions": true,
-              "allowIIFEs": true
-            }
-          ]
-        }
+              allowExpressions: true,
+              allowHigherOrderFunctions: true,
+              allowIIFEs: true,
+            },
+          ],
+        },
       },
       {
-        "files": [
+        files: [
           "**/__tests__/**/*.?([cm])[jt]s?(x)",
           "**/*.spec.?([cm])[jt]s?(x)",
           "**/*.test.?([cm])[jt]s?(x)",
           "**/*.bench.?([cm])[jt]s?(x)",
-          "**/*.benchmark.?([cm])[jt]s?(x)"
+          "**/*.benchmark.?([cm])[jt]s?(x)",
         ],
-        "rules": {
+        rules: {
           "vitest/consistent-test-it": [
             "error",
             {
-              "fn": "it",
-              "withinDescribe": "it"
-            }
+              fn: "it",
+              withinDescribe: "it",
+            },
           ],
           "vitest/no-identical-title": "error",
           "vitest/no-import-node-test": "error",
           "vitest/prefer-hooks-in-order": "error",
           "vitest/prefer-lowercase-title": "error",
           "no-unused-expressions": "off",
-          "typescript/explicit-function-return-type": "off"
+          "typescript/explicit-function-return-type": "off",
         },
-        "jsPlugins": [],
-        "plugins": [
-          "vitest"
-        ]
+        jsPlugins: [],
+        plugins: ["vitest"],
       },
       {
-        "files": [
-          "**/*.json",
-          "**/*.json5",
-          "**/*.jsonc"
-        ],
-        "rules": {},
-        "jsPlugins": []
+        files: ["**/*.json", "**/*.json5", "**/*.jsonc"],
+        rules: {},
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/package.json"
-        ],
-        "rules": {},
-        "jsPlugins": []
+        files: ["**/package.json"],
+        rules: {},
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/[jt]sconfig.json",
-          "**/[jt]sconfig.*.json"
-        ],
-        "rules": {},
-        "jsPlugins": []
+        files: ["**/[jt]sconfig.json", "**/[jt]sconfig.*.json"],
+        rules: {},
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/*.y?(a)ml"
-        ],
-        "rules": {},
-        "jsPlugins": []
+        files: ["**/*.y?(a)ml"],
+        rules: {},
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/*.toml"
-        ],
-        "rules": {},
-        "jsPlugins": []
+        files: ["**/*.toml"],
+        rules: {},
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/*.md"
-        ],
-        "rules": {},
-        "jsPlugins": []
+        files: ["**/*.md"],
+        rules: {},
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/*.md/**/*.?([cm])[jt]s?(x)"
-        ],
-        "rules": {
+        files: ["**/*.md/**/*.?([cm])[jt]s?(x)"],
+        rules: {
           "no-alert": "off",
           "no-console": "off",
           "no-labels": "off",
@@ -637,70 +577,52 @@ export default defineConfig({
           "typescript/consistent-type-imports": "off",
           "typescript/explicit-function-return-type": "off",
           "typescript/no-namespace": "off",
-          "typescript/no-require-imports": "off"
+          "typescript/no-require-imports": "off",
         },
-        "jsPlugins": []
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/scripts/**/*.?([cm])[jt]s?(x)"
-        ],
-        "rules": {
+        files: ["**/scripts/**/*.?([cm])[jt]s?(x)"],
+        rules: {
           "no-console": "off",
-          "typescript/explicit-function-return-type": "off"
+          "typescript/explicit-function-return-type": "off",
         },
-        "jsPlugins": []
+        jsPlugins: [],
       },
       {
-        "files": [
-          "**/cli/**/*.?([cm])[jt]s?(x)",
-          "**/cli.?([cm])[jt]s?(x)"
-        ],
-        "rules": {
-          "no-console": "off"
-        },
-        "jsPlugins": []
-      },
-      {
-        "files": [
-          "**/bin/**/*",
-          "**/bin.?([cm])[jt]s?(x)"
-        ],
-        "rules": {},
-        "jsPlugins": []
-      },
-      {
-        "files": [
-          "**/*.d.?([cm])ts"
-        ],
-        "rules": {},
-        "jsPlugins": []
-      },
-      {
-        "files": [
-          "**/*.js",
-          "**/*.cjs"
-        ],
-        "rules": {
-          "typescript/no-require-imports": "off"
-        }
-      },
-      {
-        "files": [
-          "**/*.config.?([cm])[jt]s?(x)",
-          "**/*.config.*.?([cm])[jt]s?(x)"
-        ],
-        "rules": {
+        files: ["**/cli/**/*.?([cm])[jt]s?(x)", "**/cli.?([cm])[jt]s?(x)"],
+        rules: {
           "no-console": "off",
-          "typescript/explicit-function-return-type": "off"
         },
-        "jsPlugins": []
+        jsPlugins: [],
       },
       {
-        "files": [
-          "./src/**/*.ts"
-        ],
-        "rules": {
+        files: ["**/bin/**/*", "**/bin.?([cm])[jt]s?(x)"],
+        rules: {},
+        jsPlugins: [],
+      },
+      {
+        files: ["**/*.d.?([cm])ts"],
+        rules: {},
+        jsPlugins: [],
+      },
+      {
+        files: ["**/*.js", "**/*.cjs"],
+        rules: {
+          "typescript/no-require-imports": "off",
+        },
+      },
+      {
+        files: ["**/*.config.?([cm])[jt]s?(x)", "**/*.config.*.?([cm])[jt]s?(x)"],
+        rules: {
+          "no-console": "off",
+          "typescript/explicit-function-return-type": "off",
+        },
+        jsPlugins: [],
+      },
+      {
+        files: ["./src/**/*.ts"],
+        rules: {
           "no-console": "off",
           "unicorn/prefer-node-protocol": "off",
           "vitest/prefer-lowercase-title": "off",
@@ -709,13 +631,11 @@ export default defineConfig({
           "no-throw-literal": "off",
           "typescript/ban-ts-comment": "off",
           "typescript/no-unsafe-function-type": "off",
-          "typescript/explicit-function-return-type": "off"
+          "typescript/explicit-function-return-type": "off",
         },
-        "jsPlugins": [],
-        "plugins": [
-          "vitest"
-        ]
-      }
-    ]
+        jsPlugins: [],
+        plugins: ["vitest"],
+      },
+    ],
   },
 });

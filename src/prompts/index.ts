@@ -64,16 +64,14 @@ function parseFrontmatter(raw: string): ParsedPrompt | null {
       }
       const prop = line.match(/^[ \t]+(description|required):[ \t]*(\S.*)$/);
       if (prop && cur) {
-        if (prop[1] === "required")
-          cur.required = /^(true|yes)$/i.test(prop[2].trim());
+        if (prop[1] === "required") cur.required = /^(true|yes)$/i.test(prop[2].trim());
         else cur.description = prop[2].trim().replace(/^["']|["']$/g, "");
         continue;
       }
       if (/^\S/.test(line)) inArgs = false; // a non-indented key ends the list
     }
     const kv = line.match(/^(\w+):[ \t]*(\S.*)?$/);
-    if (kv && !inArgs)
-      meta[kv[1]] = (kv[2] ?? "").trim().replace(/^["']|["']$/g, "");
+    if (kv && !inArgs) meta[kv[1]] = (kv[2] ?? "").trim().replace(/^["']|["']$/g, "");
   }
   if (cur) args.push(cur);
 
@@ -90,7 +88,10 @@ function parseFrontmatter(raw: string): ParsedPrompt | null {
 function substitute(body: string, vars: Record<string, unknown>): string {
   return body.replace(/\{\{\s*(\w+)\s*\}\}/g, (whole, key) => {
     const v = vars[key];
-    return v === undefined || v === null || v === "" ? whole : String(v);
+    if (v === undefined || v === null || v === "") return whole;
+    return typeof v === "object"
+      ? JSON.stringify(v)
+      : String(v as string | number | boolean | bigint | symbol);
   });
 }
 

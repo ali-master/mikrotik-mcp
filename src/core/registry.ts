@@ -2,10 +2,7 @@
  * Tool declaration + registration layer.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type {
-  ToolAnnotations,
-  CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import type { ToolAnnotations, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { ZodRawShape } from "zod";
 import { createContext } from "./context";
@@ -73,9 +70,7 @@ export interface RegisterableTool {
   register: (server: McpServer, opts?: RegisterOptions) => void;
 }
 
-export function defineTool<Shape extends ZodRawShape>(
-  def: ToolDef<Shape>,
-): RegisterableTool {
+export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): RegisterableTool {
   return {
     name: def.name,
     title: def.title,
@@ -91,7 +86,7 @@ export function defineTool<Shape extends ZodRawShape>(
       // can target a specific router per call. Single-device setups are untouched.
       const inputSchema = multiDevice
         ? {
-            ...(def.inputSchema ?? {}),
+            ...def.inputSchema,
             device: z
               .enum(deviceNames as [string, ...string[]])
               .optional()
@@ -101,15 +96,10 @@ export function defineTool<Shape extends ZodRawShape>(
           }
         : def.inputSchema;
 
-      const callback = async (
-        args: Record<string, unknown>,
-      ): Promise<CallToolResult> => {
+      const callback = async (args: Record<string, unknown>): Promise<CallToolResult> => {
         // Peel the injected selector off before handing args to the handler.
         const { device, ...rest } = args as { device?: unknown };
-        const ctx = createContext(
-          sendLog,
-          typeof device === "string" ? device : undefined,
-        );
+        const ctx = createContext(sendLog, typeof device === "string" ? device : undefined);
         try {
           const text = await def.handler(rest, ctx);
           // Backstop: if a handler returned a raw RouterOS parser error (an
