@@ -10,6 +10,7 @@
  * with no allowlist disables the Host check (with a loud warning) so a reverse
  * proxy doesn't get every request rejected with HTTP 421.
  */
+import { randomUUID } from "node:crypto";
 import { serve } from "bun";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import type { McpServerSettings } from "../config";
@@ -66,16 +67,38 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
 }
 
 export async function runHttp(mcp: McpServerSettings): Promise<void> {
-  const { server, toolCount, promptCount, uiViewCount, readOnly } = createServer();
   const security = buildSecurity(mcp);
+  // Counts for the startup banner (a throwaway build — served sessions get their
+  // own server instances below).
+  const { toolCount, promptCount, uiViewCount, readOnly } = createServer();
 
-  // Stateless single-session transport: connect once, reuse across requests.
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-    ...security,
-  });
-  await server.connect(transport);
+  // Session-keyed transports. The SDK forbids reusing a stateless transport
+  // across requests, so we run in session mode: an `initialize` request creates
+  // a transport (+ its own server) and returns an `Mcp-Session-Id`; later
+  // requests reuse the transport for that id, and close evicts it.
+  const transports = new Map<string, WebStandardStreamableHTTPServerTransport>();
+
+  async function transportFor(req: Request): Promise<WebStandardStreamableHTTPServerTransport> {
+    const sid = req.headers.get("mcp-session-id") ?? undefined;
+    const existing = sid ? transports.get(sid) : undefined;
+    if (existing) return existing;
+
+    const transport: WebStandardStreamableHTTPServerTransport =
+      new WebStandardStreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        enableJsonResponse: true,
+        ...security,
+        onsessioninitialized: (id) => {
+          transports.set(id, transport);
+        },
+      });
+    transport.onclose = () => {
+      if (transport.sessionId) transports.delete(transport.sessionId);
+    };
+    const { server } = createServer();
+    await server.connect(transport);
+    return transport;
+  }
 
   const mcpPath = "/mcp";
   serve({
@@ -96,6 +119,7 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
         });
       }
       if (url.pathname === mcpPath || url.pathname === `${mcpPath}/`) {
+        const transport = await transportFor(req);
         const res = await transport.handleRequest(req);
         if (Object.keys(cors).length === 0) return res;
         // Merge CORS onto the transport's response (its headers are preserved).
