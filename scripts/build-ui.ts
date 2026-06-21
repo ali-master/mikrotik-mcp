@@ -46,16 +46,23 @@ function inline(htmlPath: string): string {
   return html;
 }
 
-function main(): void {
-  log("• Building MCP App views (vp build)…");
-  const res = spawnSync("bunx", ["vp", "build", "-c", "ui/vite.config.ts", "--logLevel", "warn"], {
+/** Run a single `vp build` for one config; abort on failure. */
+function build(configPath: string, label: string): void {
+  log(`• Building ${label} (vp build)…`);
+  const res = spawnSync("bunx", ["vp", "build", "-c", configPath, "--logLevel", "warn"], {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
   });
   if (res.status !== 0) {
-    console.error("✗ vp build failed");
+    console.error(`✗ vp build failed (${label})`);
     process.exit(res.status ?? 1);
   }
+}
+
+function main(): void {
+  // First build empties dist/ui-build; the second (React dashboard) appends.
+  build("ui/vite.config.ts", "MCP App views");
+  build("ui/vite.observability.config.ts", "React observability dashboard");
 
   if (!existsSync(BUILD_DIR)) {
     console.error(`✗ expected build output at ${BUILD_DIR}`);

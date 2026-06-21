@@ -80,9 +80,13 @@ a live stream on its own `Bun.serve` port (started from `cli.ts serve`) — both
 Bun-native WebSocket (`/api/stream`) and an SSE fallback (`/api/sse`), plus
 `/api/devices` and `/api/config` (config redacted via `redact()`). `health.ts`
 SSH-probes each device for the connectivity graph. Analytics live in the pure
-`stats.ts`. The default DB path is `~/.mikrotik-mcp/events.db` (`DEFAULT_DASHBOARD_DB`). **Test constraint:** `bun:sqlite` is imported only via
+`stats.ts`. The default DB path is `~/.mikrotik-mcp/events.db` (`DEFAULT_DASHBOARD_DB`).
+The dashboard UI is a **React** app (`ui/observability/main.tsx`) built _separately_
+(`ui/vite.observability.config.ts`, single-input + `inlineDynamicImports`) so it
+inlines into one self-contained HTML — the other `ui/*` views are ext-apps and
+build via `ui/vite.config.ts`. `bun run build:ui` runs both. **Test constraint:** `bun:sqlite` is imported only via
 the dynamic `import()` in `store.ts`, so the Node/Vitest import graph (which aliases
-`"bun"`) never loads it — keep it that way (recorder/registry import store *types*
+`"bun"`) never loads it — keep it that way (recorder/registry import store _types_
 only).
 
 **Tests are offline.** `tests/` validate the static catalog shape and the command

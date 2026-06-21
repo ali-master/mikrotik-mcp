@@ -25,12 +25,15 @@ export default defineConfig({
     assetsInlineLimit: 100_000_000,
     modulePreload: { polyfill: false },
     rollupOptions: {
+      // MCP App views (ext-apps). The React observability dashboard is built
+      // separately (ui/vite.observability.config.ts) as a single self-contained
+      // bundle, because a multi-entry build extracts a shared runtime chunk that
+      // can't be inlined into one HTML file.
       input: {
         dashboard: resolve(here, "dashboard/index.html"),
         records: resolve(here, "records/index.html"),
         interfaces: resolve(here, "interfaces/index.html"),
         firewall: resolve(here, "firewall/index.html"),
-        observability: resolve(here, "observability/index.html"),
       },
     },
   },

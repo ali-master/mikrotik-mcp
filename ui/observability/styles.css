@@ -1,12 +1,20 @@
 /* MikroTik MCP Observability dashboard — shared tokens + dashboard-specific UI. */
 @import "../shared/base.css";
 
+html,
 body {
+  margin: 0;
   padding: 0;
+  background: var(--mt-bg);
 }
-.app {
-  max-width: 1280px;
-  padding: 16px;
+
+/* The dashboard root container — owns centering and the page's outer margins.
+ * (Uses its own class, not the shared `.app`, so the cascade is unambiguous.) */
+.obs {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  display: grid;
   gap: 16px;
 }
 
