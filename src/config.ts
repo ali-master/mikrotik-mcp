@@ -41,6 +41,27 @@ export const DeviceConfigSchema = z.object({
 });
 export type DeviceConfig = z.infer<typeof DeviceConfigSchema>;
 
+/**
+ * Optional S3-compatible object storage for shipping backup/export files off
+ * the device. When omitted, the S3 backup tools are inert. Credentials follow
+ * Bun's native S3 conventions (`S3_*`, then `AWS_*` env fallbacks) and may be
+ * overridden here or via a JSON config `s3` block.
+ */
+export const S3ConfigSchema = z.object({
+  accessKeyId: z.string().optional(),
+  secretAccessKey: z.string().optional(),
+  sessionToken: z.string().optional(),
+  region: z.string().optional(),
+  /** Custom endpoint for R2/MinIO/Spaces/etc. Omit for AWS S3. */
+  endpoint: z.string().optional(),
+  bucket: z.string().optional(),
+  /** Key prefix prepended to backup object keys, e.g. "mikrotik/". */
+  prefix: z.string().default(""),
+  /** Presigned-URL lifetime (seconds) used for device `/tool fetch` transfers. */
+  presignExpiresIn: z.coerce.number().int().positive().default(3600),
+});
+export type S3Config = z.infer<typeof S3ConfigSchema>;
+
 export const MikrotikConfigSchema = z.object({
   /** Named devices the server can reach. Always has at least one entry. */
   devices: z
@@ -49,6 +70,8 @@ export const MikrotikConfigSchema = z.object({
   /** Device used when a tool call doesn't specify one. */
   defaultDevice: z.string().default("default"),
   mcp: McpServerSettingsSchema.default(() => McpServerSettingsSchema.parse({})),
+  /** Optional S3 storage; absent unless configured (feature is opt-in). */
+  s3: S3ConfigSchema.optional(),
 });
 export type MikrotikConfig = z.infer<typeof MikrotikConfigSchema>;
 
@@ -94,6 +117,7 @@ function parseDevicesSource(
 ): {
   devices: Record<string, unknown>;
   defaultDevice?: string;
+  s3?: Record<string, unknown>;
 } {
   let json: unknown;
   try {
@@ -107,10 +131,17 @@ function parseDevicesSource(
   }
   const obj = json as Record<string, unknown>;
   // Accept either { devices: {...}, defaultDevice } or a bare { name: {...} } map.
+  const structured = obj.devices !== undefined;
   const devices = (obj.devices ?? obj) as Record<string, unknown>;
   const defaultDevice =
     typeof obj.defaultDevice === "string" ? obj.defaultDevice : undefined;
-  return { devices, defaultDevice };
+  // Only read an `s3` block from the structured form, so a device literally
+  // named "s3" in a bare map isn't mistaken for storage config.
+  const s3 =
+    structured && obj.s3 && typeof obj.s3 === "object"
+      ? (obj.s3 as Record<string, unknown>)
+      : undefined;
+  return { devices, defaultDevice, s3 };
 }
 
 /**
@@ -147,6 +178,7 @@ export function loadConfig(
   // 2) Multi-device source (file wins over the inline env var).
   const configFile = pick("config", "MIKROTIK_CONFIG_FILE");
   const devicesInline = flags.devices ?? env("MIKROTIK_DEVICES");
+  let fileS3: Record<string, unknown> | undefined;
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -154,7 +186,27 @@ export function loadConfig(
     for (const [name, dc] of Object.entries(src.devices)) devices[name] = dc;
     if (src.defaultDevice) defaultDevice = src.defaultDevice;
     else if (!defaultDevice) defaultDevice = Object.keys(src.devices)[0];
+    fileS3 = src.s3;
   }
+
+  // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
+  // (S3_* then AWS_*); flags and the config-file `s3` block override env.
+  const s3 = {
+    accessKeyId: pick("s3-access-key-id", "S3_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
+    secretAccessKey: pick(
+      "s3-secret-access-key",
+      "S3_SECRET_ACCESS_KEY",
+      "AWS_SECRET_ACCESS_KEY",
+    ),
+    sessionToken: pick("s3-session-token", "S3_SESSION_TOKEN", "AWS_SESSION_TOKEN"),
+    region: pick("s3-region", "S3_REGION", "AWS_REGION"),
+    endpoint: pick("s3-endpoint", "S3_ENDPOINT", "AWS_ENDPOINT"),
+    bucket: pick("s3-bucket", "S3_BUCKET", "AWS_BUCKET"),
+    prefix: pick("s3-prefix", "MIKROTIK_S3_PREFIX"),
+    presignExpiresIn: pick("s3-presign-expires-in", "MIKROTIK_S3_PRESIGN_EXPIRES_IN"),
+    // The config-file block overrides anything from env/flags.
+    ...(fileS3 ?? {}),
+  };
 
   const mcp = {
     transport: pick("transport", "MIKROTIK_MCP__TRANSPORT", "MCP_TRANSPORT"),
@@ -167,10 +219,15 @@ export function loadConfig(
     ),
   };
 
+  // S3 is opt-in: only attach the block when something meaningful is set, so an
+  // unconfigured deployment leaves `config.s3` undefined and the tools inert.
+  const hasS3 = !!(s3.accessKeyId || s3.bucket || s3.endpoint);
+
   const raw = {
     devices: Object.keys(devices).length ? devices : { default: {} },
     defaultDevice: defaultDevice ?? "default",
     mcp,
+    ...(hasS3 ? { s3 } : {}),
   };
 
   // Drop undefined keys so zod applies its defaults instead of failing on them.
