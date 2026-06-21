@@ -104,14 +104,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "transport",
-        "host",
-        "port",
-        "allowedHosts",
-        "allowedOrigins",
-        "corsOrigins"
-      ],
+      "required": ["transport", "host", "port", "allowedHosts", "allowedOrigins", "corsOrigins"],
       "additionalProperties": false
     },
     "s3": {
@@ -157,6 +150,7 @@
         "dbPath": "./.mikrotik-mcp/events.db",
         "maxEvents": 100000,
         "captureBody": true,
+        "redactInput": false,
         "maxBodyBytes": 16384
       },
       "type": "object",
@@ -189,6 +183,10 @@
           "default": true,
           "type": "boolean"
         },
+        "redactInput": {
+          "default": false,
+          "type": "boolean"
+        },
         "maxBodyBytes": {
           "default": 16384,
           "type": "integer",
@@ -206,6 +204,7 @@
         "dbPath",
         "maxEvents",
         "captureBody",
+        "redactInput",
         "maxBodyBytes"
       ],
       "additionalProperties": false
