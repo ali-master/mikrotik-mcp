@@ -609,7 +609,7 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
         )}
         <div className="sheet__hd">
           <h2 className="muted" style={{ margin: 0 }}>
-            INPUT (redacted)
+            INPUT
           </h2>
           <span style={{ flex: 1 }} />
           <button className="btn" onClick={() => copy(event.input)}>

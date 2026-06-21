@@ -95,8 +95,14 @@ export const DashboardConfigSchema = z.object({
   dbPath: z.string().default(DEFAULT_DASHBOARD_DB),
   /** Retention cap — older events are pruned beyond this many rows. */
   maxEvents: z.coerce.number().int().positive().default(100_000),
-  /** Record tool input/output bodies (redacted). Off keeps only metadata. */
+  /** Record tool input/output bodies. Off keeps only metadata. */
   captureBody: z.boolean().default(true),
+  /**
+   * Mask secret-looking input fields (password / key / psk / token / …) before
+   * storing. Off stores inputs verbatim in the dashboard and SQLite — handy for
+   * debugging, but secrets then land on disk. Defaults off per local-debug use.
+   */
+  redactInput: z.boolean().default(false),
   /** Per-body truncation budget in characters. */
   maxBodyBytes: z.coerce.number().int().nonnegative().default(16_384),
   /** Optional bearer token; when set, the dashboard page and API require it. */
@@ -284,6 +290,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     dbPath: pick("dashboard-db", "MIKROTIK_DASHBOARD__DB_PATH"),
     maxEvents: pick("dashboard-max-events", "MIKROTIK_DASHBOARD__MAX_EVENTS"),
     captureBody: boolOpt(pick("dashboard-capture-body", "MIKROTIK_DASHBOARD__CAPTURE_BODY")),
+    redactInput: boolOpt(pick("dashboard-redact-input", "MIKROTIK_DASHBOARD__REDACT_INPUT")),
     maxBodyBytes: pick("dashboard-max-body-bytes", "MIKROTIK_DASHBOARD__MAX_BODY_BYTES"),
     token: pick("dashboard-token", "MIKROTIK_DASHBOARD__TOKEN"),
     ...fileDashboard,

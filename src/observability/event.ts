@@ -38,7 +38,7 @@ export interface ToolEvent {
   isError: boolean;
   /** Error message when `isError`, else undefined. */
   error?: string;
-  /** Redacted, possibly-truncated JSON of the input arguments. */
+  /** JSON of the input arguments — redacted unless `redactInput` is off — possibly truncated. */
   input: string;
   /** Possibly-truncated text output returned to the model. */
   output: string;
@@ -90,6 +90,13 @@ export interface CaptureOptions {
   captureBody: boolean;
   /** Per-body truncation budget. */
   maxBodyBytes: number;
+  /**
+   * Mask secret-looking input fields (password / key / psk / token / …) before
+   * storing. Omitted or `true` → redact (the safe default). Set `false` to store
+   * inputs verbatim — convenient for debugging, but secrets then hit disk and the
+   * dashboard.
+   */
+  redactInput?: boolean;
 }
 
 /** Raw inputs the recorder has on hand when a call finishes. */
@@ -115,7 +122,8 @@ export function buildEvent(raw: RawCall, id: string, opts: CaptureOptions): Tool
   let output = "";
   let truncated = false;
   if (opts.captureBody) {
-    const rin = truncate(JSON.stringify(redact(raw.args) ?? {}), opts.maxBodyBytes);
+    const args = opts.redactInput === false ? raw.args : redact(raw.args);
+    const rin = truncate(JSON.stringify(args ?? {}), opts.maxBodyBytes);
     const rout = truncate(raw.output, opts.maxBodyBytes);
     input = rin.text;
     output = rout.text;
