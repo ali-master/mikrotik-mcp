@@ -46,9 +46,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bunup && chmod +x dist/cli.js",
+    "build": "bunup && chmod +x dist/cli.js && bun run build:ui",
+    "build:ui": "bun run scripts/build-ui.ts",
     "dev": "bunup --watch",
-    "prepack": "bunup && chmod +x dist/cli.js",
+    "prepack": "bunup && chmod +x dist/cli.js && bun run build:ui",
     "auth-check": "bun run src/cli.ts auth-check",
     "gen:schemas": "bun run scripts/gen-schemas.ts",
     "gen:docs": "bun run scripts/gen-tool-docs.ts",
@@ -59,7 +60,9 @@
     "inspect:config": "bunx @modelcontextprotocol/inspector --config mcp-inspector.config.json --server mikrotik",
     "inspect:cli": "bunx @modelcontextprotocol/inspector --cli bun run src/cli.ts serve --method tools/list",
     "inspect:config:local": "bunx @modelcontextprotocol/inspector --config /var/open-source/mikrotik-mcp/mcp-inspector.config.local.json --server mikrotik",
-    "test": "bun test",
+    "test": "bun test '.test.' && vp test run",
+    "test:bun": "bun test '.test.'",
+    "test:unit": "vp test run",
     "release": "release-it",
     "test:types": "tsc --noEmit",
     "check": "vp check",
@@ -70,6 +73,7 @@
     "prepare": "vp config"
   },
   "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "ssh2": "^1.17.0",
     "zod": "^4.4.3"
@@ -83,7 +87,7 @@
     "bunup": "^0.16.32",
     "prettier": "^3.8.4",
     "release-it": "^20.2.0",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vite": "^0.2.1",
     "vite-plus": "latest"
   },
   "peerDependencies": {

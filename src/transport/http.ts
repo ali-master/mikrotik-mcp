@@ -65,7 +65,7 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
 }
 
 export async function runHttp(mcp: McpServerSettings): Promise<void> {
-  const { server, toolCount, promptCount } = createServer();
+  const { server, toolCount, promptCount, uiViewCount } = createServer();
   const security = buildSecurity(mcp);
 
   // Stateless single-session transport: connect once, reuse across requests.
@@ -96,7 +96,7 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
   });
 
   logger.info(
-    `MCP server ready on http://${mcp.host}:${mcp.port}${mcpPath} — ${toolCount} tools, ${promptCount} prompts ` +
+    `MCP server ready on http://${mcp.host}:${mcp.port}${mcpPath} — ${toolCount} tools, ${promptCount} prompts, ${uiViewCount} app views ` +
       `(${mcp.transport})`,
   );
 }
