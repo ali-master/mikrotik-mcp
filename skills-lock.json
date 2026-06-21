@@ -21,6 +21,11 @@
       "sourceType": "github",
       "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
     "git-flow-branch-creator": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
@@ -100,6 +105,11 @@
       "source": "tikoci/routeros-skills",
       "sourceType": "github",
       "computedHash": "a57baf03a692e3673e13f26fc8207a3ce83fcd4809050b19d97d45022bf94343"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
     },
     "writing-great-skills": {
       "source": "mattpocock/skills",
