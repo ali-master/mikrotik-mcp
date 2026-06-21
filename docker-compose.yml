@@ -1,0 +1,58 @@
+# Run the MikroTik MCP server with Docker Compose.
+#
+#   cp .env.example .env          # fill in your device + (optional) S3 / read-only
+#   docker compose up --build     # server on http://localhost:8000/mcp
+#
+# For a public HTTPS endpoint (e.g. a ChatGPT Apps connector), also start the
+# Cloudflare tunnel — see docs/docker.md#deploying-to-chatgpt-apps:
+#
+#   docker compose --profile chatgpt up --build
+#
+# Requires Docker Compose v2.24+ (for the optional env_file form below).
+
+services:
+  mikrotik-mcp:
+    build: .
+    image: mikrotik-mcp
+    container_name: mikrotik-mcp
+    restart: unless-stopped
+    command: ["serve"]
+    # Device credentials, S3, read-only, etc. all come from .env (every config
+    # setting is an environment variable). Optional so `up` works without it.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Compose runs the server mode, so default to the HTTP transport.
+      MIKROTIK_MCP__TRANSPORT: ${MIKROTIK_MCP__TRANSPORT:-streamable-http}
+      MIKROTIK_MCP__HOST: 0.0.0.0
+      MIKROTIK_MCP__PORT: ${MIKROTIK_MCP__PORT:-8000}
+      MIKROTIK_LOG_LEVEL: ${MIKROTIK_LOG_LEVEL:-info}
+    ports:
+      - "${MIKROTIK_MCP__PORT:-8000}:8000"
+    # Prefer key-based auth over a plaintext password. Drop your private key in
+    # ./secrets/, uncomment below, and set MIKROTIK_KEY_FILENAME in .env to
+    # /run/secrets/mikrotik_key:
+    # volumes:
+    #   - ./secrets/mikrotik_ed25519:/run/secrets/mikrotik_key:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  # Optional: expose the server publicly over HTTPS for a ChatGPT Apps connector.
+  # Create a Cloudflare named tunnel, put its token in CF_TUNNEL_TOKEN (.env),
+  # and route it to http://mikrotik-mcp:8000. Run read-only until auth is in
+  # place (MIKROTIK_READ_ONLY=true in .env).
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: mikrotik-mcp-tunnel
+    profiles: ["chatgpt"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN:-}
+    depends_on:
+      - mikrotik-mcp

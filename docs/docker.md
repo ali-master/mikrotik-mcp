@@ -4,6 +4,17 @@ The server is a single Bun process, so a container image is small and simple. It
 reaches the RouterOS device over the network via SSH, so the container only needs
 outbound access to the device.
 
+A ready-to-use **`docker-compose.yml`** ships in the repo root:
+
+```bash
+cp .env.example .env          # fill in your device credentials
+docker compose up --build     # → http://localhost:8000/mcp
+```
+
+It runs the HTTP transport by default and includes an optional `chatgpt` profile
+(a Cloudflare tunnel) — see [Deploying to ChatGPT Apps](#deploying-to-chatgpt-apps).
+The sections below explain the pieces it wires up.
+
 ## Minimal image
 
 ```dockerfile
