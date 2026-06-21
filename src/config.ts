@@ -68,6 +68,32 @@ export const S3ConfigSchema = z.object({
 });
 export type S3Config = z.infer<typeof S3ConfigSchema>;
 
+/**
+ * Optional real-time observability dashboard. When enabled, every MCP tool call
+ * the LLM makes is intercepted at the registry, persisted to a Bun-native SQLite
+ * database and streamed to a web dashboard (live feed + analytics) served on its
+ * own host/port, independently of the MCP transport. Disabled by default.
+ */
+export const DashboardConfigSchema = z.object({
+  /** Master switch. When false, zero overhead and no SQLite is loaded. */
+  enabled: z.boolean().default(false),
+  /** Bind host for the dashboard HTTP/WebSocket server. */
+  host: z.string().default("127.0.0.1"),
+  /** Bind port for the dashboard server. */
+  port: z.coerce.number().int().positive().default(9090),
+  /** SQLite database path (`:memory:` for an ephemeral, in-process store). */
+  dbPath: z.string().default("./mikrotik-mcp-events.db"),
+  /** Retention cap — older events are pruned beyond this many rows. */
+  maxEvents: z.coerce.number().int().positive().default(100_000),
+  /** Record tool input/output bodies (redacted). Off keeps only metadata. */
+  captureBody: z.boolean().default(true),
+  /** Per-body truncation budget in characters. */
+  maxBodyBytes: z.coerce.number().int().nonnegative().default(16_384),
+  /** Optional bearer token; when set, the dashboard page and API require it. */
+  token: z.string().optional(),
+});
+export type DashboardConfig = z.infer<typeof DashboardConfigSchema>;
+
 export const MikrotikConfigSchema = z.object({
   /** Named devices the server can reach. Always has at least one entry. */
   devices: z
@@ -78,6 +104,8 @@ export const MikrotikConfigSchema = z.object({
   mcp: McpServerSettingsSchema.default(() => McpServerSettingsSchema.parse({})),
   /** Optional S3 storage; absent unless configured (feature is opt-in). */
   s3: S3ConfigSchema.optional(),
+  /** Real-time observability dashboard (opt-in; off by default). */
+  dashboard: DashboardConfigSchema.default(() => DashboardConfigSchema.parse({})),
   /**
    * Read-only mode: register only `readOnlyHint` tools (inspection, no changes).
    * Recommended whenever the server is exposed publicly (e.g. a ChatGPT Apps
@@ -131,6 +159,7 @@ function parseDevicesSource(
   devices: Record<string, unknown>;
   defaultDevice?: string;
   s3?: Record<string, unknown>;
+  dashboard?: Record<string, unknown>;
 } {
   let json: unknown;
   try {
@@ -147,13 +176,17 @@ function parseDevicesSource(
   const structured = obj.devices !== undefined;
   const devices = (obj.devices ?? obj) as Record<string, unknown>;
   const defaultDevice = typeof obj.defaultDevice === "string" ? obj.defaultDevice : undefined;
-  // Only read an `s3` block from the structured form, so a device literally
-  // named "s3" in a bare map isn't mistaken for storage config.
+  // Only read `s3` / `dashboard` blocks from the structured form, so a device
+  // literally named "s3"/"dashboard" in a bare map isn't mistaken for config.
   const s3 =
     structured && obj.s3 && typeof obj.s3 === "object"
       ? (obj.s3 as Record<string, unknown>)
       : undefined;
-  return { devices, defaultDevice, s3 };
+  const dashboard =
+    structured && obj.dashboard && typeof obj.dashboard === "object"
+      ? (obj.dashboard as Record<string, unknown>)
+      : undefined;
+  return { devices, defaultDevice, s3, dashboard };
 }
 
 /**
@@ -188,6 +221,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   const configFile = pick("config", "MIKROTIK_CONFIG_FILE");
   const devicesInline = flags.devices ?? env("MIKROTIK_DEVICES");
   let fileS3: Record<string, unknown> | undefined = {};
+  let fileDashboard: Record<string, unknown> | undefined = {};
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -196,6 +230,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     if (src.defaultDevice) defaultDevice = src.defaultDevice;
     else if (!defaultDevice) defaultDevice = Object.keys(src.devices)[0];
     fileS3 = src.s3;
+    fileDashboard = src.dashboard;
   }
 
   // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
@@ -223,8 +258,26 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   };
 
   // Read-only mode (boolean flag/env). A bare `--read-only` parses to "true".
-  const readOnlyRaw = pick("read-only", "MIKROTIK_READ_ONLY");
-  const readOnly = /^(1|true|yes|on)$/i.test(readOnlyRaw ?? "");
+  const isTruthy = (v?: string): boolean => /^(1|true|yes|on)$/i.test(v ?? "");
+  const readOnly = isTruthy(pick("read-only", "MIKROTIK_READ_ONLY"));
+
+  // Coerce a string flag/env to a boolean only when present; undefined lets zod
+  // apply its schema default (so e.g. captureBody stays true unless overridden).
+  const boolOpt = (v?: string): boolean | undefined => (v === undefined ? undefined : isTruthy(v));
+
+  // 4) Optional observability dashboard. A bare `--dashboard` enables it; the
+  // config-file `dashboard` block overrides anything from env/flags.
+  const dashboard = {
+    enabled: boolOpt(pick("dashboard", "MIKROTIK_DASHBOARD__ENABLED", "MIKROTIK_DASHBOARD")),
+    host: pick("dashboard-host", "MIKROTIK_DASHBOARD__HOST"),
+    port: pick("dashboard-port", "MIKROTIK_DASHBOARD__PORT"),
+    dbPath: pick("dashboard-db", "MIKROTIK_DASHBOARD__DB_PATH"),
+    maxEvents: pick("dashboard-max-events", "MIKROTIK_DASHBOARD__MAX_EVENTS"),
+    captureBody: boolOpt(pick("dashboard-capture-body", "MIKROTIK_DASHBOARD__CAPTURE_BODY")),
+    maxBodyBytes: pick("dashboard-max-body-bytes", "MIKROTIK_DASHBOARD__MAX_BODY_BYTES"),
+    token: pick("dashboard-token", "MIKROTIK_DASHBOARD__TOKEN"),
+    ...fileDashboard,
+  };
 
   // S3 is opt-in: only attach the block when something meaningful is set, so an
   // unconfigured deployment leaves `config.s3` undefined and the tools inert.
@@ -234,6 +287,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     devices: Object.keys(devices).length ? devices : { default: {} },
     defaultDevice: defaultDevice ?? "default",
     mcp,
+    dashboard,
     readOnly,
     ...(hasS3 ? { s3 } : {}),
   };

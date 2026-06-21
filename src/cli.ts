@@ -19,6 +19,7 @@ import { setConfig } from "./core/runtime";
 import { logger } from "./logger";
 import { MikroTikSSHClient } from "./ssh/client";
 import { allToolModules } from "./tools";
+import { runDashboard } from "./observability/dashboard";
 import { runHttp } from "./transport/http";
 import { runStdio } from "./transport/stdio";
 import { VERSION, SERVER_NAME } from "./version";
@@ -58,6 +59,17 @@ TRANSPORT OPTIONS
   --mcp-host           HTTP bind host                   (MIKROTIK_MCP__HOST)
   --mcp-port           HTTP bind port                   (MIKROTIK_MCP__PORT)
   --mcp-allowed-hosts  Host header allow-list (DNS-rebinding protection)
+
+OBSERVABILITY DASHBOARD  (optional; real-time feed + analytics of every tool call)
+  --dashboard               Enable the dashboard     (MIKROTIK_DASHBOARD__ENABLED)
+  --dashboard-host          Bind host (default 127.0.0.1)  (MIKROTIK_DASHBOARD__HOST)
+  --dashboard-port          Bind port (default 9090)       (MIKROTIK_DASHBOARD__PORT)
+  --dashboard-db            SQLite path (bun:sqlite; ":memory:" for ephemeral)
+                                                           (MIKROTIK_DASHBOARD__DB_PATH)
+  --dashboard-max-events    Retention cap (default 100000) (MIKROTIK_DASHBOARD__MAX_EVENTS)
+  --dashboard-capture-body  Record redacted in/out bodies  (MIKROTIK_DASHBOARD__CAPTURE_BODY)
+  --dashboard-token         Bearer token to protect the dashboard
+                                                           (MIKROTIK_DASHBOARD__TOKEN)
 `;
 
 function warnIfPlaintextPasswordInContainer(anyPassword: boolean): void {
@@ -183,6 +195,20 @@ async function main(): Promise<void> {
     `Starting ${SERVER_NAME} v${VERSION} (transport=${cfg.mcp.transport}, ` +
       `devices=${deviceNames.length === 1 ? deviceNames[0] : deviceNames.join("/")})`,
   );
+
+  // Optional real-time observability dashboard — runs alongside whichever MCP
+  // transport is active, on its own host/port. Must start before the transport
+  // so the recorder is installed before any tool call is served.
+  if (cfg.dashboard.enabled) {
+    try {
+      await runDashboard(cfg.dashboard, cfg.mcp.transport);
+    } catch (e) {
+      logger.error(
+        `Failed to start observability dashboard: ${e instanceof Error ? e.message : String(e)}. ` +
+          "Continuing without it.",
+      );
+    }
+  }
 
   if (cfg.mcp.transport === "stdio") {
     await runStdio();

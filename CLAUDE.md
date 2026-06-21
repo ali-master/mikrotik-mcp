@@ -66,10 +66,21 @@ Zod→JSON-Schema, and `moduleCatalog.length === allToolModules.length`.
 
 **Config & runtime.** `src/config.ts` `loadConfig()` layers defaults → env → CLI
 flags: single-device (`MIKROTIK_*`), multi-device (`--config`/`MIKROTIK_CONFIG_FILE`
-JSON or `MIKROTIK_DEVICES`), an `mcp` transport block, and an optional `s3` block.
-The result is installed once via `setConfig()` and read globally through
-`src/core/runtime.ts` (`getConfig`, `getDevice`, `resolveDeviceName`) — handlers get
-connection details from runtime, not parameters.
+JSON or `MIKROTIK_DEVICES`), an `mcp` transport block, an optional `s3` block, and a
+`dashboard` block. The result is installed once via `setConfig()` and read globally
+through `src/core/runtime.ts` (`getConfig`, `getDevice`, `resolveDeviceName`) —
+handlers get connection details from runtime, not parameters.
+
+**Observability (optional).** `src/observability/` is an opt-in, localhost dashboard
+that records every tool call. The registry callback is the choke point: it calls
+`recordToolCall()` (a no-op unless `--dashboard` is set), which `buildEvent()`
+(redacts secrets, truncates bodies) → persists to `bun:sqlite` (`store.ts`) →
+fans out to live WebSocket subscribers. `dashboard.ts` serves the SPA + REST +
+`/api/stream` on its own `Bun.serve` port (started from `cli.ts serve`). Analytics
+live in the pure `stats.ts`. **Test constraint:** `bun:sqlite` is imported only via
+the dynamic `import()` in `store.ts`, so the Node/Vitest import graph (which aliases
+`"bun"`) never loads it — keep it that way (recorder/registry import store *types*
+only).
 
 **Tests are offline.** `tests/` validate the static catalog shape and the command
 builder against no live device. "Tested" here means these pass — on-device behavior

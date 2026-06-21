@@ -233,9 +233,23 @@ flags (highest precedence last: defaults → env → flags).
 | `MIKROTIK_DEVICES` | `--devices` | — | Inline JSON of named devices |
 | `MIKROTIK_MCP__TRANSPORT` | `--transport` | `stdio` | `stdio` / `streamable-http` / `sse` |
 | `MIKROTIK_MCP__PORT` | `--mcp-port` | `8000` | HTTP bind port |
+| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard` | `false` | Real-time observability dashboard ([docs](docs/observability.md)) |
 
 Full table (incl. HTTP host, allow-lists, timeouts, `MIKROTIK_LOG_LEVEL`):
 **[docs/configuration.md](docs/configuration.md)**.
+
+### Observability dashboard (optional)
+
+A localhost-only web dashboard that intercepts **every** tool call the LLM makes
+— live feed of inputs/outputs (secrets redacted), latency percentiles, error
+rate and per-tool/risk/device analytics — persisted to a Bun-native SQLite store
+and served on its own port alongside any transport:
+
+```bash
+mikrotik-mcp serve --dashboard          # → http://127.0.0.1:9090
+```
+
+See **[docs/observability.md](docs/observability.md)**.
 
 ## Schemas
 
@@ -255,6 +269,7 @@ source** (`bun run gen:schemas`) so they can never drift:
 | [Multiple devices](docs/multi-device.md) | Manage several routers; per-call targeting |
 | [Connecting clients](docs/connecting-clients.md) | Claude Desktop, stdio, HTTP |
 | [Transports](docs/transports.md) | stdio / HTTP / SSE, DNS-rebinding |
+| **[Observability](docs/observability.md)** | Real-time dashboard: live feed + analytics, SQLite |
 | [Safe Mode](docs/safe-mode.md) | Transactional changes |
 | **[VPN guide](docs/vpn-guide.md)** | Every tunnel type + how to build it |
 | [Prompts](docs/prompts.md) | The 9 guided workflows |

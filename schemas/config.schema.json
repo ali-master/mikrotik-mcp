@@ -57,7 +57,13 @@
             "type": "string"
           }
         },
-        "required": ["host", "username", "password", "port", "timeoutMs"],
+        "required": [
+          "host",
+          "username",
+          "password",
+          "port",
+          "timeoutMs"
+        ],
         "additionalProperties": false
       }
     },
@@ -79,7 +85,11 @@
         "transport": {
           "default": "stdio",
           "type": "string",
-          "enum": ["stdio", "sse", "streamable-http"]
+          "enum": [
+            "stdio",
+            "sse",
+            "streamable-http"
+          ]
         },
         "host": {
           "default": "0.0.0.0",
@@ -104,7 +114,14 @@
           "type": "string"
         }
       },
-      "required": ["transport", "host", "port", "allowedHosts", "allowedOrigins", "corsOrigins"],
+      "required": [
+        "transport",
+        "host",
+        "port",
+        "allowedHosts",
+        "allowedOrigins",
+        "corsOrigins"
+      ],
       "additionalProperties": false
     },
     "s3": {
@@ -139,7 +156,71 @@
           "maximum": 9007199254740991
         }
       },
-      "required": ["prefix", "presignExpiresIn"],
+      "required": [
+        "prefix",
+        "presignExpiresIn"
+      ],
+      "additionalProperties": false
+    },
+    "dashboard": {
+      "default": {
+        "enabled": false,
+        "host": "127.0.0.1",
+        "port": 9090,
+        "dbPath": "./mikrotik-mcp-events.db",
+        "maxEvents": 100000,
+        "captureBody": true,
+        "maxBodyBytes": 16384
+      },
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "host": {
+          "default": "127.0.0.1",
+          "type": "string"
+        },
+        "port": {
+          "default": 9090,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "dbPath": {
+          "default": "./mikrotik-mcp-events.db",
+          "type": "string"
+        },
+        "maxEvents": {
+          "default": 100000,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "captureBody": {
+          "default": true,
+          "type": "boolean"
+        },
+        "maxBodyBytes": {
+          "default": 16384,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "enabled",
+        "host",
+        "port",
+        "dbPath",
+        "maxEvents",
+        "captureBody",
+        "maxBodyBytes"
+      ],
       "additionalProperties": false
     },
     "readOnly": {
@@ -147,6 +228,12 @@
       "type": "boolean"
     }
   },
-  "required": ["devices", "defaultDevice", "mcp", "readOnly"],
+  "required": [
+    "devices",
+    "defaultDevice",
+    "mcp",
+    "dashboard",
+    "readOnly"
+  ],
   "additionalProperties": false
 }

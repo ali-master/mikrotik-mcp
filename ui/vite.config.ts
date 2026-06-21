@@ -30,6 +30,7 @@ export default defineConfig({
         records: resolve(here, "records/index.html"),
         interfaces: resolve(here, "interfaces/index.html"),
         firewall: resolve(here, "firewall/index.html"),
+        observability: resolve(here, "observability/index.html"),
       },
     },
   },

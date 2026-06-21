@@ -15,6 +15,7 @@ so the AI can configure both ends of a tunnel from one conversation.
 | [Configuration](./configuration.md) | Every env var and CLI flag, defaults, key vs. password auth, log levels. |
 | **[Multiple devices](./multi-device.md)** | Manage several routers; how the AI targets one per call; per-device Safe Mode. |
 | [Transports](./transports.md) | `stdio` vs `streamable-http` vs `sse`, the `/mcp` and `/health` endpoints, DNS-rebinding protection. |
+| **[Observability dashboard](./observability.md)** | Optional real-time, localhost dashboard: live feed of every tool call, analytics, SQLite persistence. |
 | [Connecting clients](./connecting-clients.md) | Claude Desktop config, generic stdio clients, HTTP clients. |
 | [Safe Mode](./safe-mode.md) | Transactional config changes that auto-revert on disconnect. |
 | **[VPN guide](./vpn-guide.md)** | Every MikroTik VPN/tunnel type, when to use it, and the tools + prompts that build it. |

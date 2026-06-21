@@ -11,6 +11,8 @@ import { containsRawParserError } from "./routeros";
 import { buildRecordsView } from "./routeros-parse";
 import { toolUiMeta, uiViewUri } from "./ui-meta";
 import type { UiLink } from "./ui-meta";
+import { riskOf } from "../observability/event";
+import { isRecording, recordToolCall } from "../observability/recorder";
 
 /**
  * Read tools whose names start with one of these verbs render their output in
@@ -154,20 +156,32 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
           }
         : def.inputSchema;
 
+      const risk = riskOf(def.annotations);
       const callback = async (args: Record<string, unknown>): Promise<CallToolResult> => {
         // Peel the injected selector off before handing args to the handler.
         const { device, ...rest } = args as { device?: unknown };
-        const ctx = createContext(sendLog, typeof device === "string" ? device : undefined);
+        const deviceName = typeof device === "string" ? device : undefined;
+        const ctx = createContext(sendLog, deviceName);
+        // Observability: capture timing + outcome for the dashboard (no-op when
+        // the dashboard is disabled). Tracked across try/catch, emitted in finally.
+        const startedAt = Date.now();
+        let outText = "";
+        let isErr = false;
+        let errMsg: string | undefined;
+        let hasStructured = false;
         try {
           const raw = await def.handler(rest, ctx);
           // Normalize: a plain string is just text; an object may also carry
           // `structuredContent` for an MCP App view.
           const out = typeof raw === "string" ? { text: raw } : raw;
+          outText = out.text;
           // Backstop: if a handler returned a raw RouterOS parser error (an
           // unsupported/mistyped command on this device/version), surface it as a
           // real error instead of a success-looking result.
           if (containsRawParserError(out.text)) {
             ctx.error(`Device rejected the command: ${out.text.trim()}`);
+            isErr = true;
+            errMsg = out.text.trim();
             return { content: [{ type: "text", text: out.text }], isError: true };
           }
           // For an auto-attached records view, derive structured rows from the
@@ -185,15 +199,37 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
             content: [{ type: "text", text: out.text }],
           };
           // Structured data for the UI view (ignored by text-only hosts).
-          if (out.structuredContent) result.structuredContent = out.structuredContent;
+          if (out.structuredContent) {
+            result.structuredContent = out.structuredContent;
+            hasStructured = true;
+          }
           return result;
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           ctx.error(msg);
+          isErr = true;
+          errMsg = msg;
+          outText = `Error: ${msg}`;
           return {
             content: [{ type: "text", text: `Error: ${msg}` }],
             isError: true,
           };
+        } finally {
+          if (isRecording()) {
+            recordToolCall({
+              tool: def.name,
+              title: def.title,
+              risk,
+              device: deviceName,
+              ts: startedAt,
+              durationMs: Date.now() - startedAt,
+              isError: isErr,
+              error: errMsg,
+              args: rest,
+              output: outText,
+              hasStructured,
+            });
+          }
         }
       };
 

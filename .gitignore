@@ -182,6 +182,12 @@ state.db-journal
 state.db-wal
 state.db-shm
 work/
+
+# Observability dashboard SQLite store (default path)
+mikrotik-mcp-events.db
+mikrotik-mcp-events.db-journal
+mikrotik-mcp-events.db-wal
+mikrotik-mcp-events.db-shm
 results/
 *.log
 
