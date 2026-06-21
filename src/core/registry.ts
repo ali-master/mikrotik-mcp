@@ -16,6 +16,12 @@ export interface RegisterOptions {
   sendLog?: SendLog;
   /** Configured device names; when more than one, a `device` selector is injected. */
   deviceNames?: string[];
+  /**
+   * Read-only mode: register only tools annotated `readOnlyHint`. Used to
+   * withhold every write/destructive tool from a publicly-exposed surface (e.g.
+   * a ChatGPT Apps connector) until authentication is in place.
+   */
+  readOnly?: boolean;
 }
 
 // ── Behaviour presets (MCP §Tool Annotations) ──────────────────────────────
@@ -188,6 +194,8 @@ export function registerTools(
         throw new Error(`Duplicate tool name registered: ${tool.name}`);
       }
       seen.add(tool.name);
+      // In read-only mode, withhold anything that isn't explicitly read-only.
+      if (opts.readOnly && tool.annotations.readOnlyHint !== true) continue;
       tool.register(server, opts);
       count++;
     }

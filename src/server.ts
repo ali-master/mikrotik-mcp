@@ -6,7 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SendLog } from "./core/context";
 import { registerTools } from "./core/registry";
 import { registerUiResources } from "./core/ui-resources";
-import { listDevices } from "./core/runtime";
+import { listDevices, getConfig } from "./core/runtime";
 import { registerPrompts } from "./prompts";
 import { allToolModules } from "./tools";
 import { VERSION, SERVER_NAME } from "./version";
@@ -40,10 +40,13 @@ export interface CreatedServer {
   promptCount: number;
   /** Number of MCP App `ui://` views registered as resources. */
   uiViewCount: number;
+  /** True when only read-only tools were registered. */
+  readOnly: boolean;
 }
 
 export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
   const { names, default: defaultDevice } = listDevices();
+  const readOnly = getConfig().readOnly;
   const instructions =
     names.length > 1
       ? INSTRUCTIONS +
@@ -64,10 +67,11 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
   const toolCount = registerTools(server, allToolModules, {
     sendLog: opts.sendLog,
     deviceNames: names,
+    readOnly,
   });
   const promptCount = registerPrompts(server);
   // MCP App views (`ui://…`) — interactive dashboards rendered inline by hosts
   // that support the Apps extension (Claude, ChatGPT). Plain clients ignore them.
   const uiViewCount = registerUiResources(server);
-  return { server, toolCount, promptCount, uiViewCount };
+  return { server, toolCount, promptCount, uiViewCount, readOnly };
 }

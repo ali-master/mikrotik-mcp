@@ -10,9 +10,11 @@
  * with no allowlist disables the Host check (with a loud warning) so a reverse
  * proxy doesn't get every request rejected with HTTP 421.
  */
+import { randomUUID } from "node:crypto";
 import { serve } from "bun";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import type { McpServerSettings } from "../config";
+import { corsHeaders } from "./cors";
 import { logger } from "../logger";
 import { createServer } from "../server";
 
@@ -65,16 +67,38 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
 }
 
 export async function runHttp(mcp: McpServerSettings): Promise<void> {
-  const { server, toolCount, promptCount, uiViewCount } = createServer();
   const security = buildSecurity(mcp);
+  // Counts for the startup banner (a throwaway build — served sessions get their
+  // own server instances below).
+  const { toolCount, promptCount, uiViewCount, readOnly } = createServer();
 
-  // Stateless single-session transport: connect once, reuse across requests.
-  const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-    ...security,
-  });
-  await server.connect(transport);
+  // Session-keyed transports. The SDK forbids reusing a stateless transport
+  // across requests, so we run in session mode: an `initialize` request creates
+  // a transport (+ its own server) and returns an `Mcp-Session-Id`; later
+  // requests reuse the transport for that id, and close evicts it.
+  const transports = new Map<string, WebStandardStreamableHTTPServerTransport>();
+
+  async function transportFor(req: Request): Promise<WebStandardStreamableHTTPServerTransport> {
+    const sid = req.headers.get("mcp-session-id") ?? undefined;
+    const existing = sid ? transports.get(sid) : undefined;
+    if (existing) return existing;
+
+    const transport: WebStandardStreamableHTTPServerTransport =
+      new WebStandardStreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        enableJsonResponse: true,
+        ...security,
+        onsessioninitialized: (id) => {
+          transports.set(id, transport);
+        },
+      });
+    transport.onclose = () => {
+      if (transport.sessionId) transports.delete(transport.sessionId);
+    };
+    const { server } = createServer();
+    await server.connect(transport);
+    return transport;
+  }
 
   const mcpPath = "/mcp";
   serve({
@@ -83,20 +107,36 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
     idleTimeout: 0,
     async fetch(req) {
       const url = new URL(req.url);
+      const cors = corsHeaders(req.headers.get("origin"), mcp.corsOrigins);
+
+      // CORS preflight — answer before anything else (ChatGPT/Claude send this).
+      if (req.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: cors });
+      }
       if (url.pathname === "/health") {
         return new Response("OK", {
-          headers: { "content-type": "text/plain" },
+          headers: { "content-type": "text/plain", ...cors },
         });
       }
       if (url.pathname === mcpPath || url.pathname === `${mcpPath}/`) {
-        return transport.handleRequest(req);
+        const transport = await transportFor(req);
+        const res = await transport.handleRequest(req);
+        if (Object.keys(cors).length === 0) return res;
+        // Merge CORS onto the transport's response (its headers are preserved).
+        const headers = new Headers(res.headers);
+        for (const [k, v] of Object.entries(cors)) headers.set(k, v);
+        return new Response(res.body, {
+          status: res.status,
+          statusText: res.statusText,
+          headers,
+        });
       }
-      return new Response("Not Found", { status: 404 });
+      return new Response("Not Found", { status: 404, headers: cors });
     },
   });
 
   logger.info(
     `MCP server ready on http://${mcp.host}:${mcp.port}${mcpPath} — ${toolCount} tools, ${promptCount} prompts, ${uiViewCount} app views ` +
-      `(${mcp.transport})`,
+      `(${mcp.transport})${readOnly ? " [READ-ONLY]" : ""}`,
   );
 }

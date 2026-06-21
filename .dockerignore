@@ -1,0 +1,29 @@
+# Keep the build context small and correct. In particular, never copy the host
+# node_modules/dist into the image — the Dockerfile installs deps and builds
+# fresh inside Alpine (host native modules like ssh2 wouldn't load there).
+node_modules
+dist
+
+# VCS / CI / editor / agent tooling
+.git
+.github
+.vite-hooks
+.ai
+.agents
+.claude
+.cursor
+
+# Secrets and local env (config is injected at runtime, never baked in)
+.env
+.env.*
+!.env.example
+secrets
+
+# Not needed to build or run (NB: keep prompts/*.md — read at runtime).
+tests
+coverage
+*.log
+docs
+assets
+.prettierignore
+.npmignore

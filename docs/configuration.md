@@ -18,16 +18,16 @@ default.
 These control the SSH connection to the RouterOS device. On their own they define
 a single device named `default`.
 
-| Setting | CLI flag | Environment variable | Default |
-|---------|----------|----------------------|---------|
-| Host / IP | `--host` | `MIKROTIK_HOST` | `127.0.0.1` |
-| SSH username | `--username` | `MIKROTIK_USERNAME` | `admin` |
-| SSH password | `--password` | `MIKROTIK_PASSWORD` | _(empty)_ |
-| SSH port | `--port` | `MIKROTIK_PORT` | `22` |
-| Private key file path | `--key-filename` | `MIKROTIK_KEY_FILENAME` | _(unset)_ |
-| Inline private key (PEM) | `--private-key` | `MIKROTIK_PRIVATE_KEY` | _(unset)_ |
-| Private key passphrase | `--key-passphrase` | `MIKROTIK_KEY_PASSPHRASE` | _(unset)_ |
-| SSH connect timeout (ms) | `--timeout-ms` | `MIKROTIK_TIMEOUT_MS` | `10000` |
+| Setting                  | CLI flag           | Environment variable      | Default     |
+| ------------------------ | ------------------ | ------------------------- | ----------- |
+| Host / IP                | `--host`           | `MIKROTIK_HOST`           | `127.0.0.1` |
+| SSH username             | `--username`       | `MIKROTIK_USERNAME`       | `admin`     |
+| SSH password             | `--password`       | `MIKROTIK_PASSWORD`       | _(empty)_   |
+| SSH port                 | `--port`           | `MIKROTIK_PORT`           | `22`        |
+| Private key file path    | `--key-filename`   | `MIKROTIK_KEY_FILENAME`   | _(unset)_   |
+| Inline private key (PEM) | `--private-key`    | `MIKROTIK_PRIVATE_KEY`    | _(unset)_   |
+| Private key passphrase   | `--key-passphrase` | `MIKROTIK_KEY_PASSPHRASE` | _(unset)_   |
+| SSH connect timeout (ms) | `--timeout-ms`     | `MIKROTIK_TIMEOUT_MS`     | `10000`     |
 
 ## Multiple devices
 
@@ -35,10 +35,10 @@ To manage more than one router from a single server (e.g. to build a tunnel
 between two), define a **named devices map**. The AI then targets a device per
 call via an injected `device` argument.
 
-| Setting | CLI flag | Environment variable |
-|---------|----------|----------------------|
-| Named-devices JSON file | `--config` | `MIKROTIK_CONFIG_FILE` |
-| Named-devices inline JSON | `--devices` | `MIKROTIK_DEVICES` |
+| Setting                   | CLI flag    | Environment variable   |
+| ------------------------- | ----------- | ---------------------- |
+| Named-devices JSON file   | `--config`  | `MIKROTIK_CONFIG_FILE` |
+| Named-devices inline JSON | `--devices` | `MIKROTIK_DEVICES`     |
 
 Full guide, file format, and the per-device Safe Mode behaviour:
 **[Multiple devices](./multi-device.md)**.
@@ -48,25 +48,36 @@ Full guide, file format, and the per-device Safe Mode behaviour:
 These control how MCP clients reach the server. See [Transports](./transports.md)
 for the full behavior.
 
-| Setting | CLI flag | Environment variable | Default |
-|---------|----------|----------------------|---------|
-| Transport | `--transport` | `MIKROTIK_MCP__TRANSPORT` (alias `MCP_TRANSPORT`) | `stdio` |
-| HTTP bind host | `--mcp-host` | `MIKROTIK_MCP__HOST` | `0.0.0.0` |
-| HTTP bind port | `--mcp-port` | `MIKROTIK_MCP__PORT` | `8000` |
-| Allowed `Host` headers | `--mcp-allowed-hosts` | `MIKROTIK_MCP__ALLOWED_HOSTS` | _(empty)_ |
-| Allowed `Origin` headers | `--mcp-allowed-origins` | `MIKROTIK_MCP__ALLOWED_ORIGINS` | _(empty)_ |
+| Setting                    | CLI flag                | Environment variable                              | Default               |
+| -------------------------- | ----------------------- | ------------------------------------------------- | --------------------- |
+| Transport                  | `--transport`           | `MIKROTIK_MCP__TRANSPORT` (alias `MCP_TRANSPORT`) | `stdio`               |
+| HTTP bind host             | `--mcp-host`            | `MIKROTIK_MCP__HOST`                              | `0.0.0.0`             |
+| HTTP bind port             | `--mcp-port`            | `MIKROTIK_MCP__PORT`                              | `8000`                |
+| Allowed `Host` headers     | `--mcp-allowed-hosts`   | `MIKROTIK_MCP__ALLOWED_HOSTS`                     | _(empty)_             |
+| Allowed `Origin` headers   | `--mcp-allowed-origins` | `MIKROTIK_MCP__ALLOWED_ORIGINS`                   | _(empty)_             |
+| CORS allow-list for `/mcp` | `--mcp-cors-origins`    | `MIKROTIK_MCP__CORS_ORIGINS`                      | _(MCP-host defaults)_ |
+| Read-only mode             | `--read-only`           | `MIKROTIK_READ_ONLY`                              | `false`               |
 
 Transport values are `stdio`, `streamable-http`, or `sse`. The HTTP bind host,
 port, and allow-lists only apply to the HTTP transports; they're ignored for
 `stdio`.
 
+`--mcp-cors-origins` controls CORS on the `/mcp` endpoint, needed by the
+**ChatGPT Apps** connector. Empty allows the built-in MCP-host origins
+(ChatGPT, Claude); pass a comma-separated list to add your own, or `*` for any.
+
+**Read-only mode** registers only `readOnlyHint` tools — inspection only, every
+write/destructive tool is withheld. Turn it on whenever the server is exposed
+publicly (e.g. a ChatGPT Apps connector) before authentication is in place. See
+[Deploying to ChatGPT Apps](./docker.md#deploying-to-chatgpt-apps).
+
 The `__` (double underscore) in the env var names is the nested-key delimiter.
 
 ## Logging
 
-| Setting | Environment variable | Default | Values |
-|---------|----------------------|---------|--------|
-| Log verbosity | `MIKROTIK_LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
+| Setting       | Environment variable | Default | Values                           |
+| ------------- | -------------------- | ------- | -------------------------------- |
+| Log verbosity | `MIKROTIK_LOG_LEVEL` | `info`  | `debug`, `info`, `warn`, `error` |
 
 All log output is written to **stderr** (never stdout, which carries the
 JSON-RPC protocol stream on the stdio transport). Each line is prefixed with
@@ -106,16 +117,16 @@ the tools simply report that storage is disabled and do nothing.
 Credentials follow Bun's native lookup order — `S3_*` first, then `AWS_*` as a
 fallback — and can be overridden by flags or a JSON config `s3` block.
 
-| Setting | CLI flag | Environment variable | Default |
-|---------|----------|----------------------|---------|
-| Access key ID | `--s3-access-key-id` | `S3_ACCESS_KEY_ID` / `AWS_ACCESS_KEY_ID` | _(unset)_ |
-| Secret access key | `--s3-secret-access-key` | `S3_SECRET_ACCESS_KEY` / `AWS_SECRET_ACCESS_KEY` | _(unset)_ |
-| Session token | `--s3-session-token` | `S3_SESSION_TOKEN` / `AWS_SESSION_TOKEN` | _(unset)_ |
-| Region | `--s3-region` | `S3_REGION` / `AWS_REGION` | _(unset)_ |
-| Endpoint (R2/MinIO/…) | `--s3-endpoint` | `S3_ENDPOINT` / `AWS_ENDPOINT` | _(AWS S3)_ |
-| Bucket | `--s3-bucket` | `S3_BUCKET` / `AWS_BUCKET` | _(unset)_ |
-| Key prefix | `--s3-prefix` | `MIKROTIK_S3_PREFIX` | _(empty)_ |
-| Presigned-URL TTL (s) | `--s3-presign-expires-in` | `MIKROTIK_S3_PRESIGN_EXPIRES_IN` | `3600` |
+| Setting               | CLI flag                  | Environment variable                             | Default    |
+| --------------------- | ------------------------- | ------------------------------------------------ | ---------- |
+| Access key ID         | `--s3-access-key-id`      | `S3_ACCESS_KEY_ID` / `AWS_ACCESS_KEY_ID`         | _(unset)_  |
+| Secret access key     | `--s3-secret-access-key`  | `S3_SECRET_ACCESS_KEY` / `AWS_SECRET_ACCESS_KEY` | _(unset)_  |
+| Session token         | `--s3-session-token`      | `S3_SESSION_TOKEN` / `AWS_SESSION_TOKEN`         | _(unset)_  |
+| Region                | `--s3-region`             | `S3_REGION` / `AWS_REGION`                       | _(unset)_  |
+| Endpoint (R2/MinIO/…) | `--s3-endpoint`           | `S3_ENDPOINT` / `AWS_ENDPOINT`                   | _(AWS S3)_ |
+| Bucket                | `--s3-bucket`             | `S3_BUCKET` / `AWS_BUCKET`                       | _(unset)_  |
+| Key prefix            | `--s3-prefix`             | `MIKROTIK_S3_PREFIX`                             | _(empty)_  |
+| Presigned-URL TTL (s) | `--s3-presign-expires-in` | `MIKROTIK_S3_PRESIGN_EXPIRES_IN`                 | `3600`     |
 
 S3 is considered configured once a **bucket**, **endpoint**, or **access key**
 is present.
