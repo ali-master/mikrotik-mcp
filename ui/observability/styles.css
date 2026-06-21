@@ -53,10 +53,23 @@ body {
 }
 
 /* ── Stat cards ──────────────────────────────────────────────────────────── */
+/* Fixed column counts that divide the 8 cards evenly (2 / 4 / 8) at each
+ * breakpoint, so no card is ever stranded alone on a ragged trailing row (which
+ * `auto-fit` causes when the card count isn't a multiple of the fitted columns). */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+}
+@media (min-width: 560px) {
+  .cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (min-width: 1040px) {
+  .cards {
+    grid-template-columns: repeat(8, 1fr);
+  }
 }
 .stat {
   background: linear-gradient(180deg, var(--mt-surface), var(--mt-surface-2));
@@ -258,6 +271,62 @@ body {
   overflow: auto;
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius);
+}
+
+/* ── Devices & connectivity ──────────────────────────────────────────────── */
+.dev-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-content: start;
+}
+@media (min-width: 600px) and (max-width: 819px) {
+  .dev-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.dev-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+}
+.dev-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dev-card__name {
+  font-family: var(--mt-mono);
+  font-weight: 650;
+  font-size: 13px;
+}
+.dev-card .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.dev-card__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 12px;
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  color: var(--mt-text-dim);
+}
+.dev-card__meta b {
+  color: var(--mt-text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+details.cfg > summary {
+  cursor: pointer;
+  color: var(--mt-text-dim);
+  font-family: var(--mt-mono);
+  font-size: 12px;
+  user-select: none;
+  padding: 4px 0;
 }
 
 /* ── Drawer ──────────────────────────────────────────────────────────────── */

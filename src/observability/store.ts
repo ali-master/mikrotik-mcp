@@ -10,6 +10,8 @@
  * minimal — insert, filtered select, get-by-id, prune. All analytics live in the
  * pure `stats.ts` so they need no database and stay unit-testable.
  */
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import type { Database } from "bun:sqlite";
 import type { Risk, ToolEvent } from "./event";
 
@@ -216,6 +218,15 @@ class SqliteEventStore implements EventStore {
  * reference from Node-loaded code paths that never call it.
  */
 export async function openSqliteStore(path: string): Promise<EventStore> {
+  // Ensure the parent directory exists (e.g. ~/.mikrotik-mcp) for file-backed
+  // stores; skip for the special in-memory database.
+  if (path !== ":memory:") {
+    try {
+      mkdirSync(dirname(path), { recursive: true });
+    } catch {
+      // best-effort; opening the DB will surface a real failure
+    }
+  }
   const { Database } = await import("bun:sqlite");
   const db = new Database(path, { create: true });
   return new SqliteEventStore(db);

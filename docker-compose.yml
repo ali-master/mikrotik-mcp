@@ -1,14 +1,4 @@
-# Run the MikroTik MCP server with Docker Compose.
-#
-#   cp .env.example .env          # fill in your device + (optional) S3 / read-only
-#   docker compose up --build     # server on http://localhost:8000/mcp
-#
-# For a public HTTPS endpoint (e.g. a ChatGPT Apps connector), also start the
-# Cloudflare tunnel — see docs/docker.md#deploying-to-chatgpt-apps:
-#
-#   docker compose --profile chatgpt up --build
-#
-# Requires Docker Compose v2.24+ (for the optional env_file form below).
+name: mikrotik-mcp
 
 services:
   mikrotik-mcp:

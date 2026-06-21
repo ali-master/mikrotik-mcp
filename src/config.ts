@@ -7,7 +7,17 @@
  * per tool call.
  */
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { z } from "zod";
+
+/**
+ * Default observability DB location: `~/.mikrotik-mcp/events.db`. `homedir()`
+ * resolves the per-user home on Windows, macOS and Linux, so the database lives
+ * outside the project tree and survives reinstalls. Overridable via
+ * `MIKROTIK_DASHBOARD__DB_PATH` / `--dashboard-db` / the config `dashboard` block.
+ */
+export const DEFAULT_DASHBOARD_DB = join(homedir(), ".mikrotik-mcp", "events.db");
 
 export const TransportSchema = z.enum(["stdio", "sse", "streamable-http"]);
 export type Transport = z.infer<typeof TransportSchema>;
@@ -82,7 +92,7 @@ export const DashboardConfigSchema = z.object({
   /** Bind port for the dashboard server. */
   port: z.coerce.number().int().positive().default(9090),
   /** SQLite database path (`:memory:` for an ephemeral, in-process store). */
-  dbPath: z.string().default("./mikrotik-mcp-events.db"),
+  dbPath: z.string().default(DEFAULT_DASHBOARD_DB),
   /** Retention cap — older events are pruned beyond this many rows. */
   maxEvents: z.coerce.number().int().positive().default(100_000),
   /** Record tool input/output bodies (redacted). Off keeps only metadata. */

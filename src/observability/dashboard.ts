@@ -20,13 +20,18 @@ import { join } from "node:path";
 import { serve } from "bun";
 import type { Server, ServerWebSocket } from "bun";
 import type { DashboardConfig } from "../config";
+import { getConfig } from "../core/runtime";
 import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
+import { redact } from "./event";
 import type { Risk, ToolEvent } from "./event";
+import { getDeviceStatus, startHealthChecks, stopHealthChecks } from "./health";
 import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./recorder";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
 import { computeStats } from "./stats";
+
+const SERVER_TAG = "mikrotik-mcp";
 
 interface SocketData {
   unsub?: () => void;
@@ -86,6 +91,97 @@ function facets(store: EventStore): { tools: string[]; devices: string[] } {
   };
 }
 
+/** Per-device activity rolled up from recent events. */
+function deviceActivity(store: EventStore): Map<
+  string,
+  { calls: number; errors: number; lastSeen: number; avgMs: number }
+> {
+  const recent = store.query({ limit: 5000 });
+  const map = new Map<string, { calls: number; errors: number; lastSeen: number; sumMs: number }>();
+  for (const e of recent) {
+    if (!e.device) continue;
+    const a = map.get(e.device) ?? { calls: 0, errors: 0, lastSeen: 0, sumMs: 0 };
+    a.calls++;
+    if (e.isError) a.errors++;
+    a.lastSeen = Math.max(a.lastSeen, e.ts);
+    a.sumMs += e.durationMs;
+    map.set(e.device, a);
+  }
+  const out = new Map<string, { calls: number; errors: number; lastSeen: number; avgMs: number }>();
+  for (const [k, a] of map) {
+    out.set(k, { calls: a.calls, errors: a.errors, lastSeen: a.lastSeen, avgMs: a.sumMs / a.calls });
+  }
+  return out;
+}
+
+/** Configured devices + connectivity status + recent activity (no secrets). */
+function devicesPayload(store: EventStore): unknown {
+  const cfg = getConfig();
+  const activity = deviceActivity(store);
+  const devices = Object.entries(cfg.devices).map(([name, dc]) => ({
+    name,
+    host: dc.host,
+    port: dc.port,
+    username: dc.username,
+    authMode: dc.keyFilename || dc.privateKey ? "key" : dc.password ? "password" : "none",
+    isDefault: name === cfg.defaultDevice,
+    description: dc.description,
+    status: getDeviceStatus(name),
+    activity: activity.get(name) ?? { calls: 0, errors: 0, lastSeen: 0, avgMs: 0 },
+  }));
+  return { server: SERVER_TAG, defaultDevice: cfg.defaultDevice, devices };
+}
+
+/** Effective runtime configuration, with every secret redacted. */
+function configPayload(): unknown {
+  const cfg = getConfig();
+  return redact({
+    devices: cfg.devices,
+    defaultDevice: cfg.defaultDevice,
+    mcp: cfg.mcp,
+    dashboard: cfg.dashboard,
+    readOnly: cfg.readOnly,
+    s3: cfg.s3,
+  });
+}
+
+/**
+ * A Server-Sent Events response that streams every new tool call. Built on a
+ * Web-standard `ReadableStream` (Bun serves it natively): we subscribe to the
+ * recorder on `start`, push `data:` frames per event with periodic keep-alive
+ * comments, and unsubscribe on `cancel` when the client disconnects.
+ */
+function sseResponse(transportLabel: string): Response {
+  let unsub: (() => void) | undefined;
+  let ping: ReturnType<typeof setInterval> | undefined;
+  const stream = new ReadableStream({
+    start(controller) {
+      const enc = new TextEncoder();
+      const send = (text: string): void => {
+        try {
+          controller.enqueue(enc.encode(text));
+        } catch {
+          /* stream closed */
+        }
+      };
+      send(`event: hello\ndata: ${JSON.stringify({ transport: transportLabel })}\n\n`);
+      unsub = subscribe((e: ToolEvent) => send(`event: tool\ndata: ${JSON.stringify(e)}\n\n`));
+      ping = setInterval(() => send(`: ping\n\n`), 15_000);
+    },
+    cancel() {
+      unsub?.();
+      if (ping) clearInterval(ping);
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+    },
+  });
+}
+
 export interface DashboardHandle {
   server: Server<SocketData>;
   store: EventStore;
@@ -108,6 +204,10 @@ export async function runDashboard(
     transport: transportLabel,
   });
 
+  // Periodically probe each configured device's SSH reachability for the
+  // connectivity graph/status (one immediate pass, then every 30s).
+  startHealthChecks(30_000);
+
   const tokenOk = (req: Request, url: URL): boolean => {
     if (!cfg.token) return true;
     const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -127,14 +227,28 @@ export async function runDashboard(
         return new Response("Unauthorized", { status: 401 });
       }
 
-      // Live event stream (WebSocket upgrade).
+      // Live event stream — Bun-native WebSocket (preferred).
       if (url.pathname === "/api/stream") {
         if (srv.upgrade(req, { data: {} })) return undefined;
         return new Response("WebSocket upgrade failed", { status: 400 });
       }
 
+      // Live event stream — Server-Sent Events (the front-end's automatic
+      // fallback when WebSocket can't connect, e.g. through some proxies).
+      if (url.pathname === "/api/sse") {
+        return sseResponse(transportLabel);
+      }
+
       const db = getEventStore();
       if (!db) return json({ error: "recorder not active" }, 503);
+
+      if (url.pathname === "/api/devices") {
+        return json(devicesPayload(db));
+      }
+
+      if (url.pathname === "/api/config") {
+        return json(configPayload());
+      }
 
       if (url.pathname === "/" || url.pathname === "/index.html") {
         return new Response(dashboardHtml(), {
@@ -203,6 +317,7 @@ export async function runDashboard(
     server,
     store,
     stop() {
+      stopHealthChecks();
       void server.stop(true);
       store.close();
     },

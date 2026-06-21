@@ -57,13 +57,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "host",
-          "username",
-          "password",
-          "port",
-          "timeoutMs"
-        ],
+        "required": ["host", "username", "password", "port", "timeoutMs"],
         "additionalProperties": false
       }
     },
@@ -85,11 +79,7 @@
         "transport": {
           "default": "stdio",
           "type": "string",
-          "enum": [
-            "stdio",
-            "sse",
-            "streamable-http"
-          ]
+          "enum": ["stdio", "sse", "streamable-http"]
         },
         "host": {
           "default": "0.0.0.0",
@@ -156,18 +146,15 @@
           "maximum": 9007199254740991
         }
       },
-      "required": [
-        "prefix",
-        "presignExpiresIn"
-      ],
+      "required": ["prefix", "presignExpiresIn"],
       "additionalProperties": false
     },
     "dashboard": {
       "default": {
         "enabled": false,
-        "host": "127.0.0.1",
+        "host": "0.0.0.0",
         "port": 9090,
-        "dbPath": "./mikrotik-mcp-events.db",
+        "dbPath": "./.mikrotik-mcp/events.db",
         "maxEvents": 100000,
         "captureBody": true,
         "maxBodyBytes": 16384
@@ -189,7 +176,7 @@
           "maximum": 9007199254740991
         },
         "dbPath": {
-          "default": "./mikrotik-mcp-events.db",
+          "default": "./.mikrotik-mcp/events.db",
           "type": "string"
         },
         "maxEvents": {
@@ -228,12 +215,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "devices",
-    "defaultDevice",
-    "mcp",
-    "dashboard",
-    "readOnly"
-  ],
+  "required": ["devices", "defaultDevice", "mcp", "dashboard", "readOnly"],
   "additionalProperties": false
 }

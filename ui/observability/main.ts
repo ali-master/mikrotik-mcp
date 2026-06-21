@@ -61,6 +61,30 @@ interface Meta {
   liveClients: number;
   transport: string;
 }
+interface DeviceStatus {
+  reachable: boolean | null;
+  checkedAt: number | null;
+  latencyMs: number | null;
+  identity?: string;
+  version?: string;
+  error?: string;
+}
+interface DeviceInfo {
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  authMode: string;
+  isDefault: boolean;
+  description?: string;
+  status: DeviceStatus;
+  activity: { calls: number; errors: number; lastSeen: number; avgMs: number };
+}
+interface DevicesPayload {
+  server: string;
+  defaultDevice: string;
+  devices: DeviceInfo[];
+}
 
 // ── DOM helpers (text-node only) ─────────────────────────────────────────────
 type Child = Node | string | number | null | undefined | false;
@@ -147,9 +171,12 @@ const state = {
   feed: [] as ToolEvent[],
   stats: null as Stats | null,
   meta: null as Meta | null,
+  devices: null as DevicesPayload | null,
+  config: null as Record<string, unknown> | null,
   windowMs: 3_600_000,
   paused: false,
   connected: false,
+  liveMode: "off" as "ws" | "sse" | "off",
   selected: null as ToolEvent | null,
   filter: { tool: "", risk: "", device: "", status: "", q: "" },
 };
@@ -243,6 +270,162 @@ function hbars(rows: { label: string; value: number; sub?: string; color?: strin
       );
     }),
   );
+}
+
+// ── devices & connectivity ───────────────────────────────────────────────────
+function statusInfo(s: DeviceStatus): { label: string; color: string } {
+  if (s.reachable === true) return { label: "online", color: "#34d399" };
+  if (s.reachable === false) return { label: "offline", color: "#f87171" };
+  return { label: "checking…", color: "#6b7280" };
+}
+
+/** Hub-and-spoke connectivity graph: the MCP server linked to each device. */
+function connectivityGraph(payload: DevicesPayload): SVGElement {
+  const W = 640;
+  const H = 300;
+  const cx = W / 2;
+  const cy = H / 2;
+  const devices = payload.devices;
+  const n = Math.max(1, devices.length);
+  const R = Math.min(115, 70 + n * 6);
+  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", height: H, preserveAspectRatio: "xMidYMid meet" });
+
+  // Edges first (under nodes).
+  const nodes = devices.map((d, i) => {
+    const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
+    return { d, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
+  });
+  for (const { d, x, y } of nodes) {
+    const info = statusInfo(d.status);
+    const line = s("line", {
+      x1: cx,
+      y1: cy,
+      x2: x,
+      y2: y,
+      stroke: info.color,
+      "stroke-width": 2,
+      opacity: 0.55,
+    });
+    if (d.status.reachable == null) line.setAttribute("stroke-dasharray", "4 4");
+    svg.append(line);
+  }
+
+  // Central MCP-server hub.
+  svg.append(s("circle", { cx, cy, r: 30, fill: "#14171c", stroke: "#6ea8fe", "stroke-width": 2 }));
+  svg.append(s("text", { x: cx, y: cy - 1, "text-anchor": "middle", fill: "#e8eaed", "font-size": 11, "font-weight": 650 }, "MCP"));
+  svg.append(s("text", { x: cx, y: cy + 12, "text-anchor": "middle", fill: "#9aa3af", "font-size": 8 }, "server"));
+
+  // Device nodes.
+  for (const { d, x, y } of nodes) {
+    const info = statusInfo(d.status);
+    svg.append(s("circle", { cx: x, cy: y, r: 22, fill: "#1b1f26", stroke: info.color, "stroke-width": 2 }));
+    svg.append(s("circle", { cx: x + 15, cy: y - 15, r: 4, fill: info.color }));
+    svg.append(s("text", { x, y: y + 1, "text-anchor": "middle", fill: "#e8eaed", "font-size": 9, "font-weight": 600 }, d.name.length > 9 ? `${d.name.slice(0, 8)}…` : d.name));
+    svg.append(s("text", { x, y: y + 34, "text-anchor": "middle", fill: "#9aa3af", "font-size": 9 }, d.host));
+    const detail = d.status.reachable ? `${d.status.latencyMs ?? "?"}ms` : info.label;
+    svg.append(s("text", { x, y: y + 45, "text-anchor": "middle", fill: info.color, "font-size": 8 }, detail));
+  }
+  return svg;
+}
+
+function deviceCard(d: DeviceInfo): HTMLElement {
+  const info = statusInfo(d.status);
+  const dot = h("span", { class: "dot" });
+  dot.style.background = info.color;
+  const statusLine =
+    d.status.reachable === true
+      ? `${info.label} · ${d.status.latencyMs ?? "?"}ms${d.status.version ? ` · v${d.status.version}` : ""}`
+      : d.status.reachable === false
+        ? `${info.label}${d.status.error ? ` · ${d.status.error}` : ""}`
+        : info.label;
+  return h(
+    "div",
+    { class: "card dev-card" },
+    h(
+      "div",
+      { class: "dev-card__top" },
+      dot,
+      h("span", { class: "dev-card__name" }, d.name),
+      d.isDefault ? h("span", { class: "badge" }, "default") : false,
+      h("span", { style: "flex:1" }),
+      h("span", { class: "chip" }, d.authMode),
+    ),
+    h(
+      "div",
+      { class: "dev-card__meta" },
+      h("span", {}, "host"),
+      h("b", {}, `${d.host}:${d.port}`),
+      h("span", {}, "user"),
+      h("b", {}, d.username),
+      h("span", {}, "status"),
+      h("b", { style: `color:${info.color}` }, statusLine),
+      h("span", {}, "activity"),
+      h("b", {}, `${d.activity.calls} calls · ${d.activity.errors} err${d.activity.avgMs ? ` · ${ms(d.activity.avgMs)} avg` : ""}`),
+      d.description ? h("span", {}, "note") : false,
+      d.description ? h("b", {}, d.description) : false,
+    ),
+  );
+}
+
+function renderDevices(): void {
+  const slot = document.getElementById("devices");
+  if (!slot) return;
+  const p = state.devices;
+  if (!p || !p.devices.length) {
+    slot.replaceChildren(h("div", { class: "muted" }, "no devices configured"));
+    return;
+  }
+  const online = p.devices.filter((d) => d.status.reachable === true).length;
+  const offline = p.devices.filter((d) => d.status.reachable === false).length;
+  slot.replaceChildren(
+    h(
+      "div",
+      { class: "cols" },
+      h(
+        "div",
+        { class: "panel" },
+        h(
+          "div",
+          { class: "sheet__hd", style: "margin-bottom:8px" },
+          h("h2", { style: "margin:0" }, "Connectivity"),
+          h("span", { style: "flex:1" }),
+          h("span", { class: "muted" }, `${online} online · ${offline} offline · ${p.devices.length} total`),
+        ),
+        connectivityGraph(p) as unknown as Node,
+      ),
+      h("div", { class: "dev-grid" }, ...p.devices.map(deviceCard)),
+    ),
+  );
+}
+
+function renderConfig(): void {
+  const slot = document.getElementById("config");
+  if (!slot) return;
+  const c = state.config;
+  if (!c) {
+    slot.replaceChildren();
+    return;
+  }
+  const mcp = (c.mcp ?? {}) as Record<string, unknown>;
+  const dash = (c.dashboard ?? {}) as Record<string, unknown>;
+  const sval = (v: unknown): string => {
+    if (v == null) return "?";
+    if (typeof v === "string") return v;
+    if (typeof v === "number" || typeof v === "boolean") return String(v);
+    return JSON.stringify(v);
+  };
+  const summary = h(
+    "div",
+    { class: "legend", style: "margin:0 0 10px" },
+    h("span", {}, `transport: ${sval(mcp.transport)}`),
+    h("span", {}, `read-only: ${c.readOnly ? "yes" : "no"}`),
+    h("span", {}, `dashboard: ${sval(dash.host)}:${sval(dash.port)}`),
+    h("span", {}, `capture: ${dash.captureBody ? "on" : "off"}`),
+    h("span", {}, `s3: ${c.s3 ? "configured" : "off"}`),
+  );
+  const pre = h("pre", { class: "body", style: "max-height:340px" }, JSON.stringify(c, null, 2));
+  const details = h("details", { class: "cfg" }, h("summary", {}, "Full effective configuration (secrets redacted)"), pre);
+  slot.replaceChildren(h("div", { class: "panel" }, h("h2", {}, "Configuration"), summary, details));
 }
 
 // ── sections ─────────────────────────────────────────────────────────────────
@@ -510,33 +693,80 @@ async function loadInitialFeed(): Promise<void> {
     console.error("[obs] events failed", e);
   }
 }
+async function refreshDevices(): Promise<void> {
+  try {
+    state.devices = await api<DevicesPayload>("/api/devices");
+    renderDevices();
+  } catch (e) {
+    console.error("[obs] devices failed", e);
+  }
+}
+async function refreshConfig(): Promise<void> {
+  try {
+    state.config = await api<Record<string, unknown>>("/api/config");
+    renderConfig();
+  } catch (e) {
+    console.error("[obs] config failed", e);
+  }
+}
 
-// ── live websocket ───────────────────────────────────────────────────────────
-function connect(): void {
+// ── live connection (Bun-native WebSocket, SSE fallback) ─────────────────────
+function setLive(mode: "ws" | "sse" | "off"): void {
+  state.liveMode = mode;
+  state.connected = mode !== "off";
+  renderTopbar();
+}
+
+/** Push a streamed event into the feed (respecting pause + cap). */
+function pushEvent(e: ToolEvent): void {
+  if (state.paused) return;
+  state.feed.unshift(e);
+  if (state.feed.length > FEED_CAP) state.feed.length = FEED_CAP;
+  renderFeed();
+}
+
+/**
+ * Connect the live feed. Prefers a Bun-native WebSocket; if it never opens
+ * (some proxies block upgrades) it falls back to the Bun-native SSE endpoint.
+ */
+function connectLive(): void {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(withToken(`${proto}://${location.host}/api/stream`));
+  let opened = false;
   ws.onopen = () => {
-    state.connected = true;
-    renderTopbar();
-  };
-  ws.onclose = () => {
-    state.connected = false;
-    renderTopbar();
-    setTimeout(connect, 2000); // auto-reconnect
+    opened = true;
+    setLive("ws");
   };
   ws.onerror = () => ws.close();
   ws.onmessage = (m) => {
-    let msg: { type: string; event?: ToolEvent };
     try {
-      msg = JSON.parse(m.data);
+      const msg = JSON.parse(m.data) as { type: string; event?: ToolEvent };
+      if (msg.type === "event" && msg.event) pushEvent(msg.event);
     } catch {
-      return;
+      /* ignore malformed frame */
     }
-    if (msg.type === "event" && msg.event && !state.paused) {
-      state.feed.unshift(msg.event);
-      if (state.feed.length > FEED_CAP) state.feed.length = FEED_CAP;
-      renderFeed();
+  };
+  ws.onclose = () => {
+    setLive("off");
+    if (opened)
+      setTimeout(connectLive, 2000); // was working → retry WebSocket
+    else connectSse(); // never upgraded → fall back to SSE
+  };
+}
+
+function connectSse(): void {
+  const es = new EventSource(withToken("/api/sse"));
+  es.addEventListener("hello", () => setLive("sse"));
+  es.addEventListener("tool", (ev) => {
+    try {
+      pushEvent(JSON.parse((ev as MessageEvent).data) as ToolEvent);
+    } catch {
+      /* ignore */
     }
+  });
+  es.onerror = () => {
+    // EventSource auto-reconnects; reflect the transient drop in the banner.
+    if (es.readyState === EventSource.CONNECTING) setLive("off");
   };
 }
 
@@ -559,9 +789,9 @@ function renderTopbar(): void {
     h("span", { style: "flex:1" }),
     h(
       "span",
-      { class: `live${state.connected ? " is-on" : ""}` },
+      { class: `live${state.connected ? " is-on" : ""}`, title: "Live transport: WebSocket (preferred) or SSE fallback" },
       h("span", { class: "dot" }),
-      state.connected ? "live" : "offline",
+      state.liveMode === "off" ? "offline" : `live · ${state.liveMode}`,
     ),
   );
 }
@@ -681,6 +911,8 @@ function shell(): void {
       h("div", { id: "chart" }),
     ),
     h("section", { id: "breakdowns", class: "cols-3" }),
+    h("section", { id: "devices" }),
+    h("section", { id: "config" }),
     h(
       "div",
       { class: "panel" },
@@ -735,11 +967,17 @@ shell();
 void refreshMeta();
 void refreshStats();
 void loadInitialFeed();
-connect();
-// Periodically refresh analytics (the live feed updates instantly via WS).
+void refreshDevices();
+void refreshConfig();
+connectLive();
+// Periodically refresh analytics + device connectivity (the live feed itself
+// updates instantly over WebSocket/SSE).
 setInterval(() => {
   if (!state.paused) {
     void refreshStats();
     void refreshMeta();
+    void refreshDevices();
   }
 }, 4000);
+// Config rarely changes — refresh it on a slower cadence.
+setInterval(() => void refreshConfig(), 30_000);

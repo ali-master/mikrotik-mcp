@@ -4,7 +4,7 @@
  * is set/cleared around the env case.
  */
 import { afterEach, describe, it, expect } from "vite-plus/test";
-import { loadConfig } from "../../src/config";
+import { DEFAULT_DASHBOARD_DB, loadConfig } from "../../src/config";
 
 const ENV_KEYS = [
   "MIKROTIK_DASHBOARD__ENABLED",
@@ -25,7 +25,8 @@ describe("dashboard config", () => {
     expect(cfg.dashboard.port).toBe(9090);
     expect(cfg.dashboard.captureBody).toBe(true);
     expect(cfg.dashboard.maxEvents).toBe(100_000);
-    expect(cfg.dashboard.dbPath).toBe("./mikrotik-mcp-events.db");
+    expect(cfg.dashboard.dbPath).toBe(DEFAULT_DASHBOARD_DB);
+    expect(cfg.dashboard.dbPath).toMatch(/[/\\]\.mikrotik-mcp[/\\]events\.db$/);
   });
 
   it("a bare --dashboard flag enables it, and flags override fields", () => {

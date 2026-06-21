@@ -51,7 +51,7 @@ Then open **http://127.0.0.1:9090/** in a browser on the same machine.
 | `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard` | `false` | Master switch. When off, zero overhead and no SQLite is loaded. |
 | `MIKROTIK_DASHBOARD__HOST` | `--dashboard-host` | `127.0.0.1` | Bind host (loopback by default). |
 | `MIKROTIK_DASHBOARD__PORT` | `--dashboard-port` | `9090` | Bind port. |
-| `MIKROTIK_DASHBOARD__DB_PATH` | `--dashboard-db` | `./mikrotik-mcp-events.db` | SQLite file; `:memory:` for an ephemeral store. |
+| `MIKROTIK_DASHBOARD__DB_PATH` | `--dashboard-db` | `~/.mikrotik-mcp/events.db` | SQLite file (per-user home on Win/macOS/Linux); `:memory:` for an ephemeral store. |
 | `MIKROTIK_DASHBOARD__MAX_EVENTS` | `--dashboard-max-events` | `100000` | Retention cap; older rows are pruned. |
 | `MIKROTIK_DASHBOARD__CAPTURE_BODY` | `--dashboard-capture-body` | `true` | Record redacted input/output bodies. |
 | `MIKROTIK_DASHBOARD__MAX_BODY_BYTES` | `--dashboard-max-body-bytes` | `16384` | Per-body truncation budget. |
@@ -83,9 +83,16 @@ imported lazily — `bun:sqlite` is only loaded when the dashboard is enabled.
 - **Calls over time** — stacked ok/error time-series.
 - **Breakdowns** — top tools (count + p95 + errors), by-risk and status donuts,
   by-device bars, and a recent-errors panel.
-- **Live feed** — every call streams in over a WebSocket; filter by tool, risk,
-  device, status or free-text search; pause/resume; export the visible rows to
-  CSV or JSON.
+- **Devices & connectivity** — a hub-and-spoke graph linking the MCP server to
+  each configured device, coloured by live SSH reachability; per-device cards
+  with host/port, auth mode, online/offline status + latency + RouterOS
+  identity/version, and recent activity (calls / errors / avg latency).
+- **Configuration** — the effective runtime config (transport, read-only, S3,
+  dashboard settings, devices) with every secret redacted.
+- **Live feed** — every call streams in over a **Bun-native WebSocket** (with an
+  automatic **SSE** fallback); filter by tool, risk, device, status or free-text
+  search; pause/resume; export the visible rows to CSV or JSON. The header shows
+  the active transport (`live · ws` / `live · sse`).
 - **Detail drawer** — click any row for full metadata plus the redacted input
   and complete output, with copy buttons.
 
@@ -99,8 +106,12 @@ The dashboard is backed by a small JSON API on the same port (handy for scripts)
 | `GET /api/events?limit&offset&tool&risk&device&status&q&since&until` | Filtered, paginated events. |
 | `GET /api/event/:id` | One event with full (redacted) bodies. |
 | `GET /api/meta` | Filter facets (tools/devices), totals, live-client count. |
-| `GET /api/stream` | WebSocket — pushes `{type:"event", event}` for every new call. |
+| `GET /api/devices` | Configured devices + SSH connectivity status + activity. |
+| `GET /api/config` | Effective runtime config, secrets redacted. |
+| `GET /api/stream` | **WebSocket** — pushes `{type:"event", event}` for every new call. |
+| `GET /api/sse` | **Server-Sent Events** — same event stream as a fallback transport. |
 | `GET /health` | Liveness probe (`OK`). |
 
-All routes require the bearer token when one is configured (the WebSocket reads
-it from `?token=`).
+The front-end connects over the Bun-native WebSocket by default and falls back
+to SSE automatically if the upgrade fails. All routes require the bearer token
+when one is configured (the WebSocket/SSE read it from `?token=`).

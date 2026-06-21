@@ -76,8 +76,11 @@ that records every tool call. The registry callback is the choke point: it calls
 `recordToolCall()` (a no-op unless `--dashboard` is set), which `buildEvent()`
 (redacts secrets, truncates bodies) → persists to `bun:sqlite` (`store.ts`) →
 fans out to live WebSocket subscribers. `dashboard.ts` serves the SPA + REST +
-`/api/stream` on its own `Bun.serve` port (started from `cli.ts serve`). Analytics
-live in the pure `stats.ts`. **Test constraint:** `bun:sqlite` is imported only via
+a live stream on its own `Bun.serve` port (started from `cli.ts serve`) — both a
+Bun-native WebSocket (`/api/stream`) and an SSE fallback (`/api/sse`), plus
+`/api/devices` and `/api/config` (config redacted via `redact()`). `health.ts`
+SSH-probes each device for the connectivity graph. Analytics live in the pure
+`stats.ts`. The default DB path is `~/.mikrotik-mcp/events.db` (`DEFAULT_DASHBOARD_DB`). **Test constraint:** `bun:sqlite` is imported only via
 the dynamic `import()` in `store.ts`, so the Node/Vitest import graph (which aliases
 `"bun"`) never loads it — keep it that way (recorder/registry import store *types*
 only).
