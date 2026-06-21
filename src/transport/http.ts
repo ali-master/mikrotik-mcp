@@ -13,6 +13,7 @@
 import { serve } from "bun";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import type { McpServerSettings } from "../config";
+import { corsHeaders } from "./cors";
 import { logger } from "../logger";
 import { createServer } from "../server";
 
@@ -65,7 +66,7 @@ function buildSecurity(mcp: McpServerSettings): SecuritySettings {
 }
 
 export async function runHttp(mcp: McpServerSettings): Promise<void> {
-  const { server, toolCount, promptCount, uiViewCount } = createServer();
+  const { server, toolCount, promptCount, uiViewCount, readOnly } = createServer();
   const security = buildSecurity(mcp);
 
   // Stateless single-session transport: connect once, reuse across requests.
@@ -83,20 +84,35 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
     idleTimeout: 0,
     async fetch(req) {
       const url = new URL(req.url);
+      const cors = corsHeaders(req.headers.get("origin"), mcp.corsOrigins);
+
+      // CORS preflight — answer before anything else (ChatGPT/Claude send this).
+      if (req.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: cors });
+      }
       if (url.pathname === "/health") {
         return new Response("OK", {
-          headers: { "content-type": "text/plain" },
+          headers: { "content-type": "text/plain", ...cors },
         });
       }
       if (url.pathname === mcpPath || url.pathname === `${mcpPath}/`) {
-        return transport.handleRequest(req);
+        const res = await transport.handleRequest(req);
+        if (Object.keys(cors).length === 0) return res;
+        // Merge CORS onto the transport's response (its headers are preserved).
+        const headers = new Headers(res.headers);
+        for (const [k, v] of Object.entries(cors)) headers.set(k, v);
+        return new Response(res.body, {
+          status: res.status,
+          statusText: res.statusText,
+          headers,
+        });
       }
-      return new Response("Not Found", { status: 404 });
+      return new Response("Not Found", { status: 404, headers: cors });
     },
   });
 
   logger.info(
     `MCP server ready on http://${mcp.host}:${mcp.port}${mcpPath} — ${toolCount} tools, ${promptCount} prompts, ${uiViewCount} app views ` +
-      `(${mcp.transport})`,
+      `(${mcp.transport})${readOnly ? " [READ-ONLY]" : ""}`,
   );
 }

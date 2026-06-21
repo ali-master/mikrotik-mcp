@@ -4,10 +4,10 @@ import { createServer } from "../server";
 import { logger } from "../logger";
 
 export async function runStdio(): Promise<void> {
-  const { server, toolCount, promptCount, uiViewCount } = createServer();
+  const { server, toolCount, promptCount, uiViewCount, readOnly } = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   logger.info(
-    `MCP server ready on stdio — ${toolCount} tools, ${promptCount} prompts, ${uiViewCount} app views`,
+    `MCP server ready on stdio — ${toolCount} tools, ${promptCount} prompts, ${uiViewCount} app views${readOnly ? " [READ-ONLY]" : ""}`,
   );
 }

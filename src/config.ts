@@ -20,6 +20,12 @@ export const McpServerSettingsSchema = z.object({
   allowedHosts: z.string().default(""),
   /** Comma-separated Origin header allowlist for DNS-rebinding protection. */
   allowedOrigins: z.string().default(""),
+  /**
+   * Comma-separated CORS allow-list for the `/mcp` endpoint. Empty uses the
+   * built-in MCP-host defaults (ChatGPT, Claude); "*" allows any origin.
+   * Required for the ChatGPT Apps connector (its preflight needs CORS).
+   */
+  corsOrigins: z.string().default(""),
 });
 export type McpServerSettings = z.infer<typeof McpServerSettingsSchema>;
 
@@ -72,6 +78,13 @@ export const MikrotikConfigSchema = z.object({
   mcp: McpServerSettingsSchema.default(() => McpServerSettingsSchema.parse({})),
   /** Optional S3 storage; absent unless configured (feature is opt-in). */
   s3: S3ConfigSchema.optional(),
+  /**
+   * Read-only mode: register only `readOnlyHint` tools (inspection, no changes).
+   * Recommended whenever the server is exposed publicly (e.g. a ChatGPT Apps
+   * connector) before authentication is in place — it withholds every write /
+   * destructive tool from the surface entirely.
+   */
+  readOnly: z.boolean().default(false),
 });
 export type MikrotikConfig = z.infer<typeof MikrotikConfigSchema>;
 
@@ -206,7 +219,12 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     port: pick("mcp-port", "MIKROTIK_MCP__PORT"),
     allowedHosts: pick("mcp-allowed-hosts", "MIKROTIK_MCP__ALLOWED_HOSTS"),
     allowedOrigins: pick("mcp-allowed-origins", "MIKROTIK_MCP__ALLOWED_ORIGINS"),
+    corsOrigins: pick("mcp-cors-origins", "MIKROTIK_MCP__CORS_ORIGINS"),
   };
+
+  // Read-only mode (boolean flag/env). A bare `--read-only` parses to "true".
+  const readOnlyRaw = pick("read-only", "MIKROTIK_READ_ONLY");
+  const readOnly = /^(1|true|yes|on)$/i.test(readOnlyRaw ?? "");
 
   // S3 is opt-in: only attach the block when something meaningful is set, so an
   // unconfigured deployment leaves `config.s3` undefined and the tools inert.
@@ -216,6 +234,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     devices: Object.keys(devices).length ? devices : { default: {} },
     defaultDevice: defaultDevice ?? "default",
     mcp,
+    readOnly,
     ...(hasS3 ? { s3 } : {}),
   };
 
