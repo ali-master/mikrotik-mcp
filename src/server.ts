@@ -5,6 +5,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SendLog } from "./core/context";
 import { registerTools } from "./core/registry";
+import { registerUiResources } from "./core/ui-resources";
 import { listDevices } from "./core/runtime";
 import { registerPrompts } from "./prompts";
 import { allToolModules } from "./tools";
@@ -37,6 +38,8 @@ export interface CreatedServer {
   server: McpServer;
   toolCount: number;
   promptCount: number;
+  /** Number of MCP App `ui://` views registered as resources. */
+  uiViewCount: number;
 }
 
 export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
@@ -44,16 +47,16 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
   const instructions =
     names.length > 1
       ? INSTRUCTIONS +
-        MULTI_DEVICE_INSTRUCTIONS.replace(
-          "{{names}}",
-          names.join(", "),
-        ).replace("{{default}}", defaultDevice)
+        MULTI_DEVICE_INSTRUCTIONS.replace("{{names}}", names.join(", ")).replace(
+          "{{default}}",
+          defaultDevice,
+        )
       : INSTRUCTIONS;
 
   const server = new McpServer(
     { name: SERVER_NAME, version: VERSION },
     {
-      capabilities: { tools: {}, prompts: {}, logging: {} },
+      capabilities: { tools: {}, prompts: {}, resources: {}, logging: {} },
       instructions,
     },
   );
@@ -63,5 +66,8 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
     deviceNames: names,
   });
   const promptCount = registerPrompts(server);
-  return { server, toolCount, promptCount };
+  // MCP App views (`ui://…`) — interactive dashboards rendered inline by hosts
+  // that support the Apps extension (Claude, ChatGPT). Plain clients ignore them.
+  const uiViewCount = registerUiResources(server);
+  return { server, toolCount, promptCount, uiViewCount };
 }

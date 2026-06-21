@@ -8,6 +8,8 @@ import type { ZodRawShape } from "zod";
 import { createContext } from "./context";
 import type { ToolContext, SendLog } from "./context";
 import { containsRawParserError } from "./routeros";
+import { toolUiMeta } from "./ui-meta";
+import type { UiLink } from "./ui-meta";
 
 /** Options threaded into every tool registration. */
 export interface RegisterOptions {
@@ -46,6 +48,19 @@ export const DANGEROUS: ToolAnnotations = {
   openWorldHint: false,
 };
 
+/**
+ * A handler may return plain text (the common case — wrapped as the model-facing
+ * result) or a structured payload. `structuredContent` is the data an MCP App
+ * view renders; `text` remains the fallback shown to the model and to text-only
+ * hosts, so UI is always additive.
+ */
+export interface ToolResult {
+  text: string;
+  structuredContent?: Record<string, unknown>;
+}
+
+export type HandlerOutput = string | ToolResult;
+
 export interface ToolDef<Shape extends ZodRawShape> {
   /** Stable tool id exposed to MCP clients. */
   name: string;
@@ -57,8 +72,14 @@ export interface ToolDef<Shape extends ZodRawShape> {
   annotations: ToolAnnotations;
   /** Zod raw shape describing the tool's parameters. */
   inputSchema?: Shape;
-  /** Handler returning the textual result shown to the model. */
-  handler: (args: any, ctx: ToolContext) => Promise<string> | string;
+  /**
+   * Optional MCP App view: links this tool to a `ui://…` HTML resource the host
+   * renders inline. When set, the tool should return `structuredContent` for the
+   * view (it still returns `text` for non-UI hosts).
+   */
+  ui?: UiLink;
+  /** Handler returning the result shown to the model (text, or text + structured data). */
+  handler: (args: any, ctx: ToolContext) => Promise<HandlerOutput> | HandlerOutput;
 }
 
 export interface RegisterableTool {
@@ -67,6 +88,8 @@ export interface RegisterableTool {
   annotations: ToolAnnotations;
   inputSchema?: ZodRawShape;
   description: string;
+  /** Present when the tool renders an MCP App view. */
+  ui?: UiLink;
   register: (server: McpServer, opts?: RegisterOptions) => void;
 }
 
@@ -77,6 +100,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     description: def.description,
     annotations: def.annotations,
     inputSchema: def.inputSchema,
+    ui: def.ui,
     register(server: McpServer, opts: RegisterOptions = {}) {
       const { sendLog, deviceNames } = opts;
       const multiDevice = !!deviceNames && deviceNames.length > 1;
@@ -101,15 +125,23 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
         const { device, ...rest } = args as { device?: unknown };
         const ctx = createContext(sendLog, typeof device === "string" ? device : undefined);
         try {
-          const text = await def.handler(rest, ctx);
+          const raw = await def.handler(rest, ctx);
+          // Normalize: a plain string is just text; an object may also carry
+          // `structuredContent` for an MCP App view.
+          const out = typeof raw === "string" ? { text: raw } : raw;
           // Backstop: if a handler returned a raw RouterOS parser error (an
           // unsupported/mistyped command on this device/version), surface it as a
           // real error instead of a success-looking result.
-          if (containsRawParserError(text)) {
-            ctx.error(`Device rejected the command: ${text.trim()}`);
-            return { content: [{ type: "text", text }], isError: true };
+          if (containsRawParserError(out.text)) {
+            ctx.error(`Device rejected the command: ${out.text.trim()}`);
+            return { content: [{ type: "text", text: out.text }], isError: true };
           }
-          return { content: [{ type: "text", text }] };
+          const result: CallToolResult = {
+            content: [{ type: "text", text: out.text }],
+          };
+          // Structured data for the UI view (ignored by text-only hosts).
+          if (out.structuredContent) result.structuredContent = out.structuredContent;
+          return result;
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           ctx.error(msg);
@@ -127,6 +159,9 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
           description: def.description,
           inputSchema,
           annotations: { ...def.annotations, title: def.title },
+          // When the tool has an MCP App view, advertise the `ui://` resource so
+          // the host can preload and render it (Claude + ChatGPT compatible).
+          ...(def.ui ? { _meta: toolUiMeta(def.ui) } : {}),
         },
         // The SDK derives the callback's arg type from `inputSchema`; our
         // dynamic registry erases that generic, so we assert the known-correct
