@@ -46,9 +46,10 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bunup && chmod +x dist/cli.js",
+    "build": "bunup && chmod +x dist/cli.js && bun run build:ui",
+    "build:ui": "bun run scripts/build-ui.ts",
     "dev": "bunup --watch",
-    "prepack": "bunup && chmod +x dist/cli.js",
+    "prepack": "bunup && chmod +x dist/cli.js && bun run build:ui",
     "auth-check": "bun run src/cli.ts auth-check",
     "gen:schemas": "bun run scripts/gen-schemas.ts",
     "gen:docs": "bun run scripts/gen-tool-docs.ts",

@@ -1,0 +1,255 @@
+/*
+ * MikroTik Device Dashboard — MCP App view styles.
+ *
+ * Dark-first, developer-first. Every colour/typography token falls back to a
+ * tuned default but prefers the host's CSS variables (Claude / ChatGPT inject
+ * `--color-*`, `--font-*`, `--border-radius-*` via applyHostStyleVariables), so
+ * the view feels native inside whichever chat surface renders it.
+ */
+:root {
+  --mt-bg: var(--color-background-primary, #0b0d10);
+  --mt-surface: var(--color-background-secondary, #14171c);
+  --mt-surface-2: var(--color-background-tertiary, #1b1f26);
+  --mt-border: var(--color-border-primary, #262b33);
+  --mt-text: var(--color-text-primary, #e8eaed);
+  --mt-text-dim: var(--color-text-secondary, #9aa3af);
+  --mt-text-faint: var(--color-text-tertiary, #6b7280);
+  --mt-accent: var(--color-accent-primary, #6ea8fe);
+  --mt-good: #34d399;
+  --mt-warn: #fbbf24;
+  --mt-bad: #f87171;
+  --mt-radius: var(--border-radius-md, 14px);
+  --mt-radius-sm: var(--border-radius-sm, 9px);
+  --mt-mono: var(--font-mono, ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace);
+  --mt-sans: var(--font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
+  color-scheme: dark light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  background: var(--mt-bg);
+  color: var(--mt-text);
+  font-family: var(--mt-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hd__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mt-good);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-good) 22%, transparent);
+}
+.hd__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.hd__sub {
+  margin: 0;
+  color: var(--mt-text-dim);
+  font-family: var(--mt-mono);
+  font-size: 12px;
+}
+.hd__spacer {
+  flex: 1;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--mt-border);
+  border-radius: 999px;
+  background: var(--mt-surface);
+  color: var(--mt-text-dim);
+  font-family: var(--mt-mono);
+  font-size: 11px;
+}
+.pill b {
+  color: var(--mt-text);
+  font-weight: 600;
+}
+
+/* ── Cards / grid ───────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.card {
+  background: linear-gradient(180deg, var(--mt-surface), var(--mt-surface-2));
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius);
+  padding: 14px;
+}
+.card__label {
+  color: var(--mt-text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+}
+.card__value {
+  font-family: var(--mt-mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.card__value small {
+  font-size: 12px;
+  color: var(--mt-text-dim);
+  font-weight: 400;
+}
+
+/* ── Gauge (radial) ─────────────────────────────────────────────────────── */
+.gauge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.gauge svg {
+  flex: none;
+}
+.gauge__track {
+  stroke: var(--mt-surface-2);
+}
+.gauge__bar {
+  stroke: var(--mt-accent);
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gauge__pct {
+  font-family: var(--mt-mono);
+  font-size: 16px;
+  font-weight: 650;
+  fill: var(--mt-text);
+}
+.gauge__meta {
+  min-width: 0;
+}
+.gauge__meta .card__label {
+  margin-bottom: 4px;
+}
+.gauge__meta small {
+  color: var(--mt-text-faint);
+  font-family: var(--mt-mono);
+  font-size: 11px;
+}
+.is-good {
+  stroke: var(--mt-good);
+}
+.is-warn {
+  stroke: var(--mt-warn);
+}
+.is-bad {
+  stroke: var(--mt-bad);
+}
+
+/* ── Details table ──────────────────────────────────────────────────────── */
+details.kv {
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius);
+  overflow: hidden;
+}
+details.kv > summary {
+  cursor: pointer;
+  padding: 12px 14px;
+  color: var(--mt-text-dim);
+  font-weight: 600;
+  list-style: none;
+  user-select: none;
+}
+details.kv > summary::-webkit-details-marker {
+  display: none;
+}
+details.kv > summary::after {
+  content: "▸";
+  float: right;
+  transition: transform 0.2s;
+  color: var(--mt-text-faint);
+}
+details.kv[open] > summary::after {
+  transform: rotate(90deg);
+}
+.kv__body {
+  border-top: 1px solid var(--mt-border);
+  display: grid;
+  grid-template-columns: minmax(120px, 0.4fr) 1fr;
+}
+.kv__body > div {
+  padding: 7px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--mt-border) 55%, transparent);
+  font-size: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.kv__k {
+  color: var(--mt-text-dim);
+  font-family: var(--mt-mono);
+}
+.kv__v {
+  font-family: var(--mt-mono);
+  color: var(--mt-text);
+}
+
+.foot {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--mt-text-faint);
+  font-size: 11px;
+  font-family: var(--mt-mono);
+}
+.btn {
+  appearance: none;
+  border: 1px solid var(--mt-border);
+  background: var(--mt-surface);
+  color: var(--mt-text);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 11px;
+  border-radius: var(--mt-radius-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.btn:hover {
+  border-color: var(--mt-accent);
+  background: var(--mt-surface-2);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.skeleton {
+  color: var(--mt-text-faint);
+  padding: 40px 0;
+  text-align: center;
+}
