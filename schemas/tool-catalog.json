@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 646,
+  "toolCount": 647,
   "tools": [
     {
       "name": "list_interfaces",
@@ -49,10 +49,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "running_only",
-          "disabled_only"
-        ],
+        "required": ["running_only", "disabled_only"],
         "additionalProperties": false
       }
     },
@@ -75,9 +72,7 @@
             "description": "Exact interface name, e.g. 'ether1', 'wg0'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -99,9 +94,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -123,9 +116,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -176,25 +167,13 @@
           "arp": {
             "default": "enabled",
             "type": "string",
-            "enum": [
-              "enabled",
-              "disabled",
-              "proxy-arp",
-              "reply-only"
-            ]
+            "enum": ["enabled", "disabled", "proxy-arp", "reply-only"]
           },
           "arp_timeout": {
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "vlan_id",
-          "interface",
-          "disabled",
-          "use_service_tag",
-          "arp"
-        ],
+        "required": ["name", "vlan_id", "interface", "disabled", "use_service_tag", "arp"],
         "additionalProperties": false
       }
     },
@@ -230,9 +209,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -254,9 +231,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -305,20 +280,13 @@
           },
           "arp": {
             "type": "string",
-            "enum": [
-              "enabled",
-              "disabled",
-              "proxy-arp",
-              "reply-only"
-            ]
+            "enum": ["enabled", "disabled", "proxy-arp", "reply-only"]
           },
           "arp_timeout": {
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -340,9 +308,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -374,12 +340,7 @@
           "protocol_mode": {
             "description": "Spanning-tree protocol mode",
             "type": "string",
-            "enum": [
-              "none",
-              "rstp",
-              "stp",
-              "mstp"
-            ]
+            "enum": ["none", "rstp", "stp", "mstp"]
           },
           "disabled": {
             "default": false,
@@ -391,11 +352,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "name",
-          "vlan_filtering",
-          "disabled"
-        ],
+        "required": ["name", "vlan_filtering", "disabled"],
         "additionalProperties": false
       }
     },
@@ -439,9 +396,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -474,12 +429,7 @@
           },
           "protocol_mode": {
             "type": "string",
-            "enum": [
-              "none",
-              "rstp",
-              "stp",
-              "mstp"
-            ]
+            "enum": ["none", "rstp", "stp", "mstp"]
           },
           "disabled": {
             "type": "boolean"
@@ -490,9 +440,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -514,9 +462,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -555,10 +501,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "bridge",
-          "interface"
-        ],
+        "required": ["bridge", "interface"],
         "additionalProperties": false
       }
     },
@@ -607,9 +550,7 @@
             "description": "Interface to remove from the bridge"
           }
         },
-        "required": [
-          "interface"
-        ],
+        "required": ["interface"],
         "additionalProperties": false
       }
     },
@@ -665,10 +606,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "bridge",
-          "vlan_ids"
-        ],
+        "required": ["bridge", "vlan_ids"],
         "additionalProperties": false
       }
     },
@@ -757,23 +695,13 @@
           },
           "channel_width": {
             "type": "string",
-            "enum": [
-              "20mhz",
-              "40mhz",
-              "80mhz",
-              "160mhz",
-              "20/40mhz-eC",
-              "20/40mhz-Ce"
-            ]
+            "enum": ["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"]
           },
           "security_profile": {
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "disabled"
-        ],
+        "required": ["name", "disabled"],
         "additionalProperties": false
       }
     },
@@ -803,10 +731,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "running_only"
-        ],
+        "required": ["disabled_only", "running_only"],
         "additionalProperties": false
       }
     },
@@ -828,9 +753,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -852,9 +775,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -876,9 +797,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -900,9 +819,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -930,10 +847,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "interface",
-          "duration"
-        ],
+        "required": ["interface", "duration"],
         "additionalProperties": false
       }
     },
@@ -992,9 +906,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -1033,9 +945,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -1057,9 +967,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -1083,10 +991,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "interface_name",
-          "security_profile"
-        ],
+        "required": ["interface_name", "security_profile"],
         "additionalProperties": false
       }
     },
@@ -1141,9 +1046,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -1177,9 +1080,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -1202,9 +1103,7 @@
             "description": "Comma-separated ethernet interface name(s), e.g. 'ether1' or 'ether9,ether10'"
           }
         },
-        "required": [
-          "interfaces"
-        ],
+        "required": ["interfaces"],
         "additionalProperties": false
       }
     },
@@ -1249,9 +1148,7 @@
             "description": "Exact ethernet interface name, e.g. 'ether1'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -1300,9 +1197,7 @@
             "description": "Switch name (e.g. 'switch1') or RouterOS '.id'"
           }
         },
-        "required": [
-          "switch_id"
-        ],
+        "required": ["switch_id"],
         "additionalProperties": false
       }
     },
@@ -1344,9 +1239,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "switch_id"
-        ],
+        "required": ["switch_id"],
         "additionalProperties": false
       }
     },
@@ -1395,9 +1288,7 @@
             "description": "Port name (e.g. 'ether1') or RouterOS '.id'"
           }
         },
-        "required": [
-          "port_id"
-        ],
+        "required": ["port_id"],
         "additionalProperties": false
       }
     },
@@ -1425,28 +1316,17 @@
           },
           "vlan_mode": {
             "type": "string",
-            "enum": [
-              "disabled",
-              "optional",
-              "enabled",
-              "secure"
-            ]
+            "enum": ["disabled", "optional", "enabled", "secure"]
           },
           "vlan_header": {
             "type": "string",
-            "enum": [
-              "leave-as-is",
-              "always-strip",
-              "add-if-missing"
-            ]
+            "enum": ["leave-as-is", "always-strip", "add-if-missing"]
           },
           "force_vlan_id": {
             "type": "boolean"
           }
         },
-        "required": [
-          "port_id"
-        ],
+        "required": ["port_id"],
         "additionalProperties": false
       }
     },
@@ -1475,10 +1355,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "port",
-          "forwarding_override_ports"
-        ],
+        "required": ["port", "forwarding_override_ports"],
         "additionalProperties": false
       }
     },
@@ -1523,9 +1400,7 @@
             "description": "Source port name (e.g. 'ether1') or RouterOS '.id'"
           }
         },
-        "required": [
-          "isolation_id"
-        ],
+        "required": ["isolation_id"],
         "additionalProperties": false
       }
     },
@@ -1555,9 +1430,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "isolation_id"
-        ],
+        "required": ["isolation_id"],
         "additionalProperties": false
       }
     },
@@ -1580,9 +1453,7 @@
             "description": "Source port name or RouterOS '.id'"
           }
         },
-        "required": [
-          "isolation_id"
-        ],
+        "required": ["isolation_id"],
         "additionalProperties": false
       }
     },
@@ -1683,11 +1554,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "switch",
-          "ports",
-          "disabled"
-        ],
+        "required": ["switch", "ports", "disabled"],
         "additionalProperties": false
       }
     },
@@ -1716,9 +1583,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -1741,9 +1606,7 @@
             "description": "RouterOS '.id', e.g. '*1' or '0'"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -1834,9 +1697,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -1858,9 +1719,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -1882,9 +1741,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -1906,9 +1763,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -1946,11 +1801,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "address",
-          "interface",
-          "disabled"
-        ],
+        "required": ["address", "interface", "disabled"],
         "additionalProperties": false
       }
     },
@@ -1986,10 +1837,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "dynamic_only"
-        ],
+        "required": ["disabled_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -2012,9 +1860,7 @@
             "description": "RouterOS .id (e.g. '*1') or the address value"
           }
         },
-        "required": [
-          "address_id"
-        ],
+        "required": ["address_id"],
         "additionalProperties": false
       }
     },
@@ -2036,9 +1882,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "address_id"
-        ],
+        "required": ["address_id"],
         "additionalProperties": false
       }
     },
@@ -2069,10 +1913,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "ranges"
-        ],
+        "required": ["name", "ranges"],
         "additionalProperties": false
       }
     },
@@ -2101,9 +1942,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "include_used"
-        ],
+        "required": ["include_used"],
         "additionalProperties": false
       }
     },
@@ -2125,9 +1964,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -2162,9 +1999,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -2186,9 +2021,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -2244,10 +2077,7 @@
             "description": "Hyphen-separated range(s) e.g. \"192.168.1.101-192.168.1.150\". Multiple ranges comma-separated: \"10.0.0.51-10.0.0.60,10.0.0.70-10.0.0.80\""
           }
         },
-        "required": [
-          "name",
-          "additional_ranges"
-        ],
+        "required": ["name", "additional_ranges"],
         "additionalProperties": false
       }
     },
@@ -2308,11 +2138,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "dst_address",
-          "gateway",
-          "disabled"
-        ],
+        "required": ["dst_address", "gateway", "disabled"],
         "additionalProperties": false
       }
     },
@@ -2361,12 +2187,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "active_only",
-          "disabled_only",
-          "dynamic_only",
-          "static_only"
-        ],
+        "required": ["active_only", "disabled_only", "dynamic_only", "static_only"],
         "additionalProperties": false
       }
     },
@@ -2389,9 +2210,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -2456,9 +2275,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -2481,9 +2298,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -2506,9 +2321,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -2531,9 +2344,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -2563,10 +2374,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "table_name",
-          "active_only"
-        ],
+        "required": ["table_name", "active_only"],
         "additionalProperties": false
       }
     },
@@ -2594,9 +2402,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       }
     },
@@ -2664,11 +2470,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "gateway",
-          "distance",
-          "check_gateway"
-        ],
+        "required": ["gateway", "distance", "check_gateway"],
         "additionalProperties": false
       }
     },
@@ -2700,10 +2502,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "dst_address",
-          "distance"
-        ],
+        "required": ["dst_address", "distance"],
         "additionalProperties": false
       }
     },
@@ -2758,11 +2557,7 @@
           "authoritative": {
             "default": "yes",
             "type": "string",
-            "enum": [
-              "yes",
-              "no",
-              "after-2sec-delay"
-            ]
+            "enum": ["yes", "no", "after-2sec-delay"]
           },
           "delay_threshold": {
             "type": "string"
@@ -2771,13 +2566,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "interface",
-          "lease_time",
-          "disabled",
-          "authoritative"
-        ],
+        "required": ["name", "interface", "lease_time", "disabled", "authoritative"],
         "additionalProperties": false
       }
     },
@@ -2810,10 +2599,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only"
-        ],
+        "required": ["disabled_only", "invalid_only"],
         "additionalProperties": false
       }
     },
@@ -2835,9 +2621,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -2894,10 +2678,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "network",
-          "gateway"
-        ],
+        "required": ["network", "gateway"],
         "additionalProperties": false
       }
     },
@@ -2928,10 +2709,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "ranges"
-        ],
+        "required": ["name", "ranges"],
         "additionalProperties": false
       }
     },
@@ -2953,9 +2731,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -3013,12 +2789,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "servers",
-          "allow_remote_requests",
-          "use_doh",
-          "verify_doh_cert"
-        ],
+        "required": ["servers", "allow_remote_requests", "use_doh", "verify_doh_cert"],
         "additionalProperties": false
       }
     },
@@ -3104,10 +2875,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "disabled"
-        ],
+        "required": ["name", "disabled"],
         "additionalProperties": false
       }
     },
@@ -3143,10 +2911,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "regexp_only"
-        ],
+        "required": ["disabled_only", "regexp_only"],
         "additionalProperties": false
       }
     },
@@ -3168,9 +2933,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -3242,9 +3005,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -3266,9 +3027,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -3290,9 +3049,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -3314,9 +3071,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -3402,12 +3157,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "regexp",
-          "address",
-          "ttl",
-          "disabled"
-        ],
+        "required": ["regexp", "address", "ttl", "disabled"],
         "additionalProperties": false
       }
     },
@@ -3436,10 +3186,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "type"
-        ],
+        "required": ["name", "type"],
         "additionalProperties": false
       }
     },
@@ -3508,11 +3255,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "address",
-          "interface",
-          "disabled"
-        ],
+        "required": ["address", "interface", "disabled"],
         "additionalProperties": false
       }
     },
@@ -3549,11 +3292,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "dynamic_only",
-          "link_local_only"
-        ],
+        "required": ["disabled_only", "dynamic_only", "link_local_only"],
         "additionalProperties": false
       }
     },
@@ -3576,9 +3315,7 @@
             "description": "RouterOS .id (e.g. '*1') or the address value"
           }
         },
-        "required": [
-          "address_id"
-        ],
+        "required": ["address_id"],
         "additionalProperties": false
       }
     },
@@ -3600,9 +3337,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "address_id"
-        ],
+        "required": ["address_id"],
         "additionalProperties": false
       }
     },
@@ -3625,11 +3360,7 @@
           "request": {
             "default": "prefix",
             "type": "string",
-            "enum": [
-              "address",
-              "prefix",
-              "address,prefix"
-            ]
+            "enum": ["address", "prefix", "address,prefix"]
           },
           "pool_name": {
             "description": "Name of the IPv6 pool to expose the delegated prefix as",
@@ -3647,11 +3378,7 @@
           },
           "add_default_route": {
             "type": "string",
-            "enum": [
-              "yes",
-              "no",
-              "special-classless"
-            ]
+            "enum": ["yes", "no", "special-classless"]
           },
           "default_route_distance": {
             "type": "integer",
@@ -3676,11 +3403,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "request",
-          "disabled"
-        ],
+        "required": ["interface", "request", "disabled"],
         "additionalProperties": false
       }
     },
@@ -3714,10 +3437,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only"
-        ],
+        "required": ["disabled_only", "invalid_only"],
         "additionalProperties": false
       }
     },
@@ -3740,9 +3460,7 @@
             "description": "RouterOS .id (e.g. '*1') or the interface name"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -3764,9 +3482,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -3788,9 +3504,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -3812,9 +3526,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -3853,12 +3565,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "interface",
-          "dhcp_server",
-          "disabled"
-        ],
+        "required": ["name", "interface", "dhcp_server", "disabled"],
         "additionalProperties": false
       }
     },
@@ -3887,9 +3594,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -3911,9 +3616,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -3935,9 +3638,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -3959,9 +3660,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -3983,9 +3682,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -4048,13 +3745,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "interface",
-          "address_pool",
-          "lease_time",
-          "disabled"
-        ],
+        "required": ["name", "interface", "address_pool", "lease_time", "disabled"],
         "additionalProperties": false
       }
     },
@@ -4087,10 +3778,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only"
-        ],
+        "required": ["disabled_only", "invalid_only"],
         "additionalProperties": false
       }
     },
@@ -4112,9 +3800,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -4136,9 +3822,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -4186,10 +3870,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "duid",
-          "disabled"
-        ],
+        "required": ["duid", "disabled"],
         "additionalProperties": false
       }
     },
@@ -4218,9 +3899,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "dynamic_only"
-        ],
+        "required": ["dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -4243,9 +3922,7 @@
             "description": "RouterOS .id (e.g. '*1') or the DUID"
           }
         },
-        "required": [
-          "binding_id"
-        ],
+        "required": ["binding_id"],
         "additionalProperties": false
       }
     },
@@ -4279,11 +3956,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "code",
-          "value"
-        ],
+        "required": ["name", "code", "value"],
         "additionalProperties": false
       }
     },
@@ -4326,9 +3999,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -4347,11 +4018,7 @@
         "properties": {
           "chain": {
             "type": "string",
-            "enum": [
-              "input",
-              "forward",
-              "output"
-            ]
+            "enum": ["input", "forward", "output"]
           },
           "action": {
             "type": "string",
@@ -4435,12 +4102,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "action",
-          "disabled",
-          "log"
-        ],
+        "required": ["chain", "action", "disabled", "log"],
         "additionalProperties": false
       }
     },
@@ -4489,11 +4151,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only",
-          "dynamic_only"
-        ],
+        "required": ["disabled_only", "invalid_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -4516,9 +4174,7 @@
             "description": "Rule ID from list output e.g. \"*1\" or \"0\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4603,9 +4259,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4627,9 +4281,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4657,10 +4309,7 @@
             "description": "0-based target position index"
           }
         },
-        "required": [
-          "rule_id",
-          "destination"
-        ],
+        "required": ["rule_id", "destination"],
         "additionalProperties": false
       }
     },
@@ -4682,9 +4331,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4706,9 +4353,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4727,10 +4372,7 @@
         "properties": {
           "chain": {
             "type": "string",
-            "enum": [
-              "srcnat",
-              "dstnat"
-            ]
+            "enum": ["srcnat", "dstnat"]
           },
           "action": {
             "type": "string",
@@ -4800,12 +4442,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "action",
-          "disabled",
-          "log"
-        ],
+        "required": ["chain", "action", "disabled", "log"],
         "additionalProperties": false
       }
     },
@@ -4848,11 +4485,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only",
-          "dynamic_only"
-        ],
+        "required": ["disabled_only", "invalid_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -4875,9 +4508,7 @@
             "description": "Rule ID from list output e.g. \"*1\" or \"0\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4950,9 +4581,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -4974,9 +4603,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5004,10 +4631,7 @@
             "description": "0-based target position index"
           }
         },
-        "required": [
-          "rule_id",
-          "destination"
-        ],
+        "required": ["rule_id", "destination"],
         "additionalProperties": false
       }
     },
@@ -5029,9 +4653,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5053,9 +4675,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5074,13 +4694,7 @@
         "properties": {
           "chain": {
             "type": "string",
-            "enum": [
-              "prerouting",
-              "input",
-              "forward",
-              "output",
-              "postrouting"
-            ]
+            "enum": ["prerouting", "input", "forward", "output", "postrouting"]
           },
           "action": {
             "type": "string",
@@ -5169,12 +4783,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "action",
-          "disabled",
-          "log"
-        ],
+        "required": ["chain", "action", "disabled", "log"],
         "additionalProperties": false
       }
     },
@@ -5217,11 +4826,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only",
-          "dynamic_only"
-        ],
+        "required": ["disabled_only", "invalid_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -5244,9 +4849,7 @@
             "description": "Rule ID from list output e.g. \"*1\" or \"0\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5334,9 +4937,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5358,9 +4959,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5388,10 +4987,7 @@
             "description": "0-based target position index"
           }
         },
-        "required": [
-          "rule_id",
-          "destination"
-        ],
+        "required": ["rule_id", "destination"],
         "additionalProperties": false
       }
     },
@@ -5413,9 +5009,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5437,9 +5031,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5458,22 +5050,11 @@
         "properties": {
           "chain": {
             "type": "string",
-            "enum": [
-              "prerouting",
-              "output"
-            ]
+            "enum": ["prerouting", "output"]
           },
           "action": {
             "type": "string",
-            "enum": [
-              "accept",
-              "drop",
-              "notrack",
-              "jump",
-              "log",
-              "passthrough",
-              "return"
-            ]
+            "enum": ["accept", "drop", "notrack", "jump", "log", "passthrough", "return"]
           },
           "src_address": {
             "type": "string"
@@ -5521,12 +5102,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "action",
-          "disabled",
-          "log"
-        ],
+        "required": ["chain", "action", "disabled", "log"],
         "additionalProperties": false
       }
     },
@@ -5569,11 +5145,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only",
-          "dynamic_only"
-        ],
+        "required": ["disabled_only", "invalid_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -5596,9 +5168,7 @@
             "description": "Rule ID from list output e.g. \"*1\" or \"0\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5665,9 +5235,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5689,9 +5257,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5719,10 +5285,7 @@
             "description": "0-based target position index"
           }
         },
-        "required": [
-          "rule_id",
-          "destination"
-        ],
+        "required": ["rule_id", "destination"],
         "additionalProperties": false
       }
     },
@@ -5744,9 +5307,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5768,9 +5329,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -5807,11 +5366,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "list",
-          "address",
-          "disabled"
-        ],
+        "required": ["list", "address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -5843,9 +5398,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "dynamic_only"
-        ],
+        "required": ["dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -5868,9 +5421,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -5893,9 +5444,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -5918,9 +5467,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -5943,9 +5490,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -5978,11 +5523,7 @@
           },
           "ra_preference": {
             "type": "string",
-            "enum": [
-              "low",
-              "medium",
-              "high"
-            ]
+            "enum": ["low", "medium", "high"]
           },
           "hop_limit": {
             "description": "Advertised hop limit (0-255 or 'unspecified')",
@@ -6019,10 +5560,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "disabled"
-        ],
+        "required": ["interface", "disabled"],
         "additionalProperties": false
       }
     },
@@ -6048,9 +5586,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -6073,9 +5609,7 @@
             "description": "RouterOS .id (e.g. '*1') or the interface name"
           }
         },
-        "required": [
-          "nd_id"
-        ],
+        "required": ["nd_id"],
         "additionalProperties": false
       }
     },
@@ -6108,11 +5642,7 @@
           },
           "ra_preference": {
             "type": "string",
-            "enum": [
-              "low",
-              "medium",
-              "high"
-            ]
+            "enum": ["low", "medium", "high"]
           },
           "hop_limit": {
             "type": "string"
@@ -6147,9 +5677,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "nd_id"
-        ],
+        "required": ["nd_id"],
         "additionalProperties": false
       }
     },
@@ -6172,9 +5700,7 @@
             "description": "Interface name or '.id'"
           }
         },
-        "required": [
-          "nd_id"
-        ],
+        "required": ["nd_id"],
         "additionalProperties": false
       }
     },
@@ -6215,10 +5741,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "prefix",
-          "disabled"
-        ],
+        "required": ["prefix", "disabled"],
         "additionalProperties": false
       }
     },
@@ -6247,9 +5770,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "dynamic_only"
-        ],
+        "required": ["dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -6272,9 +5793,7 @@
             "description": "RouterOS .id (e.g. '*1') or the prefix"
           }
         },
-        "required": [
-          "prefix_id"
-        ],
+        "required": ["prefix_id"],
         "additionalProperties": false
       }
     },
@@ -6311,9 +5830,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "router_only"
-        ],
+        "required": ["router_only"],
         "additionalProperties": false
       }
     },
@@ -6336,9 +5853,7 @@
             "description": "RouterOS .id (e.g. '*1') or the IPv6 address"
           }
         },
-        "required": [
-          "neighbor_id"
-        ],
+        "required": ["neighbor_id"],
         "additionalProperties": false
       }
     },
@@ -6361,9 +5876,7 @@
             "description": "RouterOS .id (e.g. '*1') or the IPv6 address"
           }
         },
-        "required": [
-          "neighbor_id"
-        ],
+        "required": ["neighbor_id"],
         "additionalProperties": false
       }
     },
@@ -6397,11 +5910,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "prefix",
-          "prefix_length"
-        ],
+        "required": ["name", "prefix", "prefix_length"],
         "additionalProperties": false
       }
     },
@@ -6447,9 +5956,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -6507,9 +6014,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -6531,9 +6036,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -6560,12 +6063,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "unicast",
-              "blackhole",
-              "unreachable",
-              "prohibit"
-            ]
+            "enum": ["unicast", "blackhole", "unreachable", "prohibit"]
           },
           "distance": {
             "type": "integer",
@@ -6603,10 +6101,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "dst_address",
-          "disabled"
-        ],
+        "required": ["dst_address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -6646,10 +6141,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "gateway",
-          "disabled"
-        ],
+        "required": ["gateway", "disabled"],
         "additionalProperties": false
       }
     },
@@ -6689,11 +6181,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "active_only",
-          "disabled_only",
-          "dynamic_only"
-        ],
+        "required": ["active_only", "disabled_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -6716,9 +6204,7 @@
             "description": "RouterOS .id (e.g. '*1') or the destination prefix"
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -6741,9 +6227,7 @@
             "description": "RouterOS .id, e.g. '*5'"
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -6765,9 +6249,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -6789,9 +6271,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "route_id"
-        ],
+        "required": ["route_id"],
         "additionalProperties": false
       }
     },
@@ -6834,19 +6314,11 @@
           },
           "accept_redirects": {
             "type": "string",
-            "enum": [
-              "yes",
-              "no",
-              "yes-if-forwarding-disabled"
-            ]
+            "enum": ["yes", "no", "yes-if-forwarding-disabled"]
           },
           "accept_router_advertisements": {
             "type": "string",
-            "enum": [
-              "yes",
-              "no",
-              "yes-if-forwarding-disabled"
-            ]
+            "enum": ["yes", "no", "yes-if-forwarding-disabled"]
           },
           "max_neighbor_entries": {
             "type": "integer",
@@ -6898,9 +6370,7 @@
             "description": "Router-ID instance name"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -6937,10 +6407,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "disabled"
-        ],
+        "required": ["name", "disabled"],
         "additionalProperties": false
       }
     },
@@ -6977,9 +6444,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -7002,9 +6467,7 @@
             "description": "Router-ID instance name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -7031,10 +6494,7 @@
             "description": "true to enable, false to disable"
           }
         },
-        "required": [
-          "name",
-          "enabled"
-        ],
+        "required": ["name", "enabled"],
         "additionalProperties": false
       }
     },
@@ -7071,19 +6531,11 @@
         "properties": {
           "ipv4_multipath_hash_policy": {
             "type": "string",
-            "enum": [
-              "l3",
-              "l3-inner",
-              "l4"
-            ]
+            "enum": ["l3", "l3-inner", "l4"]
           },
           "ipv6_multipath_hash_policy": {
             "type": "string",
-            "enum": [
-              "l3",
-              "l3-inner",
-              "l4"
-            ]
+            "enum": ["l3", "l3-inner", "l4"]
           },
           "ipv4_vrf_as_interface": {
             "type": "boolean"
@@ -7133,9 +6585,7 @@
             "description": "Routing table name"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -7169,11 +6619,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "fib",
-          "disabled"
-        ],
+        "required": ["name", "fib", "disabled"],
         "additionalProperties": false
       }
     },
@@ -7206,9 +6652,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -7231,9 +6675,7 @@
             "description": "Routing table name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -7260,10 +6702,7 @@
             "description": "true to enable, false to disable"
           }
         },
-        "required": [
-          "name",
-          "enabled"
-        ],
+        "required": ["name", "enabled"],
         "additionalProperties": false
       }
     },
@@ -7290,9 +6729,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -7315,9 +6752,7 @@
             "description": "Rule id from list output, e.g. \"*3\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -7337,12 +6772,7 @@
           "action": {
             "default": "lookup",
             "type": "string",
-            "enum": [
-              "lookup",
-              "lookup-only-in-table",
-              "drop",
-              "unreachable"
-            ]
+            "enum": ["lookup", "lookup-only-in-table", "drop", "unreachable"]
           },
           "table": {
             "description": "Target routing table for lookup actions",
@@ -7386,10 +6816,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "action",
-          "disabled"
-        ],
+        "required": ["action", "disabled"],
         "additionalProperties": false
       }
     },
@@ -7413,12 +6840,7 @@
           },
           "action": {
             "type": "string",
-            "enum": [
-              "lookup",
-              "lookup-only-in-table",
-              "drop",
-              "unreachable"
-            ]
+            "enum": ["lookup", "lookup-only-in-table", "drop", "unreachable"]
           },
           "table": {
             "type": "string"
@@ -7442,9 +6864,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -7467,9 +6887,7 @@
             "description": "Rule id, e.g. \"*3\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -7496,10 +6914,7 @@
             "description": "true to enable, false to disable"
           }
         },
-        "required": [
-          "rule_id",
-          "enabled"
-        ],
+        "required": ["rule_id", "enabled"],
         "additionalProperties": false
       }
     },
@@ -7526,9 +6941,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "active_only"
-        ],
+        "required": ["active_only"],
         "additionalProperties": false
       }
     },
@@ -7604,11 +7017,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "rule",
-          "disabled"
-        ],
+        "required": ["chain", "rule", "disabled"],
         "additionalProperties": false
       }
     },
@@ -7643,9 +7052,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -7668,9 +7075,7 @@
             "description": "Rule id, e.g. \"*3\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -7696,10 +7101,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "rule_id",
-          "enabled"
-        ],
+        "required": ["rule_id", "enabled"],
         "additionalProperties": false
       }
     },
@@ -7767,10 +7169,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "list",
-          "range"
-        ],
+        "required": ["list", "range"],
         "additionalProperties": false
       }
     },
@@ -7793,9 +7192,7 @@
             "description": "Entry id, e.g. \"*3\""
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -7859,10 +7256,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interfaces",
-          "disabled"
-        ],
+        "required": ["interfaces", "disabled"],
         "additionalProperties": false
       }
     },
@@ -7908,9 +7302,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "config_id"
-        ],
+        "required": ["config_id"],
         "additionalProperties": false
       }
     },
@@ -7933,9 +7325,7 @@
             "description": "Configuration id, e.g. \"*1\""
           }
         },
-        "required": [
-          "config_id"
-        ],
+        "required": ["config_id"],
         "additionalProperties": false
       }
     },
@@ -7961,10 +7351,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "config_id",
-          "enabled"
-        ],
+        "required": ["config_id", "enabled"],
         "additionalProperties": false
       }
     },
@@ -7988,9 +7375,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "up_only"
-        ],
+        "required": ["up_only"],
         "additionalProperties": false
       }
     },
@@ -8035,9 +7420,7 @@
             "description": "BGP connection name"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8132,11 +7515,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "remote_address",
-          "disabled"
-        ],
+        "required": ["name", "remote_address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -8208,9 +7587,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8233,9 +7610,7 @@
             "description": "BGP connection name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8261,10 +7636,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "enabled"
-        ],
+        "required": ["name", "enabled"],
         "additionalProperties": false
       }
     },
@@ -8332,10 +7704,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "disabled"
-        ],
+        "required": ["name", "disabled"],
         "additionalProperties": false
       }
     },
@@ -8358,9 +7727,7 @@
             "description": "BGP template name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8384,9 +7751,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "established_only"
-        ],
+        "required": ["established_only"],
         "additionalProperties": false
       }
     },
@@ -8484,11 +7849,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "version",
-          "disabled"
-        ],
+        "required": ["name", "version", "disabled"],
         "additionalProperties": false
       }
     },
@@ -8532,9 +7893,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8557,9 +7916,7 @@
             "description": "OSPF instance name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8607,11 +7964,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "default",
-              "stub",
-              "nssa"
-            ]
+            "enum": ["default", "stub", "nssa"]
           },
           "no_summaries": {
             "description": "Make a totally-stubby/NSSA area (block summary LSAs)",
@@ -8625,12 +7978,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "area_id",
-          "instance",
-          "disabled"
-        ],
+        "required": ["name", "area_id", "instance", "disabled"],
         "additionalProperties": false
       }
     },
@@ -8653,9 +8001,7 @@
             "description": "OSPF area name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -8711,11 +8057,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "area",
-          "prefix",
-          "advertise"
-        ],
+        "required": ["area", "prefix", "advertise"],
         "additionalProperties": false
       }
     },
@@ -8738,9 +8080,7 @@
             "description": "Range id, e.g. \"*1\""
           }
         },
-        "required": [
-          "range_id"
-        ],
+        "required": ["range_id"],
         "additionalProperties": false
       }
     },
@@ -8800,13 +8140,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "broadcast",
-              "ptp",
-              "nbma",
-              "ptmp",
-              "virtual-link"
-            ]
+            "enum": ["broadcast", "ptp", "nbma", "ptmp", "virtual-link"]
           },
           "passive": {
             "type": "boolean"
@@ -8821,14 +8155,7 @@
           },
           "auth": {
             "type": "string",
-            "enum": [
-              "simple",
-              "md5",
-              "sha1",
-              "sha256",
-              "sha384",
-              "sha512"
-            ]
+            "enum": ["simple", "md5", "sha1", "sha256", "sha384", "sha512"]
           },
           "auth_id": {
             "description": "Key id for keyed authentication",
@@ -8848,10 +8175,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "area",
-          "disabled"
-        ],
+        "required": ["area", "disabled"],
         "additionalProperties": false
       }
     },
@@ -8874,9 +8198,7 @@
             "description": "Template id, e.g. \"*2\""
           }
         },
-        "required": [
-          "template_id"
-        ],
+        "required": ["template_id"],
         "additionalProperties": false
       }
     },
@@ -8982,10 +8304,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "disabled"
-        ],
+        "required": ["name", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9029,9 +8348,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -9054,9 +8371,7 @@
             "description": "RIP instance name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -9113,11 +8428,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "instance",
-          "interfaces",
-          "disabled"
-        ],
+        "required": ["instance", "interfaces", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9140,9 +8451,7 @@
             "description": "Template id, e.g. \"*1\""
           }
         },
-        "required": [
-          "template_id"
-        ],
+        "required": ["template_id"],
         "additionalProperties": false
       }
     },
@@ -9192,10 +8501,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "address",
-          "disabled"
-        ],
+        "required": ["address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9218,9 +8524,7 @@
             "description": "Static-neighbor id, e.g. \"*1\""
           }
         },
-        "required": [
-          "neighbor_id"
-        ],
+        "required": ["neighbor_id"],
         "additionalProperties": false
       }
     },
@@ -9279,10 +8583,7 @@
             "default": "ipv4",
             "description": "Address family",
             "type": "string",
-            "enum": [
-              "ipv4",
-              "ipv6"
-            ]
+            "enum": ["ipv4", "ipv6"]
           },
           "vrf": {
             "type": "string"
@@ -9299,11 +8600,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "afi",
-          "disabled"
-        ],
+        "required": ["name", "afi", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9326,9 +8623,7 @@
             "description": "PIM-SM instance name to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -9388,11 +8683,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "instance",
-          "interfaces",
-          "disabled"
-        ],
+        "required": ["instance", "interfaces", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9415,9 +8706,7 @@
             "description": "Template id, e.g. \"*1\""
           }
         },
-        "required": [
-          "template_id"
-        ],
+        "required": ["template_id"],
         "additionalProperties": false
       }
     },
@@ -9471,11 +8760,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "instance",
-          "address",
-          "disabled"
-        ],
+        "required": ["instance", "address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9498,9 +8783,7 @@
             "description": "RP id, e.g. \"*1\""
           }
         },
-        "required": [
-          "rp_id"
-        ],
+        "required": ["rp_id"],
         "additionalProperties": false
       }
     },
@@ -9624,11 +8907,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "upstream",
-          "disabled"
-        ],
+        "required": ["interface", "upstream", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9668,9 +8947,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface"
-        ],
+        "required": ["interface"],
         "additionalProperties": false
       }
     },
@@ -9693,9 +8970,7 @@
             "description": "IGMP-proxy interface name to remove"
           }
         },
-        "required": [
-          "interface"
-        ],
+        "required": ["interface"],
         "additionalProperties": false
       }
     },
@@ -9721,10 +8996,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "enabled"
-        ],
+        "required": ["interface", "enabled"],
         "additionalProperties": false
       }
     },
@@ -9861,12 +9133,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "group",
-          "address",
-          "port",
-          "disabled"
-        ],
+        "required": ["group", "address", "port", "disabled"],
         "additionalProperties": false
       }
     },
@@ -9912,9 +9179,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "session_id"
-        ],
+        "required": ["session_id"],
         "additionalProperties": false
       }
     },
@@ -9937,9 +9202,7 @@
             "description": "Session id, e.g. \"*1\""
           }
         },
-        "required": [
-          "session_id"
-        ],
+        "required": ["session_id"],
         "additionalProperties": false
       }
     },
@@ -9965,10 +9228,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "session_id",
-          "enabled"
-        ],
+        "required": ["session_id", "enabled"],
         "additionalProperties": false
       }
     },
@@ -9987,11 +9247,7 @@
         "properties": {
           "chain": {
             "type": "string",
-            "enum": [
-              "input",
-              "forward",
-              "output"
-            ]
+            "enum": ["input", "forward", "output"]
           },
           "action": {
             "type": "string",
@@ -10068,12 +9324,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "action",
-          "disabled",
-          "log"
-        ],
+        "required": ["chain", "action", "disabled", "log"],
         "additionalProperties": false
       }
     },
@@ -10122,11 +9373,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only",
-          "dynamic_only"
-        ],
+        "required": ["disabled_only", "invalid_only", "dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -10149,9 +9396,7 @@
             "description": "Rule ID from list output e.g. \"*1\" or \"0\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10230,9 +9475,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10254,9 +9497,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10284,10 +9525,7 @@
             "description": "0-based target position index"
           }
         },
-        "required": [
-          "rule_id",
-          "destination"
-        ],
+        "required": ["rule_id", "destination"],
         "additionalProperties": false
       }
     },
@@ -10309,9 +9547,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10333,9 +9569,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10370,10 +9604,7 @@
         "properties": {
           "chain": {
             "type": "string",
-            "enum": [
-              "srcnat",
-              "dstnat"
-            ]
+            "enum": ["srcnat", "dstnat"]
           },
           "action": {
             "type": "string"
@@ -10426,12 +9657,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "chain",
-          "action",
-          "disabled",
-          "log"
-        ],
+        "required": ["chain", "action", "disabled", "log"],
         "additionalProperties": false
       }
     },
@@ -10476,10 +9702,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only"
-        ],
+        "required": ["disabled_only", "invalid_only"],
         "additionalProperties": false
       }
     },
@@ -10502,9 +9725,7 @@
             "description": "Rule ID from list output e.g. \"*1\" or \"0\""
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10571,9 +9792,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10595,9 +9814,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10625,10 +9842,7 @@
             "description": "0-based target position index"
           }
         },
-        "required": [
-          "rule_id",
-          "destination"
-        ],
+        "required": ["rule_id", "destination"],
         "additionalProperties": false
       }
     },
@@ -10650,9 +9864,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10674,9 +9886,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -10713,11 +9923,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "list",
-          "address",
-          "disabled"
-        ],
+        "required": ["list", "address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -10749,9 +9955,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "dynamic_only"
-        ],
+        "required": ["dynamic_only"],
         "additionalProperties": false
       }
     },
@@ -10774,9 +9978,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -10799,9 +10001,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -10824,9 +10024,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -10849,9 +10047,7 @@
             "description": "Internal entry id, e.g. '*1'"
           }
         },
-        "required": [
-          "entry_id"
-        ],
+        "required": ["entry_id"],
         "additionalProperties": false
       }
     },
@@ -10895,9 +10091,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -10949,12 +10143,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "common_name",
-          "key_size",
-          "days_valid"
-        ],
+        "required": ["name", "common_name", "key_size", "days_valid"],
         "additionalProperties": false
       }
     },
@@ -10984,9 +10173,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11008,9 +10195,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11040,9 +10225,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "file_name"
-        ],
+        "required": ["file_name"],
         "additionalProperties": false
       }
     },
@@ -11082,9 +10265,7 @@
             "description": "Service name, e.g. 'ssh', 'www', 'winbox'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11125,9 +10306,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11150,9 +10329,7 @@
             "description": "Service name to enable, e.g. 'ssh'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11175,9 +10352,7 @@
             "description": "Service name to disable, e.g. 'telnet'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11199,11 +10374,7 @@
           },
           "auth_types": {
             "type": "string",
-            "enum": [
-              "dot1x",
-              "mac-auth",
-              "dot1x,mac-auth"
-            ]
+            "enum": ["dot1x", "mac-auth", "dot1x,mac-auth"]
           },
           "accounting": {
             "type": "boolean"
@@ -11214,10 +10385,7 @@
           },
           "mac_auth_mode": {
             "type": "string",
-            "enum": [
-              "mac-as-username",
-              "mac-as-username-and-password"
-            ]
+            "enum": ["mac-as-username", "mac-as-username-and-password"]
           },
           "guest_vlan_id": {
             "description": "VLAN id or 'none'",
@@ -11243,10 +10411,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "disabled"
-        ],
+        "required": ["interface", "disabled"],
         "additionalProperties": false
       }
     },
@@ -11272,9 +10437,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -11297,9 +10460,7 @@
             "description": "Interface name (e.g. 'ether2') or RouterOS '.id'"
           }
         },
-        "required": [
-          "server_id"
-        ],
+        "required": ["server_id"],
         "additionalProperties": false
       }
     },
@@ -11323,11 +10484,7 @@
           },
           "auth_types": {
             "type": "string",
-            "enum": [
-              "dot1x",
-              "mac-auth",
-              "dot1x,mac-auth"
-            ]
+            "enum": ["dot1x", "mac-auth", "dot1x,mac-auth"]
           },
           "accounting": {
             "type": "boolean"
@@ -11337,10 +10494,7 @@
           },
           "mac_auth_mode": {
             "type": "string",
-            "enum": [
-              "mac-as-username",
-              "mac-as-username-and-password"
-            ]
+            "enum": ["mac-as-username", "mac-as-username-and-password"]
           },
           "guest_vlan_id": {
             "type": "string"
@@ -11361,9 +10515,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "server_id"
-        ],
+        "required": ["server_id"],
         "additionalProperties": false
       }
     },
@@ -11386,9 +10538,7 @@
             "description": "Interface name or RouterOS '.id'"
           }
         },
-        "required": [
-          "server_id"
-        ],
+        "required": ["server_id"],
         "additionalProperties": false
       }
     },
@@ -11435,11 +10585,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "eap_methods",
-          "disabled"
-        ],
+        "required": ["interface", "eap_methods", "disabled"],
         "additionalProperties": false
       }
     },
@@ -11469,9 +10615,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -11494,9 +10638,7 @@
             "description": "Interface name (e.g. 'ether3') or RouterOS '.id'"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -11540,9 +10682,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -11565,9 +10705,7 @@
             "description": "Interface name or RouterOS '.id'"
           }
         },
-        "required": [
-          "client_id"
-        ],
+        "required": ["client_id"],
         "additionalProperties": false
       }
     },
@@ -11608,10 +10746,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "disabled"
-        ],
+        "required": ["name", "disabled"],
         "additionalProperties": false
       }
     },
@@ -11641,10 +10776,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "running_only"
-        ],
+        "required": ["disabled_only", "running_only"],
         "additionalProperties": false
       }
     },
@@ -11666,9 +10798,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11712,9 +10842,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11736,9 +10864,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11760,9 +10886,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11784,9 +10908,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -11837,12 +10959,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "public_key",
-          "allowed_address",
-          "disabled"
-        ],
+        "required": ["interface", "public_key", "allowed_address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -11868,9 +10985,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -11893,9 +11008,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
           }
         },
-        "required": [
-          "peer_id"
-        ],
+        "required": ["peer_id"],
         "additionalProperties": false
       }
     },
@@ -11941,9 +11054,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "peer_id"
-        ],
+        "required": ["peer_id"],
         "additionalProperties": false
       }
     },
@@ -11966,9 +11077,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
           }
         },
-        "required": [
-          "peer_id"
-        ],
+        "required": ["peer_id"],
         "additionalProperties": false
       }
     },
@@ -11991,9 +11100,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
           }
         },
-        "required": [
-          "peer_id"
-        ],
+        "required": ["peer_id"],
         "additionalProperties": false
       }
     },
@@ -12016,9 +11123,7 @@
             "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
           }
         },
-        "required": [
-          "peer_id"
-        ],
+        "required": ["peer_id"],
         "additionalProperties": false
       }
     },
@@ -12130,11 +11235,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "name",
-          "dh_group",
-          "hash_algorithm"
-        ],
+        "required": ["name", "dh_group", "hash_algorithm"],
         "additionalProperties": false
       }
     },
@@ -12178,9 +11279,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12229,9 +11328,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12253,9 +11350,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12288,11 +11383,7 @@
             "default": "ike2",
             "description": "IKE exchange mode",
             "type": "string",
-            "enum": [
-              "main",
-              "aggressive",
-              "ike2"
-            ]
+            "enum": ["main", "aggressive", "ike2"]
           },
           "local_address": {
             "type": "string"
@@ -12312,11 +11403,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "exchange_mode",
-          "disabled"
-        ],
+        "required": ["name", "exchange_mode", "disabled"],
         "additionalProperties": false
       }
     },
@@ -12360,9 +11447,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12395,11 +11480,7 @@
           },
           "exchange_mode": {
             "type": "string",
-            "enum": [
-              "main",
-              "aggressive",
-              "ike2"
-            ]
+            "enum": ["main", "aggressive", "ike2"]
           },
           "local_address": {
             "type": "string"
@@ -12414,9 +11495,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12438,9 +11517,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12465,13 +11542,7 @@
             "default": "pre-shared-key",
             "description": "Authentication method",
             "type": "string",
-            "enum": [
-              "pre-shared-key",
-              "rsa-signature",
-              "digital-signature",
-              "eap",
-              "eap-radius"
-            ]
+            "enum": ["pre-shared-key", "rsa-signature", "digital-signature", "eap", "eap-radius"]
           },
           "secret": {
             "description": "Pre-shared key secret",
@@ -12485,11 +11556,7 @@
           },
           "generate_policy": {
             "type": "string",
-            "enum": [
-              "no",
-              "port-override",
-              "port-strict"
-            ]
+            "enum": ["no", "port-override", "port-strict"]
           },
           "mode_config": {
             "type": "string"
@@ -12504,10 +11571,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "peer",
-          "auth_method"
-        ],
+        "required": ["peer", "auth_method"],
         "additionalProperties": false
       }
     },
@@ -12552,9 +11616,7 @@
             "description": "Internal .id from list output, e.g. '*1'"
           }
         },
-        "required": [
-          "identity_id"
-        ],
+        "required": ["identity_id"],
         "additionalProperties": false
       }
     },
@@ -12595,12 +11657,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "auth_algorithms",
-          "enc_algorithms",
-          "pfs_group"
-        ],
+        "required": ["name", "auth_algorithms", "enc_algorithms", "pfs_group"],
         "additionalProperties": false
       }
     },
@@ -12644,9 +11701,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12684,9 +11739,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12708,9 +11761,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -12745,19 +11796,11 @@
           "action": {
             "default": "encrypt",
             "type": "string",
-            "enum": [
-              "encrypt",
-              "discard",
-              "none"
-            ]
+            "enum": ["encrypt", "discard", "none"]
           },
           "level": {
             "type": "string",
-            "enum": [
-              "require",
-              "unique",
-              "use"
-            ]
+            "enum": ["require", "unique", "use"]
           },
           "proposal": {
             "description": "Phase-2 proposal name",
@@ -12782,10 +11825,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "action",
-          "tunnel"
-        ],
+        "required": ["action", "tunnel"],
         "additionalProperties": false
       }
     },
@@ -12825,9 +11865,7 @@
             "description": "Internal .id from list output, e.g. '*1'"
           }
         },
-        "required": [
-          "policy_id"
-        ],
+        "required": ["policy_id"],
         "additionalProperties": false
       }
     },
@@ -12933,29 +11971,16 @@
           },
           "use_encryption": {
             "type": "string",
-            "enum": [
-              "default",
-              "yes",
-              "no",
-              "required"
-            ]
+            "enum": ["default", "yes", "no", "required"]
           },
           "change_tcp_mss": {
             "type": "string",
-            "enum": [
-              "default",
-              "yes",
-              "no"
-            ]
+            "enum": ["default", "yes", "no"]
           },
           "only_one": {
             "description": "Allow only one session per user",
             "type": "string",
-            "enum": [
-              "default",
-              "yes",
-              "no"
-            ]
+            "enum": ["default", "yes", "no"]
           },
           "bridge": {
             "type": "string"
@@ -12964,9 +11989,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13010,9 +12033,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13051,28 +12072,15 @@
           },
           "use_encryption": {
             "type": "string",
-            "enum": [
-              "default",
-              "yes",
-              "no",
-              "required"
-            ]
+            "enum": ["default", "yes", "no", "required"]
           },
           "change_tcp_mss": {
             "type": "string",
-            "enum": [
-              "default",
-              "yes",
-              "no"
-            ]
+            "enum": ["default", "yes", "no"]
           },
           "only_one": {
             "type": "string",
-            "enum": [
-              "default",
-              "yes",
-              "no"
-            ]
+            "enum": ["default", "yes", "no"]
           },
           "bridge": {
             "type": "string"
@@ -13081,9 +12089,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13105,9 +12111,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13136,14 +12140,7 @@
             "default": "any",
             "description": "Service this secret applies to",
             "type": "string",
-            "enum": [
-              "any",
-              "l2tp",
-              "pptp",
-              "sstp",
-              "ovpn",
-              "pppoe"
-            ]
+            "enum": ["any", "l2tp", "pptp", "sstp", "ovpn", "pppoe"]
           },
           "profile": {
             "type": "string"
@@ -13165,12 +12162,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "password",
-          "service",
-          "disabled"
-        ],
+        "required": ["name", "password", "service", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13195,14 +12187,7 @@
           "service_filter": {
             "description": "Exact service match",
             "type": "string",
-            "enum": [
-              "any",
-              "l2tp",
-              "pptp",
-              "sstp",
-              "ovpn",
-              "pppoe"
-            ]
+            "enum": ["any", "l2tp", "pptp", "sstp", "ovpn", "pppoe"]
           }
         },
         "additionalProperties": false
@@ -13226,9 +12211,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13258,14 +12241,7 @@
           },
           "service": {
             "type": "string",
-            "enum": [
-              "any",
-              "l2tp",
-              "pptp",
-              "sstp",
-              "ovpn",
-              "pppoe"
-            ]
+            "enum": ["any", "l2tp", "pptp", "sstp", "ovpn", "pppoe"]
           },
           "profile": {
             "type": "string"
@@ -13286,9 +12262,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13310,9 +12284,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13357,9 +12329,7 @@
             "description": "Username of the active session to disconnect"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13407,11 +12377,7 @@
           },
           "use_ipsec": {
             "type": "string",
-            "enum": [
-              "yes",
-              "no",
-              "required"
-            ]
+            "enum": ["yes", "no", "required"]
           },
           "ipsec_secret": {
             "description": "Pre-shared key for L2TP/IPsec",
@@ -13469,10 +12435,7 @@
           },
           "use_ipsec": {
             "type": "string",
-            "enum": [
-              "yes",
-              "no"
-            ]
+            "enum": ["yes", "no"]
           },
           "ipsec_secret": {
             "description": "Pre-shared key for L2TP/IPsec",
@@ -13486,14 +12449,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "connect_to",
-          "user",
-          "password",
-          "profile",
-          "disabled"
-        ],
+        "required": ["name", "connect_to", "user", "password", "profile", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13537,9 +12493,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13561,9 +12515,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13585,9 +12537,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13609,9 +12559,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13714,13 +12662,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "connect_to",
-          "user",
-          "password",
-          "disabled"
-        ],
+        "required": ["name", "connect_to", "user", "password", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13764,9 +12706,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13788,9 +12728,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13846,10 +12784,7 @@
           },
           "tls_version": {
             "type": "string",
-            "enum": [
-              "any",
-              "only-1.2"
-            ]
+            "enum": ["any", "only-1.2"]
           },
           "verify_client_certificate": {
             "type": "boolean"
@@ -13909,13 +12844,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "connect_to",
-          "user",
-          "password",
-          "disabled"
-        ],
+        "required": ["name", "connect_to", "user", "password", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13959,9 +12888,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -13983,9 +12910,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14041,10 +12966,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "ip",
-              "ethernet"
-            ]
+            "enum": ["ip", "ethernet"]
           },
           "port": {
             "type": "integer",
@@ -14053,10 +12975,7 @@
           },
           "protocol": {
             "type": "string",
-            "enum": [
-              "tcp",
-              "udp"
-            ]
+            "enum": ["tcp", "udp"]
           },
           "default_profile": {
             "type": "string"
@@ -14117,17 +13036,11 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "ip",
-              "ethernet"
-            ]
+            "enum": ["ip", "ethernet"]
           },
           "protocol": {
             "type": "string",
-            "enum": [
-              "tcp",
-              "udp"
-            ]
+            "enum": ["tcp", "udp"]
           },
           "profile": {
             "type": "string"
@@ -14146,12 +13059,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "connect_to",
-          "port",
-          "disabled"
-        ],
+        "required": ["name", "connect_to", "port", "disabled"],
         "additionalProperties": false
       }
     },
@@ -14195,9 +13103,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14219,9 +13125,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14243,9 +13147,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14267,9 +13169,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14305,10 +13205,7 @@
           "dont_fragment": {
             "description": "Don't-fragment behavior",
             "type": "string",
-            "enum": [
-              "inherit",
-              "no"
-            ]
+            "enum": ["inherit", "no"]
           },
           "clamp_tcp_mss": {
             "description": "Clamp TCP MSS to the tunnel MTU",
@@ -14327,11 +13224,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "remote_address",
-          "disabled"
-        ],
+        "required": ["name", "remote_address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -14375,9 +13268,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14399,9 +13290,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14447,11 +13336,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "remote_address",
-          "disabled"
-        ],
+        "required": ["name", "remote_address", "disabled"],
         "additionalProperties": false
       }
     },
@@ -14495,9 +13380,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14519,9 +13402,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14573,12 +13454,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "remote_address",
-          "tunnel_id",
-          "disabled"
-        ],
+        "required": ["name", "remote_address", "tunnel_id", "disabled"],
         "additionalProperties": false
       }
     },
@@ -14622,9 +13498,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14646,9 +13520,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14703,12 +13575,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "vni",
-          "port",
-          "disabled"
-        ],
+        "required": ["name", "vni", "port", "disabled"],
         "additionalProperties": false
       }
     },
@@ -14752,9 +13619,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14776,9 +13641,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -14899,9 +13762,7 @@
             "description": "RADIUS entry internal .id, e.g. '*1'"
           }
         },
-        "required": [
-          "radius_id"
-        ],
+        "required": ["radius_id"],
         "additionalProperties": false
       }
     },
@@ -14964,9 +13825,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "radius_id"
-        ],
+        "required": ["radius_id"],
         "additionalProperties": false
       }
     },
@@ -14989,9 +13848,7 @@
             "description": "RADIUS entry internal .id, e.g. '*1'"
           }
         },
-        "required": [
-          "radius_id"
-        ],
+        "required": ["radius_id"],
         "additionalProperties": false
       }
     },
@@ -15014,9 +13871,7 @@
             "description": "RADIUS entry internal .id, e.g. '*1'"
           }
         },
-        "required": [
-          "radius_id"
-        ],
+        "required": ["radius_id"],
         "additionalProperties": false
       }
     },
@@ -15039,9 +13894,7 @@
             "description": "RADIUS entry internal .id, e.g. '*1'"
           }
         },
-        "required": [
-          "radius_id"
-        ],
+        "required": ["radius_id"],
         "additionalProperties": false
       }
     },
@@ -15196,11 +14049,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "password",
-          "disabled"
-        ],
+        "required": ["name", "password", "disabled"],
         "additionalProperties": false
       }
     },
@@ -15244,9 +14093,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15292,9 +14139,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15316,9 +14161,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15352,10 +14195,7 @@
           },
           "starts_when": {
             "type": "string",
-            "enum": [
-              "assigned",
-              "first-auth"
-            ]
+            "enum": ["assigned", "first-auth"]
           },
           "override_shared_users": {
             "type": "string"
@@ -15364,9 +14204,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15410,9 +14248,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15438,10 +14274,7 @@
             "description": "Profile to assign"
           }
         },
-        "required": [
-          "user",
-          "profile"
-        ],
+        "required": ["user", "profile"],
         "additionalProperties": false
       }
     },
@@ -15503,12 +14336,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "address",
-          "shared_secret",
-          "disabled"
-        ],
+        "required": ["name", "address", "shared_secret", "disabled"],
         "additionalProperties": false
       }
     },
@@ -15552,9 +14380,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15595,9 +14421,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15641,9 +14465,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15671,9 +14493,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "active_only"
-        ],
+        "required": ["active_only"],
         "additionalProperties": false
       }
     },
@@ -15711,14 +14531,7 @@
           },
           "cake_flowmode": {
             "type": "string",
-            "enum": [
-              "triple-isolate",
-              "dual-srchost",
-              "dual-dsthost",
-              "host",
-              "flow",
-              "none"
-            ]
+            "enum": ["triple-isolate", "dual-srchost", "dual-dsthost", "host", "flow", "none"]
           },
           "cake_nat": {
             "type": "boolean"
@@ -15735,20 +14548,11 @@
           },
           "cake_diffserv": {
             "type": "string",
-            "enum": [
-              "besteffort",
-              "diffserv3",
-              "diffserv4",
-              "diffserv8"
-            ]
+            "enum": ["besteffort", "diffserv3", "diffserv4", "diffserv8"]
           },
           "cake_ack_filter": {
             "type": "string",
-            "enum": [
-              "filter",
-              "aggressive",
-              "none"
-            ]
+            "enum": ["filter", "aggressive", "none"]
           },
           "cake_rtt": {
             "description": "Round-trip time e.g. \"50ms\", \"100ms\"",
@@ -15837,10 +14641,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "name",
-          "kind"
-        ],
+        "required": ["name", "kind"],
         "additionalProperties": false
       }
     },
@@ -15886,9 +14687,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15955,9 +14754,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -15979,9 +14776,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16048,11 +14843,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "parent",
-          "disabled"
-        ],
+        "required": ["name", "parent", "disabled"],
         "additionalProperties": false
       }
     },
@@ -16085,10 +14876,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only"
-        ],
+        "required": ["disabled_only", "invalid_only"],
         "additionalProperties": false
       }
     },
@@ -16110,9 +14898,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16181,9 +14967,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16205,9 +14989,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16229,9 +15011,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16253,9 +15033,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16326,11 +15104,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "target",
-          "disabled"
-        ],
+        "required": ["name", "target", "disabled"],
         "additionalProperties": false
       }
     },
@@ -16363,10 +15137,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "invalid_only"
-        ],
+        "required": ["disabled_only", "invalid_only"],
         "additionalProperties": false
       }
     },
@@ -16388,9 +15159,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16464,9 +15233,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16488,9 +15255,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16512,9 +15277,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16536,9 +15299,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16587,9 +15348,7 @@
             "description": "Interface name (e.g. 'ether1') or RouterOS '.id'"
           }
         },
-        "required": [
-          "interface_id"
-        ],
+        "required": ["interface_id"],
         "additionalProperties": false
       }
     },
@@ -16616,10 +15375,7 @@
             "description": "Queue-type name to apply to the interface"
           }
         },
-        "required": [
-          "interface_id",
-          "queue"
-        ],
+        "required": ["interface_id", "queue"],
         "additionalProperties": false
       }
     },
@@ -16675,9 +15431,7 @@
             "description": "New system identity / hostname"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -16889,9 +15643,7 @@
             "description": "Must be true to actually reboot the device"
           }
         },
-        "required": [
-          "confirm"
-        ],
+        "required": ["confirm"],
         "additionalProperties": false
       }
     },
@@ -16913,9 +15665,7 @@
             "description": "Must be true to actually shut down the device"
           }
         },
-        "required": [
-          "confirm"
-        ],
+        "required": ["confirm"],
         "additionalProperties": false
       }
     },
@@ -16987,12 +15737,7 @@
           "all_leds_off": {
             "description": "When to turn all LEDs off (dark mode)",
             "type": "string",
-            "enum": [
-              "never",
-              "immediate",
-              "after-1h",
-              "after-1min"
-            ]
+            "enum": ["never", "immediate", "after-1h", "after-1min"]
           }
         },
         "additionalProperties": false
@@ -17132,10 +15877,7 @@
             "description": "The new password to set"
           }
         },
-        "required": [
-          "old_password",
-          "new_password"
-        ],
+        "required": ["old_password", "new_password"],
         "additionalProperties": false
       }
     },
@@ -17180,9 +15922,7 @@
             "description": "Serial port name, e.g. 'serial0'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -17215,11 +15955,7 @@
           },
           "parity": {
             "type": "string",
-            "enum": [
-              "none",
-              "odd",
-              "even"
-            ]
+            "enum": ["none", "odd", "even"]
           },
           "stop_bits": {
             "type": "integer",
@@ -17228,16 +15964,10 @@
           },
           "flow_control": {
             "type": "string",
-            "enum": [
-              "none",
-              "hardware",
-              "xon-xoff"
-            ]
+            "enum": ["none", "hardware", "xon-xoff"]
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -17292,9 +16022,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "confirm"
-        ],
+        "required": ["confirm"],
         "additionalProperties": false
       }
     },
@@ -17414,10 +16142,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "address",
-          "count"
-        ],
+        "required": ["address", "count"],
         "additionalProperties": false
       }
     },
@@ -17451,10 +16176,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "address",
-          "count"
-        ],
+        "required": ["address", "count"],
         "additionalProperties": false
       }
     },
@@ -17486,11 +16208,7 @@
           "direction": {
             "default": "receive",
             "type": "string",
-            "enum": [
-              "receive",
-              "transmit",
-              "both"
-            ]
+            "enum": ["receive", "transmit", "both"]
           },
           "user": {
             "description": "Username for the bandwidth-test server",
@@ -17503,18 +16221,10 @@
           "protocol": {
             "default": "tcp",
             "type": "string",
-            "enum": [
-              "tcp",
-              "udp"
-            ]
+            "enum": ["tcp", "udp"]
           }
         },
-        "required": [
-          "address",
-          "duration",
-          "direction",
-          "protocol"
-        ],
+        "required": ["address", "duration", "direction", "protocol"],
         "additionalProperties": false
       }
     },
@@ -17541,9 +16251,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -17588,10 +16296,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "host",
-          "disabled"
-        ],
+        "required": ["host", "disabled"],
         "additionalProperties": false
       }
     },
@@ -17635,9 +16340,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "host"
-        ],
+        "required": ["host"],
         "additionalProperties": false
       }
     },
@@ -17659,9 +16362,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "host"
-        ],
+        "required": ["host"],
         "additionalProperties": false
       }
     },
@@ -17778,10 +16479,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "address",
-          "count"
-        ],
+        "required": ["address", "count"],
         "additionalProperties": false
       }
     },
@@ -17811,9 +16509,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface"
-        ],
+        "required": ["interface"],
         "additionalProperties": false
       }
     },
@@ -17842,9 +16538,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "simple_queue"
-        ],
+        "required": ["simple_queue"],
         "additionalProperties": false
       }
     },
@@ -17887,17 +16581,11 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "interface",
-              "queue",
-              "resource"
-            ],
+            "enum": ["interface", "queue", "resource"],
             "description": "Which graphing table to list"
           }
         },
-        "required": [
-          "kind"
-        ],
+        "required": ["kind"],
         "additionalProperties": false
       }
     },
@@ -17917,21 +16605,14 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "interface",
-              "queue",
-              "resource"
-            ]
+            "enum": ["interface", "queue", "resource"]
           },
           "entry_id": {
             "type": "string",
             "description": "RouterOS '.id', e.g. '*1'"
           }
         },
-        "required": [
-          "kind",
-          "entry_id"
-        ],
+        "required": ["kind", "entry_id"],
         "additionalProperties": false
       }
     },
@@ -17965,9 +16646,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "duration"
-        ],
+        "required": ["duration"],
         "additionalProperties": false
       }
     },
@@ -18007,9 +16686,7 @@
             "description": "Interface-list name, or 'all' / 'none'"
           }
         },
-        "required": [
-          "allowed_interface_list"
-        ],
+        "required": ["allowed_interface_list"],
         "additionalProperties": false
       }
     },
@@ -18049,9 +16726,7 @@
             "description": "Interface-list name, or 'all' / 'none'"
           }
         },
-        "required": [
-          "allowed_interface_list"
-        ],
+        "required": ["allowed_interface_list"],
         "additionalProperties": false
       }
     },
@@ -18091,9 +16766,7 @@
             "description": "Whether MAC-ping is enabled"
           }
         },
-        "required": [
-          "enabled"
-        ],
+        "required": ["enabled"],
         "additionalProperties": false
       }
     },
@@ -18234,9 +16907,7 @@
             "description": "Output file name, e.g. 'capture'"
           }
         },
-        "required": [
-          "file_name"
-        ],
+        "required": ["file_name"],
         "additionalProperties": false
       }
     },
@@ -18346,9 +17017,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "duration"
-        ],
+        "required": ["duration"],
         "additionalProperties": false
       }
     },
@@ -18434,10 +17103,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interface",
-          "disabled"
-        ],
+        "required": ["interface", "disabled"],
         "additionalProperties": false
       }
     },
@@ -18481,9 +17147,7 @@
             "description": "Interface name or RouterOS '.id'"
           }
         },
-        "required": [
-          "port_id"
-        ],
+        "required": ["port_id"],
         "additionalProperties": false
       }
     },
@@ -18579,11 +17243,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "port",
-          "phone_number",
-          "message"
-        ],
+        "required": ["port", "phone_number", "message"],
         "additionalProperties": false
       }
     },
@@ -18637,11 +17297,7 @@
           "direction": {
             "default": "both",
             "type": "string",
-            "enum": [
-              "receive",
-              "transmit",
-              "both"
-            ]
+            "enum": ["receive", "transmit", "both"]
           },
           "tcp_connection_count": {
             "description": "Parallel TCP connections to use",
@@ -18658,11 +17314,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "address",
-          "duration",
-          "direction"
-        ],
+        "required": ["address", "duration", "direction"],
         "additionalProperties": false
       }
     },
@@ -18690,11 +17342,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "interface",
-          "disabled"
-        ],
+        "required": ["name", "interface", "disabled"],
         "additionalProperties": false
       }
     },
@@ -18738,9 +17386,7 @@
             "description": "Port name or RouterOS '.id'"
           }
         },
-        "required": [
-          "port_id"
-        ],
+        "required": ["port_id"],
         "additionalProperties": false
       }
     },
@@ -18784,11 +17430,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "port",
-          "disabled"
-        ],
+        "required": ["name", "port", "disabled"],
         "additionalProperties": false
       }
     },
@@ -18835,9 +17477,7 @@
             "description": "Stream name or RouterOS '.id'"
           }
         },
-        "required": [
-          "stream_id"
-        ],
+        "required": ["stream_id"],
         "additionalProperties": false
       }
     },
@@ -18901,18 +17541,11 @@
           },
           "traffic": {
             "type": "string",
-            "enum": [
-              "received",
-              "transmitted"
-            ]
+            "enum": ["received", "transmitted"]
           },
           "trigger": {
             "type": "string",
-            "enum": [
-              "above",
-              "below",
-              "always"
-            ]
+            "enum": ["above", "below", "always"]
           },
           "threshold": {
             "type": "integer",
@@ -18932,14 +17565,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "interface",
-          "traffic",
-          "trigger",
-          "threshold",
-          "disabled"
-        ],
+        "required": ["name", "interface", "traffic", "trigger", "threshold", "disabled"],
         "additionalProperties": false
       }
     },
@@ -18968,9 +17594,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only"
-        ],
+        "required": ["disabled_only"],
         "additionalProperties": false
       }
     },
@@ -18992,9 +17616,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19020,18 +17642,11 @@
           },
           "traffic": {
             "type": "string",
-            "enum": [
-              "received",
-              "transmitted"
-            ]
+            "enum": ["received", "transmitted"]
           },
           "trigger": {
             "type": "string",
-            "enum": [
-              "above",
-              "below",
-              "always"
-            ]
+            "enum": ["above", "below", "always"]
           },
           "threshold": {
             "type": "integer",
@@ -19048,9 +17663,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19072,9 +17685,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19096,9 +17707,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19120,9 +17729,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19148,9 +17755,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "mac"
-        ],
+        "required": ["mac"],
         "additionalProperties": false
       }
     },
@@ -19195,11 +17800,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "on_event",
-          "disabled"
-        ],
+        "required": ["name", "on_event", "disabled"],
         "additionalProperties": false
       }
     },
@@ -19243,9 +17844,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19267,9 +17866,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19291,9 +17888,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19315,9 +17910,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19351,11 +17944,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "source",
-          "dont_require_permissions"
-        ],
+        "required": ["name", "source", "dont_require_permissions"],
         "additionalProperties": false
       }
     },
@@ -19399,9 +17988,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19422,9 +18009,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19462,12 +18047,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "password",
-          "group",
-          "disabled"
-        ],
+        "required": ["name", "password", "group", "disabled"],
         "additionalProperties": false
       }
     },
@@ -19500,10 +18080,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "disabled_only",
-          "active_only"
-        ],
+        "required": ["disabled_only", "active_only"],
         "additionalProperties": false
       }
     },
@@ -19525,9 +18102,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19567,9 +18142,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19591,9 +18164,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19615,9 +18186,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19639,9 +18208,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19674,10 +18241,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "policy"
-        ],
+        "required": ["name", "policy"],
         "additionalProperties": false
       }
     },
@@ -19723,9 +18287,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19762,9 +18324,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19786,9 +18346,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -19827,9 +18385,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "user_id"
-        ],
+        "required": ["user_id"],
         "additionalProperties": false
       }
     },
@@ -19874,10 +18430,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "username",
-          "key_file"
-        ],
+        "required": ["username", "key_file"],
         "additionalProperties": false
       }
     },
@@ -19899,9 +18452,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "username"
-        ],
+        "required": ["username"],
         "additionalProperties": false
       }
     },
@@ -19923,9 +18474,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "key_id"
-        ],
+        "required": ["key_id"],
         "additionalProperties": false
       }
     },
@@ -19970,17 +18519,10 @@
           "print_as": {
             "default": "value",
             "type": "string",
-            "enum": [
-              "value",
-              "detail",
-              "terse"
-            ]
+            "enum": ["value", "detail", "terse"]
           }
         },
-        "required": [
-          "follow",
-          "print_as"
-        ],
+        "required": ["follow", "print_as"],
         "additionalProperties": false
       }
     },
@@ -20000,13 +18542,7 @@
         "properties": {
           "severity": {
             "type": "string",
-            "enum": [
-              "debug",
-              "info",
-              "warning",
-              "error",
-              "critical"
-            ]
+            "enum": ["debug", "info", "warning", "error", "critical"]
           },
           "time_filter": {
             "type": "string"
@@ -20017,9 +18553,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "severity"
-        ],
+        "required": ["severity"],
         "additionalProperties": false
       }
     },
@@ -20049,9 +18583,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "topic"
-        ],
+        "required": ["topic"],
         "additionalProperties": false
       }
     },
@@ -20085,10 +18617,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "search_term",
-          "case_sensitive"
-        ],
+        "required": ["search_term", "case_sensitive"],
         "additionalProperties": false
       }
     },
@@ -20207,15 +18736,10 @@
           "format": {
             "default": "plain",
             "type": "string",
-            "enum": [
-              "plain",
-              "csv"
-            ]
+            "enum": ["plain", "csv"]
           }
         },
-        "required": [
-          "format"
-        ],
+        "required": ["format"],
         "additionalProperties": false
       }
     },
@@ -20246,9 +18770,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "duration"
-        ],
+        "required": ["duration"],
         "additionalProperties": false
       }
     },
@@ -20282,10 +18804,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "topics",
-          "disabled"
-        ],
+        "required": ["topics", "disabled"],
         "additionalProperties": false
       }
     },
@@ -20334,9 +18853,7 @@
             "description": "Internal .id of the logging rule, e.g. '*1'"
           }
         },
-        "required": [
-          "rule_id"
-        ],
+        "required": ["rule_id"],
         "additionalProperties": false
       }
     },
@@ -20359,13 +18876,7 @@
           },
           "target": {
             "type": "string",
-            "enum": [
-              "memory",
-              "disk",
-              "echo",
-              "remote",
-              "email"
-            ],
+            "enum": ["memory", "disk", "echo", "remote", "email"],
             "description": "Where log messages are written"
           },
           "remote": {
@@ -20412,11 +18923,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "target",
-          "disabled"
-        ],
+        "required": ["name", "target", "disabled"],
         "additionalProperties": false
       }
     },
@@ -20461,9 +18968,7 @@
             "description": "Name of the logging action to remove"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -20495,10 +19000,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "dont_encrypt",
-          "include_password"
-        ],
+        "required": ["dont_encrypt", "include_password"],
         "additionalProperties": false
       }
     },
@@ -20524,9 +19026,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "include_exports"
-        ],
+        "required": ["include_exports"],
         "additionalProperties": false
       }
     },
@@ -20550,20 +19050,12 @@
           "file_format": {
             "default": "rsc",
             "type": "string",
-            "enum": [
-              "rsc",
-              "json",
-              "xml"
-            ]
+            "enum": ["rsc", "json", "xml"]
           },
           "export_type": {
             "default": "full",
             "type": "string",
-            "enum": [
-              "full",
-              "compact",
-              "verbose"
-            ]
+            "enum": ["full", "compact", "verbose"]
           },
           "hide_sensitive": {
             "default": true,
@@ -20581,13 +19073,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "file_format",
-          "export_type",
-          "hide_sensitive",
-          "verbose",
-          "compact"
-        ],
+        "required": ["file_format", "export_type", "hide_sensitive", "verbose", "compact"],
         "additionalProperties": false
       }
     },
@@ -20620,11 +19106,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "section",
-          "hide_sensitive",
-          "compact"
-        ],
+        "required": ["section", "hide_sensitive", "compact"],
         "additionalProperties": false
       }
     },
@@ -20648,16 +19130,10 @@
           "file_type": {
             "default": "backup",
             "type": "string",
-            "enum": [
-              "backup",
-              "export"
-            ]
+            "enum": ["backup", "export"]
           }
         },
-        "required": [
-          "filename",
-          "file_type"
-        ],
+        "required": ["filename", "file_type"],
         "additionalProperties": false
       }
     },
@@ -20681,10 +19157,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "filename",
-          "content_base64"
-        ],
+        "required": ["filename", "content_base64"],
         "additionalProperties": false
       }
     },
@@ -20708,9 +19181,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "filename"
-        ],
+        "required": ["filename"],
         "additionalProperties": false
       }
     },
@@ -20739,11 +19210,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "filename",
-          "run_after_reset",
-          "verbose"
-        ],
+        "required": ["filename", "run_after_reset", "verbose"],
         "additionalProperties": false
       }
     },
@@ -20764,9 +19231,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "filename"
-        ],
+        "required": ["filename"],
         "additionalProperties": false
       }
     },
@@ -20788,9 +19253,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "filename"
-        ],
+        "required": ["filename"],
         "additionalProperties": false
       }
     },
@@ -20839,9 +19302,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "filename"
-        ],
+        "required": ["filename"],
         "additionalProperties": false
       }
     },
@@ -20873,9 +19334,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "key"
-        ],
+        "required": ["key"],
         "additionalProperties": false
       }
     },
@@ -20905,9 +19364,7 @@
             "maximum": 1000
           }
         },
-        "required": [
-          "max_keys"
-        ],
+        "required": ["max_keys"],
         "additionalProperties": false
       }
     },
@@ -20930,9 +19387,7 @@
             "description": "S3 object key"
           }
         },
-        "required": [
-          "key"
-        ],
+        "required": ["key"],
         "additionalProperties": false
       }
     },
@@ -20955,9 +19410,7 @@
             "description": "S3 object key to delete"
           }
         },
-        "required": [
-          "key"
-        ],
+        "required": ["key"],
         "additionalProperties": false
       }
     },
@@ -20997,9 +19450,7 @@
             "description": "Disk name, e.g. 'disk1'"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "additionalProperties": false
       }
     },
@@ -21023,12 +19474,7 @@
           "file_system": {
             "description": "File system to create",
             "type": "string",
-            "enum": [
-              "ext4",
-              "fat32",
-              "exfat",
-              "ntfs"
-            ]
+            "enum": ["ext4", "fat32", "exfat", "ntfs"]
           },
           "label": {
             "description": "Volume label",
@@ -21039,10 +19485,7 @@
             "description": "Must be true to actually erase the disk"
           }
         },
-        "required": [
-          "name",
-          "confirm"
-        ],
+        "required": ["name", "confirm"],
         "additionalProperties": false
       }
     },
@@ -21104,6 +19547,23 @@
         "openWorldHint": false
       },
       "description": "Discards all pending Safe Mode changes on the targeted device by closing the SSH session, triggering automatic rollback.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "show_system_dashboard",
+      "title": "Device Dashboard",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Shows a live device health dashboard (CPU, memory, disk, uptime, temperature/voltage, board and RouterOS version) as an interactive view. Use this when the user wants an at-a-glance overview of a MikroTik device.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
