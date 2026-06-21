@@ -13,6 +13,10 @@
 # SECURITY: env vars are visible via `docker inspect`. In shared/production
 # environments pass credentials via Docker secrets or a mounted key file
 # (MIKROTIK_KEY_FILENAME) instead of a plaintext password.
+#
+# Public exposure (e.g. a ChatGPT Apps connector)? Add MIKROTIK_READ_ONLY=true so
+# only inspection tools are reachable until auth is in place, and put HTTPS in
+# front (e.g. Cloudflare Tunnel). See docs/docker.md#deploying-to-chatgpt-apps.
 
 FROM oven/bun:1.3-alpine AS build
 WORKDIR /app
