@@ -1,0 +1,1695 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>@usex/mikrotik-mcp — Ali Torki</title>
+    <meta
+      name="description"
+      content="@usex/mikrotik-mcp — a Bun-native Model Context Protocol (MCP) server that exposes MikroTik RouterOS over SSH as 640+ risk-annotated AI tools across 88 modules: firewall, NAT, routing, IPv6, DHCP/DNS, WireGuard, QoS, switching, 802.1X and more."
+    />
+    <meta
+      name="keywords"
+      content="mikrotik, mikrotik mcp, routeros, mcp server, model context protocol, bun, ssh, firewall, wireguard, ipv6, dhcp, dns, qos, ai tools, claude, network automation, ali torki"
+    />
+    <meta name="author" content="Ali Torki" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href="https://github.com/ali-master/mikrotik-mcp" />
+    <link rel="icon" type="image/svg+xml" href="./logo-icon.svg" />
+    <link rel="apple-touch-icon" href="./logo-icon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="@usex/mikrotik-mcp" />
+    <meta
+      property="og:title"
+      content="@usex/mikrotik-mcp — drive your MikroTik router with words"
+    />
+    <meta
+      property="og:description"
+      content="Bun-native MCP server: 640+ risk-annotated RouterOS tools over SSH, with transactional Safe Mode and live observability."
+    />
+    <meta property="og:url" content="https://github.com/ali-master/mikrotik-mcp" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/social-preview.png"
+    />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta property="og:image:alt" content="@usex/mikrotik-mcp — MikroTik RouterOS MCP server" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@usex/mikrotik-mcp — MikroTik RouterOS, driven by AI" />
+    <meta
+      name="twitter:description"
+      content="640+ risk-annotated RouterOS tools over SSH. Bun-native MCP server with Safe Mode and live observability."
+    />
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/social-preview.png"
+    />
+    <meta name="twitter:creator" content="@alitorki" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "@usex/mikrotik-mcp",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Cross-platform (Bun >= 1.3)",
+        "description": "A Bun-native Model Context Protocol server that exposes MikroTik RouterOS over SSH as 640+ risk-annotated AI tools across 88 modules.",
+        "softwareVersion": "2.0.0",
+        "license": "https://opensource.org/licenses/MIT",
+        "url": "https://github.com/ali-master/mikrotik-mcp",
+        "downloadUrl": "https://www.npmjs.com/package/@usex/mikrotik-mcp",
+        "author": { "@type": "Person", "name": "Ali Torki" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --violet: #8b5cf6;
+        --indigo: #6366f1;
+        --cyan: #06b6d4;
+        --bg: #07080f;
+        --bg-2: #0b1020;
+        --ink: #eef1ff;
+        --muted: #8a90b8;
+        --line: rgba(140, 150, 210, 0.14);
+        --glass: rgba(20, 24, 48, 0.5);
+        --grad: linear-gradient(110deg, var(--violet), var(--indigo) 45%, var(--cyan));
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "DM Mono", ui-monospace, monospace;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+        cursor: none;
+      }
+      @media (pointer: coarse) {
+        body {
+          cursor: auto;
+        }
+      }
+      ::selection {
+        background: var(--violet);
+        color: #fff;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* film grain + vignette over everything */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 90;
+        background:
+          radial-gradient(120% 80% at 50% 0%, transparent 55%, rgba(0, 0, 0, 0.55)),
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/></svg>");
+        mix-blend-mode: screen;
+      }
+
+      /* ---------- custom cursor ---------- */
+      .cursor,
+      .cursor-dot {
+        position: fixed;
+        top: 0;
+        left: 0;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 100;
+        transform: translate(-50%, -50%);
+        will-change: transform;
+      }
+      .cursor {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(160, 170, 255, 0.6);
+        backdrop-filter: invert(0.04);
+        transition:
+          width 0.3s var(--ease),
+          height 0.3s var(--ease),
+          background 0.3s var(--ease),
+          border-color 0.3s var(--ease);
+      }
+      .cursor.is-hover {
+        width: 74px;
+        height: 74px;
+        background: rgba(139, 92, 246, 0.16);
+        border-color: transparent;
+      }
+      .cursor-dot {
+        width: 5px;
+        height: 5px;
+        background: var(--cyan);
+      }
+
+      /* ---------- preloader ---------- */
+      #loader {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: var(--bg);
+        display: grid;
+        place-items: center;
+      }
+      #pl-logo {
+        width: clamp(112px, 22vw, 168px);
+        height: auto;
+        overflow: visible;
+        filter: drop-shadow(0 10px 34px rgba(99, 102, 241, 0.5));
+      }
+      #loader .pl-cap {
+        position: absolute;
+        bottom: 13%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      #loader .pl-bar {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 2px;
+        width: 0%;
+        background: var(--grad);
+      }
+
+      /* ---------- ambient orbs ---------- */
+      .orbs {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        overflow: hidden;
+        background: radial-gradient(140% 120% at 50% -10%, var(--bg-2), var(--bg) 60%);
+      }
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(70px);
+        opacity: 0.5;
+        will-change: transform;
+      }
+      .orb.a {
+        width: 46vw;
+        height: 46vw;
+        background: var(--violet);
+        top: -8vw;
+        left: -6vw;
+      }
+      .orb.b {
+        width: 40vw;
+        height: 40vw;
+        background: var(--cyan);
+        bottom: -12vw;
+        right: -8vw;
+        opacity: 0.4;
+      }
+      .orb.c {
+        width: 30vw;
+        height: 30vw;
+        background: var(--indigo);
+        top: 40%;
+        left: 55%;
+        opacity: 0.35;
+      }
+
+      /* ---------- layout ---------- */
+      .wrap {
+        max-width: 1200px;
+        margin: 10px auto;
+        padding: 20px 28px;
+      }
+      section {
+        position: relative;
+      }
+      .eyebrow {
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--cyan);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .eyebrow::before {
+        content: "";
+        width: 26px;
+        height: 1px;
+        background: var(--cyan);
+        display: inline-block;
+      }
+
+      /* ---------- nav ---------- */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 80;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 28px;
+        mix-blend-mode: difference;
+      }
+      nav .brand {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        font-size: 18px;
+      }
+      nav .brand b {
+        color: var(--indigo);
+      }
+      nav .links {
+        display: flex;
+        gap: 26px;
+        font-size: 13px;
+        font-family: "DM Mono", ui-monospace, monospace;
+      }
+      nav .links a {
+        opacity: 0.8;
+        transition: opacity 0.25s;
+      }
+      nav .links a:hover {
+        opacity: 1;
+      }
+      @media (max-width: 720px) {
+        nav .links {
+          display: none;
+        }
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 120px 0 80px;
+      }
+      .hero h1 {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-weight: 700;
+        font-size: clamp(2.6rem, 9vw, 8.4rem);
+        line-height: 0.95;
+        letter-spacing: -0.03em;
+        margin: 22px 0;
+      }
+      .hero h1 .line {
+        display: block;
+        overflow: hidden;
+      }
+      .hero h1 .char {
+        display: inline-block;
+        will-change: transform;
+      }
+      .hero h1 .grad,
+      .hero h1 .grad .char {
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .hero .sub {
+        max-width: 540px;
+        color: var(--muted);
+        font-size: clamp(1rem, 2.2vw, 1.25rem);
+        line-height: 1.6;
+        margin-top: 8px;
+      }
+      .hero .sub b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .cta-row {
+        display: flex;
+        gap: 16px;
+        margin-top: 38px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 28px;
+        border-radius: 100px;
+        font-weight: 600;
+        font-size: 15px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        will-change: transform;
+      }
+      .btn.primary {
+        background: var(--grad);
+        color: #0a0c18;
+        border: none;
+      }
+      .btn .lbl {
+        position: relative;
+        z-index: 2;
+      }
+      .btn.ghost::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--grad);
+        opacity: 0;
+        transition: opacity 0.35s var(--ease);
+        z-index: 1;
+      }
+      .btn.ghost:hover::after {
+        opacity: 0.16;
+      }
+      .scroll-cue {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .scroll-cue .bar {
+        width: 1px;
+        height: 50px;
+        background: linear-gradient(var(--cyan), transparent);
+      }
+
+      /* ---------- marquee ---------- */
+      .marquee {
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 26px 0;
+        overflow: hidden;
+        white-space: nowrap;
+        background: rgba(10, 12, 26, 0.4);
+      }
+      .marquee .track {
+        display: inline-flex;
+        gap: 56px;
+        will-change: transform;
+      }
+      .marquee span {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: clamp(1.4rem, 4vw, 2.6rem);
+        font-weight: 600;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(160, 170, 255, 0.4);
+      }
+      .marquee span.fill {
+        color: var(--ink);
+        -webkit-text-stroke: 0;
+      }
+
+      /* ---------- stats ---------- */
+      .stats {
+        padding: 130px 0;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+      }
+      @media (max-width: 820px) {
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .stat {
+        padding: 28px 0;
+        border-top: 1px solid var(--line);
+      }
+      .stat .num {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: clamp(2.6rem, 7vw, 4.6rem);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .stat .num .suffix {
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .stat .lbl {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-family: "DM Mono", ui-monospace, monospace;
+      }
+
+      /* ---------- section heading ---------- */
+      .head {
+        padding: 60px 0 50px;
+        max-width: 760px;
+      }
+      .head h2 {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-weight: 700;
+        font-size: clamp(2rem, 6vw, 4rem);
+        line-height: 1.02;
+        letter-spacing: -0.025em;
+        margin: 18px 0 0;
+      }
+      .reveal-word {
+        display: inline-block;
+        overflow: hidden;
+        vertical-align: bottom;
+      }
+      .reveal-word > span {
+        display: inline-block;
+        will-change: transform;
+      }
+
+      /* ---------- features ---------- */
+      .features {
+        padding-bottom: 120px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 920px) {
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        position: relative;
+        padding: 30px;
+        border-radius: 22px;
+        background: var(--glass);
+        border: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+        overflow: hidden;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          400px circle at var(--mx, 50%) var(--my, 0%),
+          rgba(139, 92, 246, 0.18),
+          transparent 45%
+        );
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+      .card:hover::before {
+        opacity: 1;
+      }
+      .card .ic {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(139, 92, 246, 0.14);
+        border: 1px solid var(--line);
+        margin-bottom: 22px;
+      }
+      .card .ic svg {
+        width: 24px;
+        height: 24px;
+        stroke: var(--cyan);
+        fill: none;
+        stroke-width: 1.6;
+      }
+      .card h3 {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        letter-spacing: -0.01em;
+      }
+      .card p {
+        color: var(--muted);
+        font-size: 14.5px;
+        line-height: 1.6;
+      }
+      .card code {
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 0.85em;
+        color: var(--ink);
+      }
+      .card .tag {
+        margin-top: 18px;
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--cyan);
+        letter-spacing: 0.1em;
+      }
+
+      /* ---------- domains (horizontal pinned gallery) ---------- */
+      .domains-intro {
+        padding: 100px 0 10px;
+        max-width: 820px;
+      }
+      .domains-intro h2 {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: clamp(2.2rem, 7vw, 5rem);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        margin-top: 16px;
+      }
+      .domains-intro .ital {
+        font-style: italic;
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .domains-hint {
+        margin-top: 20px;
+        color: var(--cyan);
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .domains-hint .arrow {
+        display: inline-block;
+        will-change: transform;
+      }
+      .dviewport {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+      }
+      .dtrack {
+        display: flex;
+        gap: 26px;
+        padding: 0 28px;
+        width: max-content;
+      }
+      .dslide {
+        position: relative;
+        width: min(80vw, 560px);
+        height: 72vh;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: var(--glass);
+        backdrop-filter: blur(14px);
+        padding: clamp(26px, 4vw, 46px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+      .dslide::before {
+        content: "";
+        position: absolute;
+        width: 360px;
+        height: 360px;
+        border-radius: 50%;
+        filter: blur(85px);
+        opacity: 0.32;
+        top: -130px;
+        right: -110px;
+        background: var(--accent, var(--violet));
+        pointer-events: none;
+      }
+      .dindex {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-style: italic;
+        font-size: clamp(4rem, 12vw, 9rem);
+        line-height: 0.8;
+        color: transparent;
+        -webkit-text-stroke: 1.5px rgba(160, 170, 255, 0.45);
+      }
+      .dmeta {
+        position: relative;
+        z-index: 1;
+      }
+      .dhead {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .dname {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: clamp(1.8rem, 4vw, 2.9rem);
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+      }
+      .dcount {
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--cyan);
+        border: 1px solid var(--line);
+        padding: 4px 11px;
+        border-radius: 100px;
+        white-space: nowrap;
+      }
+      .dtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 24px;
+      }
+      .dtag {
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--ink);
+        padding: 7px 12px;
+        border-radius: 11px;
+        background: rgba(140, 150, 210, 0.08);
+        border: 1px solid var(--line);
+        will-change: transform;
+        transition:
+          background 0.25s,
+          border-color 0.25s,
+          color 0.25s;
+      }
+      .dslide:hover .dtag {
+        border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+      }
+      .dtag:hover {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        border-color: var(--accent);
+      }
+
+      /* ---------- pipeline (pinned, scrubbed) ---------- */
+      .pipeline {
+        padding: 40px 0 160px;
+      }
+      .pipe-stage {
+        position: relative;
+        height: 60vh;
+        display: grid;
+        place-items: center;
+      }
+      .pipe-svg {
+        width: 100%;
+        max-width: 980px;
+        overflow: visible;
+      }
+      .pipe-svg .wire {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 2;
+      }
+      .pipe-svg .flow {
+        fill: none;
+        stroke: url(#pg);
+        stroke-width: 3;
+        stroke-linecap: round;
+      }
+      .pipe-svg .node circle {
+        fill: var(--bg-2);
+        stroke: var(--line);
+        stroke-width: 1.5;
+      }
+      .pipe-svg .node text {
+        fill: var(--ink);
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 12px;
+        text-anchor: middle;
+      }
+      .pipe-svg .node .sub {
+        fill: var(--muted);
+        font-size: 9px;
+      }
+      .packet {
+        fill: var(--cyan);
+        filter: drop-shadow(0 0 10px var(--cyan));
+      }
+      .pipe-caption {
+        text-align: center;
+        margin-top: 26px;
+        color: var(--muted);
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 13px;
+      }
+      .pipe-caption b {
+        color: var(--ink);
+      }
+
+      /* ---------- big quote / outro ---------- */
+      .outro {
+        padding: 140px 0 80px;
+        text-align: center;
+      }
+      .outro h2 {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-weight: 700;
+        font-size: clamp(2.2rem, 8vw, 6rem);
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+      }
+      .outro h2 .grad {
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .outro p {
+        color: var(--muted);
+        max-width: 480px;
+        margin: 26px auto 0;
+        line-height: 1.6;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 40px 0;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        color: var(--muted);
+        font-family: "DM Mono", ui-monospace, monospace;
+        font-size: 12px;
+      }
+      footer b {
+        color: var(--ink);
+      }
+
+      .progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        background: var(--grad);
+        z-index: 85;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="orbs">
+      <div class="orb a" data-speed="0.4"></div>
+      <div class="orb b" data-speed="0.7"></div>
+      <div class="orb c" data-speed="0.55"></div>
+    </div>
+
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
+    <div class="progress"></div>
+
+    <div id="loader">
+      <svg id="pl-logo" viewBox="0 0 256 256" fill="none" role="img" aria-label="MikroTik MCP">
+        <defs>
+          <linearGradient
+            id="pl-tile"
+            x1="32"
+            y1="24"
+            x2="224"
+            y2="232"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stop-color="#8B5CF6" />
+            <stop offset="0.55" stop-color="#6366F1" />
+            <stop offset="1" stop-color="#06B6D4" />
+          </linearGradient>
+          <linearGradient
+            id="pl-sheen"
+            x1="40"
+            y1="32"
+            x2="160"
+            y2="180"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.22" />
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+          </linearGradient>
+          <radialGradient id="pl-node" cx="0.35" cy="0.3" r="0.85">
+            <stop offset="0" stop-color="#ffffff" />
+            <stop offset="1" stop-color="#E5EDFF" />
+          </radialGradient>
+        </defs>
+        <rect class="pl-tile" x="16" y="16" width="224" height="224" rx="54" fill="url(#pl-tile)" />
+        <rect
+          class="pl-tile"
+          x="16"
+          y="16"
+          width="224"
+          height="224"
+          rx="54"
+          fill="url(#pl-sheen)"
+        />
+        <g class="pl-links" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.95">
+          <line x1="128" y1="128" x2="80" y2="74" />
+          <line x1="128" y1="128" x2="182" y2="78" />
+          <line x1="128" y1="128" x2="78" y2="184" />
+          <line x1="128" y1="128" x2="184" y2="182" />
+        </g>
+        <g class="pl-nodes">
+          <circle class="pl-leaf" cx="80" cy="74" r="13" fill="url(#pl-node)" />
+          <circle class="pl-leaf" cx="182" cy="78" r="13" fill="url(#pl-node)" />
+          <circle class="pl-leaf" cx="78" cy="184" r="13" fill="url(#pl-node)" />
+          <circle class="pl-leaf" cx="184" cy="182" r="13" fill="url(#pl-node)" />
+          <circle class="pl-hub" cx="128" cy="128" r="22" fill="url(#pl-node)" />
+        </g>
+        <path
+          class="pl-chevron"
+          d="M120 120.5 L127.5 128 L120 135.5"
+          fill="none"
+          stroke="#6366F1"
+          stroke-width="4.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <div class="pl-cap">mikrotik · mcp</div>
+      <div class="pl-bar"></div>
+    </div>
+
+    <nav>
+      <div class="brand">mikrotik<b>·</b>mcp</div>
+      <div class="links">
+        <a href="#tools" data-hover>tools</a>
+        <a href="#capabilities" data-hover>capabilities</a>
+        <a href="#flow" data-hover>flow</a>
+        <a href="https://www.npmjs.com/package/@usex/mikrotik-mcp" data-hover>npm ↗</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="wrap">
+        <span class="eyebrow">Bun-native · MCP · RouterOS</span>
+        <h1>
+          <span class="line"><span class="w">Drive&nbsp;your</span></span>
+          <span class="line"><span class="w grad">router</span></span>
+          <span class="line"><span class="w">with&nbsp;words.</span></span>
+        </h1>
+        <p class="sub">
+          <b>640+ risk-annotated tools</b> over SSH turn one — or a whole fleet — of MikroTik
+          devices into something your AI can read, configure and secure in natural language.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" href="#tools" data-hover data-magnetic>
+            <span class="lbl">Explore the surface</span>
+          </a>
+          <a
+            class="btn ghost"
+            href="https://www.npmjs.com/package/@usex/mikrotik-mcp"
+            data-hover
+            data-magnetic
+          >
+            <span class="lbl">bunx @usex/mikrotik-mcp</span>
+          </a>
+        </div>
+      </div>
+      <div class="scroll-cue">
+        <span>SCROLL</span>
+        <span class="bar"></span>
+      </div>
+    </header>
+
+    <!-- MARQUEE -->
+    <div class="marquee" aria-hidden="true">
+      <div class="track">
+        <span class="fill">FIREWALL</span><span>·</span><span>ROUTING</span
+        ><span class="fill">·</span><span>IPv6</span><span>·</span
+        ><span class="fill">WIREGUARD</span><span>·</span><span>DHCP</span
+        ><span class="fill">·</span><span>QoS</span><span>·</span><span class="fill">802.1X</span
+        ><span>·</span><span>SWITCH</span><span class="fill">·</span><span>DNS</span><span>·</span>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <section class="wrap stats" id="tools">
+      <div class="stat">
+        <div class="num" data-count="640" data-suffix="+">
+          <span>0</span><span class="suffix"></span>
+        </div>
+        <div class="lbl">tools exposed</div>
+      </div>
+      <div class="stat">
+        <div class="num" data-count="88"><span>0</span></div>
+        <div class="lbl">RouterOS modules</div>
+      </div>
+      <div class="stat">
+        <div class="num" data-count="5"><span>0</span></div>
+        <div class="lbl">risk tiers</div>
+      </div>
+      <div class="stat">
+        <div class="num" data-count="3"><span>0</span></div>
+        <div class="lbl">MCP transports</div>
+      </div>
+    </section>
+
+    <!-- DOMAINS (horizontal pinned gallery, built from data) -->
+    <section class="domains" id="surface" aria-label="Tools and modules by domain">
+      <div class="domains-intro wrap">
+        <span class="eyebrow">The surface</span>
+        <h2>640+ tools. 88 modules.<br /><span class="ital">Twelve domains.</span></h2>
+        <p class="domains-hint">Scroll to traverse <span class="arrow">→</span></p>
+      </div>
+      <div class="dviewport">
+        <div class="dtrack"><!-- slides injected by JS --></div>
+      </div>
+    </section>
+
+    <!-- CAPABILITIES -->
+    <section class="wrap" id="capabilities">
+      <div class="head">
+        <span class="eyebrow">What it does</span>
+        <h2 data-reveal>One safe choke point. Hundreds of scopes. Zero string concatenation.</h2>
+      </div>
+      <div class="features">
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6l8-4z" /></svg>
+          </div>
+          <h3>Transactional Safe Mode</h3>
+          <p>
+            Push changes through RouterOS Safe Mode's persistent session — a broken config rolls
+            back instead of locking you out of the box.
+          </p>
+          <div class="tag">// safe-mode.ts</div>
+        </div>
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24"><path d="M4 17l6-6-6-6M12 19h8" /></svg>
+          </div>
+          <h3>Injection-safe by design</h3>
+          <p>
+            Every device command is assembled with a typed <code>Cmd</code> builder and
+            <code>quoteValue</code> escaping — even control chars and newlines never reach the SSH
+            channel raw.
+          </p>
+          <div class="tag">// routeros.ts</div>
+        </div>
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+            </svg>
+          </div>
+          <h3>Fleet-aware</h3>
+          <p>
+            Manage many routers from one server. Tools auto-expose a <code>device</code> selector
+            and the registry peels it off before your handler runs.
+          </p>
+          <div class="tag">// runtime.ts</div>
+        </div>
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
+          </div>
+          <h3>Live observability</h3>
+          <p>
+            An opt-in localhost dashboard streams every tool call in real time — latency, errors,
+            per-device health and a redaction-aware feed.
+          </p>
+          <div class="tag">// dashboard.ts</div>
+        </div>
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M9 9h6v6H9z" />
+            </svg>
+          </div>
+          <h3>MCP Apps UI</h3>
+          <p>
+            Interactive <code>ui://</code> views for interfaces, firewall, records and the device
+            dashboard — built as self-contained single-file apps.
+          </p>
+          <div class="tag">// ui-resources.ts</div>
+        </div>
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5" /></svg>
+          </div>
+          <h3>Anywhere transport</h3>
+          <p>
+            stdio, SSE and streamable-HTTP — with CORS and a read-only mode for safe public
+            exposure, plus a self-contained Docker image.
+          </p>
+          <div class="tag">// cli.ts</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PINNED PIPELINE -->
+    <section class="pipeline" id="flow">
+      <div class="wrap head">
+        <span class="eyebrow">Anatomy of a call</span>
+        <h2 data-reveal>How one natural-language request reaches the wire.</h2>
+      </div>
+      <div class="pipe-stage">
+        <div style="width: 100%">
+          <svg class="pipe-svg" viewBox="0 0 980 220">
+            <defs>
+              <linearGradient id="pg" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#8b5cf6" />
+                <stop offset="0.5" stop-color="#6366f1" />
+                <stop offset="1" stop-color="#06b6d4" />
+              </linearGradient>
+            </defs>
+            <path class="wire" d="M70 110 H910" />
+            <path class="flow" d="M70 110 H910" />
+            <g class="node" transform="translate(70,110)">
+              <circle r="30" />
+              <text y="-44">LLM</text>
+              <text class="sub" y="4">prompt</text>
+            </g>
+            <g class="node" transform="translate(350,110)">
+              <circle r="30" />
+              <text y="-44">registry</text>
+              <text class="sub" y="0">risk</text>
+              <text class="sub" y="12">gate</text>
+            </g>
+            <g class="node" transform="translate(630,110)">
+              <circle r="30" />
+              <text y="-44">Cmd</text>
+              <text class="sub" y="0">quote</text>
+              <text class="sub" y="12">+ build</text>
+            </g>
+            <g class="node" transform="translate(910,110)">
+              <circle r="30" />
+              <text y="-44">RouterOS</text>
+              <text class="sub" y="4">SSH</text>
+            </g>
+            <circle class="packet" r="7" cx="70" cy="110" />
+          </svg>
+          <div class="pipe-caption" id="pipeCap">
+            <b>tool call</b> · validated against a five-tier risk preset
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OUTRO -->
+    <section class="wrap outro">
+      <span class="eyebrow" style="justify-content: center">v2.0.0 — first release</span>
+      <h2 data-reveal-html>Configuration<br /><span class="grad">as conversation.</span></h2>
+      <p>
+        Point any MCP client at your MikroTik and start talking. Bun ≥ 1.3 · RouterOS 6.x ∴ 7.x ·
+        MIT.
+      </p>
+      <div class="cta-row" style="justify-content: center">
+        <a
+          class="btn primary"
+          href="https://www.npmjs.com/package/@usex/mikrotik-mcp"
+          data-hover
+          data-magnetic
+        >
+          <span class="lbl">Get it on npm</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="wrap">
+      <span
+        >© 2026
+        <a
+          href="https://www.npmjs.com/package/@usex/mikrotik-mcp"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="@usex/mikrotik-mcp"
+          ><b>@usex/mikrotik-mcp</b></a
+        ></span
+      >
+      <span
+        >∴
+        <a
+          href="https://github.com/ali-torki"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Ali Torki"
+          >Ali Torki</a
+        >
+        ∴</span
+      >
+    </footer>
+
+    <!-- ───────────────────────── GSAP ───────────────────────── -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script>
+      gsap.registerPlugin(ScrollTrigger);
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      /* ---------- split helper: wrap each char of an element (safe DOM) ---------- */
+      function splitChars(el) {
+        const text = el.textContent;
+        el.textContent = "";
+        const frag = document.createDocumentFragment();
+        [...text].forEach((ch) => {
+          const s = document.createElement("span");
+          s.className = "char";
+          s.textContent = ch === " " ? " " : ch;
+          frag.appendChild(s);
+        });
+        el.appendChild(frag);
+        return el.querySelectorAll(".char");
+      }
+
+      /* ---------- tiny safe element factory ---------- */
+      function make(tag, cls, text) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text != null) e.textContent = text;
+        return e;
+      }
+
+      /* ---------- preloader: build the MikroTik MCP logo with motion ---------- */
+      function buildLogo() {
+        const tl = gsap.timeline();
+        // prime the draw-on strokes (links + chevron) from their own lengths
+        gsap.utils.toArray("#pl-logo .pl-links line").forEach((ln) => {
+          const len = ln.getTotalLength();
+          gsap.set(ln, { strokeDasharray: len, strokeDashoffset: len });
+        });
+        const chev = document.querySelector("#pl-logo .pl-chevron");
+        const cl = chev.getTotalLength();
+        gsap.set(chev, { strokeDasharray: cl, strokeDashoffset: cl });
+        gsap.set("#pl-logo .pl-tile", { scale: 0.55, opacity: 0, transformOrigin: "center" });
+        gsap.set("#pl-logo .pl-hub, #pl-logo .pl-leaf", { scale: 0, transformOrigin: "center" });
+
+        tl.to("#pl-logo .pl-tile", { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.5)" })
+          .to("#pl-logo .pl-hub", { scale: 1, duration: 0.5, ease: "back.out(2.2)" }, "-=0.25")
+          .to(
+            "#pl-logo .pl-links line",
+            { strokeDashoffset: 0, duration: 0.45, ease: "power2.out", stagger: 0.07 },
+            "-=0.15",
+          )
+          .to(
+            "#pl-logo .pl-leaf",
+            { scale: 1, duration: 0.5, ease: "back.out(2.6)", stagger: 0.07 },
+            "-=0.4",
+          )
+          .to(
+            "#pl-logo .pl-chevron",
+            { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
+            "-=0.15",
+          )
+          .from(".pl-cap", { opacity: 0, y: 8, duration: 0.4 }, "-=0.3");
+        // a gentle infinite breathing while the bar finishes loading
+        gsap.to("#pl-logo", {
+          scale: 1.04,
+          duration: 1.1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          transformOrigin: "center",
+        });
+        return tl;
+      }
+
+      if (reduce) {
+        gsap.set("#loader", { display: "none" });
+      } else {
+        const loadTl = gsap.timeline();
+        loadTl
+          .add(buildLogo())
+          .to(".pl-bar", { width: "100%", duration: 1.6, ease: "power2.inOut" }, 0)
+          .to(
+            "#pl-logo",
+            {
+              scale: 0.86,
+              opacity: 0,
+              duration: 0.5,
+              ease: "power3.in",
+              transformOrigin: "center",
+            },
+            "+=0.05",
+          )
+          .to(".pl-cap", { opacity: 0, duration: 0.3 }, "<")
+          .to("#loader", { yPercent: -100, duration: 0.7, ease: "expo.inOut" }, "-=0.3")
+          .set("#loader", { display: "none" })
+          .add(introHero, "-=0.4");
+      }
+
+      /* ---------- hero intro ---------- */
+      function introHero() {
+        const chars = [];
+        document.querySelectorAll(".hero h1 .w").forEach((w) => chars.push(...splitChars(w)));
+        gsap.set(chars, { yPercent: 120 });
+        const tl = gsap.timeline();
+        tl.to(chars, {
+          yPercent: 0,
+          duration: 1,
+          ease: "expo.out",
+          stagger: { each: 0.018, from: "start" },
+        })
+          .from(".hero .eyebrow", { opacity: 0, y: 16, duration: 0.6 }, 0.2)
+          .from(".hero .sub", { opacity: 0, y: 24, duration: 0.8 }, "-=0.7")
+          .from(".cta-row .btn", { opacity: 0, y: 24, duration: 0.6, stagger: 0.1 }, "-=0.6")
+          .from(".scroll-cue", { opacity: 0, duration: 0.6 }, "-=0.3");
+      }
+
+      /* ---------- custom cursor ---------- */
+      const cursor = document.querySelector(".cursor");
+      const dot = document.querySelector(".cursor-dot");
+      const cx = gsap.quickTo(cursor, "x", { duration: 0.5, ease: "power3" });
+      const cy = gsap.quickTo(cursor, "y", { duration: 0.5, ease: "power3" });
+      const dx = gsap.quickTo(dot, "x", { duration: 0.12, ease: "power3" });
+      const dy = gsap.quickTo(dot, "y", { duration: 0.12, ease: "power3" });
+      window.addEventListener("mousemove", (e) => {
+        cx(e.clientX);
+        cy(e.clientY);
+        dx(e.clientX);
+        dy(e.clientY);
+      });
+      document.querySelectorAll("[data-hover]").forEach((el) => {
+        el.addEventListener("mouseenter", () => cursor.classList.add("is-hover"));
+        el.addEventListener("mouseleave", () => cursor.classList.remove("is-hover"));
+      });
+
+      /* ---------- magnetic buttons ---------- */
+      document.querySelectorAll("[data-magnetic]").forEach((el) => {
+        const xTo = gsap.quickTo(el, "x", { duration: 0.6, ease: "elastic.out(1,0.4)" });
+        const yTo = gsap.quickTo(el, "y", { duration: 0.6, ease: "elastic.out(1,0.4)" });
+        el.addEventListener("mousemove", (e) => {
+          const r = el.getBoundingClientRect();
+          xTo((e.clientX - (r.left + r.width / 2)) * 0.4);
+          yTo((e.clientY - (r.top + r.height / 2)) * 0.4);
+        });
+        el.addEventListener("mouseleave", () => {
+          xTo(0);
+          yTo(0);
+        });
+      });
+
+      /* ---------- scroll progress ---------- */
+      gsap.to(".progress", {
+        scaleX: 1,
+        ease: "none",
+        scrollTrigger: { scrub: 0.3, start: 0, end: "max" },
+      });
+
+      /* ---------- parallax orbs ---------- */
+      gsap.utils.toArray(".orb").forEach((orb) => {
+        const speed = parseFloat(orb.dataset.speed);
+        gsap.to(orb, {
+          yPercent: -40 * speed * 5,
+          ease: "none",
+          scrollTrigger: { trigger: document.body, start: 0, end: "max", scrub: true },
+        });
+      });
+      if (!reduce) {
+        gsap.to(".orb.a", {
+          x: 60,
+          y: 40,
+          duration: 9,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+        gsap.to(".orb.b", {
+          x: -50,
+          y: -30,
+          duration: 11,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+        gsap.to(".orb.c", {
+          x: 40,
+          y: -50,
+          duration: 8,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+
+      /* ---------- marquee (clone nodes; scroll-velocity aware) ---------- */
+      const track = document.querySelector(".marquee .track");
+      [...track.children].forEach((n) => track.appendChild(n.cloneNode(true))); // seamless loop
+      let mLoop = gsap.to(track, { xPercent: -50, duration: 18, ease: "none", repeat: -1 });
+      ScrollTrigger.create({
+        start: 0,
+        end: "max",
+        onUpdate: (self) => {
+          const v = 1 + Math.min(Math.abs(self.getVelocity() / 300), 6);
+          gsap.to(mLoop, {
+            timeScale: self.direction === -1 ? -v : v,
+            overwrite: true,
+            duration: 0.3,
+          });
+        },
+      });
+
+      /* ---------- word-reveal headings (safe DOM split) ---------- */
+      gsap.utils.toArray("[data-reveal]").forEach((h) => {
+        const words = h.textContent.trim().split(/\s+/);
+        h.textContent = "";
+        const inners = [];
+        words.forEach((w, i) => {
+          const outer = document.createElement("span");
+          outer.className = "reveal-word";
+          const inner = document.createElement("span");
+          inner.textContent = w;
+          outer.appendChild(inner);
+          h.appendChild(outer);
+          if (i < words.length - 1) h.appendChild(document.createTextNode(" "));
+          inners.push(inner);
+        });
+        gsap.from(inners, {
+          yPercent: 110,
+          duration: 0.9,
+          ease: "expo.out",
+          stagger: 0.05,
+          scrollTrigger: { trigger: h, start: "top 85%" },
+        });
+      });
+      /* the outro keeps its <br> markup — reveal the whole block instead of splitting */
+      gsap.utils.toArray("[data-reveal-html]").forEach((h) => {
+        gsap.from(h, {
+          yPercent: 30,
+          opacity: 0,
+          duration: 1,
+          ease: "expo.out",
+          scrollTrigger: { trigger: h, start: "top 85%" },
+        });
+      });
+
+      /* ---------- counters ---------- */
+      gsap.utils.toArray(".num[data-count]").forEach((el) => {
+        const target = +el.dataset.count;
+        const suffix = el.dataset.suffix || "";
+        const numSpan = el.children[0];
+        const sufSpan = el.querySelector(".suffix");
+        if (sufSpan) sufSpan.textContent = suffix;
+        const obj = { v: 0 };
+        ScrollTrigger.create({
+          trigger: el,
+          start: "top 88%",
+          once: true,
+          onEnter: () =>
+            gsap.to(obj, {
+              v: target,
+              duration: 1.8,
+              ease: "power3.out",
+              onUpdate: () => (numSpan.textContent = Math.round(obj.v)),
+            }),
+        });
+      });
+
+      /* ---------- feature cards: rise + glow tracking + tilt ---------- */
+      gsap.utils.toArray(".card").forEach((card, i) => {
+        gsap.from(card, {
+          y: 60,
+          opacity: 0,
+          duration: 0.9,
+          ease: "power3.out",
+          scrollTrigger: { trigger: card, start: "top 90%" },
+          delay: (i % 3) * 0.08,
+        });
+        card.addEventListener("mousemove", (e) => {
+          const r = card.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width;
+          const py = (e.clientY - r.top) / r.height;
+          card.style.setProperty("--mx", px * 100 + "%");
+          card.style.setProperty("--my", py * 100 + "%");
+          gsap.to(card, {
+            rotateY: (px - 0.5) * 10,
+            rotateX: (0.5 - py) * 10,
+            duration: 0.4,
+            ease: "power2.out",
+            transformPerspective: 800,
+          });
+        });
+        card.addEventListener("mouseleave", () =>
+          gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.6, ease: "power3.out" }),
+        );
+      });
+
+      /* ---------- domains: data-driven, horizontal pinned scroll ---------- */
+      const DOMAINS = [
+        {
+          n: "Security",
+          c: 7,
+          tags: [
+            "Firewall — Filter",
+            "Firewall — NAT",
+            "Address Lists",
+            "Certificates",
+            "IP Services",
+            "802.1X — Server",
+            "802.1X — Client",
+          ],
+        },
+        {
+          n: "Addressing & Routing",
+          c: 5,
+          tags: ["IP Addresses", "IP Pools", "Routing — Static", "DHCP", "DNS"],
+        },
+        {
+          n: "Dynamic Routing",
+          c: 14,
+          tags: [
+            "BGP",
+            "OSPF",
+            "RIP",
+            "PIM-SM",
+            "IGMP Proxy",
+            "RPKI",
+            "BFD",
+            "Routing Filters",
+            "Routing Tables",
+            "Next-hops",
+            "Routing Rules",
+            "Router ID",
+          ],
+        },
+        {
+          n: "IPv6",
+          c: 14,
+          tags: [
+            "IPv6 Addresses",
+            "DHCPv6 Client",
+            "DHCPv6 Server",
+            "DHCPv6 Relay",
+            "IPv6 FW — Filter",
+            "IPv6 FW — NAT",
+            "IPv6 FW — Mangle",
+            "IPv6 ND",
+            "IPv6 Neighbors",
+            "IPv6 Pool",
+            "IPv6 Routes",
+          ],
+        },
+        {
+          n: "VPN & Tunneling",
+          c: 8,
+          tags: ["WireGuard", "IPsec", "OpenVPN", "L2TP", "PPTP", "SSTP", "PPP", "Tunnels"],
+        },
+        { n: "Interfaces", c: 5, tags: ["Interfaces", "VLAN", "Bridge", "Wireless", "PoE"] },
+        {
+          n: "Switch",
+          c: 4,
+          tags: ["Switch — Settings", "Switch — Ports", "Port Isolation", "Switch — Rules"],
+        },
+        { n: "QoS", c: 2, tags: ["Queues / QoS", "Queues — Interface"] },
+        {
+          n: "System & Ops",
+          c: 12,
+          tags: [
+            "System",
+            "Users",
+            "Scheduler / Scripts",
+            "Backup",
+            "S3 Backup",
+            "Logs",
+            "Disk",
+            "Safe Mode",
+            "Network Tools",
+            "Devices",
+          ],
+        },
+        {
+          n: "Tools",
+          c: 13,
+          tags: [
+            "Speed Test",
+            "Packet Sniffer",
+            "Traffic Monitor",
+            "Traffic Generator",
+            "IP Scan",
+            "Wake-on-LAN",
+            "RoMON",
+            "SMS",
+            "Btest Server",
+            "Flood Ping",
+            "Graphing",
+            "Profile",
+          ],
+        },
+        { n: "AAA", c: 2, tags: ["RADIUS", "User Manager"] },
+        { n: "MCP Apps", c: 1, tags: ["Apps — Dashboards"] },
+      ];
+      const dtrack = document.querySelector(".dtrack");
+      if (dtrack) {
+        const accents = ["#8b5cf6", "#6366f1", "#06b6d4"];
+        DOMAINS.forEach((d, i) => {
+          const slide = make("article", "dslide");
+          slide.style.setProperty("--accent", accents[i % accents.length]);
+          slide.appendChild(make("div", "dindex", String(i + 1).padStart(2, "0")));
+          const head = make("div", "dhead");
+          head.append(make("h3", "dname", d.n), make("span", "dcount", d.c + " modules"));
+          const tags = make("div", "dtags");
+          d.tags.forEach((t) => {
+            const tag = make("span", "dtag", t);
+            tag.setAttribute("data-hover", "");
+            tags.appendChild(tag);
+          });
+          const meta = make("div", "dmeta");
+          meta.append(head, tags);
+          slide.append(meta);
+          dtrack.appendChild(slide);
+        });
+
+        const slides = gsap.utils.toArray(".dslide");
+        if (reduce) {
+          document.querySelector(".dviewport").style.cssText = "height:auto;overflow-x:auto;";
+        } else {
+          const extra = 56;
+          const amount = () => dtrack.scrollWidth - window.innerWidth + extra;
+          const horiz = gsap.to(dtrack, {
+            x: () => -amount(),
+            ease: "none",
+            scrollTrigger: {
+              trigger: ".dviewport",
+              pin: true,
+              scrub: 1,
+              end: () => "+=" + amount(),
+              invalidateOnRefresh: true,
+            },
+          });
+          slides.forEach((s) => {
+            gsap.from(s.querySelectorAll(".dindex, .dname, .dcount"), {
+              y: 44,
+              opacity: 0,
+              duration: 0.6,
+              ease: "power3.out",
+              stagger: 0.06,
+              scrollTrigger: { trigger: s, containerAnimation: horiz, start: "left 82%" },
+            });
+            gsap.from(s.querySelectorAll(".dtag"), {
+              y: 26,
+              opacity: 0,
+              scale: 0.9,
+              duration: 0.5,
+              ease: "back.out(1.7)",
+              stagger: 0.03,
+              scrollTrigger: { trigger: s, containerAnimation: horiz, start: "left 72%" },
+            });
+          });
+          // re-bind the custom-cursor hover state to the freshly-built tags
+          slides
+            .flatMap((s) => [...s.querySelectorAll("[data-hover]")])
+            .forEach((el) => {
+              el.addEventListener("mouseenter", () => cursor.classList.add("is-hover"));
+              el.addEventListener("mouseleave", () => cursor.classList.remove("is-hover"));
+            });
+          // nudge the scroll hint
+          gsap.to(".domains-hint .arrow", {
+            x: 6,
+            duration: 0.8,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+          });
+        }
+      }
+
+      /* ---------- pinned pipeline: scrub the packet + draw the flow ---------- */
+      const flow = document.querySelector(".pipe-svg .flow");
+      const len = flow.getTotalLength();
+      gsap.set(flow, { strokeDasharray: len, strokeDashoffset: len });
+      const packet = document.querySelector(".packet");
+      const cap = document.getElementById("pipeCap");
+      const captions = [
+        ["tool call", " · the model picks a tool by its description"],
+        ["risk gate", " · validated against a five-tier preset"],
+        ["Cmd build", " · quoteValue escapes every argument"],
+        ["on the wire", " · executeMikrotikCommand over SSH"],
+      ];
+      function setCaption(arr) {
+        cap.textContent = "";
+        const b = document.createElement("b");
+        b.textContent = arr[0];
+        cap.append(b, document.createTextNode(arr[1]));
+      }
+      const pipeTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".pipeline",
+          start: "top top",
+          end: "+=2200",
+          pin: ".pipe-stage",
+          scrub: 1,
+        },
+      });
+      pipeTl
+        .to(flow, { strokeDashoffset: 0, ease: "none" }, 0)
+        .to(
+          packet,
+          {
+            attr: { cx: 910 },
+            ease: "none",
+            onUpdate: function () {
+              const p = this.progress();
+              const idx = Math.min(captions.length - 1, Math.floor(p * captions.length));
+              if (cap.dataset.idx != idx) {
+                cap.dataset.idx = idx;
+                setCaption(captions[idx]);
+                gsap.fromTo(cap, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 });
+              }
+            },
+          },
+          0,
+        )
+        .to(".pipe-svg .node circle", { stroke: "#06b6d4", stagger: 0.2, duration: 0.3 }, 0);
+
+      /* ---------- scroll cue fade ---------- */
+      gsap.to(".scroll-cue", {
+        opacity: 0,
+        scrollTrigger: { start: 80, end: 300, scrub: true },
+      });
+    </script>
+  </body>
+</html>
