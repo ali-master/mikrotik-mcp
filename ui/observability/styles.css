@@ -143,6 +143,12 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
 }
+/* Breakdown cards stack their heading above the chart so a chart given
+ * `flex: 1` (e.g. the donut) fills the card and centers vertically. */
+.cols-3 .panel {
+  display: flex;
+  flex-direction: column;
+}
 
 /* Horizontal bar list. */
 .hbar {

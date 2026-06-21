@@ -271,10 +271,11 @@ function Donut({
     <div
       style={{
         display: "flex",
+        flexDirection: "column",
         gap: 14,
         alignItems: "center",
         justifyContent: "center",
-        flexWrap: "wrap",
+        flex: 1,
       }}
     >
       <svg viewBox="0 0 120 120" width={120} height={120}>
@@ -307,7 +308,7 @@ function Donut({
           calls
         </text>
       </svg>
-      <div className="legend">
+      <div className="legend" style={{ justifyContent: "center", marginTop: 0 }}>
         {segments
           .filter((s) => s.value > 0)
           .map((s) => (
