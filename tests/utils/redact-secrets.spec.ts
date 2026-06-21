@@ -1,11 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { redactSecrets } from "../../src/utils/redact-secrets";
 
 describe("redactSecrets", () => {
   test("masks password values", () => {
-    expect(redactSecrets('name="bob" password="hunter2"')).toBe(
-      'name="bob" password="***"',
-    );
+    expect(redactSecrets('name="bob" password="hunter2"')).toBe('name="bob" password="***"');
   });
 
   test("masks secret and shared-secret values", () => {

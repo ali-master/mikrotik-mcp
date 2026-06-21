@@ -2,7 +2,7 @@
  * Offline tests for the optional S3 configuration + helper. No network or real
  * bucket is touched; these validate config layering and the opt-in behaviour.
  */
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "vite-plus/test";
 import { loadConfig, MikrotikConfigSchema } from "../src/config";
 import { setConfig } from "../src/core/runtime";
 import {

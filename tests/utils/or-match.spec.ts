@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { orMatch } from "../../src/utils/or-match";
 
 describe("orMatch", () => {
@@ -15,9 +15,7 @@ describe("orMatch", () => {
   });
 
   test("supports exact-match operator", () => {
-    expect(orMatch("action", ["accept", "drop"], "=")).toBe(
-      '(action="accept" or action="drop")',
-    );
+    expect(orMatch("action", ["accept", "drop"], "=")).toBe('(action="accept" or action="drop")');
   });
 
   test("returns an empty string for an empty value list", () => {

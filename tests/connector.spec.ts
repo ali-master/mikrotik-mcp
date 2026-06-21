@@ -5,7 +5,7 @@
  * result as an error) — it must NOT come back as a string that a tool then wraps
  * in a success message like "INTERFACES:\n\nError: …".
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { MikrotikConfigSchema } from "../src/config";
 import { executeMikrotikCommand } from "../src/core/connector";
 import { createContext } from "../src/core/context";

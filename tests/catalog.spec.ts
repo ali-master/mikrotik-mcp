@@ -2,7 +2,7 @@
  * Offline smoke tests for the tool catalog and the command builder.
  * These need no device — they validate the static shape of the server.
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { z } from "zod";
 import {
   Cmd,
@@ -113,9 +113,7 @@ describe("RouterOS command builder", () => {
 
   test("commandUnsupported detects RouterOS 'command does not exist' errors", () => {
     // The exact string a v7 device returns for `/ip route cache print`.
-    expect(
-      commandUnsupported("bad command name cache (line 1 column 11)"),
-    ).toBe(true);
+    expect(commandUnsupported("bad command name cache (line 1 column 11)")).toBe(true);
     expect(commandUnsupported("no such command prefix")).toBe(true);
     expect(commandUnsupported("expected end of command")).toBe(true);
     // Real output and value-level failures are NOT "command unsupported".
@@ -126,41 +124,27 @@ describe("RouterOS command builder", () => {
   test("containsRawParserError flags wrapped parser errors but not real data", () => {
     // The exact symptoms reported by users (error wrapped under a success header).
     expect(
-      containsRawParserError(
-        "POE CONFIGURATION:\n\nbad command name poe (line 1 column 21)",
-      ),
+      containsRawParserError("POE CONFIGURATION:\n\nbad command name poe (line 1 column 21)"),
     ).toBe(true);
     expect(
-      containsRawParserError(
-        "DNS CACHE STATISTICS:\n\nbad parameter stats (line 1 column 26)",
-      ),
+      containsRawParserError("DNS CACHE STATISTICS:\n\nbad parameter stats (line 1 column 26)"),
     ).toBe(true);
     expect(
-      containsRawParserError(
-        "ROUTE CACHE:\n\nbad command name cache (line 1 column 11)",
-      ),
+      containsRawParserError("ROUTE CACHE:\n\nbad command name cache (line 1 column 11)"),
     ).toBe(true);
     // Must NOT flag legitimate output that merely contains error-ish words.
     expect(
-      containsRawParserError(
-        "LOGS:\n\n12:00:00 system,error login failure for user admin",
-      ),
+      containsRawParserError("LOGS:\n\n12:00:00 system,error login failure for user admin"),
     ).toBe(false);
     expect(
-      containsRawParserError(
-        'INTERFACES:\n\n0 R ether1 ... comment="syntax error in old note"',
-      ),
+      containsRawParserError('INTERFACES:\n\n0 R ether1 ... comment="syntax error in old note"'),
     ).toBe(false);
-    expect(
-      containsRawParserError("ROUTES:\n\n0 As 0.0.0.0/0 gateway=10.0.0.1"),
-    ).toBe(false);
+    expect(containsRawParserError("ROUTES:\n\n0 As 0.0.0.0/0 gateway=10.0.0.1")).toBe(false);
   });
 
   test("looksLikeError catches device failures, parser and value errors", () => {
     expect(looksLikeError("failure: already have such entry")).toBe(true);
-    expect(looksLikeError("bad command name cache (line 1 column 11)")).toBe(
-      true,
-    );
+    expect(looksLikeError("bad command name cache (line 1 column 11)")).toBe(true);
     // Value/parameter errors that previously slipped through as "success".
     expect(looksLikeError("bad parameter stats (line 1 column 26)")).toBe(true);
     expect(looksLikeError("invalid value for argument address")).toBe(true);

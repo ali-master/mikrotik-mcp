@@ -14,18 +14,22 @@ SSH via `ssh2`). The live tool/module counts are whatever the catalog
 ## Commands
 
 ```bash
-bun test                          # all tests (offline — no device needed)
-bun test tests/catalog.test.ts    # a single test file
-bun test -t "quoteValue"          # tests matching a name
+bun run test                      # all tests — Vitest via vite-plus (offline, no device)
+bunx vp test run tests/catalog.spec.ts   # a single test file
+bunx vp test run -t "quoteValue"  # tests matching a name
+bun run test:watch                # Vitest watch mode
 bun run test:types                # tsc --noEmit typecheck
-bun run lint                      # eslint (antfu config); lint:fix to autofix
+bun run lint                      # vp lint (vite-plus / oxlint); lint:fix to autofix
 bun run gen                       # regenerate schemas/ + docs/tools-reference.md
-bun run build                     # bunup -> dist/cli.js
+bun run build                     # bunup -> dist/cli.js (+ build:ui single-file views)
 bun run start                     # serve (stdio transport by default)
 bun run inspect                   # MCP Inspector against the server
 ```
 
-Pre-commit gate used in this repo: `bun run test:types && bun test && bun run lint`.
+Tests are **Vitest** (`tests/**/*.spec.ts`, helpers imported from `vite-plus/test`);
+`vitest.config.ts` aliases the Bun-native `"bun"` module to an inert stub so the
+Node runner can load Bun-importing source. Pre-commit gate: `bun run test:types &&
+bun run test && bun run lint`.
 Run each **un-piped** in the `&&` chain — piping through `tail` masks the exit code
 and lets a failing check pass the gate.
 

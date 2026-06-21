@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { tailLines } from "../../src/utils/tail-lines";
 
 describe("tailLines", () => {
