@@ -77,6 +77,17 @@ describe("buildEvent", () => {
     expect(e.outputBytes).toBe("USER created".length);
   });
 
+  it("stores inputs verbatim when redactInput is off", () => {
+    const e = buildEvent(raw, "id1b", {
+      captureBody: true,
+      maxBodyBytes: 1000,
+      redactInput: false,
+    });
+    expect(e.input).toContain('"name":"bob"');
+    expect(e.input).toContain('"password":"secret"');
+    expect(e.input).not.toContain("«redacted»");
+  });
+
   it("drops bodies when captureBody is off but keeps metadata", () => {
     const e = buildEvent(raw, "id2", { captureBody: false, maxBodyBytes: 1000 });
     expect(e.input).toBe("");
@@ -126,8 +137,21 @@ describe("computeStats", () => {
     const events: ToolEvent[] = [
       ev({ tool: "list_interfaces", durationMs: 10, device: "a" }),
       ev({ tool: "list_interfaces", durationMs: 30, device: "a" }),
-      ev({ tool: "create_user", risk: "WRITE", durationMs: 50, isError: true, error: "boom", device: "b" }),
-      ev({ tool: "remove_user", risk: "DESTRUCTIVE", durationMs: 20, device: "b", outputBytes: 100 }),
+      ev({
+        tool: "create_user",
+        risk: "WRITE",
+        durationMs: 50,
+        isError: true,
+        error: "boom",
+        device: "b",
+      }),
+      ev({
+        tool: "remove_user",
+        risk: "DESTRUCTIVE",
+        durationMs: 20,
+        device: "b",
+        outputBytes: 100,
+      }),
     ];
     const s = computeStats(events, { now, windowMs: 600_000, buckets: 10 });
     expect(s.total).toBe(4);

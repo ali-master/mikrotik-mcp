@@ -92,10 +92,9 @@ function facets(store: EventStore): { tools: string[]; devices: string[] } {
 }
 
 /** Per-device activity rolled up from recent events. */
-function deviceActivity(store: EventStore): Map<
-  string,
-  { calls: number; errors: number; lastSeen: number; avgMs: number }
-> {
+function deviceActivity(
+  store: EventStore,
+): Map<string, { calls: number; errors: number; lastSeen: number; avgMs: number }> {
   const recent = store.query({ limit: 5000 });
   const map = new Map<string, { calls: number; errors: number; lastSeen: number; sumMs: number }>();
   for (const e of recent) {
@@ -109,7 +108,12 @@ function deviceActivity(store: EventStore): Map<
   }
   const out = new Map<string, { calls: number; errors: number; lastSeen: number; avgMs: number }>();
   for (const [k, a] of map) {
-    out.set(k, { calls: a.calls, errors: a.errors, lastSeen: a.lastSeen, avgMs: a.sumMs / a.calls });
+    out.set(k, {
+      calls: a.calls,
+      errors: a.errors,
+      lastSeen: a.lastSeen,
+      avgMs: a.sumMs / a.calls,
+    });
   }
   return out;
 }
@@ -199,7 +203,11 @@ export async function runDashboard(
   const store = await openSqliteStore(cfg.dbPath);
   configureRecorder({
     store,
-    capture: { captureBody: cfg.captureBody, maxBodyBytes: cfg.maxBodyBytes },
+    capture: {
+      captureBody: cfg.captureBody,
+      maxBodyBytes: cfg.maxBodyBytes,
+      redactInput: cfg.redactInput,
+    },
     maxEvents: cfg.maxEvents,
     transport: transportLabel,
   });
