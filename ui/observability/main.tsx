@@ -358,57 +358,154 @@ function statusInfo(s: DeviceStatus): { label: string; color: string } {
   return { label: "checking…", color: "#6b7280" };
 }
 
+/**
+ * Animated "radar hub" connectivity map: the MCP server core emits sonar pulses,
+ * each device hangs off a curved link, and online links carry a glowing data
+ * packet that streams from the core outward. Status drives every accent colour;
+ * all motion is CSS/SMIL (see `.conn-*` in styles.css) and respects
+ * `prefers-reduced-motion`.
+ */
 function ConnectivityGraph({ payload }: { payload: DevicesPayload }): ReactNode {
-  const W = 640;
-  const H = 300;
-  const cx = W / 2;
-  const cy = H / 2;
   const devices = payload.devices;
   const n = Math.max(1, devices.length);
-  const R = Math.min(115, 70 + n * 6);
+  const R = Math.min(150, 96 + n * 3);
+  const PAD = 72;
+  const W = 700;
+  const H = Math.round((R + PAD) * 2);
+  const cx = W / 2;
+  const cy = H / 2;
+
   const nodes = devices.map((d, i) => {
-    const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
-    return { d, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
+    // Start at the top and fan evenly; nudge a half-step when even so two
+    // devices don't sit dead-vertical (which would hide the curve).
+    const ang = (i / n) * Math.PI * 2 - Math.PI / 2 + (n % 2 === 0 ? Math.PI / n : 0);
+    return { d, i, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
   });
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="xMidYMid meet">
-      {nodes.map(({ d, x, y }) => {
+    <svg
+      className="conn"
+      viewBox={`0 0 ${W} ${H}`}
+      width="100%"
+      height={H}
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <defs>
+        <radialGradient id="conn-hub" cx="0.5" cy="0.38" r="0.72">
+          <stop offset="0" stopColor="#c7d2fe" />
+          <stop offset="0.55" stopColor="#6366f1" />
+          <stop offset="1" stopColor="#312e81" />
+        </radialGradient>
+        <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
+          <stop offset="0" stopColor="#232a3b" />
+          <stop offset="1" stopColor="#0f131c" />
+        </radialGradient>
+      </defs>
+
+      {/* faint concentric range rings for depth */}
+      {[0.5, 0.78, 1].map((f, i) => (
+        <circle key={`g-${i}`} className="conn-grid" cx={cx} cy={cy} r={R * f} />
+      ))}
+
+      {/* sonar pulses radiating from the core */}
+      {[0, 1, 2].map((i) => (
+        <circle
+          key={`s-${i}`}
+          className="conn-sonar"
+          cx={cx}
+          cy={cy}
+          style={{ animationDelay: `${i * 1.1}s` }}
+        />
+      ))}
+
+      {/* links + flowing packets */}
+      {nodes.map(({ d, i, x, y }) => {
         const info = statusInfo(d.status);
+        const online = d.status.reachable === true;
+        const checking = d.status.reachable == null;
+        const mx = (cx + x) / 2;
+        const my = (cy + y) / 2;
+        const dx = x - cx;
+        const dy = y - cy;
+        const len = Math.hypot(dx, dy) || 1;
+        const off = 26 * (i % 2 ? 1 : -1);
+        const px = mx + (-dy / len) * off;
+        const py = my + (dx / len) * off;
+        const dPath = `M${cx},${cy} Q${px.toFixed(1)},${py.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
         return (
-          <line
-            key={`e-${d.name}`}
-            x1={cx}
-            y1={cy}
-            x2={x}
-            y2={y}
-            stroke={info.color}
-            strokeWidth={2}
-            opacity={0.55}
-            strokeDasharray={d.status.reachable == null ? "4 4" : undefined}
-          />
+          <g key={`l-${d.name}`}>
+            <path
+              id={`conn-link-${i}`}
+              className="conn-link"
+              d={dPath}
+              stroke={info.color}
+              strokeDasharray={checking ? "2 8" : online ? undefined : "6 7"}
+            />
+            {online && (
+              <>
+                <path className="conn-flow" d={dPath} stroke={info.color} />
+                <circle className="conn-packet" r={3.4} fill="#eafff6">
+                  <animateMotion dur="2.4s" repeatCount="indefinite" calcMode="linear">
+                    <mpath href={`#conn-link-${i}`} />
+                  </animateMotion>
+                </circle>
+              </>
+            )}
+          </g>
         );
       })}
-      <circle cx={cx} cy={cy} r={30} fill="#14171c" stroke="#6ea8fe" strokeWidth={2} />
-      <text x={cx} y={cy - 1} textAnchor="middle" fill="#e8eaed" fontSize={11} fontWeight={650}>
+
+      {/* core hub */}
+      <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
+      <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
+      <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#a5b4fc" strokeWidth={1.5} />
+      <text x={cx} y={cy - 2} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={700}>
         MCP
       </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill="#9aa3af" fontSize={8}>
+      <text x={cx} y={cy + 12} textAnchor="middle" fill="#c7d2fe" fontSize={8.5}>
         server
       </text>
+
+      {/* device nodes */}
       {nodes.map(({ d, x, y }) => {
         const info = statusInfo(d.status);
-        const detail = d.status.reachable ? `${d.status.latencyMs ?? "?"}ms` : info.label;
+        const online = d.status.reachable === true;
+        const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
+        const short = d.name.length > 11 ? `${d.name.slice(0, 10)}…` : d.name;
         return (
-          <g key={`n-${d.name}`}>
-            <circle cx={x} cy={y} r={22} fill="#1b1f26" stroke={info.color} strokeWidth={2} />
-            <circle cx={x + 15} cy={y - 15} r={4} fill={info.color} />
-            <text x={x} y={y + 1} textAnchor="middle" fill="#e8eaed" fontSize={9} fontWeight={600}>
-              {d.name.length > 9 ? `${d.name.slice(0, 8)}…` : d.name}
+          <g key={`n-${d.name}`} className="conn-node">
+            {online && (
+              <circle className="conn-node-halo" cx={x} cy={y} r={24} stroke={info.color} />
+            )}
+            <circle
+              cx={x}
+              cy={y}
+              r={23}
+              fill="url(#conn-orb)"
+              stroke={info.color}
+              strokeWidth={2}
+            />
+            <circle
+              className={online ? "conn-blink" : undefined}
+              cx={x + 16}
+              cy={y - 16}
+              r={4.5}
+              fill={info.color}
+            />
+            <text x={x} y={y + 3} textAnchor="middle" fill="#e8eaed" fontSize={10} fontWeight={600}>
+              {short}
             </text>
-            <text x={x} y={y + 34} textAnchor="middle" fill="#9aa3af" fontSize={9}>
+            <text x={x} y={y + 40} textAnchor="middle" fill="#9aa3af" fontSize={9}>
               {d.host}
             </text>
-            <text x={x} y={y + 45} textAnchor="middle" fill={info.color} fontSize={8}>
+            <text
+              x={x}
+              y={y + 52}
+              textAnchor="middle"
+              fill={info.color}
+              fontSize={9}
+              fontWeight={600}
+            >
               {detail}
             </text>
           </g>

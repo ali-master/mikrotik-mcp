@@ -338,6 +338,127 @@ body {
   }
 }
 
+/* ── Connectivity radar (animated SVG) ───────────────────────────────────── */
+.conn {
+  display: block;
+  overflow: visible;
+}
+.conn-grid {
+  fill: none;
+  stroke: var(--mt-border);
+  stroke-opacity: 0.55;
+  stroke-dasharray: 2 7;
+}
+/* Sonar rings expanding out of the core. */
+.conn-sonar {
+  fill: none;
+  stroke: var(--mt-accent);
+  stroke-width: 1.5;
+  opacity: 0;
+  animation: conn-sonar 3.3s ease-out infinite;
+}
+@keyframes conn-sonar {
+  0% {
+    r: 30px;
+    opacity: 0.5;
+  }
+  100% {
+    r: 150px;
+    opacity: 0;
+  }
+}
+/* Base link + the glowing dashed "flow" overlay on live links. */
+.conn-link {
+  fill: none;
+  stroke-width: 1.6;
+  opacity: 0.38;
+}
+.conn-flow {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 13;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 4px currentColor);
+  animation: conn-flow 1.05s linear infinite;
+}
+@keyframes conn-flow {
+  to {
+    stroke-dashoffset: -60;
+  }
+}
+.conn-packet {
+  filter: drop-shadow(0 0 6px #34d399);
+}
+/* Core hub: soft glow + a slowly rotating dashed ring. */
+.conn-hub-glow {
+  fill: var(--mt-accent);
+  opacity: 0.22;
+  filter: blur(11px);
+}
+.conn-hub-ring {
+  fill: none;
+  stroke: var(--mt-accent);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 9;
+  opacity: 0.7;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: conn-rot 15s linear infinite;
+}
+@keyframes conn-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Pulsing halo around online device orbs. */
+.conn-node-halo {
+  fill: none;
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: conn-halo 2.4s ease-in-out infinite;
+}
+@keyframes conn-halo {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+.conn-blink {
+  animation: conn-blink 1.6s ease-in-out infinite;
+}
+@keyframes conn-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.conn-node text {
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .conn-sonar,
+  .conn-flow,
+  .conn-hub-ring,
+  .conn-node-halo,
+  .conn-blink,
+  .conn-packet animateMotion {
+    animation: none;
+  }
+  .conn-sonar {
+    display: none;
+  }
+}
+
 /* ── Devices & connectivity ──────────────────────────────────────────────── */
 .dev-grid {
   display: grid;
