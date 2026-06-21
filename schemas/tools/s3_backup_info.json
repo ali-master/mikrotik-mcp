@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "s3_backup_info",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "S3 object key"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "additionalProperties": false
+}

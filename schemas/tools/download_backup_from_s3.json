@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "download_backup_from_s3",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "S3 object key to download"
+    },
+    "filename": {
+      "description": "Device destination filename (defaults to the key basename)",
+      "type": "string"
+    },
+    "expires_in": {
+      "description": "Presigned-URL lifetime in seconds",
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "additionalProperties": false
+}

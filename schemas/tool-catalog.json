@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 640,
+  "toolCount": 646,
   "tools": [
     {
       "name": "list_interfaces",
@@ -20790,6 +20790,173 @@
         },
         "required": [
           "filename"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "s3_backup_status",
+      "title": "S3 Backup Status",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reports whether optional S3 backup storage is configured and where backups will be stored.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "upload_backup_to_s3",
+      "title": "Upload Backup to S3",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Uploads a file from the device (e.g. a .backup or .rsc export) to the configured S3 bucket. The device streams it directly to S3 via a short-lived presigned URL.\n\nNotes:\n    filename: the file on the device, e.g. 'daily.backup'.\n    key: optional S3 object key; defaults to '<prefix>/<device>/<filename>' so each router's backups are organised separately.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "File on the device, e.g. 'daily.backup'"
+          },
+          "key": {
+            "description": "S3 object key (defaults to prefix + filename)",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Presigned-URL lifetime in seconds",
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "filename"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "download_backup_from_s3",
+      "title": "Download Backup from S3",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Downloads an object from the configured S3 bucket onto the device filesystem (e.g. to later restore a backup). The device streams it directly from S3 via a short-lived presigned URL.\n\nNotes:\n    key: the S3 object key to download.\n    filename: optional device destination; defaults to the key's base name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "S3 object key to download"
+          },
+          "filename": {
+            "description": "Device destination filename (defaults to the key basename)",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Presigned-URL lifetime in seconds",
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_s3_backups",
+      "title": "List S3 Backups",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists objects in the configured S3 bucket. By default lists only the current device's backups (under '<prefix>/<device>/'); pass an explicit prefix to list elsewhere (e.g. '' for the whole bucket).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "description": "Key prefix to list under (defaults to this device's '<prefix>/<device>/')",
+            "type": "string"
+          },
+          "max_keys": {
+            "default": 100,
+            "description": "Maximum number of objects to return (1-1000)",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "max_keys"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "s3_backup_info",
+      "title": "S3 Backup Info",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Gets metadata (size, etag, last-modified, content type) for an object in the configured S3 bucket.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "S3 object key"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "delete_s3_backup",
+      "title": "Delete S3 Backup",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Deletes an object from the configured S3 bucket.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "S3 object key to delete"
+          }
+        },
+        "required": [
+          "key"
         ],
         "additionalProperties": false
       }

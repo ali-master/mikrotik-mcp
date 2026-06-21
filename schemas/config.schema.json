@@ -117,6 +117,44 @@
         "allowedOrigins"
       ],
       "additionalProperties": false
+    },
+    "s3": {
+      "type": "object",
+      "properties": {
+        "accessKeyId": {
+          "type": "string"
+        },
+        "secretAccessKey": {
+          "type": "string"
+        },
+        "sessionToken": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "prefix": {
+          "default": "",
+          "type": "string"
+        },
+        "presignExpiresIn": {
+          "default": 3600,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "prefix",
+        "presignExpiresIn"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v1.0.0. Do not edit by hand.
 
-**640 tools** across **85 modules**. A `*` marks a required parameter.
+**646 tools** across **86 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -93,6 +93,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Logs](#logs) | System & Ops | 10 | Log retrieval, search, statistics and export (`/log`). |
 | [Logging Config](#logging) | System & Ops | 6 | Logging rules + actions: where each topic is logged (`/system logging`). |
 | [Backup](#backup) | System & Ops | 10 | Binary backups, text exports, file transfer and restore. |
+| [S3 Backup](#s3-backup) | System & Ops | 6 | Optional: ship device backups/exports to S3-compatible storage, organised per device (`/tool fetch` + Bun S3). |
 | [Disk](#disk) | System & Ops | 3 | Storage devices: list/get disks and format-drive (`/disk`). |
 | [Safe Mode](#safe-mode) | System & Ops | 4 | Transactional config window with auto-revert (Ctrl+X session). |
 
@@ -1309,6 +1310,19 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `import_configuration` | ⛔ dangerous | `filename`*, `run_after_reset`*, `verbose`* | Imports and executes a RouterOS configuration script (.rsc file) on the device. |
 | `remove_file` | ⛔ dangerous | `filename`* | Removes a file from the MikroTik device filesystem. |
 | `backup_info` | 🟢 read | `filename`* | Gets detailed information about a backup file on the MikroTik device. |
+
+## S3 Backup
+
+<a id="s3-backup"></a>Optional: ship device backups/exports to S3-compatible storage, organised per device (`/tool fetch` + Bun S3).
+
+| Tool | Risk | Parameters | Description |
+|------|------|------------|-------------|
+| `s3_backup_status` | 🟢 read | _none_ | Reports whether optional S3 backup storage is configured and where backups will be stored. |
+| `upload_backup_to_s3` | 🟡 write | `filename`*, `key`, `expires_in` | Uploads a file from the device (e.g. a .backup or .rsc export) to the configured S3 bucket. The device streams it directly to S3 via a short-lived presigned URL. |
+| `download_backup_from_s3` | 🟡 write | `key`*, `filename`, `expires_in` | Downloads an object from the configured S3 bucket onto the device filesystem (e.g. to later restore a backup). The device streams it directly from S3 via a short-lived presigned URL. |
+| `list_s3_backups` | 🟢 read | `prefix`, `max_keys`* | Lists objects in the configured S3 bucket. By default lists only the current device's backups (under '<prefix>/<device>/'); pass an explicit prefix to list elsewhere (e.g. '' for the whole bucket). |
+| `s3_backup_info` | 🟢 read | `key`* | Gets metadata (size, etag, last-modified, content type) for an object in the configured S3 bucket. |
+| `delete_s3_backup` | 🔴 destructive | `key`* | Deletes an object from the configured S3 bucket. |
 
 ## Disk
 

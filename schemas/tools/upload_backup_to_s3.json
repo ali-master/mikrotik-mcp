@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "upload_backup_to_s3",
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string",
+      "description": "File on the device, e.g. 'daily.backup'"
+    },
+    "key": {
+      "description": "S3 object key (defaults to prefix + filename)",
+      "type": "string"
+    },
+    "expires_in": {
+      "description": "Presigned-URL lifetime in seconds",
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "filename"
+  ],
+  "additionalProperties": false
+}

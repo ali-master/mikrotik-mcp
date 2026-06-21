@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_s3_backups",
+  "type": "object",
+  "properties": {
+    "prefix": {
+      "description": "Key prefix to list under (defaults to this device's '<prefix>/<device>/')",
+      "type": "string"
+    },
+    "max_keys": {
+      "default": 100,
+      "description": "Maximum number of objects to return (1-1000)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    }
+  },
+  "required": [
+    "max_keys"
+  ],
+  "additionalProperties": false
+}

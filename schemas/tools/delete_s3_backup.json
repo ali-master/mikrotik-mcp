@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "delete_s3_backup",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "S3 object key to delete"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "additionalProperties": false
+}
