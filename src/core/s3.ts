@@ -44,11 +44,28 @@ export function getS3Client(): S3Client {
   return new S3Client(opts);
 }
 
-/** Prepend the configured key prefix (if any) to an object name. */
-export function s3Key(name: string): string {
-  const prefix = getS3Config()?.prefix ?? "";
-  if (!prefix) return name;
-  return `${prefix.replace(/\/+$/, "")}/${name.replace(/^\/+/, "")}`;
+function trimSlashes(s: string): string {
+  return s.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * The key prefix for a device's backups: `<configured-prefix>/<device>/`.
+ * Backups are organised per device so each router's files live under their own
+ * "folder" in the bucket. Returns "" only when neither prefix nor device apply.
+ */
+export function s3DevicePrefix(device?: string): string {
+  const segments = [getS3Config()?.prefix ?? "", device ?? ""]
+    .map(trimSlashes)
+    .filter(Boolean);
+  return segments.length ? `${segments.join("/")}/` : "";
+}
+
+/**
+ * Build the S3 object key for a file: `<configured-prefix>/<device>/<name>`.
+ * Pass the (resolved) device name to categorise the object under that router.
+ */
+export function s3Key(name: string, device?: string): string {
+  return s3DevicePrefix(device) + name.replace(/^\/+/, "");
 }
 
 /** Configured presigned-URL lifetime in seconds (default 3600). */
@@ -62,6 +79,6 @@ export function s3Target(): string {
   if (!s3) return "S3 not configured";
   const where = s3.endpoint ?? "AWS S3";
   const bucket = s3.bucket ?? "(bucket from env)";
-  const prefix = s3.prefix ? ` prefix='${s3.prefix}'` : "";
-  return `bucket='${bucket}' at ${where}${prefix}`;
+  const layout = `${trimSlashes(s3.prefix ?? "")}${s3.prefix ? "/" : ""}<device>/<file>`;
+  return `bucket='${bucket}' at ${where}, layout='${layout}'`;
 }

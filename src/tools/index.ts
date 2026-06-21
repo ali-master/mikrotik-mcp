@@ -8,6 +8,7 @@ import type { ToolModule } from "../core/registry";
 
 import { addressListTools } from "./address-list";
 import { backupTools } from "./backup";
+import { s3BackupTools } from "./s3-backup";
 import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
 import { deviceTools } from "./devices";
@@ -752,6 +753,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "Binary backups, text exports, file transfer and restore.",
     tools: backupTools,
+  },
+  {
+    label: "S3 Backup",
+    slug: "s3-backup",
+    group: "System & Ops",
+    description:
+      "Optional: ship device backups/exports to S3-compatible storage, organised per device (`/tool fetch` + Bun S3).",
+    tools: s3BackupTools,
   },
   {
     label: "Disk",

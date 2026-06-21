@@ -9,6 +9,7 @@ import { MikrotikConfigSchema } from "../src/config";
 import {
   isS3Configured,
   s3Key,
+  s3DevicePrefix,
   presignExpiresIn,
   getS3Config,
 } from "../src/core/s3";
@@ -96,9 +97,22 @@ describe("S3 helper", () => {
     expect(s3Key("/daily.backup")).toBe("mikrotik/daily.backup");
   });
 
-  test("s3Key is a no-op without a prefix", () => {
+  test("s3Key categorises by device", () => {
+    setConfig(
+      MikrotikConfigSchema.parse({ s3: { bucket: "b", prefix: "mikrotik/" } }),
+    );
+    expect(s3Key("daily.backup", "home")).toBe("mikrotik/home/daily.backup");
+    expect(s3DevicePrefix("home")).toBe("mikrotik/home/");
+    // Device categorisation works even without a configured prefix.
+    setConfig(MikrotikConfigSchema.parse({ s3: { bucket: "b" } }));
+    expect(s3Key("daily.backup", "edge")).toBe("edge/daily.backup");
+    expect(s3DevicePrefix("edge")).toBe("edge/");
+  });
+
+  test("s3Key is a no-op without a prefix or device", () => {
     setConfig(MikrotikConfigSchema.parse({ s3: { bucket: "b" } }));
     expect(s3Key("daily.backup")).toBe("daily.backup");
+    expect(s3DevicePrefix()).toBe("");
   });
 
   test("presignExpiresIn defaults to 3600", () => {
