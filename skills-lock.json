@@ -16,6 +16,16 @@
       "sourceType": "github",
       "computedHash": "39f1ce1c5d4c43b8281e7e51332f9a05f4b689ddd9bf426b4833fb671237f757"
     },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+    },
+    "git-flow-branch-creator": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "8add10a7fce31ef99856d36bffeb90f1f1130f5afd88b111417c257f1e5d39bd"
+    },
     "migrate-oai-app": {
       "source": "modelcontextprotocol/ext-apps",
       "sourceType": "github",
@@ -90,6 +100,11 @@
       "source": "tikoci/routeros-skills",
       "sourceType": "github",
       "computedHash": "a57baf03a692e3673e13f26fc8207a3ce83fcd4809050b19d97d45022bf94343"
+    },
+    "writing-great-skills": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "581f78b50b3d81b095de86b5c18a4d9fa932fbe414cc82bd26d627d4da518f07"
     }
   }
 }
