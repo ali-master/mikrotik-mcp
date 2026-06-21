@@ -273,6 +273,7 @@ function Donut({
         display: "flex",
         gap: 14,
         alignItems: "center",
+        justifyContent: "center",
         flexWrap: "wrap",
       }}
     >
@@ -723,22 +724,24 @@ function App(): ReactNode {
 
   const visible = useMemo(() => {
     const q = filter.q.trim().toLowerCase();
-    return feed.filter((e) => {
-      if (filter.tool && e.tool !== filter.tool) return false;
-      if (filter.risk && e.risk !== filter.risk) return false;
-      if (filter.device && e.device !== filter.device) return false;
-      if (filter.status === "ok" && e.isError) return false;
-      if (filter.status === "error" && !e.isError) return false;
-      if (
-        q &&
-        !e.tool.toLowerCase().includes(q) &&
-        !e.input.toLowerCase().includes(q) &&
-        !e.output.toLowerCase().includes(q) &&
-        !(e.error ?? "").toLowerCase().includes(q)
-      )
-        return false;
-      return true;
-    });
+    return feed
+      .filter((e) => {
+        if (filter.tool && e.tool !== filter.tool) return false;
+        if (filter.risk && e.risk !== filter.risk) return false;
+        if (filter.device && e.device !== filter.device) return false;
+        if (filter.status === "ok" && e.isError) return false;
+        if (filter.status === "error" && !e.isError) return false;
+        if (
+          q &&
+          !e.tool.toLowerCase().includes(q) &&
+          !e.input.toLowerCase().includes(q) &&
+          !e.output.toLowerCase().includes(q) &&
+          !(e.error ?? "").toLowerCase().includes(q)
+        )
+          return false;
+        return true;
+      })
+      .sort((a, b) => b.ts - a.ts); // newest first
   }, [feed, filter]);
   const hasFilters = Boolean(
     filter.tool || filter.risk || filter.device || filter.status || filter.q,
