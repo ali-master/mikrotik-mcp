@@ -740,6 +740,9 @@ function App(): ReactNode {
       return true;
     });
   }, [feed, filter]);
+  const hasFilters = Boolean(
+    filter.tool || filter.risk || filter.device || filter.status || filter.q,
+  );
 
   const openDetail = useCallback(async (e: ToolEvent) => {
     try {
@@ -1038,46 +1041,79 @@ function App(): ReactNode {
             Clear
           </button>
         </div>
-        <div className="feedwrap">
-          <table className="feed">
-            <thead>
-              <tr>
-                <th>time</th>
-                <th>tool</th>
-                <th>risk</th>
-                <th>device</th>
-                <th className="num">dur</th>
-                <th>status</th>
-                <th>output</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.slice(0, 200).map((e) => (
-                <tr
-                  key={e.id}
-                  className={e.isError ? "is-err" : undefined}
-                  onClick={() => void openDetail(e)}
-                >
-                  <td>{clock(e.ts)}</td>
-                  <td>{e.tool}</td>
-                  <td>
-                    <span className={`risk risk-${e.risk}`}>
-                      {e.risk.replace("WRITE_IDEMPOTENT", "WRITE·I")}
-                    </span>
-                  </td>
-                  <td>{e.device ?? "—"}</td>
-                  <td className="num">{ms(e.durationMs)}</td>
-                  <td>
-                    <span className={e.isError ? "status-err" : "status-ok"}>
-                      {e.isError ? "error" : "ok"}
-                    </span>
-                  </td>
-                  <td className="preview">{e.isError ? (e.error ?? "error") : e.output || "—"}</td>
+        {visible.length === 0 ? (
+          hasFilters ? (
+            <div className="feed-empty">
+              <div className="feed-empty__icon">🔍</div>
+              <p className="feed-empty__title">No calls match your filters</p>
+              <p className="feed-empty__sub">
+                {feed.length} call{feed.length === 1 ? "" : "s"} buffered — try widening the search
+                or the risk / device / status filters.
+              </p>
+              <button
+                className="btn"
+                onClick={() => setFilter({ tool: "", risk: "", device: "", status: "", q: "" })}
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="feed-empty">
+              <div className={`feed-empty__pulse${liveMode !== "off" ? " is-on" : ""}`} />
+              <p className="feed-empty__title">
+                {liveMode === "off" ? "Not connected" : "Listening for tool calls…"}
+              </p>
+              <p className="feed-empty__sub">
+                {liveMode === "off"
+                  ? "The live stream is offline — it will reconnect automatically."
+                  : "Tool calls the LLM makes against this server stream in here in real time."}
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="feedwrap">
+            <table className="feed">
+              <thead>
+                <tr>
+                  <th>time</th>
+                  <th>tool</th>
+                  <th>risk</th>
+                  <th>device</th>
+                  <th className="num">dur</th>
+                  <th>status</th>
+                  <th>output</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {visible.slice(0, 200).map((e) => (
+                  <tr
+                    key={e.id}
+                    className={e.isError ? "is-err" : undefined}
+                    onClick={() => void openDetail(e)}
+                  >
+                    <td>{clock(e.ts)}</td>
+                    <td>{e.tool}</td>
+                    <td>
+                      <span className={`risk risk-${e.risk}`}>
+                        {e.risk.replace("WRITE_IDEMPOTENT", "WRITE·I")}
+                      </span>
+                    </td>
+                    <td>{e.device ?? "—"}</td>
+                    <td className="num">{ms(e.durationMs)}</td>
+                    <td>
+                      <span className={e.isError ? "status-err" : "status-ok"}>
+                        {e.isError ? "error" : "ok"}
+                      </span>
+                    </td>
+                    <td className="preview">
+                      {e.isError ? (e.error ?? "error") : e.output || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {selected && <DetailDrawer event={selected} onClose={() => setSelected(null)} />}

@@ -281,6 +281,57 @@ body {
   border-radius: var(--mt-radius);
 }
 
+/* Empty state for the live feed (no events yet, or filtered to nothing). */
+.feed-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  border: 1px dashed var(--mt-border);
+  border-radius: var(--mt-radius);
+  text-align: center;
+}
+.feed-empty__icon {
+  font-size: 28px;
+  opacity: 0.8;
+}
+.feed-empty__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--mt-text);
+}
+.feed-empty__sub {
+  margin: 0;
+  max-width: 460px;
+  color: var(--mt-text-faint);
+  font-size: 12px;
+}
+.feed-empty .btn {
+  margin-top: 6px;
+}
+/* Pulsing dot for the "listening…" state. */
+.feed-empty__pulse {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--mt-text-faint);
+}
+.feed-empty__pulse.is-on {
+  background: var(--mt-good);
+  animation: feed-pulse 1.6s ease-out infinite;
+}
+@keyframes feed-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--mt-good) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 0%, transparent);
+  }
+}
+
 /* ── Devices & connectivity ──────────────────────────────────────────────── */
 .dev-grid {
   display: grid;
