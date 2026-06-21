@@ -45,7 +45,13 @@ interface Stats {
   callsPerMin: number;
   outputBytes: number;
   latency: { avg: number; p50: number; p95: number; p99: number; max: number };
-  byTool: { tool: string; count: number; errors: number; avgMs: number; p95Ms: number }[];
+  byTool: {
+    tool: string;
+    count: number;
+    errors: number;
+    avgMs: number;
+    p95Ms: number;
+  }[];
   byRisk: Record<Risk, number>;
   byDevice: { device: string; count: number }[];
   byStatus: { ok: number; error: number };
@@ -87,7 +93,13 @@ interface DevicesPayload {
   defaultDevice: string;
   devices: DeviceInfo[];
 }
-type Filter = { tool: string; risk: string; device: string; status: string; q: string };
+type Filter = {
+  tool: string;
+  risk: string;
+  device: string;
+  status: string;
+  q: string;
+};
 type LiveMode = "ws" | "sse" | "off";
 
 // ── formatting ───────────────────────────────────────────────────────────────
@@ -256,7 +268,14 @@ function Donut({
   const C = 2 * Math.PI * R;
   let offset = 0;
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: 14,
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
       <svg viewBox="0 0 120 120" width={120} height={120}>
         <circle cx={60} cy={60} r={R} fill="none" stroke="#1b1f26" strokeWidth={16} />
         {segments
@@ -317,7 +336,10 @@ function HBars({
           <div className="hbar__track">
             <div
               className="hbar__fill"
-              style={{ width: `${(r.value / max) * 100}%`, background: r.color }}
+              style={{
+                width: `${(r.value / max) * 100}%`,
+                background: r.color,
+              }}
             />
           </div>
           <span className="hbar__val">{r.sub ?? String(r.value)}</span>
@@ -499,6 +521,41 @@ function useLiveStream(onEvent: (e: ToolEvent) => void, onMode: (m: LiveMode) =>
   }, []);
 }
 
+// ── JSON syntax highlighter ──────────────────────────────────────────────────
+// Tokenises pretty-printed JSON into coloured spans (keys / strings / numbers /
+// booleans / null). Dependency-free and XSS-safe — React escapes every token's
+// text. Non-JSON input degrades gracefully (only quoted strings/numbers light up).
+const JSON_TOKEN =
+  /("(?:\\.|[^"\\])*"(?:\s*:)?)|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+
+function JsonView({ value, maxHeight }: { value: unknown; maxHeight?: number }): ReactNode {
+  const json = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let i = 0;
+  for (const m of json.matchAll(JSON_TOKEN)) {
+    const idx = m.index ?? 0;
+    if (idx > last) parts.push(json.slice(last, idx));
+    const tok = m[0];
+    let cls: string;
+    if (m[1] !== undefined) cls = /:\s*$/.test(tok) ? "j-key" : "j-str";
+    else if (m[2] !== undefined) cls = tok === "null" ? "j-null" : "j-bool";
+    else cls = "j-num";
+    parts.push(
+      <span className={cls} key={i++}>
+        {tok}
+      </span>,
+    );
+    last = idx + tok.length;
+  }
+  if (last < json.length) parts.push(json.slice(last));
+  return (
+    <pre className="body json" style={maxHeight ? { maxHeight } : undefined}>
+      {parts}
+    </pre>
+  );
+}
+
 // ── detail drawer ────────────────────────────────────────────────────────────
 function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => void }): ReactNode {
   const copy = (text: string): void => void navigator.clipboard?.writeText(text).catch(() => {});
@@ -557,7 +614,7 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
             Copy
           </button>
         </div>
-        <pre className="body">{event.input || "—"}</pre>
+        {event.input ? <JsonView value={event.input} /> : <pre className="body">—</pre>}
         <div className="sheet__hd">
           <h2 className="muted" style={{ margin: 0 }}>
             OUTPUT
@@ -833,13 +890,22 @@ function App(): ReactNode {
             <Donut
               segments={[
                 { label: "ok", value: stats.byStatus.ok, color: "#34d399" },
-                { label: "error", value: stats.byStatus.error, color: "#f87171" },
+                {
+                  label: "error",
+                  value: stats.byStatus.error,
+                  color: "#f87171",
+                },
               ]}
             />
           </Panel>
           <Panel title="By device">
             {stats.byDevice.length ? (
-              <HBars rows={stats.byDevice.map((d) => ({ label: d.device, value: d.count }))} />
+              <HBars
+                rows={stats.byDevice.map((d) => ({
+                  label: d.device,
+                  value: d.count,
+                }))}
+              />
             ) : (
               <div className="muted">single device</div>
             )}
@@ -907,9 +973,7 @@ function App(): ReactNode {
           </div>
           <details className="cfg">
             <summary>Full effective configuration (secrets redacted)</summary>
-            <pre className="body" style={{ maxHeight: 340 }}>
-              {JSON.stringify(config, null, 2)}
-            </pre>
+            <JsonView value={config} maxHeight={340} />
           </details>
         </Panel>
       )}

@@ -380,6 +380,26 @@ pre.body {
   max-height: 40vh;
   overflow: auto;
 }
+
+/* JSON syntax highlighting (JsonView tokens). */
+pre.body.json {
+  color: var(--mt-text-dim); /* punctuation: braces, brackets, commas, colons */
+}
+pre.body.json .j-key {
+  color: var(--mt-accent);
+}
+pre.body.json .j-str {
+  color: var(--mt-good);
+}
+pre.body.json .j-num {
+  color: #fbbf24;
+}
+pre.body.json .j-bool {
+  color: #c792ea;
+}
+pre.body.json .j-null {
+  color: var(--mt-text-faint);
+}
 .muted {
   color: var(--mt-text-faint);
   font-family: var(--mt-mono);
