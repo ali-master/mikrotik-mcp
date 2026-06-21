@@ -7,6 +7,7 @@
 import type { ToolModule } from "../core/registry";
 
 import { addressListTools } from "./address-list";
+import { appViewTools } from "./app-views";
 import { backupTools } from "./backup";
 import { s3BackupTools } from "./s3-backup";
 import { bridgeTools } from "./bridge";
@@ -125,24 +126,21 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Bridge",
     slug: "bridge",
     group: "Interfaces",
-    description:
-      "Bridges, ports, host table and bridge VLANs (`/interface bridge`).",
+    description: "Bridges, ports, host table and bridge VLANs (`/interface bridge`).",
     tools: bridgeTools,
   },
   {
     label: "Wireless",
     slug: "wireless",
     group: "Interfaces",
-    description:
-      "Wireless interfaces, security profiles and access lists (legacy + wifiwave2).",
+    description: "Wireless interfaces, security profiles and access lists (legacy + wifiwave2).",
     tools: wirelessTools,
   },
   {
     label: "PoE",
     slug: "poe",
     group: "Interfaces",
-    description:
-      "Power-over-Ethernet status and configuration (`/interface ethernet poe`).",
+    description: "Power-over-Ethernet status and configuration (`/interface ethernet poe`).",
     tools: poeTools,
   },
   // ── Switch chip (`/interface ethernet switch`) ───────────────────────────
@@ -158,8 +156,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Switch — Ports",
     slug: "switch-port",
     group: "Switch",
-    description:
-      "Per-port switch chip VLAN settings (`/interface ethernet switch port`).",
+    description: "Per-port switch chip VLAN settings (`/interface ethernet switch port`).",
     tools: switchPortTools,
   },
   {
@@ -174,8 +171,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Switch — Rules",
     slug: "switch-rule",
     group: "Switch",
-    description:
-      "Hardware switch ACL/redirect rules (`/interface ethernet switch rule`).",
+    description: "Hardware switch ACL/redirect rules (`/interface ethernet switch rule`).",
     tools: switchRuleTools,
   },
   // ── Layer 3 / addressing & routing ───────────────────────────────────────
@@ -197,8 +193,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Routing — Static",
     slug: "routes",
     group: "Addressing & Routing",
-    description:
-      "Static routes, routing table, route checks and cache (`/ip route`).",
+    description: "Static routes, routing table, route checks and cache (`/ip route`).",
     tools: routeTools,
   },
   {
@@ -227,24 +222,21 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "DHCPv6 Client",
     slug: "ipv6-dhcp-client",
     group: "IPv6",
-    description:
-      "DHCPv6 client: address/prefix delegation requests (`/ipv6 dhcp-client`).",
+    description: "DHCPv6 client: address/prefix delegation requests (`/ipv6 dhcp-client`).",
     tools: ipv6DhcpClientTools,
   },
   {
     label: "DHCPv6 Relay",
     slug: "ipv6-dhcp-relay",
     group: "IPv6",
-    description:
-      "DHCPv6 relay: forward client requests to upstream servers (`/ipv6 dhcp-relay`).",
+    description: "DHCPv6 relay: forward client requests to upstream servers (`/ipv6 dhcp-relay`).",
     tools: ipv6DhcpRelayTools,
   },
   {
     label: "DHCPv6 Server",
     slug: "ipv6-dhcp-server",
     group: "IPv6",
-    description:
-      "DHCPv6 server, static bindings and custom options (`/ipv6 dhcp-server`).",
+    description: "DHCPv6 server, static bindings and custom options (`/ipv6 dhcp-server`).",
     tools: ipv6DhcpServerTools,
   },
   {
@@ -258,8 +250,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "IPv6 Firewall — NAT",
     slug: "ipv6-firewall-nat",
     group: "IPv6",
-    description:
-      "IPv6 NAT rules: src-nat, dst-nat, masquerade, netmap (`/ipv6 firewall nat`).",
+    description: "IPv6 NAT rules: src-nat, dst-nat, masquerade, netmap (`/ipv6 firewall nat`).",
     tools: ipv6FirewallNatTools,
   },
   {
@@ -274,16 +265,14 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "IPv6 Firewall — Raw",
     slug: "ipv6-firewall-raw",
     group: "IPv6",
-    description:
-      "IPv6 raw rules: pre-conntrack accept/drop/notrack (`/ipv6 firewall raw`).",
+    description: "IPv6 raw rules: pre-conntrack accept/drop/notrack (`/ipv6 firewall raw`).",
     tools: ipv6FirewallRawTools,
   },
   {
     label: "IPv6 Firewall — Address List",
     slug: "ipv6-firewall-address-list",
     group: "IPv6",
-    description:
-      "IPv6 firewall address-lists (`/ipv6 firewall address-list`).",
+    description: "IPv6 firewall address-lists (`/ipv6 firewall address-list`).",
     tools: ipv6FirewallAddressListTools,
   },
   {
@@ -298,24 +287,21 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "IPv6 Neighbors",
     slug: "ipv6-neighbor",
     group: "IPv6",
-    description:
-      "IPv6 neighbor cache (ND-discovered addresses), read + flush (`/ipv6 neighbor`).",
+    description: "IPv6 neighbor cache (ND-discovered addresses), read + flush (`/ipv6 neighbor`).",
     tools: ipv6NeighborTools,
   },
   {
     label: "IPv6 Pool",
     slug: "ipv6-pool",
     group: "IPv6",
-    description:
-      "IPv6 address/prefix pools for delegation and addressing (`/ipv6 pool`).",
+    description: "IPv6 address/prefix pools for delegation and addressing (`/ipv6 pool`).",
     tools: ipv6PoolTools,
   },
   {
     label: "IPv6 Routes",
     slug: "ipv6-route",
     group: "IPv6",
-    description:
-      "Static IPv6 routes, incl. default and blackhole/unreachable (`/ipv6 route`).",
+    description: "Static IPv6 routes, incl. default and blackhole/unreachable (`/ipv6 route`).",
     tools: ipv6RouteTools,
   },
   {
@@ -361,32 +347,28 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Next-hops",
     slug: "routing-nexthop",
     group: "Dynamic Routing",
-    description:
-      "Resolved recursive next-hop table, read-only diagnostics (`/routing nexthop`).",
+    description: "Resolved recursive next-hop table, read-only diagnostics (`/routing nexthop`).",
     tools: routingNexthopTools,
   },
   {
     label: "Routing Filters",
     slug: "routing-filter",
     group: "Dynamic Routing",
-    description:
-      "Route filter rules, select-rules and num-lists (`/routing filter`).",
+    description: "Route filter rules, select-rules and num-lists (`/routing filter`).",
     tools: routingFilterTools,
   },
   {
     label: "BFD",
     slug: "routing-bfd",
     group: "Dynamic Routing",
-    description:
-      "Bidirectional Forwarding Detection config + sessions (`/routing bfd`).",
+    description: "Bidirectional Forwarding Detection config + sessions (`/routing bfd`).",
     tools: routingBfdTools,
   },
   {
     label: "BGP",
     slug: "routing-bgp",
     group: "Dynamic Routing",
-    description:
-      "BGP connections, templates, sessions and advertisements (`/routing bgp`).",
+    description: "BGP connections, templates, sessions and advertisements (`/routing bgp`).",
     tools: routingBgpTools,
   },
   {
@@ -401,8 +383,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "RIP",
     slug: "routing-rip",
     group: "Dynamic Routing",
-    description:
-      "RIP instances, interface-templates, static + dynamic neighbors (`/routing rip`).",
+    description: "RIP instances, interface-templates, static + dynamic neighbors (`/routing rip`).",
     tools: routingRipTools,
   },
   {
@@ -417,8 +398,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "IGMP Proxy",
     slug: "routing-igmp-proxy",
     group: "Dynamic Routing",
-    description:
-      "IGMP proxy settings, interfaces and forwarding cache (`/routing igmp-proxy`).",
+    description: "IGMP proxy settings, interfaces and forwarding cache (`/routing igmp-proxy`).",
     tools: routingIgmpProxyTools,
   },
   {
@@ -433,8 +413,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "RPKI",
     slug: "routing-rpki",
     group: "Dynamic Routing",
-    description:
-      "RPKI validator sessions for BGP origin validation (`/routing rpki`).",
+    description: "RPKI validator sessions for BGP origin validation (`/routing rpki`).",
     tools: routingRpkiTools,
   },
   // ── Security ─────────────────────────────────────────────────────────────
@@ -442,16 +421,14 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Firewall — Filter",
     slug: "firewall-filter",
     group: "Security",
-    description:
-      "Filter rules and a guided basic setup (`/ip firewall filter`).",
+    description: "Filter rules and a guided basic setup (`/ip firewall filter`).",
     tools: firewallFilterTools,
   },
   {
     label: "Firewall — NAT",
     slug: "firewall-nat",
     group: "Security",
-    description:
-      "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).",
+    description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).",
     tools: firewallNatTools,
   },
   {
@@ -472,8 +449,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "IP Services",
     slug: "ip-service",
     group: "Security",
-    description:
-      "Management service ports — ssh/www/api/telnet (`/ip service`).",
+    description: "Management service ports — ssh/www/api/telnet (`/ip service`).",
     tools: ipServiceTools,
   },
   {
@@ -512,16 +488,14 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "PPP",
     slug: "ppp",
     group: "VPN & Tunneling",
-    description:
-      "Shared PPP backend: profiles, secrets, active sessions (`/ppp`).",
+    description: "Shared PPP backend: profiles, secrets, active sessions (`/ppp`).",
     tools: pppTools,
   },
   {
     label: "L2TP",
     slug: "l2tp",
     group: "VPN & Tunneling",
-    description:
-      "L2TP server + clients, incl. L2TP/IPsec (`/interface l2tp-*`).",
+    description: "L2TP server + clients, incl. L2TP/IPsec (`/interface l2tp-*`).",
     tools: l2tpTools,
   },
   {
@@ -549,8 +523,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Tunnels",
     slug: "tunnels",
     group: "VPN & Tunneling",
-    description:
-      "GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`).",
+    description: "GRE, IPIP, EoIP and VXLAN tunnels (`/interface gre|ipip|eoip|vxlan`).",
     tools: tunnelTools,
   },
   // ── AAA (RADIUS / User Manager) ───────────────────────────────────────────
@@ -581,8 +554,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Queues — Interface",
     slug: "queue-interface",
     group: "QoS",
-    description:
-      "Per-interface queue-type assignment (`/queue interface`).",
+    description: "Per-interface queue-type assignment (`/queue interface`).",
     tools: queueInterfaceTools,
   },
   // ── System / operations ──────────────────────────────────────────────────
@@ -598,8 +570,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "System",
     slug: "system",
     group: "System & Ops",
-    description:
-      "Identity, resources, health, clock/NTP, packages, reboot/shutdown.",
+    description: "Identity, resources, health, clock/NTP, packages, reboot/shutdown.",
     tools: systemTools,
   },
   {
@@ -614,8 +585,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Network Tools",
     slug: "network-tools",
     group: "System & Ops",
-    description:
-      "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).",
+    description: "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).",
     tools: networkToolTools,
   },
   // ── Tools (`/tool`) ──────────────────────────────────────────────────────
@@ -623,8 +593,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Btest Server",
     slug: "tool-bandwidth-server",
     group: "Tools",
-    description:
-      "Bandwidth-test server settings and sessions (`/tool bandwidth-server`).",
+    description: "Bandwidth-test server settings and sessions (`/tool bandwidth-server`).",
     tools: bandwidthServerTools,
   },
   {
@@ -638,8 +607,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Graphing",
     slug: "tool-graphing",
     group: "Tools",
-    description:
-      "Interface/queue/resource graphing rules (`/tool graphing`).",
+    description: "Interface/queue/resource graphing rules (`/tool graphing`).",
     tools: graphingTools,
   },
   {
@@ -653,8 +621,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "MAC Server",
     slug: "tool-mac-server",
     group: "Tools",
-    description:
-      "MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`).",
+    description: "MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`).",
     tools: macServerTools,
   },
   {
@@ -676,8 +643,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "RoMON",
     slug: "tool-romon",
     group: "Tools",
-    description:
-      "Router Management Overlay Network settings and ports (`/tool romon`).",
+    description: "Router Management Overlay Network settings and ports (`/tool romon`).",
     tools: romonTools,
   },
   {
@@ -698,8 +664,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Traffic Generator",
     slug: "tool-traffic-generator",
     group: "Tools",
-    description:
-      "Synthetic traffic: ports, streams and run control (`/tool traffic-generator`).",
+    description: "Synthetic traffic: ports, streams and run control (`/tool traffic-generator`).",
     tools: trafficGeneratorTools,
   },
   {
@@ -721,8 +686,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Scheduler / Scripts",
     slug: "scheduler",
     group: "System & Ops",
-    description:
-      "Scheduled jobs and scripts (`/system scheduler`, `/system script`).",
+    description: "Scheduled jobs and scripts (`/system scheduler`, `/system script`).",
     tools: schedulerTools,
   },
   {
@@ -743,8 +707,7 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Logging Config",
     slug: "logging",
     group: "System & Ops",
-    description:
-      "Logging rules + actions: where each topic is logged (`/system logging`).",
+    description: "Logging rules + actions: where each topic is logged (`/system logging`).",
     tools: systemLoggingTools,
   },
   {
@@ -773,9 +736,16 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Safe Mode",
     slug: "safe-mode",
     group: "System & Ops",
-    description:
-      "Transactional config window with auto-revert (Ctrl+X session).",
+    description: "Transactional config window with auto-revert (Ctrl+X session).",
     tools: safeModeTools,
+  },
+  // ── Interactive views (MCP Apps) ─────────────────────────────────────────
+  {
+    label: "Apps — Dashboards",
+    slug: "app-views",
+    group: "MCP Apps",
+    description: "Tools that render interactive UI views inline (MCP Apps): the device dashboard.",
+    tools: appViewTools,
   },
 ];
 
