@@ -37,9 +37,19 @@ and lets a failing check pass the gate.
 
 **One choke point for the device.** Every tool reaches RouterOS through
 `executeMikrotikCommand(command, ctx)` in `src/core/connector.ts` — never by
-opening SSH directly. It routes the command through Safe Mode's persistent session
-when active (`src/ssh/safe-mode.ts`), otherwise a fresh one-shot SSH channel
-(`src/ssh/client.ts`). The target device rides on `ctx.device`.
+opening a transport directly. It routes the command through Safe Mode's persistent
+session when active (`src/ssh/safe-mode.ts`), otherwise `runOnce()` opens a fresh
+one-shot connection. The default transport is an SSH channel (`src/ssh/client.ts`);
+when the resolved device config carries a `mac` (instead of a routable `host`),
+`runOnce` instead uses **MAC-Telnet** — a Layer-2 terminal over UDP 20561
+(`src/mac-telnet/`) that reaches a device by MAC with no IP. `MikroTikMacTelnetClient`
+mirrors `MikroTikSSHClient`'s `connect/run/disconnect/lastError` shape so the branch
+is one line and every tool inherits it. MAC-Telnet auth is MTWEI (EC-SRP5 in
+`ec-srp5.ts`/`mtwei.ts`) with an MD5 fallback; the interactive console stream is
+turned back into one-shot command/response in `console.ts`. Safe Mode is SSH-only.
+This is the **only** non-SSH device path and is isolated to `src/mac-telnet/` (UDP
+via `node:dgram` + `node:crypto`; no `child_process`/OS-shell). The target device
+rides on `ctx.device`.
 
 **Command construction is the injection boundary.** Build every device command
 with the `Cmd` builder in `src/core/routeros.ts` (`.set/.opt/.flag/.bool/.raw/

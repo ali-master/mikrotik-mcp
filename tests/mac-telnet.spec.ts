@@ -1,0 +1,251 @@
+/**
+ * MAC-Telnet codec + EC-SRP5 crypto tests (offline, no L2 network).
+ *
+ * The wire codec and the EC-SRP5 math are pure functions of bytes, so they are
+ * fully testable without a device — the same approach the reference uses. The
+ * live session/console (UDP + RouterOS console negotiation) needs a real L2
+ * segment and is not exercised here.
+ */
+import { describe, expect, test } from "vite-plus/test";
+import {
+  bigIntToBytesBE,
+  bytesToBigIntBE,
+  ecSrp5ClientProof,
+  ecSrp5Curve,
+  ecSrp5Id,
+  ecSrp5Keygen,
+  EC_SRP5_PUBKEY_LEN,
+  EC_SRP5_VALIDATOR_LEN,
+  decodePoint,
+  encodePoint,
+  isOnCurve,
+  scalarMul,
+} from "../src/mac-telnet/ec-srp5";
+import {
+  buildPacket,
+  decodeHeader,
+  encodeControlBlock,
+  encodeHeader,
+  encodeTerminalDimension,
+  formatMac,
+  macTelnetPasswordHash,
+  MAC_TELNET_CLIENT_TYPE,
+  MAC_TELNET_CONTROL_MAGIC,
+  MAC_TELNET_HEADER_LEN,
+  MacTelnetControlType,
+  MacTelnetPacketType,
+  parseControlBlocks,
+  parseMac,
+} from "../src/mac-telnet/protocol";
+import { mtweiOfferValue } from "../src/mac-telnet/mtwei";
+import { emulateScreen, extractCommandOutput } from "../src/mac-telnet/console";
+
+describe("MAC address parsing", () => {
+  test("parses and round-trips a colon-separated MAC", () => {
+    const mac = parseMac("48:A9:8A:C6:42:F6");
+    expect([...mac]).toEqual([0x48, 0xa9, 0x8a, 0xc6, 0x42, 0xf6]);
+    expect(formatMac(mac)).toBe("48:a9:8a:c6:42:f6");
+  });
+
+  test("accepts dash and dot separators", () => {
+    expect([...parseMac("48-a9-8a-c6-42-f6")]).toEqual([0x48, 0xa9, 0x8a, 0xc6, 0x42, 0xf6]);
+  });
+
+  test("rejects a malformed MAC", () => {
+    expect(() => parseMac("48:A9:8A6")).toThrow(/6-octet MAC/);
+    expect(() => parseMac("zz:zz:zz:zz:zz:zz")).toThrow(/invalid octet/);
+  });
+});
+
+describe("MT header codec", () => {
+  const src = parseMac("02:00:00:00:00:01");
+  const dst = parseMac("48:a9:8a:c6:42:f6");
+
+  test("client header places the session key at offset 14 and client type at 16", () => {
+    const header = encodeHeader({
+      type: MacTelnetPacketType.sessionStart,
+      sourceMac: src,
+      destinationMac: dst,
+      sessionKey: 0x1234,
+      counter: 0,
+    });
+    expect(header.length).toBe(MAC_TELNET_HEADER_LEN);
+    expect(header[0]).toBe(1); // version
+    expect(header[1]).toBe(MacTelnetPacketType.sessionStart);
+    // session key (big-endian) at 14, client type at 16 for client direction
+    expect(header[14]).toBe(0x12);
+    expect(header[15]).toBe(0x34);
+    expect(header[16]).toBe(MAC_TELNET_CLIENT_TYPE[0]);
+    expect(header[17]).toBe(MAC_TELNET_CLIENT_TYPE[1]);
+  });
+
+  test("a client-encoded header decodes correctly when read with the matching direction", () => {
+    const header = encodeHeader({
+      type: MacTelnetPacketType.data,
+      sourceMac: src,
+      destinationMac: dst,
+      sessionKey: 0xbeef,
+      counter: 4096,
+      fromServer: false,
+    });
+    const decoded = decodeHeader(header, { fromServer: false });
+    expect(decoded.version).toBe(1);
+    expect(decoded.type).toBe(MacTelnetPacketType.data);
+    expect([...decoded.sourceMac]).toEqual([...src]);
+    expect([...decoded.destinationMac]).toEqual([...dst]);
+    expect(decoded.sessionKey).toBe(0xbeef);
+    expect(decoded.counter).toBe(4096);
+  });
+
+  test("buildPacket concatenates header + payload", () => {
+    const payload = Uint8Array.of(1, 2, 3);
+    const packet = buildPacket({
+      type: MacTelnetPacketType.data,
+      sourceMac: src,
+      destinationMac: dst,
+      sessionKey: 1,
+      counter: 0,
+      payload,
+    });
+    expect(packet.length).toBe(MAC_TELNET_HEADER_LEN + 3);
+    expect([...packet.subarray(MAC_TELNET_HEADER_LEN)]).toEqual([1, 2, 3]);
+  });
+});
+
+describe("control blocks", () => {
+  test("encode → parse round-trips with the magic and big-endian length", () => {
+    const value = new TextEncoder().encode("ali");
+    const block = encodeControlBlock(MacTelnetControlType.username, value);
+    expect([...block.subarray(0, 4)]).toEqual([...MAC_TELNET_CONTROL_MAGIC]);
+    expect(block[4]).toBe(MacTelnetControlType.username);
+    const parsed = parseControlBlocks(block);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].type).toBe(MacTelnetControlType.username);
+    expect(new TextDecoder().decode(parsed[0].value)).toBe("ali");
+  });
+
+  test("bytes without the magic parse as a single plaindata block", () => {
+    const term = new TextEncoder().encode("hello prompt");
+    const parsed = parseControlBlocks(term);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].type).toBe("plaindata");
+    expect(new TextDecoder().decode(parsed[0].value)).toBe("hello prompt");
+  });
+
+  test("a control block followed by plaindata parses into two blocks", () => {
+    const endAuth = encodeControlBlock(MacTelnetControlType.endAuth);
+    const term = new TextEncoder().encode("[ali@MikroTik] > ");
+    const combined = new Uint8Array(endAuth.length + term.length);
+    combined.set(endAuth, 0);
+    combined.set(term, endAuth.length);
+    const parsed = parseControlBlocks(combined);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0].type).toBe(MacTelnetControlType.endAuth);
+    expect(parsed[1].type).toBe("plaindata");
+  });
+
+  test("terminal dimension is little-endian uint16", () => {
+    expect([...encodeTerminalDimension(512)]).toEqual([0x00, 0x02]);
+  });
+});
+
+describe("classic MD5 auth", () => {
+  test("password value is 0x00 || MD5(0x00 || password || salt), 17 bytes", () => {
+    const salt = new Uint8Array(16).fill(0xab);
+    const value = macTelnetPasswordHash("secret", salt);
+    expect(value.length).toBe(17);
+    expect(value[0]).toBe(0x00);
+  });
+});
+
+describe("MTWEI / EC-SRP5", () => {
+  test("keygen produces a 33-byte public key on the curve", () => {
+    const seed = new Uint8Array(32).fill(7);
+    const { publicKey } = ecSrp5Keygen(seed);
+    expect(publicKey.length).toBe(EC_SRP5_PUBKEY_LEN);
+    // The encoded public key decodes back to a valid curve point.
+    expect(isOnCurve(decodePoint(publicKey))).toBe(true);
+  });
+
+  test("keygen is deterministic for a fixed seed", () => {
+    const seed = new Uint8Array(32).fill(9);
+    expect([...ecSrp5Keygen(seed).publicKey]).toEqual([...ecSrp5Keygen(seed).publicKey]);
+  });
+
+  test("encodePoint / decodePoint round-trip a scalar multiple of G", () => {
+    const point = scalarMul(123456789n, ecSrp5Curve.G);
+    const decoded = decodePoint(encodePoint(point));
+    expect(decoded).not.toBeNull();
+    expect(decoded?.x).toBe(point?.x);
+    expect(decoded?.y).toBe(point?.y);
+  });
+
+  test("the identity validator is SHA256(salt || SHA256(user:pass)), 32 bytes", () => {
+    const salt = new Uint8Array(16).fill(0x10);
+    const id = ecSrp5Id("ali", "@ali4286@", salt);
+    expect(id.length).toBe(32);
+  });
+
+  test("the client proof is a deterministic 32-byte value", () => {
+    const clientSeed = new Uint8Array(32).fill(3);
+    const client = ecSrp5Keygen(clientSeed);
+    // A second keypair stands in for the server's public point.
+    const serverSeed = new Uint8Array(32).fill(5);
+    const server = ecSrp5Keygen(serverSeed);
+    const salt = new Uint8Array(16).fill(0x22);
+    const validator = ecSrp5Id("ali", "@ali4286@", salt);
+    const proofA = ecSrp5ClientProof(
+      client.privateKey,
+      server.publicKey,
+      client.publicKey,
+      validator,
+    );
+    const proofB = ecSrp5ClientProof(
+      client.privateKey,
+      server.publicKey,
+      client.publicKey,
+      validator,
+    );
+    expect(proofA.length).toBe(EC_SRP5_VALIDATOR_LEN);
+    expect([...proofA]).toEqual([...proofB]);
+  });
+
+  test("the MTWEI offer value is username || 0x00 || pubkey", () => {
+    const { publicKey } = ecSrp5Keygen(new Uint8Array(32).fill(1));
+    const offer = mtweiOfferValue("ali", publicKey);
+    expect(offer.length).toBe(3 /* "ali" */ + 1 + EC_SRP5_PUBKEY_LEN);
+    expect(new TextDecoder().decode(offer.subarray(0, 3))).toBe("ali");
+    expect(offer[3]).toBe(0x00);
+  });
+
+  test("big-endian bigint helpers round-trip", () => {
+    const value = 0x0102030405n;
+    const bytes = bigIntToBytesBE(value, 8);
+    expect(bytesToBigIntBE(bytes)).toBe(value);
+  });
+});
+
+describe("console screen emulation", () => {
+  test("CR redraws collapse to the final overwritten line", () => {
+    // CR moves to column 0; "final  " (7 cols) overwrites all of "partial"
+    // (7 cols), then trailing spaces are right-trimmed.
+    expect(emulateScreen("partial\rfinal  ")[0]).toBe("final");
+  });
+
+  test("extractCommandOutput strips the echoed command and trailing prompt", () => {
+    const raw = [
+      "[ali@MikroTik] > /system identity print",
+      "  name: MikroTik",
+      "[ali@MikroTik] > ",
+    ].join("\r\n");
+    const out = extractCommandOutput(raw, "/system identity print");
+    expect(out).toBe("  name: MikroTik");
+  });
+
+  test("a silent write yields empty output", () => {
+    const raw = ["[ali@MikroTik] > /ip address add address=1.1.1.1/24", "[ali@MikroTik] > "].join(
+      "\r\n",
+    );
+    expect(extractCommandOutput(raw, "/ip address add address=1.1.1.1/24")).toBe("");
+  });
+});

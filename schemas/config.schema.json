@@ -53,6 +53,20 @@
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
+          "mac": {
+            "type": "string"
+          },
+          "sourceMac": {
+            "type": "string"
+          },
+          "macHost": {
+            "type": "string"
+          },
+          "macPort": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
           "description": {
             "type": "string"
           }
@@ -145,7 +159,7 @@
     "dashboard": {
       "default": {
         "enabled": false,
-        "host": "0.0.0.0",
+        "host": "127.0.0.1",
         "port": 9090,
         "dbPath": "./.mikrotik-mcp/events.db",
         "maxEvents": 100000,

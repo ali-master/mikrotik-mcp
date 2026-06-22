@@ -3,18 +3,54 @@
  *
  * Centralising command execution here means all 169 tools inherit the same
  * connection handling, error surfacing, and — crucially — Safe Mode routing:
- * when Safe Mode is active the command is sent through the persistent
+ * when Safe Mode is active, the command is sent through the persistent
  * interactive session so it runs inside that transactional context; otherwise a
  * fresh one-shot SSH channel is opened, used, and closed.
  */
 import type { ToolContext } from "./context";
 import { resolveDeviceName, getDevice } from "./runtime";
 import { MikroTikSSHClient } from "../ssh/client";
+import { MikroTikMacTelnetClient } from "../mac-telnet/client";
 import { getSafeModeManager } from "../ssh/safe-mode";
+
+/**
+ * Reach a MAC-Telnet device (Layer-2, no IP) for a single command. Mirrors the
+ * SSH path's connect-run-disconnect contract; the choke point picks this branch
+ * whenever the device config carries a `mac`.
+ */
+async function runOnceMacTelnet(
+  command: string,
+  name: string,
+  dc: ReturnType<typeof getDevice>,
+): Promise<string> {
+  const client = new MikroTikMacTelnetClient({
+    mac: dc.mac as string,
+    username: dc.username,
+    password: dc.password,
+    sourceMac: dc.sourceMac,
+    host: dc.macHost,
+    port: dc.macPort,
+    timeoutMs: dc.timeoutMs,
+  });
+  try {
+    if (!(await client.connect())) {
+      const reason = client.lastError ? ` — ${client.lastError}` : "";
+      throw new Error(
+        `Failed to connect to MikroTik device '${name}' over MAC-Telnet at ${dc.mac}${reason}. ` +
+          "Check you are on the same Layer-2 segment, MAC-Telnet is enabled (/tool mac-server) on a reachable interface, and the credentials are correct.",
+      );
+    }
+    return await client.run(command);
+  } finally {
+    client.disconnect();
+  }
+}
 
 async function runOnce(command: string, deviceName?: string): Promise<string> {
   const name = resolveDeviceName(deviceName);
   const dc = getDevice(deviceName);
+  // A `mac` config selects the Layer-2 MAC-Telnet transport instead of SSH.
+  if (dc.mac) return runOnceMacTelnet(command, name, dc);
   const ssh = new MikroTikSSHClient({
     host: dc.host,
     username: dc.username,
@@ -28,11 +64,7 @@ async function runOnce(command: string, deviceName?: string): Promise<string> {
   try {
     if (!(await ssh.connect())) {
       const authMode =
-        dc.keyFilename || dc.privateKey
-          ? "SSH key"
-          : dc.password
-            ? "password"
-            : "no credentials";
+        dc.keyFilename || dc.privateKey ? "SSH key" : dc.password ? "password" : "no credentials";
       const reason = ssh.lastError ? ` — ${ssh.lastError}` : "";
       // Throwing (vs. returning an "Error:" string) makes this a real tool
       // error: the registry catches it and marks the result isError, instead of
@@ -58,10 +90,7 @@ async function runOnce(command: string, deviceName?: string): Promise<string> {
  * @param command  Fully-formed RouterOS CLI command (e.g. `/ip address print`).
  * @param ctx      Per-call context carrying the target device.
  */
-export async function executeMikrotikCommand(
-  command: string,
-  ctx: ToolContext,
-): Promise<string> {
+export async function executeMikrotikCommand(command: string, ctx: ToolContext): Promise<string> {
   const deviceName = resolveDeviceName(ctx.device);
   const safe = getSafeModeManager(deviceName);
 

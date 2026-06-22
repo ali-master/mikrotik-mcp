@@ -63,6 +63,15 @@ export class SafeModeManager {
       if (this.active) return "Safe mode is already active.";
 
       const dc = getDevice(this.deviceName);
+      // Safe Mode rides a persistent SSH shell (Ctrl+X). A MAC-Telnet device has
+      // no SSH transport, so Safe Mode is not available there.
+      if (dc.mac) {
+        return (
+          "Error: Safe Mode is not supported for a MAC-Telnet device " +
+          `('${this.deviceName}' is reached by MAC ${dc.mac}). ` +
+          "Connect over SSH (configure host/credentials) to use Safe Mode."
+        );
+      }
       const ssh = new MikroTikSSHClient({
         host: dc.host,
         username: dc.username,
@@ -117,8 +126,7 @@ export class SafeModeManager {
   /** Send Ctrl+X again to exit Safe Mode and persist all changes. */
   commit(): Promise<string> {
     return this.lock(async () => {
-      if (!this.active || !this.channel)
-        return "Safe mode is not active. Nothing to commit.";
+      if (!this.active || !this.channel) return "Safe mode is not active. Nothing to commit.";
       this.channel.write(CTRL_X);
       const response = await this.readUntilPrompt(15_000);
       this.cleanup();

@@ -52,6 +52,28 @@ export const DeviceConfigSchema = z.object({
   keyPassphrase: z.string().optional(),
   /** SSH connect timeout in milliseconds. */
   timeoutMs: z.coerce.number().int().positive().default(10_000),
+  /**
+   * Target MAC address (e.g. `48:A9:8A:C6:42:F7`). When set, this device is
+   * reached over **MAC-Telnet** (Layer-2, UDP 20561) instead of SSH — no IP is
+   * needed, so it works for a freshly-unboxed or misconfigured router. The
+   * `host`/`port`/key fields above are ignored for a MAC device; auth uses
+   * `username`/`password` (MTWEI, falling back to MD5 on legacy gear).
+   */
+  mac: z.string().optional(),
+  /**
+   * Optional explicit in-packet source MAC for MAC-Telnet. Usually omitted —
+   * the resolver uses the real MAC of the egress interface, which is what
+   * RouterOS's mac-server requires to answer.
+   */
+  sourceMac: z.string().optional(),
+  /**
+   * Optional UDP delivery host for MAC-Telnet (e.g. a subnet broadcast like
+   * `10.0.0.255`). Omit to auto-discover the route by spraying every
+   * interface's directed broadcast.
+   */
+  macHost: z.string().optional(),
+  /** Optional UDP port the device's mac-server listens on (default 20561). */
+  macPort: z.coerce.number().int().positive().optional(),
   /** Free-text label shown to the AI (e.g. "HQ edge router"). */
   description: z.string().optional(),
 });
@@ -223,6 +245,12 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     privateKey: pick("private-key", "MIKROTIK_PRIVATE_KEY"),
     keyPassphrase: pick("key-passphrase", "MIKROTIK_KEY_PASSPHRASE"),
     timeoutMs: pick("timeout-ms", "MIKROTIK_TIMEOUT_MS"),
+    // MAC-Telnet (Layer-2, no IP): when `mac` is set the device is reached over
+    // UDP 20561 instead of SSH. See DeviceConfigSchema.mac.
+    mac: pick("mac", "MIKROTIK_MAC"),
+    sourceMac: pick("source-mac", "MIKROTIK_SOURCE_MAC"),
+    macHost: pick("mac-host", "MIKROTIK_MAC_HOST"),
+    macPort: pick("mac-port", "MIKROTIK_MAC_PORT"),
   };
   const hasSingle = Object.values(single).some((v) => v !== undefined);
 
