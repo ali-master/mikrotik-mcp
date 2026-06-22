@@ -1,6 +1,6 @@
 {
   "name": "@usex/mikrotik-mcp",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Bun-native MCP server for MikroTik RouterOS — 200+ tools over SSH for firewall, NAT, routing, DHCP, DNS, WireGuard, wireless, QoS and more.",
   "keywords": [
     "ai",
