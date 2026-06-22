@@ -12,7 +12,7 @@
 import type { DeviceConfig } from "../config";
 import { getConfig } from "../core/runtime";
 import { parseKeyValues } from "../core/routeros-parse";
-import { MikroTikSSHClient } from "../ssh/client";
+import { createDeviceClient } from "../core/transport";
 
 export interface DeviceStatus {
   /** true = reachable, false = unreachable, null = not probed yet. */
@@ -42,30 +42,27 @@ export function getDeviceStatus(name: string): DeviceStatus {
 
 /** Probe one device once and cache the result. */
 export async function probeDevice(name: string, dc: DeviceConfig): Promise<DeviceStatus> {
-  const ssh = new MikroTikSSHClient({
-    host: dc.host,
-    username: dc.username,
-    password: dc.password,
-    port: dc.port,
-    keyFilename: dc.keyFilename,
-    privateKey: dc.privateKey,
-    keyPassphrase: dc.keyPassphrase,
+  // Pick the transport by config (SSH or MAC-Telnet). The 8s probe clamp keeps
+  // the SSH path snappy; a MAC-Telnet client floors its own prime budget higher
+  // (RouterOS's ~10s console stall), so the clamp simply doesn't shorten it.
+  const client = createDeviceClient({
+    ...dc,
     timeoutMs: Math.min(dc.timeoutMs ?? 10_000, 8_000),
   });
   const t0 = Date.now();
   let status: DeviceStatus;
   try {
-    const ok = await ssh.connect();
+    const ok = await client.connect();
     if (!ok) {
       status = {
         reachable: false,
         checkedAt: Date.now(),
         latencyMs: null,
-        error: ssh.lastError ?? "connection failed",
+        error: client.lastError ?? "connection failed",
       };
     } else {
-      const identity = parseKeyValues(await ssh.run("/system identity print")).name;
-      const version = parseKeyValues(await ssh.run("/system resource print")).version;
+      const identity = parseKeyValues(await client.run("/system identity print")).name;
+      const version = parseKeyValues(await client.run("/system resource print")).version;
       status = {
         reachable: true,
         checkedAt: Date.now(),
@@ -82,7 +79,7 @@ export async function probeDevice(name: string, dc: DeviceConfig): Promise<Devic
       error: e instanceof Error ? e.message : String(e),
     };
   } finally {
-    ssh.disconnect();
+    client.disconnect();
   }
   statuses.set(name, status);
   return status;

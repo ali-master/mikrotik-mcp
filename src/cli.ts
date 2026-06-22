@@ -16,8 +16,8 @@
 import { existsSync } from "node:fs";
 import { loadConfig } from "./config";
 import { setConfig } from "./core/runtime";
+import { createDeviceClient, describeTransport } from "./core/transport";
 import { logger } from "./logger";
-import { MikroTikSSHClient } from "./ssh/client";
 import { allToolModules } from "./tools";
 import { runDashboard } from "./observability/dashboard";
 import { runHttp } from "./transport/http";
@@ -73,8 +73,7 @@ OBSERVABILITY DASHBOARD  (optional; real-time feed + analytics of every tool cal
 `;
 
 function warnIfPlaintextPasswordInContainer(anyPassword: boolean): void {
-  const inContainer =
-    existsSync("/.dockerenv") || process.env.container === "docker";
+  const inContainer = existsSync("/.dockerenv") || process.env.container === "docker";
   if (inContainer && anyPassword) {
     logger.warn(
       "Security notice: running inside a container with a plaintext password in the environment. " +
@@ -90,61 +89,51 @@ function listTools(): void {
   for (const mod of allToolModules) {
     for (const t of mod) {
       total++;
-      process.stdout.write(
-        `${risk(t.annotations).padEnd(12)} ${t.name.padEnd(34)} ${t.title}\n`,
-      );
+      process.stdout.write(`${risk(t.annotations).padEnd(12)} ${t.name.padEnd(34)} ${t.title}\n`);
     }
   }
-  process.stdout.write(
-    `\n${total} tools across ${allToolModules.length} modules\n`,
-  );
+  process.stdout.write(`\n${total} tools across ${allToolModules.length} modules\n`);
 }
 
 function listDevicesCli(): void {
   const cfg = loadConfig();
   for (const [name, d] of Object.entries(cfg.devices)) {
     const tag = name === cfg.defaultDevice ? " (default)" : "";
-    const auth =
-      d.keyFilename || d.privateKey ? "key" : d.password ? "password" : "none";
+    const auth = d.mac
+      ? "mac-telnet"
+      : d.keyFilename || d.privateKey
+        ? "key"
+        : d.password
+          ? "password"
+          : "none";
     const desc = d.description ? ` — ${d.description}` : "";
     process.stdout.write(
-      `${name}${tag}\t${d.username}@${d.host}:${d.port} [auth: ${auth}]${desc}\n`,
+      `${name}${tag}\t${d.username}@${describeTransport(d)} [auth: ${auth}]${desc}\n`,
     );
   }
   process.stdout.write(`\n${Object.keys(cfg.devices).length} device(s)\n`);
 }
 
 /** Probe one device; returns true on success. */
-async function probeDevice(
-  name: string,
-  d: import("./config").DeviceConfig,
-): Promise<boolean> {
-  const authMode = d.keyFilename || d.privateKey ? "SSH key" : "password";
+async function probeDevice(name: string, d: import("./config").DeviceConfig): Promise<boolean> {
+  const authMode = d.mac ? "mac-telnet" : d.keyFilename || d.privateKey ? "SSH key" : "password";
   logger.info(
-    `[${name}] Connecting to ${d.username}@${d.host}:${d.port} (auth: ${authMode}) …`,
+    `[${name}] Connecting to ${d.username}@${describeTransport(d)} (auth: ${authMode}) …`,
   );
-  const ssh = new MikroTikSSHClient({
-    host: d.host,
-    username: d.username,
-    password: d.password,
-    keyFilename: d.keyFilename,
-    privateKey: d.privateKey,
-    keyPassphrase: d.keyPassphrase,
-    port: d.port,
-    timeoutMs: d.timeoutMs,
-  });
-  if (!(await ssh.connect())) {
+  // The transport (SSH or MAC-Telnet) is selected from the config, not assumed.
+  const client = createDeviceClient(d);
+  if (!(await client.connect())) {
     logger.error(
-      `[${name}] Connection FAILED. Check host/credentials/reachability.`,
+      `[${name}] Connection FAILED. ${client.lastError ?? "Check credentials/reachability."}`,
     );
     return false;
   }
   try {
-    const identity = (await ssh.run("/system identity print")).trim();
+    const identity = (await client.run("/system identity print")).trim();
     process.stdout.write(`\n[${name}] Connection OK.\n${identity}\n`);
     return true;
   } finally {
-    ssh.disconnect();
+    client.disconnect();
   }
 }
 
@@ -187,9 +176,7 @@ async function main(): Promise<void> {
   // serve
   const cfg = loadConfig();
   setConfig(cfg);
-  warnIfPlaintextPasswordInContainer(
-    Object.values(cfg.devices).some((d) => !!d.password),
-  );
+  warnIfPlaintextPasswordInContainer(Object.values(cfg.devices).some((d) => !!d.password));
   const deviceNames = Object.keys(cfg.devices);
   logger.info(
     `Starting ${SERVER_NAME} v${VERSION} (transport=${cfg.mcp.transport}, ` +
@@ -218,8 +205,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((e) => {
-  logger.error(
-    `Fatal: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`,
-  );
+  logger.error(`Fatal: ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`);
   process.exit(1);
 });
