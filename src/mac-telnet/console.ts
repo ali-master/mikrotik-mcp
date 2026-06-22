@@ -28,8 +28,8 @@
  *     sees.
  */
 
-import { MacTelnetSession } from "./protocol";
-import type { MacAddress, MacTelnetDatagramSink } from "./protocol";
+import { MacTelnetSession } from "@tikoci/centrs/protocols";
+import type { MacAddress, MacTelnetDatagramSink } from "@tikoci/centrs/protocols";
 
 const ESC = "\x1B";
 const enc = new TextEncoder();

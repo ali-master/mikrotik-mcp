@@ -27,8 +27,8 @@ import {
   createUdpMacTelnetTransport,
   parseMac,
   resolveMacTelnetRoute,
-} from "./protocol";
-import type { MacTelnetTransport } from "./protocol";
+} from "@tikoci/centrs/protocols";
+import type { MacTelnetTransport } from "@tikoci/centrs/protocols";
 
 export interface MacTelnetClientOptions {
   /** Target device MAC, e.g. `48:A9:8A:C6:42:F7`. */

@@ -1,43 +1,40 @@
 /**
- * MAC-Telnet codec + EC-SRP5 crypto tests (offline, no L2 network).
+ * MAC-Telnet codec + EC-SRP5/MTWEI crypto tests (offline, no L2 network).
  *
- * The wire codec and the EC-SRP5 math are pure functions of bytes, so they are
- * fully testable without a device — the same approach the reference uses. The
- * live session/console (UDP + RouterOS console negotiation) needs a real L2
- * segment and is not exercised here.
+ * The codec and crypto come from `@tikoci/centrs/protocols` (the package this
+ * server depends on for MAC-Telnet). These tests exercise that package's pure,
+ * bytes-in/bytes-out surface — the same one the live transport uses — plus our
+ * local console screen-emulation layer. The live session/console (UDP + RouterOS
+ * console negotiation) needs a real L2 segment and is not exercised here.
  */
 import { describe, expect, test } from "vite-plus/test";
 import {
-  bigIntToBytesBE,
-  bytesToBigIntBE,
-  ecSrp5ClientProof,
-  ecSrp5Curve,
-  ecSrp5Id,
-  ecSrp5Keygen,
-  EC_SRP5_PUBKEY_LEN,
-  EC_SRP5_VALIDATOR_LEN,
-  decodePoint,
-  encodePoint,
-  isOnCurve,
-  scalarMul,
-} from "../src/mac-telnet/ec-srp5";
-import {
   buildPacket,
   decodeHeader,
+  decodePoint,
   encodeControlBlock,
   encodeHeader,
+  encodePoint,
   encodeTerminalDimension,
   formatMac,
-  macTelnetPasswordHash,
+  isOnCurve,
   MAC_TELNET_CLIENT_TYPE,
   MAC_TELNET_CONTROL_MAGIC,
   MAC_TELNET_HEADER_LEN,
   MacTelnetControlType,
   MacTelnetPacketType,
+  macTelnetPasswordHash,
+  mtweiCurve,
+  mtweiDocrypto,
+  mtweiId,
+  mtweiKeygen,
+  mtweiOfferValue,
+  MTWEI_PUBKEY_LEN,
+  MTWEI_VALIDATOR_LEN,
   parseControlBlocks,
   parseMac,
-} from "../src/mac-telnet/protocol";
-import { mtweiOfferValue } from "../src/mac-telnet/mtwei";
+  scalarMul,
+} from "@tikoci/centrs/protocols";
 import { emulateScreen, extractCommandOutput } from "../src/mac-telnet/console";
 
 describe("MAC address parsing", () => {
@@ -52,8 +49,8 @@ describe("MAC address parsing", () => {
   });
 
   test("rejects a malformed MAC", () => {
-    expect(() => parseMac("48:A9:8A6")).toThrow(/6-octet MAC/);
-    expect(() => parseMac("zz:zz:zz:zz:zz:zz")).toThrow(/invalid octet/);
+    expect(() => parseMac("48:A9:8A6")).toThrow();
+    expect(() => parseMac("zz:zz:zz:zz:zz:zz")).toThrow();
   });
 });
 
@@ -70,16 +67,15 @@ describe("MT header codec", () => {
       counter: 0,
     });
     expect(header.length).toBe(MAC_TELNET_HEADER_LEN);
-    expect(header[0]).toBe(1); // version
+    expect(header[0]).toBe(1);
     expect(header[1]).toBe(MacTelnetPacketType.sessionStart);
-    // session key (big-endian) at 14, client type at 16 for client direction
     expect(header[14]).toBe(0x12);
     expect(header[15]).toBe(0x34);
     expect(header[16]).toBe(MAC_TELNET_CLIENT_TYPE[0]);
     expect(header[17]).toBe(MAC_TELNET_CLIENT_TYPE[1]);
   });
 
-  test("a client-encoded header decodes correctly when read with the matching direction", () => {
+  test("a client-encoded header round-trips with the matching direction", () => {
     const header = encodeHeader({
       type: MacTelnetPacketType.data,
       sourceMac: src,
@@ -113,7 +109,7 @@ describe("MT header codec", () => {
 });
 
 describe("control blocks", () => {
-  test("encode → parse round-trips with the magic and big-endian length", () => {
+  test("encode then parse round-trips with the magic and length", () => {
     const value = new TextEncoder().encode("ali");
     const block = encodeControlBlock(MacTelnetControlType.username, value);
     expect([...block.subarray(0, 4)]).toEqual([...MAC_TELNET_CONTROL_MAGIC]);
@@ -150,7 +146,7 @@ describe("control blocks", () => {
 });
 
 describe("classic MD5 auth", () => {
-  test("password value is 0x00 || MD5(0x00 || password || salt), 17 bytes", () => {
+  test("password value is 0x00 then MD5 digest, 17 bytes", () => {
     const salt = new Uint8Array(16).fill(0xab);
     const value = macTelnetPasswordHash("secret", salt);
     expect(value.length).toBe(17);
@@ -161,74 +157,52 @@ describe("classic MD5 auth", () => {
 describe("MTWEI / EC-SRP5", () => {
   test("keygen produces a 33-byte public key on the curve", () => {
     const seed = new Uint8Array(32).fill(7);
-    const { publicKey } = ecSrp5Keygen(seed);
-    expect(publicKey.length).toBe(EC_SRP5_PUBKEY_LEN);
-    // The encoded public key decodes back to a valid curve point.
+    const { publicKey } = mtweiKeygen(seed);
+    expect(publicKey.length).toBe(MTWEI_PUBKEY_LEN);
     expect(isOnCurve(decodePoint(publicKey))).toBe(true);
   });
 
   test("keygen is deterministic for a fixed seed", () => {
     const seed = new Uint8Array(32).fill(9);
-    expect([...ecSrp5Keygen(seed).publicKey]).toEqual([...ecSrp5Keygen(seed).publicKey]);
+    expect([...mtweiKeygen(seed).publicKey]).toEqual([...mtweiKeygen(seed).publicKey]);
   });
 
-  test("encodePoint / decodePoint round-trip a scalar multiple of G", () => {
-    const point = scalarMul(123456789n, ecSrp5Curve.G);
+  test("encodePoint then decodePoint round-trip a scalar multiple of G", () => {
+    const point = scalarMul(123456789n, mtweiCurve.G);
     const decoded = decodePoint(encodePoint(point));
     expect(decoded).not.toBeNull();
     expect(decoded?.x).toBe(point?.x);
     expect(decoded?.y).toBe(point?.y);
   });
 
-  test("the identity validator is SHA256(salt || SHA256(user:pass)), 32 bytes", () => {
+  test("the identity validator is 32 bytes", () => {
     const salt = new Uint8Array(16).fill(0x10);
-    const id = ecSrp5Id("ali", "@ali4286@", salt);
+    const id = mtweiId("ali", "@ali4286@", salt);
     expect(id.length).toBe(32);
   });
 
   test("the client proof is a deterministic 32-byte value", () => {
-    const clientSeed = new Uint8Array(32).fill(3);
-    const client = ecSrp5Keygen(clientSeed);
-    // A second keypair stands in for the server's public point.
-    const serverSeed = new Uint8Array(32).fill(5);
-    const server = ecSrp5Keygen(serverSeed);
+    const client = mtweiKeygen(new Uint8Array(32).fill(3));
+    const server = mtweiKeygen(new Uint8Array(32).fill(5));
     const salt = new Uint8Array(16).fill(0x22);
-    const validator = ecSrp5Id("ali", "@ali4286@", salt);
-    const proofA = ecSrp5ClientProof(
-      client.privateKey,
-      server.publicKey,
-      client.publicKey,
-      validator,
-    );
-    const proofB = ecSrp5ClientProof(
-      client.privateKey,
-      server.publicKey,
-      client.publicKey,
-      validator,
-    );
-    expect(proofA.length).toBe(EC_SRP5_VALIDATOR_LEN);
+    const validator = mtweiId("ali", "@ali4286@", salt);
+    const proofA = mtweiDocrypto(client.privateKey, server.publicKey, client.publicKey, validator);
+    const proofB = mtweiDocrypto(client.privateKey, server.publicKey, client.publicKey, validator);
+    expect(proofA.length).toBe(MTWEI_VALIDATOR_LEN);
     expect([...proofA]).toEqual([...proofB]);
   });
 
-  test("the MTWEI offer value is username || 0x00 || pubkey", () => {
-    const { publicKey } = ecSrp5Keygen(new Uint8Array(32).fill(1));
+  test("the MTWEI offer value is username then 0x00 then pubkey", () => {
+    const { publicKey } = mtweiKeygen(new Uint8Array(32).fill(1));
     const offer = mtweiOfferValue("ali", publicKey);
-    expect(offer.length).toBe(3 /* "ali" */ + 1 + EC_SRP5_PUBKEY_LEN);
+    expect(offer.length).toBe(3 + 1 + MTWEI_PUBKEY_LEN);
     expect(new TextDecoder().decode(offer.subarray(0, 3))).toBe("ali");
     expect(offer[3]).toBe(0x00);
-  });
-
-  test("big-endian bigint helpers round-trip", () => {
-    const value = 0x0102030405n;
-    const bytes = bigIntToBytesBE(value, 8);
-    expect(bytesToBigIntBE(bytes)).toBe(value);
   });
 });
 
 describe("console screen emulation", () => {
   test("CR redraws collapse to the final overwritten line", () => {
-    // CR moves to column 0; "final  " (7 cols) overwrites all of "partial"
-    // (7 cols), then trailing spaces are right-trimmed.
     expect(emulateScreen("partial\rfinal  ")[0]).toBe("final");
   });
 
@@ -238,8 +212,7 @@ describe("console screen emulation", () => {
       "  name: MikroTik",
       "[ali@MikroTik] > ",
     ].join("\r\n");
-    const out = extractCommandOutput(raw, "/system identity print");
-    expect(out).toBe("  name: MikroTik");
+    expect(extractCommandOutput(raw, "/system identity print")).toBe("  name: MikroTik");
   });
 
   test("a silent write yields empty output", () => {

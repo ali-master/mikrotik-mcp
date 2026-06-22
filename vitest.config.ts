@@ -20,5 +20,9 @@ export default defineConfig({
     include: ["tests/**/*.spec.ts"],
     environment: "node",
     globals: false,
+    // `@tikoci/centrs` ships raw TypeScript (Bun-native). Inline it so Vitest
+    // transpiles the package instead of handing its `.ts` to Node, which can't
+    // load it.
+    server: { deps: { inline: [/@tikoci\/centrs/] } },
   },
 });

@@ -41,15 +41,24 @@ opening a transport directly. It routes the command through Safe Mode's persiste
 session when active (`src/ssh/safe-mode.ts`), otherwise `runOnce()` opens a fresh
 one-shot connection. The default transport is an SSH channel (`src/ssh/client.ts`);
 when the resolved device config carries a `mac` (instead of a routable `host`),
-`runOnce` instead uses **MAC-Telnet** — a Layer-2 terminal over UDP 20561
-(`src/mac-telnet/`) that reaches a device by MAC with no IP. `MikroTikMacTelnetClient`
-mirrors `MikroTikSSHClient`'s `connect/run/disconnect/lastError` shape so the branch
-is one line and every tool inherits it. MAC-Telnet auth is MTWEI (EC-SRP5 in
-`ec-srp5.ts`/`mtwei.ts`) with an MD5 fallback; the interactive console stream is
-turned back into one-shot command/response in `console.ts`. Safe Mode is SSH-only.
-This is the **only** non-SSH device path and is isolated to `src/mac-telnet/` (UDP
-via `node:dgram` + `node:crypto`; no `child_process`/OS-shell). The target device
-rides on `ctx.device`.
+`runOnce` instead uses **MAC-Telnet** — a Layer-2 terminal over UDP 20561 that
+reaches a device by MAC with no IP. `MikroTikMacTelnetClient` mirrors
+`MikroTikSSHClient`'s `connect/run/disconnect/lastError` shape so the branch is one
+line and every tool inherits it. The MAC-Telnet **wire codec, session, and MTWEI/MD5
+auth come from the `@tikoci/centrs` package** (`@tikoci/centrs/protocols`), the
+de-facto MikroTik reference; `src/mac-telnet/` keeps only the local layers that
+package doesn't provide — `console.ts` (turns the interactive console stream into
+one-shot command/response) and `client.ts` (the SSH-shaped facade). Safe Mode is
+SSH-only. The target device rides on `ctx.device`.
+
+Three knobs make the Bun-native `@tikoci/centrs` consumable here: it ships raw
+`.ts`, so `tsconfig` sets `allowImportingTsExtensions`, `vitest.config.ts` inlines
+it (`server.deps.inline`), and `bunup.config.ts` marks it `external` (Bun resolves
+it from `node_modules` at runtime — bunup mis-bundles its `export *`). Import its
+symbols by **named** import, never `export *`. Caveat: centrs' MAC-Telnet route
+resolution may shell out (`Bun.spawnSync(["ifconfig", …])`) as a fallback when the
+OS reports a zero MAC, so the "all device I/O is SSH, no OS-shell" rule no longer
+holds strictly for the MAC path.
 
 **Command construction is the injection boundary.** Build every device command
 with the `Cmd` builder in `src/core/routeros.ts` (`.set/.opt/.flag/.bool/.raw/
