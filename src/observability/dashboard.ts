@@ -126,8 +126,19 @@ function devicesPayload(store: EventStore): unknown {
     name,
     host: dc.host,
     port: dc.port,
+    // A `mac` device is reached over Layer-2 MAC-Telnet, not SSH — surface that
+    // so the dashboard shows the MAC instead of the unused default host:port.
+    mac: dc.mac,
+    transport: dc.mac ? "mac-telnet" : "ssh",
+    address: dc.mac ? dc.mac : `${dc.host}:${dc.port}`,
     username: dc.username,
-    authMode: dc.keyFilename || dc.privateKey ? "key" : dc.password ? "password" : "none",
+    authMode: dc.mac
+      ? "mac-telnet"
+      : dc.keyFilename || dc.privateKey
+        ? "key"
+        : dc.password
+          ? "password"
+          : "none",
     isDefault: name === cfg.defaultDevice,
     description: dc.description,
     status: getDeviceStatus(name),

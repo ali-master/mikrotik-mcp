@@ -42,6 +42,21 @@ export function getDeviceStatus(name: string): DeviceStatus {
 
 /** Probe one device once and cache the result. */
 export async function probeDevice(name: string, dc: DeviceConfig): Promise<DeviceStatus> {
+  // MAC-Telnet devices are NOT background-probed. A mac-telnet login is a full
+  // ~30s+ console negotiation (RouterOS's stall), and the device serves one such
+  // session at a time — a 30s-interval probe would be almost always in flight and
+  // would contend with (and starve) real tool calls. We surface a neutral status
+  // and let actual tool use prove reachability instead.
+  if (dc.mac) {
+    const status: DeviceStatus = {
+      reachable: null,
+      checkedAt: Date.now(),
+      latencyMs: null,
+      error: "MAC-Telnet device — reachability is verified on tool use, not background-probed.",
+    };
+    statuses.set(name, status);
+    return status;
+  }
   // Pick the transport by config (SSH or MAC-Telnet). The 8s probe clamp keeps
   // the SSH path snappy; a MAC-Telnet client floors its own prime budget higher
   // (RouterOS's ~10s console stall), so the clamp simply doesn't shorten it.

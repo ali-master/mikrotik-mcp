@@ -81,6 +81,11 @@ interface DeviceInfo {
   name: string;
   host: string;
   port: number;
+  /** Set when the device is reached over Layer-2 MAC-Telnet instead of SSH. */
+  mac?: string;
+  transport?: string;
+  /** Display address: the MAC for a mac-telnet device, else `host:port`. */
+  address?: string;
   username: string;
   authMode: string;
   isDefault: boolean;
@@ -496,7 +501,7 @@ function ConnectivityGraph({ payload }: { payload: DevicesPayload }): ReactNode 
               {short}
             </text>
             <text x={x} y={y + 40} textAnchor="middle" fill="#9aa3af" fontSize={9}>
-              {d.host}
+              {d.address ?? d.host}
             </text>
             <text
               x={x}
@@ -533,10 +538,8 @@ function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
         <span className="chip">{d.authMode}</span>
       </div>
       <div className="dev-card__meta">
-        <span>host</span>
-        <b>
-          {d.host}:{d.port}
-        </b>
+        <span>{d.mac ? "mac" : "host"}</span>
+        <b>{d.address ?? `${d.host}:${d.port}`}</b>
         <span>user</span>
         <b>{d.username}</b>
         <span>status</span>
@@ -1023,8 +1026,12 @@ function App(): ReactNode {
                     <span
                       style={{
                         color: "var(--mt-bad)",
+                        // Clamp to one line: a long connection error (e.g. a
+                        // MAC-Telnet failure) must ellipsize, not balloon the row.
+                        whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
+                        minWidth: 0,
                       }}
                       title={e.error}
                     >
