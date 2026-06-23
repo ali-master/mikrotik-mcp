@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_config_snapshot",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "include_body": {
+      "default": true,
+      "type": "boolean"
+    }
+  },
+  "required": ["id", "include_body"],
+  "additionalProperties": false
+}

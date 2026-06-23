@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "diff_config_snapshots",
+  "type": "object",
+  "properties": {
+    "from": {
+      "type": "string",
+      "description": "Baseline side: `<id>`, `latest` (newest stored), or `live` (capture the device now)."
+    },
+    "to": {
+      "default": "live",
+      "description": "Comparison side: `<id>`, `latest` (newest stored), or `live` (capture the device now). Defaults to live.",
+      "type": "string"
+    },
+    "context_lines": {
+      "default": 3,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "max_output_lines": {
+      "default": 800,
+      "description": "Truncate the unified diff beyond this many lines.",
+      "type": "integer",
+      "minimum": 50,
+      "maximum": 5000
+    }
+  },
+  "required": ["from", "to", "context_lines", "max_output_lines"],
+  "additionalProperties": false
+}

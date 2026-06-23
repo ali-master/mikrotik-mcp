@@ -19,6 +19,13 @@ import { z } from "zod";
  */
 export const DEFAULT_DASHBOARD_DB = join(homedir(), ".mikrotik-mcp", "events.db");
 
+/**
+ * Default configuration-snapshot DB location: `~/.mikrotik-mcp/snapshots.db`.
+ * Snapshots persist independently of the observability dashboard, so they get
+ * their own database alongside `events.db` in the per-user state directory.
+ */
+export const DEFAULT_SNAPSHOT_DB = join(homedir(), ".mikrotik-mcp", "snapshots.db");
+
 export const TransportSchema = z.enum(["stdio", "sse", "streamable-http"]);
 export type Transport = z.infer<typeof TransportSchema>;
 

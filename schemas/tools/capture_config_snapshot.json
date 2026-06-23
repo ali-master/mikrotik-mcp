@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capture_config_snapshot",
+  "type": "object",
+  "properties": {
+    "label": {
+      "description": "Human label, e.g. 'pre-firewall-change'.",
+      "type": "string"
+    },
+    "section": {
+      "description": "RouterOS path without leading slash, e.g. \"ip firewall filter\". Omit for full config.",
+      "type": "string"
+    },
+    "terse": {
+      "default": true,
+      "description": "Use `/export terse` (one self-contained line per item) for cleaner diffs.",
+      "type": "boolean"
+    },
+    "show_sensitive": {
+      "default": false,
+      "type": "boolean"
+    },
+    "force": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": ["terse", "show_sensitive", "force"],
+  "additionalProperties": false
+}

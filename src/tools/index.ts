@@ -12,6 +12,7 @@ import { backupTools } from "./backup";
 import { s3BackupTools } from "./s3-backup";
 import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
+import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
 import { diskTools } from "./disk";
@@ -716,6 +717,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "Binary backups, text exports, file transfer and restore.",
     tools: backupTools,
+  },
+  {
+    label: "Config Snapshots",
+    slug: "config-snapshot",
+    group: "System & Ops",
+    description:
+      "Capture point-in-time `/export` snapshots locally and time-travel diff any two (or against " +
+      "the live device) to see exactly what changed.",
+    tools: configSnapshotTools,
   },
   {
     label: "S3 Backup",

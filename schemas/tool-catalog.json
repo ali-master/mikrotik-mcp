@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "2.1.0",
+  "version": "2.4.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 649,
+  "toolCount": 654,
   "tools": [
     {
       "name": "list_interfaces",
@@ -19254,6 +19254,163 @@
           }
         },
         "required": ["filename"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "capture_config_snapshot",
+      "title": "Capture Config Snapshot",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Captures the device's current configuration (`/export`) and stores it locally as a timestamped snapshot for later diffing/rollback reference. Sensitive values are hidden unless show_sensitive is set. By default an identical capture (no config change since the last snapshot) is skipped; set force to store it anyway. Optionally limit to one RouterOS section (e.g. \"ip firewall filter\").",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Human label, e.g. 'pre-firewall-change'.",
+            "type": "string"
+          },
+          "section": {
+            "description": "RouterOS path without leading slash, e.g. \"ip firewall filter\". Omit for full config.",
+            "type": "string"
+          },
+          "terse": {
+            "default": true,
+            "description": "Use `/export terse` (one self-contained line per item) for cleaner diffs.",
+            "type": "boolean"
+          },
+          "show_sensitive": {
+            "default": false,
+            "type": "boolean"
+          },
+          "force": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": ["terse", "show_sensitive", "force"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_config_snapshots",
+      "title": "List Config Snapshots",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists stored configuration snapshots for the target device, newest first (metadata only — id, label, time, size, RouterOS version, content hash). Use get_config_snapshot for a body.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "limit": {
+            "default": 50,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "required": ["limit"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_config_snapshot",
+      "title": "Get Config Snapshot",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Returns a stored configuration snapshot by id. With include_body=true (default) the full captured `/export` text is returned — this body is itself a RouterOS `.rsc` script suitable for review or manual re-application. Set include_body=false for metadata only.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "include_body": {
+            "default": true,
+            "type": "boolean"
+          }
+        },
+        "required": ["id", "include_body"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "diff_config_snapshots",
+      "title": "Diff Config Snapshots",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Time-travel diff: compares two configurations and reports a unified diff (added/removed lines) plus a summary. Each of `from`/`to` may be `<id>`, `latest` (newest stored), or `live` (capture the device now). Typical uses: drift check (from=latest, to=live), or compare two stored snapshots by id. Volatile export header timestamps are ignored so unchanged configs diff clean.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Baseline side: `<id>`, `latest` (newest stored), or `live` (capture the device now)."
+          },
+          "to": {
+            "default": "live",
+            "description": "Comparison side: `<id>`, `latest` (newest stored), or `live` (capture the device now). Defaults to live.",
+            "type": "string"
+          },
+          "context_lines": {
+            "default": 3,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 20
+          },
+          "max_output_lines": {
+            "default": 800,
+            "description": "Truncate the unified diff beyond this many lines.",
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 5000
+          }
+        },
+        "required": ["from", "to", "context_lines", "max_output_lines"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_config_snapshot",
+      "title": "Remove Config Snapshot",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Deletes stored configuration snapshots by id (local history only — never touches the device). Accepts one or more ids.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"],
         "additionalProperties": false
       }
     },
