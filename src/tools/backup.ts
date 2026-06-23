@@ -6,6 +6,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
+import { deviceDateStamp } from "../core/datestamp";
 import { WRITE, READ, defineTool, DANGEROUS } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { isEmpty, Cmd } from "../core/routeros";
@@ -23,7 +24,9 @@ export const backupTools: ToolModule = [
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
-      const name = a.name || `backup_${Math.floor(Date.now() / 1000)}`;
+      // Default name uses the DEVICE's local date-time (Jalali in Tehran, else
+      // Gregorian) — not the MCP host clock — so the filename matches the router.
+      const name = a.name || `backup_${await deviceDateStamp(ctx)}`;
       ctx.info(`Creating backup: name=${name}`);
 
       const cmd = new Cmd("/system backup save").set("name", name);
@@ -59,8 +62,7 @@ export const backupTools: ToolModule = [
       ctx.info(`Listing backups with filter: name=${a.name_filter}`);
 
       let cmd = "/file print where type=backup";
-      if (a.include_exports)
-        cmd = "/file print where (type=backup or type=script)";
+      if (a.include_exports) cmd = "/file print where (type=backup or type=script)";
 
       if (a.name_filter) {
         if (a.include_exports) {
@@ -80,8 +82,7 @@ export const backupTools: ToolModule = [
     name: "create_export",
     title: "Create Config Export",
     annotations: READ,
-    description:
-      "Creates a configuration export file (rsc/json/xml) on the MikroTik device.",
+    description: "Creates a configuration export file (rsc/json/xml) on the MikroTik device.",
     inputSchema: {
       name: z.string().optional(),
       file_format: z.enum(["rsc", "json", "xml"]).default("rsc"),
@@ -92,14 +93,11 @@ export const backupTools: ToolModule = [
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
-      const name = a.name || `export_${Math.floor(Date.now() / 1000)}`;
+      const name = a.name || `export_${await deviceDateStamp(ctx)}`;
       ctx.info(`Creating export: name=${name}, format=${a.file_format}`);
 
       // Determine file extension based on format
-      const extension =
-        a.file_format === "json" || a.file_format === "xml"
-          ? a.file_format
-          : "rsc";
+      const extension = a.file_format === "json" || a.file_format === "xml" ? a.file_format : "rsc";
       const fullName = `${name}.${extension}`;
 
       const cmd = new Cmd("/export");
@@ -142,7 +140,7 @@ export const backupTools: ToolModule = [
       let name = a.name;
       if (!name) {
         const cleanSection = a.section.replace(/ /g, "_").replace(/\//g, "_");
-        name = `export_${cleanSection}_${Math.floor(Date.now() / 1000)}`;
+        name = `export_${cleanSection}_${await deviceDateStamp(ctx)}`;
       }
 
       ctx.info(`Exporting section: section=${a.section}, name=${name}`);
@@ -187,10 +185,7 @@ export const backupTools: ToolModule = [
       if (count.trim() === "0") return `File '${a.filename}' not found.`;
 
       // Get file content (this is a simplified version)
-      const content = await executeMikrotikCommand(
-        `/file print file=${a.filename}`,
-        ctx,
-      );
+      const content = await executeMikrotikCommand(`/file print file=${a.filename}`, ctx);
 
       if (content) {
         // Encode content to base64 for safe transmission
@@ -205,8 +200,7 @@ export const backupTools: ToolModule = [
     name: "upload_file",
     title: "Upload File",
     annotations: WRITE,
-    description:
-      "Uploads a base64-encoded file to the MikroTik device (for restore operations).",
+    description: "Uploads a base64-encoded file to the MikroTik device (for restore operations).",
     inputSchema: {
       filename: z.string(),
       content_base64: z.string(),
@@ -230,8 +224,7 @@ export const backupTools: ToolModule = [
     name: "restore_backup",
     title: "Restore Backup",
     annotations: DANGEROUS,
-    description:
-      "Restores a system backup on the MikroTik device; triggers a reboot.",
+    description: "Restores a system backup on the MikroTik device; triggers a reboot.",
     inputSchema: {
       filename: z.string(),
       password: z.string().optional(),
@@ -252,10 +245,7 @@ export const backupTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
-      if (
-        result.includes("Restoring system configuration") ||
-        result.trim() === ""
-      ) {
+      if (result.includes("Restoring system configuration") || result.trim() === "") {
         return `Backup '${a.filename}' restored successfully. System will reboot.`;
       }
       return `Failed to restore backup: ${result}`;
@@ -266,8 +256,7 @@ export const backupTools: ToolModule = [
     name: "import_configuration",
     title: "Import Configuration",
     annotations: DANGEROUS,
-    description:
-      "Imports and executes a RouterOS configuration script (.rsc file) on the device.",
+    description: "Imports and executes a RouterOS configuration script (.rsc file) on the device.",
     inputSchema: {
       filename: z.string(),
       run_after_reset: z.boolean().default(false),
@@ -280,8 +269,7 @@ export const backupTools: ToolModule = [
         `/file print count-only where name=${a.filename}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Configuration file '${a.filename}' not found.`;
+      if (count.trim() === "0") return `Configuration file '${a.filename}' not found.`;
 
       const cmd = new Cmd("/import")
         .set("file", a.filename)
@@ -291,10 +279,7 @@ export const backupTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
-      if (
-        result.trim() === "" ||
-        result.includes("Script file loaded and executed successfully")
-      ) {
+      if (result.trim() === "" || result.includes("Script file loaded and executed successfully")) {
         return `Configuration '${a.filename}' imported successfully.`;
       }
       return `Import result:\n${result}`;
@@ -318,13 +303,9 @@ export const backupTools: ToolModule = [
       );
       if (count.trim() === "0") return `File '${a.filename}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/file remove ${a.filename}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/file remove ${a.filename}`, ctx);
 
-      if (result.trim() === "")
-        return `File '${a.filename}' removed successfully.`;
+      if (result.trim() === "") return `File '${a.filename}' removed successfully.`;
       return `Failed to remove file: ${result}`;
     },
   }),
@@ -333,8 +314,7 @@ export const backupTools: ToolModule = [
     name: "backup_info",
     title: "Backup File Info",
     annotations: READ,
-    description:
-      "Gets detailed information about a backup file on the MikroTik device.",
+    description: "Gets detailed information about a backup file on the MikroTik device.",
     inputSchema: {
       filename: z.string(),
     },

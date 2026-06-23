@@ -12,6 +12,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
+import { deviceDateStamp } from "../core/datestamp";
 import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { looksLikeError, Cmd } from "../core/routeros";
@@ -28,11 +29,6 @@ import {
 const NOT_CONFIGURED =
   "S3 is not configured. Set S3_* (or AWS_*) environment variables, or add an " +
   '"s3" block to the JSON config file, to enable S3 backup transfer.';
-
-/** Pick http/https for `/tool fetch mode=` from a presigned URL. */
-function fetchMode(url: string): string {
-  return url.startsWith("https") ? "https" : "http";
-}
 
 /** RouterOS `/tool fetch` reports `status: finished` on success. */
 function fetchSucceeded(output: string): boolean {
@@ -65,15 +61,22 @@ export const s3BackupTools: ToolModule = [
       "Notes:\n" +
       "    filename: the file on the device, e.g. 'daily.backup'.\n" +
       "    key: optional S3 object key; defaults to '<prefix>/<device>/" +
-      "<filename>' so each router's backups are organised separately.",
+      "<device-datetime>-<filename>' so each upload is organised per router and " +
+      "stamped with the DEVICE's local date-time (Jalali calendar in Tehran, " +
+      "Gregorian elsewhere) — so repeat uploads version instead of overwriting.",
     inputSchema: {
       filename: z.string().describe("File on the device, e.g. 'daily.backup'"),
-      key: z.string().optional().describe("S3 object key (defaults to prefix + filename)"),
+      key: z
+        .string()
+        .optional()
+        .describe("S3 object key (defaults to prefix + device-local datetime + filename)"),
       expires_in: z.number().int().min(60).optional().describe("Presigned-URL lifetime in seconds"),
     },
     async handler(a, ctx) {
       if (!isS3Configured()) return NOT_CONFIGURED;
-      const key = a.key ?? s3Key(a.filename, resolveDeviceName(ctx.device));
+      const key =
+        a.key ??
+        s3Key(`${await deviceDateStamp(ctx)}-${a.filename}`, resolveDeviceName(ctx.device));
       ctx.info(`Uploading '${a.filename}' to S3 key '${key}'`);
 
       // Ensure the source file exists on the device first.
@@ -93,13 +96,17 @@ export const s3BackupTools: ToolModule = [
         return `Failed to presign S3 upload URL: ${e instanceof Error ? e.message : String(e)}`;
       }
 
-      // The device PUTs the file body directly to the presigned URL.
+      // The device PUTs the file body directly to the presigned URL. NOTE: do
+      // NOT pass `mode=` here — a full `url=` already implies the scheme, and
+      // adding `mode` flips RouterOS into its legacy address/src-path parsing
+      // where `src-path` is read as a *remote* path, colliding with the URL's
+      // path ("failure: Conflicting remote paths provided in URI and parameter").
+      // With url + http-method=put, `src-path` is correctly the local source file.
       const cmd = new Cmd("/tool fetch")
         .set("url", url)
-        .set("mode", fetchMode(url))
         .set("http-method", "put")
         .set("src-path", a.filename)
-        .set("output", "user")
+        .set("output", "none")
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
 
@@ -144,11 +151,10 @@ export const s3BackupTools: ToolModule = [
         return `Failed to presign S3 download URL: ${e instanceof Error ? e.message : String(e)}`;
       }
 
-      const cmd = new Cmd("/tool fetch")
-        .set("url", url)
-        .set("mode", fetchMode(url))
-        .set("dst-path", filename)
-        .build();
+      // No `mode=`: the full `url=` already implies the scheme (passing a
+      // conflicting/redundant mode triggers RouterOS "Conflicting ... in URI and
+      // parameter"). `dst-path` is the local destination on the device.
+      const cmd = new Cmd("/tool fetch").set("url", url).set("dst-path", filename).build();
       const result = await executeMikrotikCommand(cmd, ctx);
 
       if (looksLikeError(result) || !fetchSucceeded(result))
