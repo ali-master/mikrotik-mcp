@@ -29,6 +29,17 @@ class FakeStore implements EventStore {
   total(): number {
     return this.rows.length;
   }
+  delete(ids: string[]): number {
+    const remove = new Set(ids);
+    const before = this.rows.length;
+    this.rows = this.rows.filter((r) => !remove.has(r.id));
+    return before - this.rows.length;
+  }
+  clear(): number {
+    const n = this.rows.length;
+    this.rows = [];
+    return n;
+  }
   prune(maxEvents: number): number {
     const drop = Math.max(0, this.rows.length - maxEvents);
     this.rows.splice(0, drop);

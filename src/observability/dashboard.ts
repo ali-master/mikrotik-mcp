@@ -5,6 +5,7 @@
  * exposes:
  *   • `GET /`                 the single-page dashboard (built UI, inlined)
  *   • `GET /api/events`       filtered, paginated event list
+ *   • `DELETE /api/events`    delete selected events (`{ids:[...]}`) or all (`{all:true}`)
  *   • `GET /api/event/:id`    one event with full (redacted) bodies
  *   • `GET /api/stats`        computed analytics over a time window
  *   • `GET /api/meta`         facets (tools/devices) + counts for filters
@@ -99,7 +100,12 @@ function deviceActivity(
   const map = new Map<string, { calls: number; errors: number; lastSeen: number; sumMs: number }>();
   for (const e of recent) {
     if (!e.device) continue;
-    const a = map.get(e.device) ?? { calls: 0, errors: 0, lastSeen: 0, sumMs: 0 };
+    const a = map.get(e.device) ?? {
+      calls: 0,
+      errors: 0,
+      lastSeen: 0,
+      sumMs: 0,
+    };
     a.calls++;
     if (e.isError) a.errors++;
     a.lastSeen = Math.max(a.lastSeen, e.ts);
@@ -142,7 +148,12 @@ function devicesPayload(store: EventStore): unknown {
     isDefault: name === cfg.defaultDevice,
     description: dc.description,
     status: getDeviceStatus(name),
-    activity: activity.get(name) ?? { calls: 0, errors: 0, lastSeen: 0, avgMs: 0 },
+    activity: activity.get(name) ?? {
+      calls: 0,
+      errors: 0,
+      lastSeen: 0,
+      avgMs: 0,
+    },
   }));
   return { server: SERVER_TAG, defaultDevice: cfg.defaultDevice, devices };
 }
@@ -237,7 +248,7 @@ export async function runDashboard(
     hostname: cfg.host,
     port: cfg.port,
     idleTimeout: 0,
-    fetch(req, srv) {
+    async fetch(req, srv) {
       const url = new URL(req.url);
 
       if (url.pathname === "/health") return new Response("OK");
@@ -260,6 +271,22 @@ export async function runDashboard(
 
       const db = getEventStore();
       if (!db) return json({ error: "recorder not active" }, 503);
+
+      // Delete selected events (`{ ids: [...] }`) or every event (`{ all: true }`).
+      // Gated by the same bearer token as every other route (checked above).
+      if (url.pathname === "/api/events" && req.method === "DELETE") {
+        let body: { ids?: unknown; all?: unknown } = {};
+        try {
+          body = (await req.json()) as typeof body;
+        } catch {
+          /* empty / invalid body → no-op selection */
+        }
+        const ids = Array.isArray(body.ids)
+          ? body.ids.filter((x): x is string => typeof x === "string")
+          : [];
+        const removed = body.all === true ? db.clear() : db.delete(ids);
+        return json({ removed, total: db.total() });
+      }
 
       if (url.pathname === "/api/devices") {
         return json(devicesPayload(db));

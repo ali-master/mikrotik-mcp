@@ -148,6 +148,23 @@ async function api<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/** Delete events: a list of ids, or everything (`{ all: true }`). */
+async function deleteEvents(body: {
+  ids?: string[];
+  all?: boolean;
+}): Promise<{ removed: number; total: number }> {
+  const res = await fetch(withToken("/api/events"), {
+    method: "DELETE",
+    headers: {
+      "content-type": "application/json",
+      ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return (await res.json()) as { removed: number; total: number };
+}
+
 const WINDOWS: [string, number][] = [
   ["5m", 300_000],
   ["15m", 900_000],
@@ -755,6 +772,7 @@ function App(): ReactNode {
   const [paused, setPaused] = useState(false);
   const [liveMode, setLiveMode] = useState<LiveMode>("off");
   const [selected, setSelected] = useState<ToolEvent | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [filter, setFilter] = useState<Filter>({
     tool: "",
     risk: "",
@@ -855,6 +873,49 @@ function App(): ReactNode {
       setSelected(e);
     }
   }, []);
+
+  // The rows actually rendered (the table caps at 200) — selection + "select
+  // all" operate over exactly these so the header checkbox matches what's shown.
+  const shownRows = useMemo(() => visible.slice(0, 200), [visible]);
+  const shownIds = useMemo(() => shownRows.map((e) => e.id), [shownRows]);
+  const allShownSelected = shownIds.length > 0 && shownIds.every((id) => selectedIds.has(id));
+  const someShownSelected = !allShownSelected && shownIds.some((id) => selectedIds.has(id));
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const everyShownSelected = shownIds.length > 0 && shownIds.every((id) => next.has(id));
+      if (everyShownSelected) for (const id of shownIds) next.delete(id);
+      else for (const id of shownIds) next.add(id);
+      return next;
+    });
+  }, [shownIds]);
+
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const deleteSelected = useCallback(async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    try {
+      await deleteEvents({ ids });
+      const removed = new Set(ids);
+      setFeed((f) => f.filter((e) => !removed.has(e.id)));
+      setSelectedIds(new Set());
+    } catch {
+      /* network/permission error — leave selection intact for a retry */
+    } finally {
+      setConfirmingDelete(false);
+    }
+  }, [selectedIds]);
 
   const exportRows = (kind: "csv" | "json"): void => {
     if (kind === "json") {
@@ -1148,6 +1209,25 @@ function App(): ReactNode {
           >
             Clear
           </button>
+          {confirmingDelete && selectedIds.size > 0 ? (
+            <>
+              <button className="btn btn-danger" onClick={() => void deleteSelected()}>
+                ✓ Confirm delete ({selectedIds.size})
+              </button>
+              <button className="btn" onClick={() => setConfirmingDelete(false)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              className="btn"
+              disabled={selectedIds.size === 0}
+              onClick={() => setConfirmingDelete(true)}
+              title="Delete the selected rows"
+            >
+              🗑 Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+            </button>
+          )}
         </div>
         {visible.length === 0 ? (
           hasFilters ? (
@@ -1183,6 +1263,17 @@ function App(): ReactNode {
             <table className="feed">
               <thead>
                 <tr>
+                  <th style={{ width: 28 }}>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all shown rows"
+                      checked={allShownSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = someShownSelected;
+                      }}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th>time</th>
                   <th>tool</th>
                   <th>risk</th>
@@ -1193,12 +1284,23 @@ function App(): ReactNode {
                 </tr>
               </thead>
               <tbody>
-                {visible.slice(0, 200).map((e) => (
+                {shownRows.map((e) => (
                   <tr
                     key={e.id}
-                    className={e.isError ? "is-err" : undefined}
+                    className={
+                      `${e.isError ? "is-err" : ""}${selectedIds.has(e.id) ? " is-selected" : ""}`.trim() ||
+                      undefined
+                    }
                     onClick={() => void openDetail(e)}
                   >
+                    <td onClick={(ev) => ev.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label="Select row"
+                        checked={selectedIds.has(e.id)}
+                        onChange={() => toggleSelect(e.id)}
+                      />
+                    </td>
                     <td>{clock(e.ts)}</td>
                     <td>{e.tool}</td>
                     <td>

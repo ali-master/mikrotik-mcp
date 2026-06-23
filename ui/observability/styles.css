@@ -263,6 +263,9 @@ body {
 .feed tbody tr.is-err {
   background: color-mix(in srgb, var(--mt-bad) 9%, transparent);
 }
+.feed tbody tr.is-selected {
+  background: color-mix(in srgb, var(--mt-accent) 16%, transparent);
+}
 .feed td.preview {
   white-space: nowrap;
   overflow: hidden;
@@ -582,4 +585,14 @@ pre.body.json .j-null {
   color: var(--mt-text-faint);
   font-family: var(--mt-mono);
   font-size: 11px;
+}
+
+/* Danger button (delete-confirm) — layers on .btn with the bad-state color. */
+.btn-danger {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-bad) 12%, transparent);
+}
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--mt-bad) 20%, transparent);
 }

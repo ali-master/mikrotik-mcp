@@ -39,6 +39,10 @@ export interface EventStore {
   get(id: string): ToolEvent | null;
   /** Total rows currently stored. */
   total(): number;
+  /** Delete specific events by id. Returns the number of rows actually removed. */
+  delete(ids: string[]): number;
+  /** Delete every stored event. Returns the number of rows removed. */
+  clear(): number;
   /** Trim to at most `maxEvents` rows, dropping the oldest. Returns rows removed. */
   prune(maxEvents: number): number;
   close(): void;
@@ -186,15 +190,38 @@ class SqliteEventStore implements EventStore {
   }
 
   get(id: string): ToolEvent | null {
-    const row = this.db.query("SELECT * FROM events WHERE id = $id").get({ $id: id }) as
-      | Row
-      | null;
+    const row = this.db.query("SELECT * FROM events WHERE id = $id").get({ $id: id }) as Row | null;
     return row ? rowToEvent(row) : null;
   }
 
   total(): number {
     const r = this.db.query("SELECT COUNT(*) AS n FROM events").get() as { n: number };
     return r.n;
+  }
+
+  delete(ids: string[]): number {
+    if (ids.length === 0) return 0;
+    let removed = 0;
+    // Chunk the id list so a large selection stays well under SQLite's
+    // bound-parameter limit (~999) per statement.
+    const CHUNK = 500;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK);
+      const placeholders = chunk.map((_, j) => `$id${j}`).join(",");
+      const params: Record<string, string> = {};
+      chunk.forEach((id, j) => {
+        params[`$id${j}`] = id;
+      });
+      const res = this.db.query(`DELETE FROM events WHERE id IN (${placeholders})`).run(params);
+      removed += Number(res.changes ?? 0);
+    }
+    return removed;
+  }
+
+  clear(): number {
+    const n = this.total();
+    this.db.run("DELETE FROM events");
+    return n;
   }
 
   prune(maxEvents: number): number {
