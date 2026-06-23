@@ -76,6 +76,24 @@ interface DeviceStatus {
   identity?: string;
   version?: string;
   error?: string;
+  boardName?: string;
+  architecture?: string;
+  cpuCount?: number;
+  cpuLoad?: number;
+  freeMemory?: number;
+  totalMemory?: number;
+  memUsedPct?: number;
+  freeHdd?: number;
+  totalHdd?: number;
+  hddUsedPct?: number;
+  uptime?: string;
+}
+interface MetricSample {
+  ts: number;
+  cpuLoad: number | null;
+  memUsedPct: number | null;
+  hddUsedPct: number | null;
+  latencyMs: number | null;
 }
 interface DeviceInfo {
   name: string;
@@ -91,6 +109,7 @@ interface DeviceInfo {
   isDefault: boolean;
   description?: string;
   status: DeviceStatus;
+  history?: MetricSample[];
   activity: { calls: number; errors: number; lastSeen: number; avgMs: number };
 }
 interface DevicesPayload {
@@ -380,160 +399,307 @@ function statusInfo(s: DeviceStatus): { label: string; color: string } {
   return { label: "checking…", color: "#6b7280" };
 }
 
+/** A point on a quadratic Bézier (core → control → device) at parameter `t`. */
+function qPoint(
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  t: number,
+): { x: number; y: number } {
+  const u = 1 - t;
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  };
+}
+
+/** Tangent angle (degrees) of that Bézier at `t`, for orienting direction arrows. */
+function qAngle(
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  t: number,
+): number {
+  const u = 1 - t;
+  const dx = 2 * u * (p1.x - p0.x) + 2 * t * (p2.x - p1.x);
+  const dy = 2 * u * (p1.y - p0.y) + 2 * t * (p2.y - p1.y);
+  return (Math.atan2(dy, dx) * 180) / Math.PI;
+}
+
+const FLOW_CMD = "#818cf8"; // command: LLM → device
+const FLOW_RES = "#34d399"; // response: device → LLM
+
 /**
- * Animated "radar hub" connectivity map: the MCP server core emits sonar pulses,
- * each device hangs off a curved link, and online links carry a glowing data
- * packet that streams from the core outward. Status drives every accent colour;
- * all motion is CSS/SMIL (see `.conn-*` in styles.css) and respects
- * `prefers-reduced-motion`.
+ * Animated "radar hub" connectivity map that shows **traffic direction**. Each
+ * device hangs off the MCP core on a two-lane curved link: the outer lane is the
+ * **command** stream (LLM → device, indigo, packets flowing outward) and the
+ * inner lane is the **response** stream (device → LLM, emerald, packets flowing
+ * back). Direction chevrons sit mid-lane. Every real tool call fires a bright
+ * round-trip "burst" orb (core → device → core) on that device's link — so you
+ * literally watch a request go out and its response come home, even for
+ * mac-telnet devices the background probe can't poll. All motion is CSS/SMIL
+ * (`.conn-*` in styles.css) and respects `prefers-reduced-motion`.
  */
-function ConnectivityGraph({ payload }: { payload: DevicesPayload }): ReactNode {
+function ConnectivityGraph({
+  payload,
+  pulses,
+}: {
+  payload: DevicesPayload;
+  pulses: Record<string, number>;
+}): ReactNode {
   const devices = payload.devices;
   const n = Math.max(1, devices.length);
   const R = Math.min(150, 96 + n * 3);
-  const PAD = 72;
+  const PAD = 80;
   const W = 700;
   const H = Math.round((R + PAD) * 2);
   const cx = W / 2;
   const cy = H / 2;
+  const core = { x: cx, y: cy };
 
   const nodes = devices.map((d, i) => {
-    // Start at the top and fan evenly; nudge a half-step when even so two
-    // devices don't sit dead-vertical (which would hide the curve).
     const ang = (i / n) * Math.PI * 2 - Math.PI / 2 + (n % 2 === 0 ? Math.PI / n : 0);
     return { d, i, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
   });
 
   return (
-    <svg
-      className="conn"
-      viewBox={`0 0 ${W} ${H}`}
-      width="100%"
-      height={H}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <defs>
-        <radialGradient id="conn-hub" cx="0.5" cy="0.38" r="0.72">
-          <stop offset="0" stopColor="#c7d2fe" />
-          <stop offset="0.55" stopColor="#6366f1" />
-          <stop offset="1" stopColor="#312e81" />
-        </radialGradient>
-        <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
-          <stop offset="0" stopColor="#232a3b" />
-          <stop offset="1" stopColor="#0f131c" />
-        </radialGradient>
-      </defs>
+    <>
+      <svg
+        className="conn"
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height={H}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <defs>
+          <radialGradient id="conn-hub" cx="0.5" cy="0.38" r="0.72">
+            <stop offset="0" stopColor="#c7d2fe" />
+            <stop offset="0.55" stopColor="#6366f1" />
+            <stop offset="1" stopColor="#312e81" />
+          </radialGradient>
+          <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
+            <stop offset="0" stopColor="#232a3b" />
+            <stop offset="1" stopColor="#0f131c" />
+          </radialGradient>
+          <radialGradient id="conn-burst" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stopColor="#fffbe6" />
+            <stop offset="0.5" stopColor="#fde68a" />
+            <stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+          </radialGradient>
+        </defs>
 
-      {/* faint concentric range rings for depth */}
-      {[0.5, 0.78, 1].map((f, i) => (
-        <circle key={`g-${i}`} className="conn-grid" cx={cx} cy={cy} r={R * f} />
-      ))}
+        {/* faint concentric range rings for depth */}
+        {[0.5, 0.78, 1].map((f, i) => (
+          <circle key={`g-${i}`} className="conn-grid" cx={cx} cy={cy} r={R * f} />
+        ))}
 
-      {/* sonar pulses radiating from the core */}
-      {[0, 1, 2].map((i) => (
-        <circle
-          key={`s-${i}`}
-          className="conn-sonar"
-          cx={cx}
-          cy={cy}
-          style={{ animationDelay: `${i * 1.1}s` }}
-        />
-      ))}
+        {/* sonar pulses radiating from the core */}
+        {[0, 1, 2].map((i) => (
+          <circle
+            key={`s-${i}`}
+            className="conn-sonar"
+            cx={cx}
+            cy={cy}
+            style={{ animationDelay: `${i * 1.1}s` }}
+          />
+        ))}
 
-      {/* links + flowing packets */}
-      {nodes.map(({ d, i, x, y }) => {
-        const info = statusInfo(d.status);
-        const online = d.status.reachable === true;
-        const checking = d.status.reachable == null;
-        const mx = (cx + x) / 2;
-        const my = (cy + y) / 2;
-        const dx = x - cx;
-        const dy = y - cy;
-        const len = Math.hypot(dx, dy) || 1;
-        const off = 26 * (i % 2 ? 1 : -1);
-        const px = mx + (-dy / len) * off;
-        const py = my + (dx / len) * off;
-        const dPath = `M${cx},${cy} Q${px.toFixed(1)},${py.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
-        return (
-          <g key={`l-${d.name}`}>
-            <path
-              id={`conn-link-${i}`}
-              className="conn-link"
-              d={dPath}
-              stroke={info.color}
-              strokeDasharray={checking ? "2 8" : online ? undefined : "6 7"}
-            />
-            {online && (
-              <>
-                <path className="conn-flow" d={dPath} stroke={info.color} />
-                <circle className="conn-packet" r={3.4} fill="#eafff6">
-                  <animateMotion dur="2.4s" repeatCount="indefinite" calcMode="linear">
-                    <mpath href={`#conn-link-${i}`} />
-                  </animateMotion>
-                </circle>
-              </>
-            )}
-          </g>
-        );
-      })}
+        {/* two-lane directional links + flowing packets + activity bursts */}
+        {nodes.map(({ d, i, x, y }) => {
+          const info = statusInfo(d.status);
+          const online = d.status.reachable === true;
+          const checking = d.status.reachable == null;
+          const node = { x, y };
+          const mx = (cx + x) / 2;
+          const my = (cy + y) / 2;
+          const dx = x - cx;
+          const dy = y - cy;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = -dy / len;
+          const ny = dx / len;
+          const OFF = 16;
+          // Command lane bows one way, response lane the other — a two-lane road.
+          const cmdC = { x: mx + nx * OFF, y: my + ny * OFF };
+          const resC = { x: mx - nx * OFF, y: my - ny * OFF };
+          const cmdPath = `M${cx},${cy} Q${cmdC.x.toFixed(1)},${cmdC.y.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
+          const resPath = `M${cx},${cy} Q${resC.x.toFixed(1)},${resC.y.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
+          const burstPath = `M${cx},${cy} Q${mx.toFixed(1)},${my.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
+          // Direction chevrons at lane midpoints.
+          const cmdMid = qPoint(core, cmdC, node, 0.52);
+          const cmdAng = qAngle(core, cmdC, node, 0.52); // points toward device
+          const resMid = qPoint(core, resC, node, 0.48);
+          const resAng = qAngle(core, resC, node, 0.48) + 180; // points toward core
+          const pulse = pulses[d.name] ?? 0;
+          return (
+            <g key={`l-${d.name}`}>
+              {/* command lane (LLM → device) */}
+              <path
+                id={`conn-cmd-${i}`}
+                className="conn-link"
+                d={cmdPath}
+                stroke={online ? FLOW_CMD : info.color}
+                strokeOpacity={online ? 0.5 : 0.32}
+                strokeDasharray={checking ? "2 8" : online ? undefined : "6 7"}
+              />
+              {/* response lane (device → LLM) */}
+              <path
+                id={`conn-res-${i}`}
+                className="conn-link"
+                d={resPath}
+                stroke={online ? FLOW_RES : info.color}
+                strokeOpacity={online ? 0.5 : 0.18}
+                strokeDasharray={online ? undefined : "6 7"}
+              />
+              {online && (
+                <>
+                  <path className="conn-flow" d={cmdPath} stroke={FLOW_CMD} />
+                  <circle className="conn-packet" r={3.2} fill={FLOW_CMD}>
+                    <animateMotion dur="2.6s" repeatCount="indefinite" calcMode="linear">
+                      <mpath href={`#conn-cmd-${i}`} />
+                    </animateMotion>
+                  </circle>
+                  {/* response packet rides the inner lane in reverse (device → core) */}
+                  <rect
+                    className="conn-packet"
+                    x={-2.6}
+                    y={-2.6}
+                    width={5.2}
+                    height={5.2}
+                    fill={FLOW_RES}
+                    transform="rotate(45)"
+                  >
+                    <animateMotion
+                      dur="2.6s"
+                      begin="0.9s"
+                      repeatCount="indefinite"
+                      calcMode="linear"
+                      keyPoints="1;0"
+                      keyTimes="0;1"
+                    >
+                      <mpath href={`#conn-res-${i}`} />
+                    </animateMotion>
+                  </rect>
+                  {/* direction chevrons */}
+                  <path
+                    className="conn-chevron"
+                    d="M-4,-3 L4,0 L-4,3"
+                    stroke={FLOW_CMD}
+                    transform={`translate(${cmdMid.x.toFixed(1)},${cmdMid.y.toFixed(1)}) rotate(${cmdAng.toFixed(1)})`}
+                  />
+                  <path
+                    className="conn-chevron"
+                    d="M-4,-3 L4,0 L-4,3"
+                    stroke={FLOW_RES}
+                    transform={`translate(${resMid.x.toFixed(1)},${resMid.y.toFixed(1)}) rotate(${resAng.toFixed(1)})`}
+                  />
+                </>
+              )}
+              {/* round-trip activity burst: fires once per live tool call (any status) */}
+              {pulse > 0 && (
+                <g key={`burst-${d.name}-${pulse}`}>
+                  <circle r={6} fill="url(#conn-burst)">
+                    <animateMotion
+                      dur="1.1s"
+                      repeatCount="1"
+                      calcMode="linear"
+                      keyPoints="0;1;0"
+                      keyTimes="0;0.5;1"
+                      path={burstPath}
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0;1;1;0"
+                      keyTimes="0;0.1;0.85;1"
+                      dur="1.1s"
+                      repeatCount="1"
+                      fill="freeze"
+                    />
+                  </circle>
+                </g>
+              )}
+            </g>
+          );
+        })}
 
-      {/* core hub */}
-      <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
-      <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
-      <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#a5b4fc" strokeWidth={1.5} />
-      <text x={cx} y={cy - 2} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={700}>
-        MCP
-      </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill="#c7d2fe" fontSize={8.5}>
-        server
-      </text>
+        {/* core hub */}
+        <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
+        <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
+        <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#a5b4fc" strokeWidth={1.5} />
+        <text x={cx} y={cy - 4} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={700}>
+          LLM
+        </text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#c7d2fe" fontSize={8}>
+          ⇄ MCP
+        </text>
+        <text x={cx} y={cy + 18} textAnchor="middle" fill="#c7d2fe" fontSize={7.5}>
+          server
+        </text>
 
-      {/* device nodes */}
-      {nodes.map(({ d, x, y }) => {
-        const info = statusInfo(d.status);
-        const online = d.status.reachable === true;
-        const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
-        const short = d.name.length > 11 ? `${d.name.slice(0, 10)}…` : d.name;
-        return (
-          <g key={`n-${d.name}`} className="conn-node">
-            {online && (
-              <circle className="conn-node-halo" cx={x} cy={y} r={24} stroke={info.color} />
-            )}
-            <circle
-              cx={x}
-              cy={y}
-              r={23}
-              fill="url(#conn-orb)"
-              stroke={info.color}
-              strokeWidth={2}
-            />
-            <circle
-              className={online ? "conn-blink" : undefined}
-              cx={x + 16}
-              cy={y - 16}
-              r={4.5}
-              fill={info.color}
-            />
-            <text x={x} y={y + 3} textAnchor="middle" fill="#e8eaed" fontSize={10} fontWeight={600}>
-              {short}
-            </text>
-            <text x={x} y={y + 40} textAnchor="middle" fill="#9aa3af" fontSize={9}>
-              {d.address ?? d.host}
-            </text>
-            <text
-              x={x}
-              y={y + 52}
-              textAnchor="middle"
-              fill={info.color}
-              fontSize={9}
-              fontWeight={600}
-            >
-              {detail}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+        {/* device nodes */}
+        {nodes.map(({ d, x, y }) => {
+          const info = statusInfo(d.status);
+          const online = d.status.reachable === true;
+          const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
+          const short = d.name.length > 11 ? `${d.name.slice(0, 10)}…` : d.name;
+          return (
+            <g key={`n-${d.name}`} className="conn-node">
+              {online && (
+                <circle className="conn-node-halo" cx={x} cy={y} r={24} stroke={info.color} />
+              )}
+              <circle
+                cx={x}
+                cy={y}
+                r={23}
+                fill="url(#conn-orb)"
+                stroke={info.color}
+                strokeWidth={2}
+              />
+              <circle
+                className={online ? "conn-blink" : undefined}
+                cx={x + 16}
+                cy={y - 16}
+                r={4.5}
+                fill={info.color}
+              />
+              <text
+                x={x}
+                y={y + 3}
+                textAnchor="middle"
+                fill="#e8eaed"
+                fontSize={10}
+                fontWeight={600}
+              >
+                {short}
+              </text>
+              <text x={x} y={y + 40} textAnchor="middle" fill="#9aa3af" fontSize={9}>
+                {d.address ?? d.host}
+              </text>
+              <text
+                x={x}
+                y={y + 52}
+                textAnchor="middle"
+                fill={info.color}
+                fontSize={9}
+                fontWeight={600}
+              >
+                {detail}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="conn-legend">
+        <span>
+          <i style={{ background: FLOW_CMD }} /> command · LLM → device
+        </span>
+        <span>
+          <i style={{ background: FLOW_RES }} /> response · device → LLM
+        </span>
+        <span>
+          <i style={{ background: "#fde68a" }} /> live call (round-trip)
+        </span>
+      </div>
+    </>
   );
 }
 
@@ -572,6 +738,179 @@ function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
             <b>{d.description}</b>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── device system-health charts ─────────────────────────────────────────────
+/** A compact line+area sparkline over a series that may contain gaps (`null`). */
+function Sparkline({
+  values,
+  color,
+  maxValue,
+  unit,
+}: {
+  values: (number | null)[];
+  color: string;
+  maxValue?: number;
+  unit?: string;
+}): ReactNode {
+  const W = 220;
+  const H = 46;
+  const pad = 4;
+  const nums = values.filter((v): v is number => v != null);
+  if (nums.length === 0) return <div className="spark spark--empty">no samples yet</div>;
+  const max = Math.max(maxValue ?? 0, ...nums, 1);
+  const n = values.length;
+  const xAt = (i: number): number => pad + (i * (W - pad * 2)) / Math.max(1, n - 1);
+  const yAt = (v: number): number => H - pad - (Math.min(v, max) / max) * (H - pad * 2);
+  // Build a line path, lifting the pen across null gaps (offline samples).
+  let line = "";
+  let penDown = false;
+  values.forEach((v, i) => {
+    if (v == null) {
+      penDown = false;
+      return;
+    }
+    line += `${penDown ? "L" : "M"}${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`;
+    penDown = true;
+  });
+  const hasGap = values.some((v) => v == null);
+  const firstIdx = values.findIndex((v) => v != null);
+  const lastIdx = n - 1 - [...values].reverse().findIndex((v) => v != null);
+  const area =
+    !hasGap && nums.length > 1
+      ? `M${xAt(firstIdx).toFixed(1)},${(H - pad).toFixed(1)} ${line.slice(1)} L${xAt(lastIdx).toFixed(1)},${(H - pad).toFixed(1)} Z`
+      : "";
+  const lastVal = values[lastIdx] as number;
+  const gid = `spark-${color.replace("#", "")}`;
+  return (
+    <svg
+      className="spark"
+      viewBox={`0 0 ${W} ${H}`}
+      width="100%"
+      height={H}
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={color} stopOpacity="0.35" />
+          <stop offset="1" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {area && <path d={area} fill={`url(#${gid})`} stroke="none" />}
+      <path d={line} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
+      <circle cx={xAt(lastIdx)} cy={yAt(lastVal)} r={2.6} fill={color} />
+      <text x={W - pad} y={11} textAnchor="end" fill={color} fontSize={10} fontWeight={650}>
+        {lastVal.toFixed(unit === "%" ? 0 : 1)}
+        {unit ?? ""}
+      </text>
+    </svg>
+  );
+}
+
+/** A radial 0–100% gauge for an instantaneous reading (CPU / memory). */
+function Gauge({
+  value,
+  label,
+  color,
+}: {
+  value: number | undefined;
+  label: string;
+  color: string;
+}): ReactNode {
+  const v = value == null ? 0 : Math.max(0, Math.min(100, value));
+  const R = 24;
+  const C = 2 * Math.PI * R;
+  return (
+    <div className="gauge">
+      <svg viewBox="0 0 64 64" width={64} height={64}>
+        <circle cx={32} cy={32} r={R} fill="none" stroke="#1b1f26" strokeWidth={7} />
+        <circle
+          cx={32}
+          cy={32}
+          r={R}
+          fill="none"
+          stroke={color}
+          strokeWidth={7}
+          strokeLinecap="round"
+          strokeDasharray={`${(C * v) / 100} ${C}`}
+          transform="rotate(-90 32 32)"
+        />
+        <text x={32} y={35} textAnchor="middle" fill="#e8eaed" fontSize={13} fontWeight={700}>
+          {value == null ? "—" : `${Math.round(v)}%`}
+        </text>
+      </svg>
+      <span className="gauge__label">{label}</span>
+    </div>
+  );
+}
+
+const memHuman = (b?: number): string => (b == null ? "?" : bytes(b));
+
+/** One device's realtime system-health card: gauges + sparkline charts. */
+function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
+  const s = d.status;
+  const hist = d.history ?? [];
+  const probed = s.reachable === true || hist.length > 0;
+  if (d.mac || !probed) {
+    return (
+      <div className="card health-card health-card--na">
+        <div className="health-card__hd">
+          <span className="dev-card__name">{d.name}</span>
+          {d.isDefault && <span className="badge">default</span>}
+        </div>
+        <p className="muted" style={{ margin: 0 }}>
+          {d.mac
+            ? "System metrics are not collected for MAC-Telnet devices (no background probe)."
+            : "Waiting for the first health probe…"}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="card health-card">
+      <div className="health-card__hd">
+        <span className="dot" style={{ background: statusInfo(s).color }} />
+        <span className="dev-card__name">{d.name}</span>
+        {d.isDefault && <span className="badge">default</span>}
+        <span style={{ flex: 1 }} />
+        <span className="chip">{s.version ? `v${s.version}` : "—"}</span>
+      </div>
+      <div className="health-card__sub muted">
+        {s.boardName ?? "router"}
+        {s.architecture ? ` · ${s.architecture}` : ""}
+        {s.cpuCount ? ` · ${s.cpuCount} cpu` : ""}
+        {s.uptime ? ` · up ${s.uptime}` : ""}
+      </div>
+      <div className="health-card__gauges">
+        <Gauge value={s.cpuLoad} label="CPU" color="#6ea8fe" />
+        <Gauge value={s.memUsedPct} label="MEM" color="#34d399" />
+        <Gauge value={s.hddUsedPct} label="DISK" color="#fbbf24" />
+      </div>
+      <div className="health-card__charts">
+        <div className="health-chart">
+          <span className="health-chart__k">CPU load</span>
+          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#6ea8fe" maxValue={100} unit="%" />
+        </div>
+        <div className="health-chart">
+          <span className="health-chart__k">Memory used</span>
+          <Sparkline
+            values={hist.map((h) => h.memUsedPct)}
+            color="#34d399"
+            maxValue={100}
+            unit="%"
+          />
+        </div>
+        <div className="health-chart">
+          <span className="health-chart__k">Probe latency</span>
+          <Sparkline values={hist.map((h) => h.latencyMs)} color="#c084fc" unit="ms" />
+        </div>
+      </div>
+      <div className="health-card__foot muted">
+        RAM {memHuman(s.totalMemory && s.freeMemory ? s.totalMemory - s.freeMemory : undefined)} /{" "}
+        {memHuman(s.totalMemory)} · free disk {memHuman(s.freeHdd)}
       </div>
     </div>
   );
@@ -773,6 +1112,9 @@ function App(): ReactNode {
   const [liveMode, setLiveMode] = useState<LiveMode>("off");
   const [selected, setSelected] = useState<ToolEvent | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  // Per-device counter bumped on each live event — feeds the connectivity graph's
+  // round-trip "burst" so a new tool call visibly travels out and back.
+  const [pulses, setPulses] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState<Filter>({
     tool: "",
     risk: "",
@@ -783,11 +1125,13 @@ function App(): ReactNode {
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
 
-  // Live stream → prepend to feed (unless paused).
+  // Live stream → prepend to feed (unless paused) and pulse the device's link.
   useLiveStream(
     useCallback((e: ToolEvent) => {
       if (pausedRef.current) return;
       setFeed((f) => [e, ...f].slice(0, FEED_CAP));
+      const dev = e.device;
+      if (dev) setPulses((p) => ({ ...p, [dev]: (p[dev] ?? 0) + 1 }));
     }, []),
     useCallback((m: LiveMode) => setLiveMode(m), []),
   );
@@ -864,6 +1208,16 @@ function App(): ReactNode {
   }, [feed, filter]);
   const hasFilters = Boolean(
     filter.tool || filter.risk || filter.device || filter.status || filter.q,
+  );
+
+  // Errors + ok/error split derived from the live `feed` (the same data the
+  // table shows), so the panels never disagree with the table. The windowed
+  // `/api/stats` only counts events inside its time window, which is why a
+  // table error older than the window used to leave "Recent errors" empty.
+  const feedErrors = useMemo(() => feed.filter((e) => e.isError), [feed]);
+  const feedStatus = useMemo(
+    () => ({ ok: feed.length - feedErrors.length, error: feedErrors.length }),
+    [feed, feedErrors],
   );
 
   const openDetail = useCallback(async (e: ToolEvent) => {
@@ -1057,10 +1411,10 @@ function App(): ReactNode {
           <Panel title="Status">
             <Donut
               segments={[
-                { label: "ok", value: stats.byStatus.ok, color: "#34d399" },
+                { label: "ok", value: feedStatus.ok, color: "#34d399" },
                 {
                   label: "error",
-                  value: stats.byStatus.error,
+                  value: feedStatus.error,
                   color: "#f87171",
                 },
               ]}
@@ -1079,10 +1433,15 @@ function App(): ReactNode {
             )}
           </Panel>
           <Panel title="Recent errors">
-            {stats.recentErrors.length ? (
+            {feedErrors.length ? (
               <div className="hbar">
-                {stats.recentErrors.slice(0, 8).map((e) => (
-                  <div className="hbar__row" style={{ gridTemplateColumns: "auto 1fr" }} key={e.id}>
+                {feedErrors.slice(0, 8).map((e) => (
+                  <div
+                    className="hbar__row conn-errrow"
+                    style={{ gridTemplateColumns: "auto 1fr" }}
+                    key={e.id}
+                    onClick={() => void openDetail(e)}
+                  >
                     <span className="muted">{clock(e.ts)}</span>
                     <span
                       style={{
@@ -1094,9 +1453,9 @@ function App(): ReactNode {
                         textOverflow: "ellipsis",
                         minWidth: 0,
                       }}
-                      title={e.error}
+                      title={e.error ?? e.output}
                     >
-                      {e.tool}: {e.error}
+                      {e.tool}: {e.error ?? e.output ?? "error"}
                     </span>
                   </div>
                 ))}
@@ -1121,7 +1480,7 @@ function App(): ReactNode {
               </span>
             }
           >
-            <ConnectivityGraph payload={devices} />
+            <ConnectivityGraph payload={devices} pulses={pulses} />
           </Panel>
           <div className="dev-grid">
             {devices.devices.map((d) => (
@@ -1129,6 +1488,20 @@ function App(): ReactNode {
             ))}
           </div>
         </section>
+      )}
+
+      {/* device system health — realtime gauges + per-metric charts */}
+      {devices && devices.devices.length > 0 && (
+        <Panel
+          title="Device system health"
+          extra={<span className="muted">CPU · memory · disk · latency — sampled every 30s</span>}
+        >
+          <div className="health-grid">
+            {devices.devices.map((d) => (
+              <DeviceHealthCard key={d.name} d={d} />
+            ))}
+          </div>
+        </Panel>
       )}
 
       {/* config */}

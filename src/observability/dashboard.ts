@@ -26,7 +26,7 @@ import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
 import { redact } from "./event";
 import type { Risk, ToolEvent } from "./event";
-import { getDeviceStatus, startHealthChecks, stopHealthChecks } from "./health";
+import { getDeviceHistory, getDeviceStatus, startHealthChecks, stopHealthChecks } from "./health";
 import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./recorder";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
@@ -148,6 +148,7 @@ function devicesPayload(store: EventStore): unknown {
     isDefault: name === cfg.defaultDevice,
     description: dc.description,
     status: getDeviceStatus(name),
+    history: getDeviceHistory(name),
     activity: activity.get(name) ?? {
       calls: 0,
       errors: 0,

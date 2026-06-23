@@ -27,9 +27,45 @@ export interface DeviceStatus {
   version?: string;
   /** Failure reason, when unreachable. */
   error?: string;
+  // ── live system info (from `/system resource print`, when reachable) ──
+  /** Board / model name. */
+  boardName?: string;
+  /** CPU architecture. */
+  architecture?: string;
+  /** Number of CPU cores. */
+  cpuCount?: number;
+  /** Current CPU load, percent 0–100. */
+  cpuLoad?: number;
+  /** Free RAM, bytes. */
+  freeMemory?: number;
+  /** Total RAM, bytes. */
+  totalMemory?: number;
+  /** Used RAM, percent 0–100. */
+  memUsedPct?: number;
+  /** Free disk (HDD) space, bytes. */
+  freeHdd?: number;
+  /** Total disk (HDD) space, bytes. */
+  totalHdd?: number;
+  /** Used disk, percent 0–100. */
+  hddUsedPct?: number;
+  /** Human uptime string (e.g. `1w2d3h`). */
+  uptime?: string;
 }
 
+/** One sampled point of a device's health, for the realtime sparkline charts. */
+export interface MetricSample {
+  ts: number;
+  cpuLoad: number | null;
+  memUsedPct: number | null;
+  hddUsedPct: number | null;
+  latencyMs: number | null;
+}
+
+/** How many samples to keep per device (≈ last 30 min at a 30s cadence). */
+const HISTORY_CAP = 60;
+
 const statuses = new Map<string, DeviceStatus>();
+const histories = new Map<string, MetricSample[]>();
 let timer: ReturnType<typeof setInterval> | null = null;
 let inFlight = false;
 
@@ -38,6 +74,51 @@ const UNKNOWN: DeviceStatus = { reachable: null, checkedAt: null, latencyMs: nul
 /** The most recent probe result for a device (UNKNOWN until first probe). */
 export function getDeviceStatus(name: string): DeviceStatus {
   return statuses.get(name) ?? UNKNOWN;
+}
+
+/** The rolling health-metric history for a device (oldest → newest). */
+export function getDeviceHistory(name: string): MetricSample[] {
+  return histories.get(name) ?? [];
+}
+
+function pushHistory(name: string, sample: MetricSample): void {
+  const arr = histories.get(name) ?? [];
+  arr.push(sample);
+  if (arr.length > HISTORY_CAP) arr.splice(0, arr.length - HISTORY_CAP);
+  histories.set(name, arr);
+}
+
+/** Parse a RouterOS size string (`256.0MiB`, `1.2GiB`, `12345`) to bytes. */
+function parseSize(s: string | undefined): number | undefined {
+  if (!s) return undefined;
+  const m = s.trim().match(/^([\d.]+)\s*([KMGT]i?B|B)?$/i);
+  if (!m) return undefined;
+  const val = Number.parseFloat(m[1] as string);
+  if (!Number.isFinite(val)) return undefined;
+  const mult: Record<string, number> = {
+    B: 1,
+    KIB: 1024,
+    MIB: 1024 ** 2,
+    GIB: 1024 ** 3,
+    TIB: 1024 ** 4,
+    KB: 1e3,
+    MB: 1e6,
+    GB: 1e9,
+    TB: 1e12,
+  };
+  return val * (mult[(m[2] ?? "B").toUpperCase()] ?? 1);
+}
+
+/** Parse a RouterOS percentage string (`5%`, `0`) to a number 0–100. */
+function parsePercent(s: string | undefined): number | undefined {
+  if (!s) return undefined;
+  const m = s.trim().match(/^([\d.]+)\s*%?$/);
+  return m ? Number.parseFloat(m[1] as string) : undefined;
+}
+
+function usedPct(total?: number, free?: number): number | undefined {
+  if (total == null || free == null || total <= 0) return undefined;
+  return Math.max(0, Math.min(100, ((total - free) / total) * 100));
 }
 
 /** Probe one device once and cache the result. */
@@ -77,14 +158,45 @@ export async function probeDevice(name: string, dc: DeviceConfig): Promise<Devic
       };
     } else {
       const identity = parseKeyValues(await client.run("/system identity print")).name;
-      const version = parseKeyValues(await client.run("/system resource print")).version;
+      // One `/system resource print` yields version AND the live system metrics
+      // (cpu / memory / disk / uptime) — no extra round-trips beyond what the
+      // reachability probe already did.
+      const r = parseKeyValues(await client.run("/system resource print"));
+      const checkedAt = Date.now();
+      const latencyMs = checkedAt - t0;
+      const totalMemory = parseSize(r["total-memory"]);
+      const freeMemory = parseSize(r["free-memory"]);
+      const totalHdd = parseSize(r["total-hdd-space"]);
+      const freeHdd = parseSize(r["free-hdd-space"]);
+      const cpuLoad = parsePercent(r["cpu-load"]);
+      const memUsedPct = usedPct(totalMemory, freeMemory);
+      const hddUsedPct = usedPct(totalHdd, freeHdd);
+      const cpuCount = Number.parseInt(r["cpu-count"] ?? "", 10);
       status = {
         reachable: true,
-        checkedAt: Date.now(),
-        latencyMs: Date.now() - t0,
+        checkedAt,
+        latencyMs,
         identity,
-        version,
+        version: r.version,
+        boardName: r["board-name"] || undefined,
+        architecture: r["architecture-name"] || undefined,
+        cpuCount: Number.isFinite(cpuCount) ? cpuCount : undefined,
+        cpuLoad,
+        freeMemory,
+        totalMemory,
+        memUsedPct,
+        freeHdd,
+        totalHdd,
+        hddUsedPct,
+        uptime: r.uptime || undefined,
       };
+      pushHistory(name, {
+        ts: checkedAt,
+        cpuLoad: cpuLoad ?? null,
+        memUsedPct: memUsedPct ?? null,
+        hddUsedPct: hddUsedPct ?? null,
+        latencyMs,
+      });
     }
   } catch (e) {
     status = {

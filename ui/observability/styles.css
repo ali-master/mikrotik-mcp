@@ -596,3 +596,121 @@ pre.body.json .j-null {
 .btn-danger:hover {
   background: color-mix(in srgb, var(--mt-bad) 20%, transparent);
 }
+
+/* ── Connectivity: direction legend + chevrons + clickable error rows ──────── */
+.conn-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  color: var(--mt-text-dim);
+}
+.conn-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.conn-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.conn-chevron {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.conn-errrow {
+  cursor: pointer;
+  border-radius: 6px;
+}
+.conn-errrow:hover {
+  background: color-mix(in srgb, var(--mt-bad) 12%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .conn-chevron {
+    opacity: 0.6;
+  }
+}
+
+/* ── Device system health panel ───────────────────────────────────────────── */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.health-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+.health-card--na {
+  justify-content: center;
+  gap: 6px;
+  min-height: 120px;
+}
+.health-card__hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.health-card__sub {
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  margin-top: -4px;
+}
+.health-card__gauges {
+  display: flex;
+  gap: 14px;
+  justify-content: space-around;
+}
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.gauge__label {
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--mt-text-dim);
+}
+.health-card__charts {
+  display: grid;
+  gap: 8px;
+}
+.health-chart {
+  display: grid;
+  gap: 2px;
+}
+.health-chart__k {
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mt-text-dim);
+}
+.spark {
+  display: block;
+  background: color-mix(in srgb, var(--mt-surface-2) 60%, transparent);
+  border-radius: 6px;
+}
+.spark--empty {
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  color: var(--mt-text-faint);
+  padding: 12px 6px;
+  text-align: center;
+}
+.health-card__foot {
+  font-family: var(--mt-mono);
+  font-size: 11px;
+}
