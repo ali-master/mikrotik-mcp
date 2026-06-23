@@ -910,18 +910,58 @@ pre.body.json .j-null {
   position: relative;
   flex: 1;
 }
+/* The highlight overlay and the textarea MUST share identical box geometry
+   (font, line-height, padding, tab-size, box model) so coloured spans sit
+   exactly under the real characters. */
+.cfg-hl,
 .cfg-ta {
-  width: 100%;
-  height: 400px;
-  resize: vertical;
-  border: 0;
-  outline: none;
+  box-sizing: border-box;
+  margin: 0;
   padding: 10px 12px;
-  background: transparent;
-  color: var(--mt-text);
   font: 12px/1.5 var(--mt-mono);
   white-space: pre;
   tab-size: 2;
+  letter-spacing: normal;
+  border: 0;
+}
+.cfg-hl {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--mt-text-dim); /* base colour for punctuation/whitespace */
+}
+.cfg-ta {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 400px;
+  resize: vertical;
+  outline: none;
+  background: transparent;
+  /* Text is invisible — the overlay paints the colours — but the caret and
+     selection stay visible so editing feels normal. */
+  color: transparent;
+  caret-color: var(--mt-text);
+}
+.cfg-ta::selection {
+  background: color-mix(in srgb, var(--mt-accent) 35%, transparent);
+}
+.cfg-hl .j-key {
+  color: var(--mt-accent);
+}
+.cfg-hl .j-str {
+  color: var(--mt-good);
+}
+.cfg-hl .j-num {
+  color: #fbbf24;
+}
+.cfg-hl .j-bool {
+  color: #c792ea;
+}
+.cfg-hl .j-null {
+  color: var(--mt-text-faint);
 }
 .cfg-ac {
   position: absolute;

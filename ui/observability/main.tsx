@@ -1125,6 +1125,8 @@ function ConfigStudio({
   const [msg, setMsg] = useState<string | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const caretRef = useRef<number | null>(null);
+  const hlRef = useRef<HTMLPreElement | null>(null);
+  const gutterRef = useRef<HTMLPreElement | null>(null);
 
   // Fetch the schema once → completion hints.
   useEffect(() => {
@@ -1358,14 +1360,21 @@ function ConfigStudio({
       )}
 
       <div className="cfg-editor">
-        <pre className="cfg-gutter" aria-hidden="true">
+        <pre className="cfg-gutter" aria-hidden="true" ref={gutterRef}>
           {Array.from({ length: lines }, (_, i) => i + 1).join("\n")}
         </pre>
         <div className="cfg-ta-wrap">
+          {/* Highlight overlay sits behind a transparent-text textarea; both share
+              identical geometry and scroll in lockstep so the colours line up. */}
+          <pre className="cfg-hl" aria-hidden="true" ref={hlRef}>
+            {highlightJson(text)}
+            {"\n"}
+          </pre>
           <textarea
             ref={taRef}
             className="cfg-ta"
             spellCheck={false}
+            wrap="off"
             value={text}
             onChange={(e) => {
               setText(e.target.value);
@@ -1374,8 +1383,12 @@ function ConfigStudio({
             onKeyDown={onKeyDown}
             onClick={() => setAc(null)}
             onScroll={(e) => {
-              const g = e.currentTarget.previousElementSibling as HTMLElement | null;
-              if (g) g.scrollTop = e.currentTarget.scrollTop;
+              const ta = e.currentTarget;
+              if (hlRef.current) {
+                hlRef.current.scrollTop = ta.scrollTop;
+                hlRef.current.scrollLeft = ta.scrollLeft;
+              }
+              if (gutterRef.current) gutterRef.current.scrollTop = ta.scrollTop;
             }}
           />
           {ac && (
@@ -1734,8 +1747,8 @@ function stubBody(c: NonNullable<TopoNode["suggestedConfig"]>): Record<string, u
 const JSON_TOKEN =
   /("(?:\\.|[^"\\])*"(?:\s*:)?)|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
 
-function JsonView({ value, maxHeight }: { value: unknown; maxHeight?: number }): ReactNode {
-  const json = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+/** Tokenise JSON text into coloured `<span>`s (plain runs stay as raw strings). */
+function highlightJson(json: string): ReactNode[] {
   const parts: ReactNode[] = [];
   let last = 0;
   let i = 0;
@@ -1755,9 +1768,14 @@ function JsonView({ value, maxHeight }: { value: unknown; maxHeight?: number }):
     last = idx + tok.length;
   }
   if (last < json.length) parts.push(json.slice(last));
+  return parts;
+}
+
+function JsonView({ value, maxHeight }: { value: unknown; maxHeight?: number }): ReactNode {
+  const json = typeof value === "string" ? value : JSON.stringify(value, null, 2);
   return (
     <pre className="body json" style={maxHeight ? { maxHeight } : undefined}>
-      {parts}
+      {highlightJson(json)}
     </pre>
   );
 }
