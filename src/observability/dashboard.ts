@@ -21,16 +21,23 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { serve } from "bun";
 import type { Server, ServerWebSocket } from "bun";
+import { z } from "zod";
+import { DeviceConfigSchema, MikrotikConfigSchema, getConfigSource } from "../config";
 import type { DashboardConfig } from "../config";
-import { getConfig } from "../core/runtime";
+import { atomicWrite, mergeSecrets } from "../config-write";
+import { diffLines } from "../core/diff";
+import { getConfig, setConfig } from "../core/runtime";
 import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
+import { createConfigAdmin, validateConfig } from "./config-admin";
+import type { ConfigAdmin } from "./config-admin";
 import { redact } from "./event";
 import type { Risk, ToolEvent } from "./event";
 import {
   getDeviceHistory,
   getDeviceNeighbors,
   getDeviceStatus,
+  probeDevice,
   startHealthChecks,
   stopHealthChecks,
 } from "./health";
@@ -235,6 +242,106 @@ function sseResponse(transportLabel: string): Response {
   });
 }
 
+// ── Config Studio API ────────────────────────────────────────────────────────
+/** Parse a JSON request body, or `undefined` on empty/invalid input. */
+async function readJson(req: Request): Promise<unknown> {
+  try {
+    return await req.json();
+  } catch {
+    return undefined;
+  }
+}
+
+/** The live JSON Schema for the config (computed from the Zod schema, never stale). */
+function configSchemaJson(): unknown {
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    title: "MikrotikConfig",
+    ...z.toJSONSchema(MikrotikConfigSchema, { target: "draft-2020-12" }),
+  };
+}
+
+/** Clamp a requested rollback window to a sane range (default 60s, max 10min). */
+function clampRollback(v: unknown): number {
+  const n = typeof v === "number" ? v : 60_000;
+  return Math.max(0, Math.min(600_000, n));
+}
+
+function issues(error: z.ZodError): { path: string; message: string }[] {
+  return error.issues.map((i) => ({ path: i.path.join(".") || "(root)", message: i.message }));
+}
+
+/**
+ * Handle every Config Studio route. Returns a `Response` when it owns the path,
+ * or `null` to let the main router continue. All writes go through `admin`, which
+ * backs up + arms an auto-rollback; secrets are merged back in from the live
+ * config before validation so the browser never has to hold them.
+ */
+async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise<Response | null> {
+  const p = url.pathname;
+
+  if (p === "/api/config-schema" && req.method === "GET") {
+    return json(configSchemaJson());
+  }
+
+  if (p === "/api/config/validate" && req.method === "POST") {
+    const merged = mergeSecrets(await readJson(req), getConfig());
+    return json(validateConfig(merged));
+  }
+
+  if (p === "/api/config/test-device" && req.method === "POST") {
+    const body = (await readJson(req)) as { name?: string; config?: unknown };
+    const name = typeof body?.name === "string" ? body.name : "(unsaved)";
+    const currentDc = (getConfig().devices as Record<string, unknown>)[name];
+    const merged = mergeSecrets(body?.config, currentDc);
+    const parsed = DeviceConfigSchema.safeParse(merged);
+    if (!parsed.success) return json({ ok: false, errors: issues(parsed.error) }, 400);
+    const status = await probeDevice(`config-test:${name}`, parsed.data);
+    return json({ ok: true, status });
+  }
+
+  if (p === "/api/config/preview" && req.method === "POST") {
+    const before = JSON.stringify(redact(getConfig()), null, 2);
+    const after = JSON.stringify((await readJson(req)) ?? {}, null, 2);
+    const d = diffLines(before, after, { fromLabel: "current", toLabel: "edited" });
+    return json({ summary: d.summary, unified: d.unified });
+  }
+
+  if (p === "/api/config" && req.method === "POST") {
+    const body = (await readJson(req)) as { config?: unknown; rollbackMs?: unknown };
+    const merged = mergeSecrets(body?.config, getConfig());
+    const v = validateConfig(merged);
+    if (!v.ok || !v.value) return json({ ok: false, errors: v.errors }, 400);
+
+    const prev = getConfig();
+    const before = JSON.stringify(redact(prev), null, 2);
+    const after = JSON.stringify(redact(v.value), null, 2);
+    const diff = diffLines(before, after, { fromLabel: "current", toLabel: "saved" });
+    // Adding/removing a device name needs an MCP client reconnect to surface in
+    // the tool `device` enum — flag it so the UI can warn.
+    const prevDevs = Object.keys(prev.devices);
+    const nextDevs = Object.keys(v.value.devices);
+    const devicesChanged =
+      prevDevs.length !== nextDevs.length || prevDevs.some((d) => !nextDevs.includes(d));
+
+    const res = admin.applyConfig(v.value, clampRollback(body?.rollbackMs));
+    return json({ ok: true, ...res, devicesChanged, summary: diff.summary, unified: diff.unified });
+  }
+
+  if (p === "/api/config/keep" && req.method === "POST") {
+    const body = (await readJson(req)) as { pendingId?: string };
+    return json({ kept: admin.keepConfig(String(body?.pendingId ?? "")) });
+  }
+
+  if (p === "/api/config/rollback" && req.method === "POST") {
+    const body = (await readJson(req)) as { pendingId?: string };
+    const rolledBack = admin.rollback(String(body?.pendingId ?? ""));
+    return json({ rolledBack, config: redact(getConfig()) });
+  }
+
+  return null;
+}
+
 export interface DashboardHandle {
   server: Server<SocketData>;
   store: EventStore;
@@ -264,6 +371,28 @@ export async function runDashboard(
   // Periodically probe each configured device's SSH reachability for the
   // connectivity graph/status (one immediate pass, then every 30s).
   startHealthChecks(30_000);
+
+  // Config Studio: a safe-apply state machine bound to real fs/clock/timers. It
+  // backs up the config file, hot-swaps via setConfig, and auto-reverts unless
+  // the dashboard confirms within the rollback window.
+  const configAdmin = createConfigAdmin({
+    getConfig,
+    setConfig,
+    source: getConfigSource,
+    readFile: (pth) => {
+      try {
+        return readFileSync(pth, "utf8");
+      } catch {
+        return null;
+      }
+    },
+    writeText: atomicWrite,
+    now: Date.now,
+    schedule: (fn, ms) => setTimeout(fn, ms),
+    cancel: (h) => {
+      if (h) clearTimeout(h as ReturnType<typeof setTimeout>);
+    },
+  });
 
   const tokenOk = (req: Request, url: URL): boolean => {
     if (!cfg.token) return true;
@@ -295,6 +424,11 @@ export async function runDashboard(
       if (url.pathname === "/api/sse") {
         return sseResponse(transportLabel);
       }
+
+      // Config Studio routes are independent of the event store, so dispatch
+      // them before the recorder guard below.
+      const configResp = await configRoutes(req, url, configAdmin);
+      if (configResp) return configResp;
 
       const db = getEventStore();
       if (!db) return json({ error: "recorder not active" }, 503);

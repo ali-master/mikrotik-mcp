@@ -824,3 +824,186 @@ pre.body.json .j-null {
   border-color: var(--mt-accent);
   color: var(--mt-accent);
 }
+
+/* ── Config Studio ───────────────────────────────────────────────────────── */
+.cfgstudio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cfg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cfg-status {
+  font: 11px var(--mt-mono);
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+}
+.cfg-status.is-ok {
+  color: var(--mt-good);
+  border-color: color-mix(in srgb, var(--mt-good) 45%, var(--mt-border));
+}
+.cfg-status.is-bad {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+}
+.cfg-select {
+  font: 11px var(--mt-mono);
+  color: var(--mt-text);
+  background: var(--mt-surface-2);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  padding: 4px 8px;
+}
+.cfg-save {
+  border-color: color-mix(in srgb, var(--mt-accent) 55%, var(--mt-border));
+  color: var(--mt-accent);
+}
+.cfg-msg {
+  font: 12px var(--mt-mono);
+  color: var(--mt-text-dim);
+}
+.cfg-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  border-radius: var(--mt-radius-sm);
+  background: color-mix(in srgb, var(--mt-warn) 12%, var(--mt-surface));
+  border: 1px solid color-mix(in srgb, var(--mt-warn) 45%, var(--mt-border));
+  font-size: 12px;
+}
+.cfg-count {
+  font-family: var(--mt-mono);
+  color: var(--mt-warn);
+  font-weight: 700;
+}
+.cfg-warn {
+  color: var(--mt-warn);
+  font-size: 11px;
+}
+.cfg-editor {
+  display: flex;
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  overflow: hidden;
+  background: var(--mt-bg);
+  max-height: 420px;
+}
+.cfg-gutter {
+  margin: 0;
+  padding: 10px 8px;
+  text-align: right;
+  color: var(--mt-text-faint);
+  background: var(--mt-surface-2);
+  font: 12px/1.5 var(--mt-mono);
+  user-select: none;
+  overflow: hidden;
+  min-width: 38px;
+}
+.cfg-ta-wrap {
+  position: relative;
+  flex: 1;
+}
+.cfg-ta {
+  width: 100%;
+  height: 400px;
+  resize: vertical;
+  border: 0;
+  outline: none;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--mt-text);
+  font: 12px/1.5 var(--mt-mono);
+  white-space: pre;
+  tab-size: 2;
+}
+.cfg-ac {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  min-width: 150px;
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-accent);
+  border-radius: var(--mt-radius-sm);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+.cfg-ac-item {
+  padding: 4px 10px;
+  font: 12px var(--mt-mono);
+  color: var(--mt-text-dim);
+  cursor: pointer;
+}
+.cfg-ac-item.is-sel {
+  background: color-mix(in srgb, var(--mt-accent) 22%, transparent);
+  color: var(--mt-text);
+}
+.cfg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cfg-chip {
+  font: 11px var(--mt-mono);
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+}
+.cfg-chip.is-ok {
+  color: var(--mt-good);
+  border-color: color-mix(in srgb, var(--mt-good) 45%, var(--mt-border));
+}
+.cfg-chip.is-bad {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+}
+.cfg-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cfg-err {
+  font: 11px var(--mt-mono);
+  color: var(--mt-bad);
+}
+.cfg-err code {
+  color: var(--mt-warn);
+}
+.cfg-preview {
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  overflow: hidden;
+}
+.cfg-preview__hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--mt-surface-2);
+  font-size: 12px;
+}
+.cfg-diff {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 320px;
+  overflow: auto;
+  font: 11px/1.5 var(--mt-mono);
+  color: var(--mt-text-dim);
+  background: var(--mt-bg);
+}
+.cfg-diff .d-add {
+  color: var(--mt-good);
+}
+.cfg-diff .d-del {
+  color: var(--mt-bad);
+}
+.cfg-diff .d-hunk {
+  color: var(--mt-accent);
+}

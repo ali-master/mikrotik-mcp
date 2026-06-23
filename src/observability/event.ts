@@ -60,7 +60,8 @@ export function riskOf(a: ToolAnnotations | undefined): Risk {
 
 /** Keys whose values are secrets and must never be stored verbatim. */
 const SENSITIVE_KEY = /pass|secret|private[-_]?key|passphrase|psk|preshared|token|credential/i;
-const REDACTED = "«redacted»";
+/** The marker {@link redact} substitutes for any secret value. */
+export const REDACTED = "«redacted»";
 
 /**
  * Deep-clone `value`, replacing any string under a sensitive key with a marker.

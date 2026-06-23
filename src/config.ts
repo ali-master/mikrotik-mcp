@@ -8,7 +8,7 @@
  */
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { z } from "zod";
 
 /**
@@ -25,6 +25,13 @@ export const DEFAULT_DASHBOARD_DB = join(homedir(), ".mikrotik-mcp", "events.db"
  * their own database alongside `events.db` in the per-user state directory.
  */
 export const DEFAULT_SNAPSHOT_DB = join(homedir(), ".mikrotik-mcp", "snapshots.db");
+
+/**
+ * Where the dashboard's Config Studio writes when config did NOT come from a
+ * `--config` file (e.g. it was assembled from env/flags). Sits beside the other
+ * per-user state so a hand-started server can still be made file-editable.
+ */
+export const DEFAULT_CONFIG_FILE = join(homedir(), ".mikrotik-mcp", "config.json");
 
 export const TransportSchema = z.enum(["stdio", "sse", "streamable-http"]);
 export type Transport = z.infer<typeof TransportSchema>;
@@ -238,6 +245,21 @@ function parseDevicesSource(
  * Build the effective configuration from the environment and CLI flags.
  * `argv` defaults to the process arguments (after `bun run <file>`).
  */
+/** Where the active config was loaded from (set by {@link loadConfig}). */
+export interface ConfigSource {
+  /** Absolute path of the config file (the real source, or the default target). */
+  path: string;
+  /** True when config actually came from this file; false when env/flag-assembled. */
+  fromFile: boolean;
+}
+
+let configSource: ConfigSource = { path: DEFAULT_CONFIG_FILE, fromFile: false };
+
+/** The resolved config source — which file the dashboard should read/write. */
+export function getConfigSource(): ConfigSource {
+  return configSource;
+}
+
 export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConfig {
   const flags = parseFlags(argv);
   const pick = (flag: string, ...envNames: string[]) => flags[flag] ?? env(...envNames);
@@ -270,6 +292,11 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
 
   // 2) Multi-device source (file wins over the inline env var).
   const configFile = pick("config", "MIKROTIK_CONFIG_FILE");
+  // Remember where this config came from so the dashboard's Config Studio knows
+  // which file to write back to (and whether one even existed).
+  configSource = configFile
+    ? { path: resolve(configFile), fromFile: true }
+    : { path: DEFAULT_CONFIG_FILE, fromFile: false };
   const devicesInline = flags.devices ?? env("MIKROTIK_DEVICES");
   let fileS3: Record<string, unknown> | undefined = {};
   let fileDashboard: Record<string, unknown> | undefined = {};
