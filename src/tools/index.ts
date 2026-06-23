@@ -43,6 +43,7 @@ import { ipsecTools } from "./ipsec";
 import { l2tpTools } from "./l2tp";
 import { logTools } from "./logs";
 import { systemLoggingTools } from "./logging";
+import { neighborTools } from "./neighbor";
 import { networkToolTools } from "./network-tools";
 import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { floodPingTools } from "./tool-flood-ping";
@@ -588,6 +589,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).",
     tools: networkToolTools,
+  },
+  {
+    label: "Neighbors / MNDP",
+    slug: "neighbor",
+    group: "System & Ops",
+    description:
+      "Discovered Layer-2 neighbours and discovery settings — the data behind the topology map " +
+      "(`/ip neighbor`, MNDP/CDP/LLDP).",
+    tools: neighborTools,
   },
   // ── Tools (`/tool`) ──────────────────────────────────────────────────────
   {

@@ -714,3 +714,113 @@ pre.body.json .j-null {
   font-family: var(--mt-mono);
   font-size: 11px;
 }
+
+/* ── Network topology map ────────────────────────────────────────────────── */
+.topo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.topo svg {
+  display: block;
+  width: 100%;
+  background: radial-gradient(
+    circle at 50% 45%,
+    color-mix(in srgb, var(--mt-accent) 7%, transparent),
+    transparent 60%
+  );
+  border-radius: var(--mt-radius-sm);
+}
+.topo-edge {
+  stroke: color-mix(in srgb, var(--mt-text-faint) 55%, transparent);
+  stroke-width: 1.4;
+}
+.topo-edge.is-dashed {
+  stroke: color-mix(in srgb, var(--mt-accent) 60%, transparent);
+  stroke-dasharray: 4 4;
+}
+.topo-node {
+  cursor: pointer;
+}
+.topo-node rect {
+  fill: var(--mt-surface-2);
+  stroke-width: 1.5;
+  transition: filter 0.15s ease;
+}
+.topo-node.is-neighbor rect {
+  fill: color-mix(in srgb, var(--mt-surface) 70%, transparent);
+  stroke-dasharray: 4 3;
+}
+.topo-node.is-onboard rect {
+  stroke-dasharray: 4 3;
+}
+.topo-node:hover rect,
+.topo-node.is-picked rect {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--mt-accent) 55%, transparent));
+}
+.topo-node.is-picked rect {
+  stroke-width: 2.2;
+}
+.topo-label {
+  fill: var(--mt-text);
+  font: 600 12px var(--mt-mono);
+}
+.topo-sub {
+  fill: var(--mt-text-dim);
+  font: 10px var(--mt-mono);
+}
+.topo-bar-bg {
+  fill: color-mix(in srgb, var(--mt-text-faint) 35%, transparent);
+}
+.topo-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topo-foot .legend {
+  margin-top: 0;
+}
+.topo-pop {
+  flex: 1;
+  min-width: 280px;
+  max-width: 460px;
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  padding: 10px 12px;
+}
+.topo-pop__hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.topo-pop__hd .muted {
+  font-size: 11px;
+}
+.topo-stub {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  background: var(--mt-bg);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  font: 11px/1.5 var(--mt-mono);
+  color: var(--mt-text);
+  overflow-x: auto;
+  white-space: pre;
+}
+.topo-btn {
+  font: 11px var(--mt-mono);
+  color: var(--mt-text);
+  background: var(--mt-surface-2);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  padding: 4px 9px;
+  cursor: pointer;
+}
+.topo-btn:hover {
+  border-color: var(--mt-accent);
+  color: var(--mt-accent);
+}

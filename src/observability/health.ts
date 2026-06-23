@@ -13,6 +13,8 @@ import type { DeviceConfig } from "../config";
 import { getConfig } from "../core/runtime";
 import { parseKeyValues } from "../core/routeros-parse";
 import { createDeviceClient } from "../core/transport";
+import { parseNeighbors } from "./topology";
+import type { Neighbor } from "./topology";
 
 export interface DeviceStatus {
   /** true = reachable, false = unreachable, null = not probed yet. */
@@ -66,6 +68,7 @@ const HISTORY_CAP = 60;
 
 const statuses = new Map<string, DeviceStatus>();
 const histories = new Map<string, MetricSample[]>();
+const neighbors = new Map<string, Neighbor[]>();
 let timer: ReturnType<typeof setInterval> | null = null;
 let inFlight = false;
 
@@ -74,6 +77,11 @@ const UNKNOWN: DeviceStatus = { reachable: null, checkedAt: null, latencyMs: nul
 /** The most recent probe result for a device (UNKNOWN until first probe). */
 export function getDeviceStatus(name: string): DeviceStatus {
   return statuses.get(name) ?? UNKNOWN;
+}
+
+/** The neighbours (`/ip neighbor`) most recently discovered from a device. */
+export function getDeviceNeighbors(name: string): Neighbor[] {
+  return neighbors.get(name) ?? [];
 }
 
 /** The rolling health-metric history for a device (oldest → newest). */
@@ -197,6 +205,15 @@ export async function probeDevice(name: string, dc: DeviceConfig): Promise<Devic
         hddUsedPct: hddUsedPct ?? null,
         latencyMs,
       });
+      // Reuse the open connection to read this device's MNDP/CDP/LLDP neighbour
+      // cache for the live topology map. Best-effort: a failure here must never
+      // demote an otherwise-healthy device, so it's caught and the prior list is
+      // kept (clearing on a transient error would make the map flicker).
+      try {
+        neighbors.set(name, parseNeighbors(await client.run("/ip neighbor print detail")));
+      } catch {
+        /* keep the last known neighbour list */
+      }
     }
   } catch (e) {
     status = {

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_neighbors",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "description": "Match the local discovery interface.",
+      "type": "string"
+    },
+    "identity_filter": {
+      "description": "Match the neighbour's identity (substring).",
+      "type": "string"
+    },
+    "address_filter": {
+      "description": "Match the neighbour's IP address (substring).",
+      "type": "string"
+    },
+    "mac_filter": {
+      "description": "Match the neighbour's MAC address (substring).",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

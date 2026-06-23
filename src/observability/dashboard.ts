@@ -8,6 +8,7 @@
  *   • `DELETE /api/events`    delete selected events (`{ids:[...]}`) or all (`{all:true}`)
  *   • `GET /api/event/:id`    one event with full (redacted) bodies
  *   • `GET /api/stats`        computed analytics over a time window
+ *   • `GET /api/topology`     live Layer-2 map (devices + discovered neighbours)
  *   • `GET /api/meta`         facets (tools/devices) + counts for filters
  *   • `GET /api/stream`       WebSocket: live push of every new event
  *   • `GET /health`           liveness probe
@@ -26,11 +27,18 @@ import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
 import { redact } from "./event";
 import type { Risk, ToolEvent } from "./event";
-import { getDeviceHistory, getDeviceStatus, startHealthChecks, stopHealthChecks } from "./health";
+import {
+  getDeviceHistory,
+  getDeviceNeighbors,
+  getDeviceStatus,
+  startHealthChecks,
+  stopHealthChecks,
+} from "./health";
 import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./recorder";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
 import { computeStats } from "./stats";
+import { buildTopology } from "./topology";
 
 const SERVER_TAG = "mikrotik-mcp";
 
@@ -157,6 +165,24 @@ function devicesPayload(store: EventStore): unknown {
     },
   }));
   return { server: SERVER_TAG, defaultDevice: cfg.defaultDevice, devices };
+}
+
+/** Live Layer-2 topology built from each device's discovered neighbour cache. */
+function topologyPayload(): unknown {
+  const cfg = getConfig();
+  const devices = Object.entries(cfg.devices).map(([name, config]) => ({
+    name,
+    config,
+    status: getDeviceStatus(name),
+  }));
+  const neighborsByDevice: Record<string, ReturnType<typeof getDeviceNeighbors>> = {};
+  for (const { name } of devices) neighborsByDevice[name] = getDeviceNeighbors(name);
+  return {
+    server: SERVER_TAG,
+    defaultDevice: cfg.defaultDevice,
+    generatedAt: Date.now(),
+    ...buildTopology({ devices, neighborsByDevice }),
+  };
 }
 
 /** Effective runtime configuration, with every secret redacted. */
@@ -291,6 +317,10 @@ export async function runDashboard(
 
       if (url.pathname === "/api/devices") {
         return json(devicesPayload(db));
+      }
+
+      if (url.pathname === "/api/topology") {
+        return json(topologyPayload());
       }
 
       if (url.pathname === "/api/config") {

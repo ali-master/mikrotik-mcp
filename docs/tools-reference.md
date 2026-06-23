@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v2.4.0. Do not edit by hand.
 
-**654 tools** across **88 modules**. A `*` marks a required parameter.
+**657 tools** across **89 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -75,6 +75,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [System](#system)                                           | System & Ops         |    14 | Identity, resources, health, clock/NTP, packages, reboot/shutdown.                                                                                                                                                         |
 | [System Config](#system-config)                             | System & Ops         |    18 | Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog.                                                                                                                     |
 | [Network Tools](#network-tools)                             | System & Ops         |     8 | ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).                                                                                                                                                         |
+| [Neighbors / MNDP](#neighbor)                               | System & Ops         |     3 | Discovered Layer-2 neighbours and discovery settings — the data behind the topology map (`/ip neighbor`, MNDP/CDP/LLDP).                                                                                                   |
 | [Btest Server](#tool-bandwidth-server)                      | Tools                |     3 | Bandwidth-test server settings and sessions (`/tool bandwidth-server`).                                                                                                                                                    |
 | [Flood Ping](#tool-flood-ping)                              | Tools                |     1 | ICMP flood ping with summary statistics (`/tool flood-ping`).                                                                                                                                                              |
 | [Graphing](#tool-graphing)                                  | Tools                |     5 | Interface/queue/resource graphing rules (`/tool graphing`).                                                                                                                                                                |
@@ -1079,6 +1080,16 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `list_netwatch`   | 🟢 read        | `host_filter`                                                                      | Lists netwatch host-monitoring entries.                                                                                                                                  |
 | `get_netwatch`    | 🟢 read        | `host`\*                                                                           | Gets detailed information about a specific netwatch entry.                                                                                                               |
 | `remove_netwatch` | 🔴 destructive | `host`\*                                                                           | Removes a netwatch entry by host.                                                                                                                                        |
+
+## Neighbors / MNDP
+
+<a id="neighbor"></a>Discovered Layer-2 neighbours and discovery settings — the data behind the topology map (`/ip neighbor`, MNDP/CDP/LLDP).
+
+| Tool                              | Risk          | Parameters                                                                | Description                                                                                                                                                                                                                                                             |
+| --------------------------------- | ------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_neighbors`                  | 🟢 read       | `interface_filter`, `identity_filter`, `address_filter`, `mac_filter`     | Lists directly-attached devices discovered via MNDP/CDP/LLDP (`/ip neighbor`) — identity, MAC, IP, the local interface they were seen on, platform, board and version. This is the Layer-2 view of what is physically connected, including devices with no routable IP. |
+| `get_neighbor_discovery_settings` | 🟢 read       | _none_                                                                    | Shows neighbor-discovery settings (`/ip neighbor discovery-settings`): which interface-list participates in discovery and which protocols (MNDP/CDP/LLDP) are enabled.                                                                                                  |
+| `set_neighbor_discovery_settings` | 🟡 write·idem | `discover_interface_list`, `mode`, `protocol`, `lldp_med_net_policy_vlan` | Configures neighbor discovery (`/ip neighbor discovery-settings set`): the interface-list to discover on, the discovery mode (tx/rx), and which protocols to speak. Controls which devices appear in the topology map.                                                  |
 
 ## Btest Server
 

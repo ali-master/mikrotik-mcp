@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "2.4.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 654,
+  "toolCount": 657,
   "tools": [
     {
       "name": "list_interfaces",
@@ -16363,6 +16363,92 @@
           }
         },
         "required": ["host"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_neighbors",
+      "title": "List Neighbors (MNDP)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists directly-attached devices discovered via MNDP/CDP/LLDP (`/ip neighbor`) — identity, MAC, IP, the local interface they were seen on, platform, board and version. This is the Layer-2 view of what is physically connected, including devices with no routable IP.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "description": "Match the local discovery interface.",
+            "type": "string"
+          },
+          "identity_filter": {
+            "description": "Match the neighbour's identity (substring).",
+            "type": "string"
+          },
+          "address_filter": {
+            "description": "Match the neighbour's IP address (substring).",
+            "type": "string"
+          },
+          "mac_filter": {
+            "description": "Match the neighbour's MAC address (substring).",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_neighbor_discovery_settings",
+      "title": "Get Neighbor Discovery Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Shows neighbor-discovery settings (`/ip neighbor discovery-settings`): which interface-list participates in discovery and which protocols (MNDP/CDP/LLDP) are enabled.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_neighbor_discovery_settings",
+      "title": "Set Neighbor Discovery Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Configures neighbor discovery (`/ip neighbor discovery-settings set`): the interface-list to discover on, the discovery mode (tx/rx), and which protocols to speak. Controls which devices appear in the topology map.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "discover_interface_list": {
+            "description": "Interface-list to run discovery on, e.g. \"all\", \"LAN\", \"none\".",
+            "type": "string"
+          },
+          "mode": {
+            "description": "Whether the router transmits and/or receives discovery frames.",
+            "type": "string",
+            "enum": ["tx-only", "rx-only", "tx-and-rx"]
+          },
+          "protocol": {
+            "description": "Comma-separated protocols, e.g. \"mndp,cdp,lldp\".",
+            "type": "string"
+          },
+          "lldp_med_net_policy_vlan": {
+            "description": "LLDP-MED network-policy VLAN, e.g. \"auto\" or a VLAN id.",
+            "type": "string"
+          }
+        },
         "additionalProperties": false
       }
     },
