@@ -14,9 +14,16 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const ipv6FirewallAddressListTools: ToolModule = [
   defineTool({
     name: "add_ipv6_address_list_entry",
-    title: "Add IPv6 Address-List Entry",
+    title: "Add IPv6 Firewall Address-List Entry",
     annotations: WRITE,
-    description: "Adds an IPv6 address/prefix to an IPv6 firewall address-list.",
+    description:
+      "Adds an IPv6 address or prefix to a named group (`/ipv6 firewall address-list`) " +
+      "referenced by IPv6 filter, mangle, NAT, and raw rules — use this to build blocklists, " +
+      "allowlists, or dynamic-population targets for IPv6 traffic. " +
+      "For IPv4 address lists use `add_address_list_entry`. " +
+      "Accepts a static entry or a timeout-expiring one (e.g. `1d00:00:00`); address formats: " +
+      "`2001:db8::1` or `2001:db8::/32`. " +
+      "Returns the created entry's detail including its `.id`.",
     inputSchema: {
       list: z.string().describe("Address-list name"),
       address: z
@@ -50,9 +57,16 @@ export const ipv6FirewallAddressListTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_address_lists",
-    title: "List IPv6 Address-Lists",
+    title: "List IPv6 Firewall Address-List Entries",
     annotations: READ,
-    description: "Lists IPv6 firewall address-list entries with optional filters.",
+    description:
+      "Lists all IPv6 firewall address-list entries (`/ipv6 firewall address-list`) — both " +
+      "static and dynamically-populated — used as named groups by IPv6 filter, mangle, NAT, " +
+      "and raw rules. " +
+      "For IPv4 address lists use `list_address_lists`. " +
+      "Optionally filter by partial list name (`list_filter`), partial address (`address_filter`), " +
+      "or restrict to dynamic-only entries (`dynamic_only`). " +
+      "Returns a table of matching entries with their `.id`, list name, address, timeout, and status.",
     inputSchema: {
       list_filter: z.string().optional().describe("Partial list-name match"),
       address_filter: z.string().optional().describe("Partial address match"),
@@ -76,10 +90,15 @@ export const ipv6FirewallAddressListTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_address_list_entry",
-    title: "Get IPv6 Address-List Entry",
+    title: "Get IPv6 Firewall Address-List Entry",
     annotations: READ,
     description:
-      "Gets detailed information about a specific IPv6 address-list entry by its internal id.",
+      "Retrieves full detail for a single IPv6 firewall address-list entry " +
+      "(`/ipv6 firewall address-list print detail`) by its `.id`. " +
+      "Use to inspect one specific entry; to browse all entries use `list_ipv6_address_lists`. " +
+      "For IPv4 address-list entries use `get_address_list_entry`. " +
+      "`entry_id` takes the `.id` (e.g. `*1`) returned by `list_ipv6_address_lists`. " +
+      "Returns the full entry detail including list name, address, timeout, comment, and dynamic/disabled flags.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },
@@ -97,9 +116,15 @@ export const ipv6FirewallAddressListTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_address_list_entry",
-    title: "Remove IPv6 Address-List Entry",
+    title: "Remove IPv6 Firewall Address-List Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPv6 address-list entry by its internal id.",
+    description:
+      "Permanently deletes an IPv6 firewall address-list entry " +
+      "(`/ipv6 firewall address-list remove`) by its `.id`. " +
+      "Use when an address/prefix should no longer belong to the named group. " +
+      "To temporarily suppress the entry without deleting it use `disable_ipv6_address_list_entry`; " +
+      "for IPv4 address-list removal use the equivalent IPv4 tool. " +
+      "Verifies existence before removing; `entry_id` takes the `.id` (e.g. `*1`) from `list_ipv6_address_lists`.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },
@@ -122,9 +147,14 @@ export const ipv6FirewallAddressListTools: ToolModule = [
 
   defineTool({
     name: "enable_ipv6_address_list_entry",
-    title: "Enable IPv6 Address-List Entry",
+    title: "Enable IPv6 Firewall Address-List Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an IPv6 address-list entry by its internal id.",
+    description:
+      "Re-activates a disabled IPv6 firewall address-list entry " +
+      "(`/ipv6 firewall address-list enable`) by its `.id`, making it visible to IPv6 firewall rules again. " +
+      "Counterpart to `disable_ipv6_address_list_entry`. " +
+      "`entry_id` takes the `.id` (e.g. `*1`) from `list_ipv6_address_lists`. " +
+      "Returns confirmation of the enabled state.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },
@@ -141,9 +171,16 @@ export const ipv6FirewallAddressListTools: ToolModule = [
 
   defineTool({
     name: "disable_ipv6_address_list_entry",
-    title: "Disable IPv6 Address-List Entry",
+    title: "Disable IPv6 Firewall Address-List Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an IPv6 address-list entry by its internal id.",
+    description:
+      "Deactivates an IPv6 firewall address-list entry (`/ipv6 firewall address-list disable`) " +
+      "by its `.id` without deleting it — IPv6 firewall rules referencing the list will no longer " +
+      "match this address while it is disabled. " +
+      "To permanently delete the entry use `remove_ipv6_address_list_entry`; " +
+      "to re-activate use `enable_ipv6_address_list_entry`. " +
+      "`entry_id` takes the `.id` (e.g. `*1`) from `list_ipv6_address_lists`. " +
+      "Returns confirmation of the disabled state.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },

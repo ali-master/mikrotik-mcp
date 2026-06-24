@@ -88,7 +88,9 @@ export const ipv6FirewallFilterTools: ToolModule = [
     title: "Create IPv6 Firewall Filter Rule",
     annotations: WRITE,
     description:
-      "Creates an IPv6 firewall filter rule in the specified chain on the MikroTik device. " +
+      "Creates an IPv6 firewall FILTER rule (`/ipv6 firewall filter`) — the accept/drop/reject decision table for IPv6 traffic TO the router (chain=input), THROUGH it (forward), or FROM it (output). " +
+      "For IPv4 filter rules use create_filter_rule; for IPv6 NAT use create_ipv6_nat_rule; for IPv6 packet marking use create_ipv6_mangle_rule; for IPv6 pre-conntrack drops use create_ipv6_raw_rule. " +
+      "Returns the created rule's full detail including its `.id`. " +
       'connection_state: comma-separated e.g. "established,related,new,invalid". ' +
       'hop_limit: RouterOS hop-limit expression e.g. "equal:1" or "less:64". ' +
       'limit: RouterOS rate/burst string e.g. "10,5:packet". ' +
@@ -198,7 +200,10 @@ export const ipv6FirewallFilterTools: ToolModule = [
     name: "list_ipv6_filter_rules",
     title: "List IPv6 Firewall Filter Rules",
     annotations: READ,
-    description: "Lists IPv6 firewall filter rules on the MikroTik device.",
+    description:
+      "Lists all IPv6 firewall FILTER rules (`/ipv6 firewall filter`) with optional filtering by chain, action, address, protocol, interface, or state flags. " +
+      "Returns the ordered rule list including `.id` values needed by get_ipv6_filter_rule, update_ipv6_filter_rule, move_ipv6_filter_rule, enable_ipv6_filter_rule, disable_ipv6_filter_rule, and remove_ipv6_filter_rule. " +
+      "For IPv4 filter rules use list_filter_rules; for IPv6 NAT use list_ipv6_nat_rules; for IPv6 mangle use list_ipv6_mangle_rules; for IPv6 raw use list_ipv6_raw_rules.",
     inputSchema: {
       chain_filter: z.string().optional(),
       action_filter: z.string().optional(),
@@ -243,8 +248,10 @@ export const ipv6FirewallFilterTools: ToolModule = [
     title: "Get IPv6 Firewall Filter Rule",
     annotations: READ,
     description:
-      "Gets detailed information about a specific IPv6 firewall filter rule. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0".',
+      "Fetches full detail of a single IPv6 firewall FILTER rule (`/ipv6 firewall filter print detail where .id=…`). " +
+      "Use when you need all fields of one specific rule rather than the full list. " +
+      "For the complete ordered list use list_ipv6_filter_rules; for the IPv4 equivalent use get_filter_rule. " +
+      'rule_id takes the `.id` from list_ipv6_filter_rules output e.g. "*1" or "0".',
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
@@ -265,9 +272,12 @@ export const ipv6FirewallFilterTools: ToolModule = [
     title: "Update IPv6 Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing IPv6 firewall filter rule on the MikroTik device. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0". ' +
-      'Pass "" to clear an optional field (e.g. src_address="").',
+      "Modifies one or more fields of an existing IPv6 firewall FILTER rule (`/ipv6 firewall filter set`) then returns the updated rule detail. " +
+      "Only supplied fields are changed; omit a field to leave it untouched. " +
+      'Pass "" (empty string) to clear an optional field (e.g. src_address=""). ' +
+      "To toggle enabled/disabled state only, prefer enable_ipv6_filter_rule or disable_ipv6_filter_rule. " +
+      "For the IPv4 equivalent use update_filter_rule. " +
+      'rule_id takes the `.id` from list_ipv6_filter_rules e.g. "*1" or "0".',
     inputSchema: {
       rule_id: z.string(),
       chain: z.string().optional(),
@@ -302,8 +312,10 @@ export const ipv6FirewallFilterTools: ToolModule = [
     title: "Remove IPv6 Firewall Filter Rule",
     annotations: DESTRUCTIVE,
     description:
-      "Removes an IPv6 firewall filter rule from the MikroTik device. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0".',
+      "Permanently deletes an IPv6 firewall FILTER rule (`/ipv6 firewall filter remove`) after verifying the rule exists via a count-only check. " +
+      "To temporarily suppress a rule without deleting it use disable_ipv6_filter_rule instead. " +
+      "For the IPv4 equivalent use remove_filter_rule. " +
+      'rule_id takes the `.id` from list_ipv6_filter_rules e.g. "*1" or "0".',
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 firewall filter rule: rule_id=${a.rule_id}`);
@@ -323,11 +335,13 @@ export const ipv6FirewallFilterTools: ToolModule = [
 
   defineTool({
     name: "move_ipv6_filter_rule",
-    title: "Move IPv6 Filter Rule",
+    title: "Move IPv6 Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Moves an IPv6 firewall filter rule to a different position in the chain. " +
-      "destination: 0-based target position index.",
+      "Reorders an IPv6 firewall FILTER rule to a target position within its chain (`/ipv6 firewall filter move`). " +
+      "Evaluation order is top-to-bottom; use this to ensure a rule fires before or after others. " +
+      "For the IPv4 equivalent use move_filter_rule; for IPv6 NAT reordering use move_ipv6_nat_rule. " +
+      "rule_id takes the `.id` from list_ipv6_filter_rules; destination is the 0-based target position index.",
     inputSchema: {
       rule_id: z.string(),
       destination: z.number().int().describe("0-based target position index"),
@@ -355,9 +369,12 @@ export const ipv6FirewallFilterTools: ToolModule = [
 
   defineTool({
     name: "enable_ipv6_filter_rule",
-    title: "Enable IPv6 Filter Rule",
+    title: "Enable IPv6 Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an IPv6 firewall filter rule.",
+    description:
+      "Re-enables a previously disabled IPv6 firewall FILTER rule (`/ipv6 firewall filter set disabled=no`) without altering any other field. " +
+      "For the IPv4 equivalent use enable_filter_rule; to disable use disable_ipv6_filter_rule; to change other fields use update_ipv6_filter_rule. " +
+      'rule_id takes the `.id` from list_ipv6_filter_rules e.g. "*1" or "0".',
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateFilterRule({ rule_id: a.rule_id, disabled: false }, ctx);
@@ -366,9 +383,12 @@ export const ipv6FirewallFilterTools: ToolModule = [
 
   defineTool({
     name: "disable_ipv6_filter_rule",
-    title: "Disable IPv6 Filter Rule",
+    title: "Disable IPv6 Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an IPv6 firewall filter rule.",
+    description:
+      "Temporarily disables an IPv6 firewall FILTER rule (`/ipv6 firewall filter set disabled=yes`) without deleting it — the rule remains in the list but is skipped during packet evaluation. " +
+      "For the IPv4 equivalent use disable_filter_rule; to re-enable use enable_ipv6_filter_rule; to permanently remove use remove_ipv6_filter_rule. " +
+      'rule_id takes the `.id` from list_ipv6_filter_rules e.g. "*1" or "0".',
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateFilterRule({ rule_id: a.rule_id, disabled: true }, ctx);

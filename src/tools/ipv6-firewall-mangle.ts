@@ -88,12 +88,15 @@ export const ipv6FirewallMangleTools: ToolModule = [
     title: "Create IPv6 Firewall Mangle Rule",
     annotations: WRITE,
     description:
-      "Creates an IPv6 firewall mangle rule on the MikroTik device. " +
+      "Creates an IPv6 mangle rule (`/ipv6 firewall mangle add`) — the packet-marking and header-modification table for IPv6 traffic, " +
+      "used to mark connections/packets/routing or change DSCP/hop-limit/MSS. " +
+      "For accept/drop decisions use create_ipv6_filter_rule; for address translation use create_ipv6_nat_rule; " +
+      "for pre-connection-tracking drops use create_ipv6_raw_rule. " +
       "chain: prerouting/input/forward/output/postrouting. " +
-      "action: mark-connection/mark-packet/mark-routing/change-dscp/" +
-      "change-hop-limit/change-mss/accept/etc. " +
-      "Set the matching new-*-mark field for mark-* actions and keep " +
-      "passthrough=true to let later rules also match.",
+      "action: mark-connection/mark-packet/mark-routing/change-dscp/change-hop-limit/change-mss/accept/etc. " +
+      "Set the matching new-*-mark field for mark-* actions; keep passthrough=true so later rules can also match the same packet. " +
+      "place_before accepts a rule number or ID (*N) to control insertion position. " +
+      "Returns the created rule's detail including its `.id`.",
     inputSchema: {
       chain: z.enum(["prerouting", "input", "forward", "output", "postrouting"]),
       action: z.enum([
@@ -199,7 +202,11 @@ export const ipv6FirewallMangleTools: ToolModule = [
     name: "list_ipv6_mangle_rules",
     title: "List IPv6 Firewall Mangle Rules",
     annotations: READ,
-    description: "Lists IPv6 firewall mangle rules on the MikroTik device.",
+    description:
+      "Lists IPv6 mangle rules (`/ipv6 firewall mangle print`) — returns all rules in the mangle table with their IDs, chains, actions, and match criteria. " +
+      "For IPv6 filter use list_ipv6_filter_rules; for IPv6 NAT use list_ipv6_nat_rules; for IPv6 raw use list_ipv6_raw_rules. " +
+      "Optionally filter by chain, action, connection-mark, packet-mark, disabled, invalid, or dynamic status. " +
+      "Rule `.id` values from this output are required by get_ipv6_mangle_rule, update_ipv6_mangle_rule, remove_ipv6_mangle_rule, move_ipv6_mangle_rule, enable_ipv6_mangle_rule, and disable_ipv6_mangle_rule.",
     inputSchema: {
       chain_filter: z.string().optional(),
       action_filter: z.string().optional(),
@@ -233,9 +240,13 @@ export const ipv6FirewallMangleTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_mangle_rule",
-    title: "Get IPv6 Firewall Mangle Rule",
+    title: "Get IPv6 Firewall Mangle Rule Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IPv6 firewall mangle rule.",
+    description:
+      "Retrieves full detail for a single IPv6 mangle rule (`/ipv6 firewall mangle print detail where .id=`). " +
+      "Use when you need all fields of one specific rule rather than the full table listing. " +
+      "For the full list use list_ipv6_mangle_rules. " +
+      'rule_id takes the `.id` value (e.g. "*1" or "0") returned by list_ipv6_mangle_rules.',
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
@@ -256,7 +267,11 @@ export const ipv6FirewallMangleTools: ToolModule = [
     title: "Update IPv6 Firewall Mangle Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing IPv6 firewall mangle rule. " + 'Pass "" to clear an optional field.',
+      "Updates fields on an existing IPv6 mangle rule (`/ipv6 firewall mangle set`) — change chain, action, match criteria, mark values, DSCP, hop-limit, or flags without recreating the rule. " +
+      "To toggle enabled state only use enable_ipv6_mangle_rule or disable_ipv6_mangle_rule. " +
+      "rule_id takes the `.id` from list_ipv6_mangle_rules. " +
+      'Pass "" (empty string) for an optional field to clear it. ' +
+      "Returns the updated rule's full detail.",
     inputSchema: {
       rule_id: z.string(),
       chain: z.string().optional(),
@@ -291,7 +306,11 @@ export const ipv6FirewallMangleTools: ToolModule = [
     name: "remove_ipv6_mangle_rule",
     title: "Remove IPv6 Firewall Mangle Rule",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPv6 firewall mangle rule from the MikroTik device.",
+    description:
+      "Permanently deletes an IPv6 mangle rule (`/ipv6 firewall mangle remove`) — verifies the rule exists first, then removes it. " +
+      "To only deactivate without deleting use disable_ipv6_mangle_rule. " +
+      "rule_id takes the `.id` from list_ipv6_mangle_rules. " +
+      "Returns confirmation on success or a not-found message if the ID is absent.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 firewall mangle rule: rule_id=${a.rule_id}`);
@@ -311,9 +330,13 @@ export const ipv6FirewallMangleTools: ToolModule = [
 
   defineTool({
     name: "move_ipv6_mangle_rule",
-    title: "Move IPv6 Mangle Rule",
+    title: "Move IPv6 Firewall Mangle Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Moves an IPv6 firewall mangle rule to a different position in the chain.",
+    description:
+      "Reorders an IPv6 mangle rule to a specific position (`/ipv6 firewall mangle move`) — mangle rules are evaluated top-down, so position controls which rules fire first. " +
+      "For IPv6 filter reordering use move_ipv6_filter_rule. " +
+      "rule_id takes the `.id` from list_ipv6_mangle_rules; destination is the 0-based target index. " +
+      "Verifies the rule exists before moving.",
     inputSchema: {
       rule_id: z.string(),
       destination: z.number().int().describe("0-based target position index"),
@@ -341,9 +364,13 @@ export const ipv6FirewallMangleTools: ToolModule = [
 
   defineTool({
     name: "enable_ipv6_mangle_rule",
-    title: "Enable IPv6 Mangle Rule",
+    title: "Enable IPv6 Firewall Mangle Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an IPv6 firewall mangle rule.",
+    description:
+      "Enables a disabled IPv6 mangle rule (`/ipv6 firewall mangle set disabled=no`) so it participates in packet processing again. " +
+      "To deactivate use disable_ipv6_mangle_rule; to delete permanently use remove_ipv6_mangle_rule. " +
+      "rule_id takes the `.id` from list_ipv6_mangle_rules. " +
+      "Returns the updated rule's detail.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateMangleRule({ rule_id: a.rule_id, disabled: false }, ctx);
@@ -352,9 +379,13 @@ export const ipv6FirewallMangleTools: ToolModule = [
 
   defineTool({
     name: "disable_ipv6_mangle_rule",
-    title: "Disable IPv6 Mangle Rule",
+    title: "Disable IPv6 Firewall Mangle Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an IPv6 firewall mangle rule.",
+    description:
+      "Disables an active IPv6 mangle rule (`/ipv6 firewall mangle set disabled=yes`) — the rule remains in the table but is skipped during packet processing. " +
+      "To re-enable use enable_ipv6_mangle_rule; to delete permanently use remove_ipv6_mangle_rule. " +
+      "rule_id takes the `.id` from list_ipv6_mangle_rules. " +
+      "Returns the updated rule's detail.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateMangleRule({ rule_id: a.rule_id, disabled: true }, ctx);

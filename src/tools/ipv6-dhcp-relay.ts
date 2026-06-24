@@ -8,13 +8,16 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const ipv6DhcpRelayTools: ToolModule = [
   defineTool({
     name: "add_ipv6_dhcp_relay",
-    title: "Add DHCPv6 Relay",
+    title: "Add IPv6 DHCP Relay",
     annotations: WRITE,
     description:
-      "Adds a DHCPv6 relay on the MikroTik device, forwarding client requests " +
-      "from a local interface to upstream DHCPv6 server(s).\n\n" +
-      "Notes:\n" +
-      "    dhcp_server: comma-separated IPv6 address(es) of upstream servers.\n" +
+      "Creates an IPv6 DHCP relay agent (`/ipv6 dhcp-relay`) that forwards DHCPv6 client " +
+      "requests from a local interface to one or more upstream DHCPv6 servers. Use when clients " +
+      "on a subnet cannot reach the DHCPv6 server directly and need relay forwarding. " +
+      "For serving DHCPv6 addresses directly (no relay) use create_ipv6_dhcp_server. " +
+      "Returns the created relay's full detail on success.\n\n" +
+      "Args:\n" +
+      "    dhcp_server: comma-separated IPv6 address(es) of upstream DHCPv6 servers.\n" +
       "    interface: the interface facing the DHCPv6 clients.",
     inputSchema: {
       name: z.string(),
@@ -49,9 +52,14 @@ export const ipv6DhcpRelayTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_dhcp_relays",
-    title: "List DHCPv6 Relays",
+    title: "List IPv6 DHCP Relays",
     annotations: READ,
-    description: "Lists DHCPv6 relays on the MikroTik device.",
+    description:
+      "Lists IPv6 DHCP relay agents (`/ipv6 dhcp-relay`) configured on the device. " +
+      "Use to enumerate all DHCPv6 relay forwarders or to find a relay's `name` for use with " +
+      "get_ipv6_dhcp_relay, enable_ipv6_dhcp_relay, disable_ipv6_dhcp_relay, or " +
+      "remove_ipv6_dhcp_relay. Supports optional filtering by name substring, interface, or " +
+      "disabled state. Returns all matching relay entries.",
     inputSchema: {
       name_filter: z.string().optional(),
       interface_filter: z.string().optional(),
@@ -76,9 +84,13 @@ export const ipv6DhcpRelayTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_dhcp_relay",
-    title: "Get DHCPv6 Relay",
+    title: "Get IPv6 DHCP Relay Details",
     annotations: READ,
-    description: "Gets detailed information about a specific DHCPv6 relay.",
+    description:
+      "Retrieves full detail for a single IPv6 DHCP relay agent (`/ipv6 dhcp-relay print detail`) " +
+      "by name. Use to inspect a specific relay's configuration including its upstream servers and " +
+      "client-facing interface. For a summary listing of all relays use list_ipv6_dhcp_relays. " +
+      "Returns all fields for the named relay, or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting DHCPv6 relay details: name=${a.name}`);
@@ -94,9 +106,13 @@ export const ipv6DhcpRelayTools: ToolModule = [
 
   defineTool({
     name: "enable_ipv6_dhcp_relay",
-    title: "Enable DHCPv6 Relay",
+    title: "Enable IPv6 DHCP Relay",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a DHCPv6 relay on the MikroTik device.",
+    description:
+      "Enables a disabled IPv6 DHCP relay agent (`/ipv6 dhcp-relay enable`) by name. " +
+      "Use to re-activate relay forwarding that was previously stopped without deleting the entry. " +
+      "For the inverse operation use disable_ipv6_dhcp_relay; to create a new relay use " +
+      "add_ipv6_dhcp_relay. The `name` must match an entry returned by list_ipv6_dhcp_relays.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling DHCPv6 relay: name=${a.name}`);
@@ -111,9 +127,13 @@ export const ipv6DhcpRelayTools: ToolModule = [
 
   defineTool({
     name: "disable_ipv6_dhcp_relay",
-    title: "Disable DHCPv6 Relay",
+    title: "Disable IPv6 DHCP Relay",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a DHCPv6 relay on the MikroTik device.",
+    description:
+      "Disables an active IPv6 DHCP relay agent (`/ipv6 dhcp-relay disable`) by name without " +
+      "removing it. Use to temporarily stop DHCPv6 request forwarding on a relay. " +
+      "For the inverse operation use enable_ipv6_dhcp_relay; to permanently delete the relay use " +
+      "remove_ipv6_dhcp_relay. The `name` must match an entry returned by list_ipv6_dhcp_relays.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling DHCPv6 relay: name=${a.name}`);
@@ -128,9 +148,14 @@ export const ipv6DhcpRelayTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_dhcp_relay",
-    title: "Remove DHCPv6 Relay",
+    title: "Remove IPv6 DHCP Relay",
     annotations: DESTRUCTIVE,
-    description: "Removes a DHCPv6 relay from the MikroTik device.",
+    description:
+      "Permanently deletes an IPv6 DHCP relay agent (`/ipv6 dhcp-relay remove`) by name. " +
+      "First confirms existence with a count-only check before removing. " +
+      "Use to permanently tear down relay forwarding for a subnet; to disable temporarily " +
+      "without deleting use disable_ipv6_dhcp_relay. " +
+      "The `name` must match an entry returned by list_ipv6_dhcp_relays.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCPv6 relay: name=${a.name}`);

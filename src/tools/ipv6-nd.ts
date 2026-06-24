@@ -11,16 +11,19 @@ export const ipv6NdTools: ToolModule = [
   // ── ND interface configuration ──────────────────────────────────────────────
   defineTool({
     name: "add_ipv6_nd",
-    title: "Add IPv6 ND Interface Config",
+    title: "Add IPv6 ND Interface Configuration",
     annotations: WRITE,
     description:
-      "Adds a per-interface IPv6 Neighbor Discovery / Router Advertisement " +
-      "configuration on the MikroTik device.\n\n" +
+      "Create an IPv6 Neighbor Discovery / Router Advertisement interface entry (`/ipv6 nd`) — " +
+      "controls RA emission (intervals, lifetime, preference), M/O DHCPv6 flags, hop limit, " +
+      "MTU, reachable/retransmit timers, and DNS/MAC advertisement for a specific interface. " +
+      "Use when a new interface needs its own ND settings distinct from the global 'all' entry; " +
+      "to change an existing entry (including 'all') use update_ipv6_nd. " +
+      "To advertise IPv6 prefixes via RA, use add_ipv6_nd_prefix. " +
+      "Returns the created entry's full detail including its `.id`.\n\n" +
       "Notes:\n" +
-      "    managed_address_configuration (M flag): tell hosts to use DHCPv6 for\n" +
-      "        addresses.\n" +
-      "    other_configuration (O flag): tell hosts to use DHCPv6 for other info\n" +
-      "        (e.g. DNS).\n" +
+      "    managed_address_configuration (M flag): tell hosts to use DHCPv6 for addresses.\n" +
+      "    other_configuration (O flag): tell hosts to use DHCPv6 for other info (e.g. DNS).\n" +
       "    ra_interval: min-max range, e.g. '3m20s-10m'.",
     inputSchema: {
       interface: z.string(),
@@ -73,9 +76,15 @@ export const ipv6NdTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_nd",
-    title: "List IPv6 ND Configs",
+    title: "List IPv6 ND Interface Configurations",
     annotations: READ,
-    description: "Lists IPv6 Neighbor Discovery interface configurations on the MikroTik device.",
+    description:
+      "List all per-interface IPv6 Neighbor Discovery / Router Advertisement configurations " +
+      "(`/ipv6 nd print`) — shows RA intervals, M/O DHCPv6 flags, hop-limit, MTU, and " +
+      "enabled state for each interface entry including the global 'all'. " +
+      "To view the prefixes those RAs advertise, use list_ipv6_nd_prefixes. " +
+      "Supports optional filters by interface name or disabled-only. " +
+      "Returns all matching entries; use get_ipv6_nd for full detail on a single entry.",
     inputSchema: {
       interface_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -95,9 +104,15 @@ export const ipv6NdTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_nd",
-    title: "Get IPv6 ND Config",
+    title: "Get IPv6 ND Interface Configuration",
     annotations: READ,
-    description: "Gets detailed IPv6 ND configuration for an interface (or '.id').",
+    description:
+      "Fetch full detail of a single IPv6 Neighbor Discovery interface configuration " +
+      "(`/ipv6 nd print detail`) by RouterOS `.id` (e.g. '*1') or interface name — " +
+      "tries `.id` first, falls back to interface name match. " +
+      "For a summary table of all interfaces use list_ipv6_nd. " +
+      "For advertised prefix entries use list_ipv6_nd_prefixes. " +
+      "Returns all RA parameters for the matched entry, or a not-found message.",
     inputSchema: {
       nd_id: z.string().describe("RouterOS .id (e.g. '*1') or the interface name"),
     },
@@ -121,11 +136,16 @@ export const ipv6NdTools: ToolModule = [
 
   defineTool({
     name: "update_ipv6_nd",
-    title: "Update IPv6 ND Config",
+    title: "Update IPv6 ND Interface Configuration",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing IPv6 ND interface configuration (by interface name " +
-      "or '.id'). Also use this to configure the built-in 'all' entry.",
+      "Modify an existing IPv6 Neighbor Discovery / Router Advertisement configuration " +
+      "(`/ipv6 nd set`) by interface name (e.g. 'all', 'ether1') or `.id` — " +
+      "use this to tune the global 'all' entry or any per-interface override. " +
+      "Selects by `.id` when nd_id starts with '*', otherwise by interface name. " +
+      "For adding a brand-new interface entry use add_ipv6_nd. " +
+      "For changes to advertised prefixes use add_ipv6_nd_prefix or remove_ipv6_nd_prefix. " +
+      "Returns the updated entry's full detail.",
     inputSchema: {
       nd_id: z.string().describe("Interface name (e.g. 'all', 'ether1') or '.id'"),
       ra_interval: z.string().optional(),
@@ -175,11 +195,14 @@ export const ipv6NdTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_nd",
-    title: "Remove IPv6 ND Config",
+    title: "Remove IPv6 ND Interface Configuration",
     annotations: DESTRUCTIVE,
     description:
-      "Removes a per-interface IPv6 ND configuration (the built-in 'all' entry " +
-      "cannot be removed).",
+      "Delete a per-interface IPv6 Neighbor Discovery configuration entry " +
+      "(`/ipv6 nd remove`) by interface name or `.id` — the `.id` is obtained from list_ipv6_nd. " +
+      "The built-in 'all' entry cannot be removed; to disable it use update_ipv6_nd with disabled=true. " +
+      "For removing advertised prefix entries use remove_ipv6_nd_prefix. " +
+      "Verifies existence via count-only before removal; returns success or not-found.",
     inputSchema: {
       nd_id: z.string().describe("Interface name or '.id'"),
     },
@@ -201,13 +224,19 @@ export const ipv6NdTools: ToolModule = [
   // ── ND advertised prefixes ──────────────────────────────────────────────────
   defineTool({
     name: "add_ipv6_nd_prefix",
-    title: "Add IPv6 ND Prefix",
+    title: "Add IPv6 ND Advertised Prefix",
     annotations: WRITE,
     description:
-      "Adds an advertised IPv6 ND prefix on the MikroTik device.\n\n" +
+      "Add an IPv6 prefix to the Router Advertisement prefix list (`/ipv6 nd prefix add`) — " +
+      "announces the prefix in RA messages so hosts can perform SLAAC (autonomous=true, the A flag) " +
+      "or learn the on-link prefix. " +
+      "This is distinct from ND interface settings (add_ipv6_nd) which control RA timing and M/O flags; " +
+      "this tool controls WHAT prefix is carried inside those RAs. " +
+      "To list existing advertised prefixes use list_ipv6_nd_prefixes. " +
+      "Returns the added prefix's detail including its `.id`.\n\n" +
       "Notes:\n" +
-      "    autonomous: allow hosts to auto-configure addresses from this prefix\n" +
-      "        (SLAAC, the A flag).",
+      "    autonomous: allow hosts to auto-configure addresses from this prefix (SLAAC, the A flag).\n" +
+      "    prefix format: e.g. '2001:db8:1::/64'.",
     inputSchema: {
       prefix: z.string().describe("Prefix to advertise, e.g. '2001:db8:1::/64'"),
       interface: z.string().optional(),
@@ -243,9 +272,15 @@ export const ipv6NdTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_nd_prefixes",
-    title: "List IPv6 ND Prefixes",
+    title: "List IPv6 ND Advertised Prefixes",
     annotations: READ,
-    description: "Lists advertised IPv6 ND prefixes on the MikroTik device.",
+    description:
+      "List all IPv6 prefixes advertised in Router Advertisement messages (`/ipv6 nd prefix print`) — " +
+      "shows each prefix, its interface, valid/preferred lifetimes, and autonomous (SLAAC A-flag) status. " +
+      "To see ND interface settings (RA intervals, M/O flags) rather than the advertised prefixes, " +
+      "use list_ipv6_nd. " +
+      "Supports optional filters by interface name, prefix substring, or dynamic-only. " +
+      "Returns all matching entries; use the `.id` values with remove_ipv6_nd_prefix.",
     inputSchema: {
       interface_filter: z.string().optional(),
       prefix_filter: z.string().optional(),
@@ -270,10 +305,14 @@ export const ipv6NdTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_nd_prefix",
-    title: "Remove IPv6 ND Prefix",
+    title: "Remove IPv6 ND Advertised Prefix",
     annotations: DESTRUCTIVE,
     description:
-      "Removes an advertised IPv6 ND prefix by ID or prefix value from the MikroTik device.",
+      "Delete an IPv6 ND advertised prefix entry (`/ipv6 nd prefix remove`) by RouterOS `.id` " +
+      "(e.g. '*1') or prefix value (e.g. '2001:db8:1::/64') — the `.id` is obtained from " +
+      "list_ipv6_nd_prefixes. Tries `.id` match first, falls back to prefix string match. " +
+      "To remove the ND interface configuration (not a prefix) use remove_ipv6_nd. " +
+      "Verifies existence via count-only before deletion; returns success or not-found.",
     inputSchema: {
       prefix_id: z.string().describe("RouterOS .id (e.g. '*1') or the prefix"),
     },

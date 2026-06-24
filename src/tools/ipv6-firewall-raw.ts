@@ -74,9 +74,14 @@ export const ipv6FirewallRawTools: ToolModule = [
     title: "Create IPv6 Firewall Raw Rule",
     annotations: WRITE,
     description:
-      "Creates an IPv6 firewall raw rule on the MikroTik device. The raw table " +
-      "runs before connection tracking — use it to bypass tracking (notrack) " +
-      "or drop traffic cheaply. chain: 'prerouting' or 'output'.",
+      "Creates an IPv6 raw rule (`/ipv6 firewall raw`) — the pre-connection-tracking table " +
+      "for IPv6 traffic. Use to cheaply drop packets before the state machine runs (action=drop) " +
+      "or to exempt traffic from connection tracking (action=notrack). " +
+      "chain: 'prerouting' (all arriving IPv6 traffic) or 'output' (locally generated IPv6 traffic). " +
+      "For IPv6 accept/drop based on state use create_ipv6_filter_rule; " +
+      "for IPv6 packet marking use create_ipv6_mangle_rule; for IPv6 address translation use create_ipv6_nat_rule. " +
+      "place_before accepts a rule number or ID (*N) to control insertion point. " +
+      "Returns the created rule's details including its .id.",
     inputSchema: {
       chain: z.enum(["prerouting", "output"]),
       action: z.enum(["accept", "drop", "notrack", "jump", "log", "passthrough", "return"]),
@@ -150,7 +155,15 @@ export const ipv6FirewallRawTools: ToolModule = [
     name: "list_ipv6_raw_rules",
     title: "List IPv6 Firewall Raw Rules",
     annotations: READ,
-    description: "Lists IPv6 firewall raw rules on the MikroTik device.",
+    description:
+      "Lists IPv6 raw rules (`/ipv6 firewall raw`) — the pre-connection-tracking table for IPv6 traffic. " +
+      "Use to audit which rules bypass or cheaply drop traffic before connection tracking runs. " +
+      "For IPv6 filter use list_ipv6_filter_rules; " +
+      "for IPv6 mangle use list_ipv6_mangle_rules; for IPv6 NAT use list_ipv6_nat_rules. " +
+      "Supports optional filters: chain_filter, action_filter, src/dst address substring match, " +
+      "and disabled_only/invalid_only/dynamic_only flags. " +
+      "Returns all matching rules; .id values are used by get_ipv6_raw_rule, update_ipv6_raw_rule, " +
+      "remove_ipv6_raw_rule, and move_ipv6_raw_rule.",
     inputSchema: {
       chain_filter: z.string().optional(),
       action_filter: z.string().optional(),
@@ -186,7 +199,12 @@ export const ipv6FirewallRawTools: ToolModule = [
     name: "get_ipv6_raw_rule",
     title: "Get IPv6 Firewall Raw Rule",
     annotations: READ,
-    description: "Gets detailed information about a specific IPv6 firewall raw rule.",
+    description:
+      "Fetches full detail of a single IPv6 raw rule (`/ipv6 firewall raw print detail`) by its .id. " +
+      "Use to inspect the exact match criteria, action, and flags of one specific rule. " +
+      "For the full list use list_ipv6_raw_rules. " +
+      "rule_id takes the .id value (e.g. '*1' or '0') from list_ipv6_raw_rules output. " +
+      "Returns the complete detail block for that rule, or a not-found message if the ID is absent.",
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
@@ -207,7 +225,13 @@ export const ipv6FirewallRawTools: ToolModule = [
     title: "Update IPv6 Firewall Raw Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing IPv6 firewall raw rule. " + 'Pass "" to clear an optional field.',
+      "Modifies fields of an existing IPv6 raw rule (`/ipv6 firewall raw set`) without deleting and " +
+      "recreating it. Use to change chain, action, match criteria (src/dst address, port, protocol, " +
+      "interface, address list), comment, log settings, or enabled state. " +
+      "To reorder a rule use move_ipv6_raw_rule; to toggle only " +
+      "the enabled state use enable_ipv6_raw_rule or disable_ipv6_raw_rule. " +
+      'rule_id takes the .id from list_ipv6_raw_rules. Pass "" for any optional string field to clear it. ' +
+      "Returns the updated rule's full details.",
     inputSchema: {
       rule_id: z.string(),
       chain: z.string().optional(),
@@ -235,7 +259,12 @@ export const ipv6FirewallRawTools: ToolModule = [
     name: "remove_ipv6_raw_rule",
     title: "Remove IPv6 Firewall Raw Rule",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPv6 firewall raw rule from the MikroTik device.",
+    description:
+      "Permanently deletes an IPv6 raw rule (`/ipv6 firewall raw remove`). " +
+      "Use to discard a pre-connection-tracking rule that is no longer needed. " +
+      "To temporarily suspend without deleting use disable_ipv6_raw_rule. " +
+      "rule_id takes the .id from list_ipv6_raw_rules; the tool verifies existence (count-only check) " +
+      "before attempting removal. Returns a success or not-found message.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 firewall raw rule: rule_id=${a.rule_id}`);
@@ -254,9 +283,14 @@ export const ipv6FirewallRawTools: ToolModule = [
 
   defineTool({
     name: "move_ipv6_raw_rule",
-    title: "Move IPv6 Raw Rule",
+    title: "Move IPv6 Firewall Raw Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Moves an IPv6 firewall raw rule to a different position in the chain.",
+    description:
+      "Reorders an IPv6 raw rule to a specific position (`/ipv6 firewall raw move`). " +
+      "Use to change evaluation order — rules are matched top-to-bottom within a chain, so position matters. " +
+      "To reorder IPv6 filter rules use move_ipv6_filter_rule. " +
+      "rule_id takes the .id from list_ipv6_raw_rules; destination is the 0-based integer target position. " +
+      "Returns a confirmation message with the new position.",
     inputSchema: {
       rule_id: z.string(),
       destination: z.number().int().describe("0-based target position index"),
@@ -281,9 +315,13 @@ export const ipv6FirewallRawTools: ToolModule = [
 
   defineTool({
     name: "enable_ipv6_raw_rule",
-    title: "Enable IPv6 Raw Rule",
+    title: "Enable IPv6 Firewall Raw Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an IPv6 firewall raw rule.",
+    description:
+      "Enables a disabled IPv6 raw rule (`/ipv6 firewall raw set disabled=no`). " +
+      "Use to activate a rule that was previously suspended without recreating it. " +
+      "To disable use disable_ipv6_raw_rule; for full field edits use update_ipv6_raw_rule. " +
+      "rule_id takes the .id from list_ipv6_raw_rules. Returns the updated rule's full details.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateRawRule({ rule_id: a.rule_id, disabled: false }, ctx);
@@ -292,9 +330,13 @@ export const ipv6FirewallRawTools: ToolModule = [
 
   defineTool({
     name: "disable_ipv6_raw_rule",
-    title: "Disable IPv6 Raw Rule",
+    title: "Disable IPv6 Firewall Raw Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an IPv6 firewall raw rule.",
+    description:
+      "Disables an active IPv6 raw rule (`/ipv6 firewall raw set disabled=yes`). " +
+      "Use to temporarily suspend a rule without deleting it — disabled rules are skipped during chain evaluation. " +
+      "To re-enable use enable_ipv6_raw_rule; for full field edits use update_ipv6_raw_rule. " +
+      "rule_id takes the .id from list_ipv6_raw_rules. Returns the updated rule's full details.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateRawRule({ rule_id: a.rule_id, disabled: true }, ctx);

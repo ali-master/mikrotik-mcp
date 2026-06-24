@@ -11,16 +11,19 @@ const AddDefaultRoute = z.enum(["yes", "no", "special-classless"]);
 export const ipv6DhcpClientTools: ToolModule = [
   defineTool({
     name: "add_ipv6_dhcp_client",
-    title: "Add DHCPv6 Client",
+    title: "Add IPv6 DHCP Client",
     annotations: WRITE,
     description:
-      "Adds a DHCPv6 client on an interface on the MikroTik device.\n\n" +
+      "Adds an IPv6 DHCP client (`/ipv6 dhcp-client`) on a named interface so the router can request an IPv6 address and/or delegated prefix from an upstream DHCPv6 server (e.g. an ISP). " +
+      "Use when the router is the DHCP *client*, not the server — for serving IPv6 addresses to downstream hosts use the DHCPv6 server tools. " +
+      "Returns the new client's full detail print including its `.id` (use that `.id` in get_ipv6_dhcp_client, release_ipv6_dhcp_client, renew_ipv6_dhcp_client, or remove_ipv6_dhcp_client).\n\n" +
       "Notes:\n" +
-      "    request: what to ask the server for — 'address', 'prefix', or both.\n" +
+      "    request: what to ask the server for — 'address', 'prefix', or 'address,prefix' (both).\n" +
       "    pool_name: when requesting a prefix, the delegated prefix is exposed\n" +
       "        as this IPv6 pool (used by '/ipv6 address from-pool').\n" +
       "    pool_prefix_length: per-interface prefix length carved from the pool,\n" +
-      "        e.g. 64.",
+      "        e.g. 64.\n" +
+      "    prefix_hint: hint the desired delegated prefix, e.g. '::/56'.",
     inputSchema: {
       interface: z.string(),
       request: Request.default("prefix"),
@@ -78,9 +81,12 @@ export const ipv6DhcpClientTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_dhcp_clients",
-    title: "List DHCPv6 Clients",
+    title: "List IPv6 DHCP Clients",
     annotations: READ,
-    description: "Lists DHCPv6 clients on the MikroTik device.",
+    description:
+      "Lists all IPv6 DHCP clients (`/ipv6 dhcp-client`) configured on the router — each entry is an interface on which the router requests an IPv6 address or delegated prefix from an upstream DHCPv6 server. " +
+      "Supports filtering by interface name, status (e.g. 'bound', 'searching', 'stopped'), disabled state, or invalid state. " +
+      "Returns all matching client entries with current status and lease/prefix info.",
     inputSchema: {
       interface_filter: z.string().optional(),
       status_filter: z
@@ -110,9 +116,11 @@ export const ipv6DhcpClientTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_dhcp_client",
-    title: "Get DHCPv6 Client",
+    title: "Get IPv6 DHCP Client Details",
     annotations: READ,
-    description: "Gets detailed information about a specific DHCPv6 client by ID or interface.",
+    description:
+      "Fetches full detail for a single IPv6 DHCP client (`/ipv6 dhcp-client print detail`) by its `.id` (e.g. '*1') or interface name — the `.id` is available from list_ipv6_dhcp_clients. " +
+      "Returns the complete detail print including status, lease times, assigned address, and delegated prefix.",
     inputSchema: {
       client_id: z.string().describe("RouterOS .id (e.g. '*1') or the interface name"),
     },
@@ -136,9 +144,12 @@ export const ipv6DhcpClientTools: ToolModule = [
 
   defineTool({
     name: "release_ipv6_dhcp_client",
-    title: "Release DHCPv6 Client",
+    title: "Release IPv6 DHCP Client Lease",
     annotations: WRITE_IDEMPOTENT,
-    description: "Releases the current DHCPv6 lease/prefix for a client (by ID or interface).",
+    description:
+      "Releases the current IPv6 DHCP address/prefix lease for a client (`/ipv6 dhcp-client release`) identified by `.id` or interface name — the `.id` is available from list_ipv6_dhcp_clients. " +
+      "Causes the client to stop using the assigned address or delegated prefix and notify the server. " +
+      "To immediately re-acquire a lease use renew_ipv6_dhcp_client instead.",
     inputSchema: { client_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Releasing DHCPv6 client: client_id=${a.client_id}`);
@@ -153,9 +164,12 @@ export const ipv6DhcpClientTools: ToolModule = [
 
   defineTool({
     name: "renew_ipv6_dhcp_client",
-    title: "Renew DHCPv6 Client",
+    title: "Renew IPv6 DHCP Client Lease",
     annotations: WRITE_IDEMPOTENT,
-    description: "Renews the DHCPv6 lease/prefix for a client (by ID or interface).",
+    description:
+      "Renews the IPv6 DHCP address/prefix lease for a client (`/ipv6 dhcp-client renew`) identified by `.id` or interface name — the `.id` is available from list_ipv6_dhcp_clients. " +
+      "Sends a DHCPv6 RENEW message to refresh the assignment without releasing it first. " +
+      "To give up the lease first use release_ipv6_dhcp_client.",
     inputSchema: { client_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Renewing DHCPv6 client: client_id=${a.client_id}`);
@@ -170,9 +184,12 @@ export const ipv6DhcpClientTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_dhcp_client",
-    title: "Remove DHCPv6 Client",
+    title: "Remove IPv6 DHCP Client",
     annotations: DESTRUCTIVE,
-    description: "Removes a DHCPv6 client from the MikroTik device by ID or interface.",
+    description:
+      "Permanently deletes an IPv6 DHCP client entry (`/ipv6 dhcp-client remove`) identified by `.id` or interface name — the `.id` is available from list_ipv6_dhcp_clients. " +
+      "After removal the router will no longer request IPv6 address or prefix on that interface. " +
+      "Confirms existence before attempting removal and returns an error if the client is not found.",
     inputSchema: { client_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCPv6 client: client_id=${a.client_id}`);

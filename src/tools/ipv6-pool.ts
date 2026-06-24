@@ -8,14 +8,17 @@ import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/r
 export const ipv6PoolTools: ToolModule = [
   defineTool({
     name: "create_ipv6_pool",
-    title: "Create IPv6 Pool",
+    title: "Create IPv6 Prefix Pool",
     annotations: WRITE,
     description:
-      "Creates an IPv6 pool on the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    prefix: the overall block, e.g. '2001:db8::/48'.\n" +
-      "    prefix_length: size of each delegation carved from the block, e.g.\n" +
-      "        64. Must be longer than the pool prefix.",
+      "Creates an IPv6 prefix pool (`/ipv6 pool`) — defines a large address block " +
+      "from which smaller per-client prefix delegations are carved, typically used with " +
+      "DHCPv6 prefix delegation (PD). " +
+      "For IPv4 address pools use `create_ip_pool`. " +
+      "`prefix` is the overall block (e.g. `2001:db8::/48`); " +
+      "`prefix_length` is the size of each carved delegation (e.g. 64) and must be " +
+      "longer than the pool prefix length. " +
+      "Returns the created pool's full detail including name and prefix configuration.",
     inputSchema: {
       name: z.string(),
       prefix: z.string().describe("Overall block, e.g. '2001:db8::/48'"),
@@ -48,9 +51,15 @@ export const ipv6PoolTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_pools",
-    title: "List IPv6 Pools",
+    title: "List IPv6 Prefix Pools",
     annotations: READ,
-    description: "Lists IPv6 pools on the MikroTik device.",
+    description:
+      "Lists IPv6 prefix pools (`/ipv6 pool print`) — returns all defined pools, " +
+      "optionally filtered by name or prefix substring. " +
+      "For full detail on a single pool use `get_ipv6_pool`. " +
+      "To see which prefixes have already been delegated from a pool use `list_ipv6_pool_used`. " +
+      "For IPv4 address pools use `list_ip_pools`. " +
+      "Returns pool names, prefixes, prefix-lengths, and comments.",
     inputSchema: {
       name_filter: z.string().optional(),
       prefix_filter: z.string().optional(),
@@ -70,9 +79,14 @@ export const ipv6PoolTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_pool",
-    title: "Get IPv6 Pool",
+    title: "Get IPv6 Pool Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IPv6 pool.",
+    description:
+      "Fetches full detail of a single IPv6 prefix pool (`/ipv6 pool print detail`) " +
+      "identified by name — use when you need all fields for one pool rather than a summary list. " +
+      "For scanning all pools use `list_ipv6_pools`. " +
+      "To check active delegations handed out from a pool use `list_ipv6_pool_used`. " +
+      "Returns the pool's prefix, prefix-length, comment, and all configuration fields.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting IPv6 pool details: name=${a.name}`);
@@ -88,10 +102,15 @@ export const ipv6PoolTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_pool_used",
-    title: "List IPv6 Pool Usage",
+    title: "List IPv6 Pool Delegated Prefixes",
     annotations: READ,
     description:
-      "Lists the currently delegated prefixes taken from IPv6 pools (`/ipv6 pool used`).",
+      "Lists actively delegated prefixes from IPv6 pools (`/ipv6 pool used print`) — " +
+      "shows which sub-prefixes have been handed out (e.g. via DHCPv6 prefix delegation) " +
+      "and to which clients. This is the runtime usage view, not the pool definitions. " +
+      "For the pool configuration itself use `list_ipv6_pools` or `get_ipv6_pool`. " +
+      "Optionally filter by pool name substring (`pool_filter`). " +
+      "Returns delegated prefix entries with pool name, prefix, and binding information.",
     inputSchema: {
       pool_filter: z.string().optional().describe("Partial pool-name match"),
     },
@@ -112,11 +131,14 @@ export const ipv6PoolTools: ToolModule = [
 
   defineTool({
     name: "update_ipv6_pool",
-    title: "Update IPv6 Pool",
+    title: "Update IPv6 Prefix Pool",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing IPv6 pool on the MikroTik device. " +
-      'Pass comment="" to clear the comment.',
+      "Updates an existing IPv6 prefix pool (`/ipv6 pool set`) — modifies the pool's " +
+      "name, prefix block, delegation size, or comment. " +
+      "Use `list_ipv6_pools` to find the current pool `name` before updating. " +
+      'Pass comment="" to clear the comment. ' +
+      "Returns the updated pool's full detail after the change.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -148,9 +170,14 @@ export const ipv6PoolTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_pool",
-    title: "Remove IPv6 Pool",
+    title: "Remove IPv6 Prefix Pool",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPv6 pool from the MikroTik device.",
+    description:
+      "Permanently removes an IPv6 prefix pool (`/ipv6 pool remove`) by name. " +
+      "Performs a count-only existence check first and returns an error if the pool is not found. " +
+      "Active delegations visible via `list_ipv6_pool_used` may be disrupted. " +
+      "Use `list_ipv6_pools` to confirm the exact pool name before removing. " +
+      "Returns a success confirmation or an error message if the pool does not exist.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 pool: name=${a.name}`);

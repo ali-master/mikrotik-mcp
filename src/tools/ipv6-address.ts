@@ -8,10 +8,12 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const ipv6AddressTools: ToolModule = [
   defineTool({
     name: "add_ipv6_address",
-    title: "Add IPv6 Address",
+    title: "Add IPv6 Address to Interface",
     annotations: WRITE,
     description:
-      "Adds an IPv6 address to an interface on the MikroTik device.\n\n" +
+      "Assigns an IPv6 address to an interface (`/ipv6 address add`) — use this to give an interface a static or pool-derived IPv6 address and optionally advertise the prefix via Router Advertisements (ND). " +
+      "For IPv4 address assignment use add_ip_address. For IPv6 routing entries (next-hop/gateway records) use add_ipv6_route. " +
+      "Returns the created entry's full detail including its `.id`.\n\n" +
       "Notes:\n" +
       "    address: IPv6 with prefix length, e.g. '2001:db8::1/64'. When from_pool\n" +
       "        is set the host part may be omitted and is taken from the pool.\n" +
@@ -59,7 +61,10 @@ export const ipv6AddressTools: ToolModule = [
     name: "list_ipv6_addresses",
     title: "List IPv6 Addresses",
     annotations: READ,
-    description: "Lists IPv6 addresses on the MikroTik device.",
+    description:
+      "List all IPv6 addresses assigned to interfaces (`/ipv6 address print`) — use this to survey which IPv6 addresses exist on the device, optionally filtered by interface name, address substring, disabled state, dynamic flag, or link-local flag. " +
+      "For IPv4 interface addresses use list_ip_addresses. For IPv6 routing table entries use list_ipv6_routes. " +
+      "Returns a table of matching address entries; use get_ipv6_address to fetch a single entry's full detail by `.id`.",
     inputSchema: {
       interface_filter: z.string().optional(),
       address_filter: z.string().optional(),
@@ -88,9 +93,12 @@ export const ipv6AddressTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_address",
-    title: "Get IPv6 Address",
+    title: "Get IPv6 Address Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IPv6 address by ID or address value.",
+    description:
+      "Fetch full detail for a single IPv6 address entry (`/ipv6 address print detail`) by its RouterOS `.id` (e.g. '*1') or by the address value (e.g. '2001:db8::1/64') — use this to inspect flags, advertise state, EUI-64, DAD status, and dynamic/invalid markers for one specific entry. " +
+      "For browsing all entries use list_ipv6_addresses. For IPv6 routing entries use list_ipv6_routes. " +
+      "The `.id` is returned by list_ipv6_addresses or add_ipv6_address.",
     inputSchema: {
       address_id: z.string().describe("RouterOS .id (e.g. '*1') or the address value"),
     },
@@ -116,7 +124,11 @@ export const ipv6AddressTools: ToolModule = [
     name: "remove_ipv6_address",
     title: "Remove IPv6 Address",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPv6 address from the MikroTik device by ID or address value.",
+    description:
+      "Delete an IPv6 address from an interface (`/ipv6 address remove`) — verifies the entry exists first via a count-only check, then removes it. " +
+      "Accepts either the RouterOS `.id` (e.g. '*1', from list_ipv6_addresses) or the address value (e.g. '2001:db8::1/64'). " +
+      "For IPv4 interface address removal use remove_ip_address. For removing an IPv6 routing entry use remove_ipv6_route. " +
+      "Returns a confirmation string on success.",
     inputSchema: { address_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 address: address_id=${a.address_id}`);

@@ -9,14 +9,20 @@ export const ipv6DhcpServerTools: ToolModule = [
   // ── Server ────────────────────────────────────────────────────────────────
   defineTool({
     name: "create_ipv6_dhcp_server",
-    title: "Create DHCPv6 Server",
+    title: "Create IPv6 DHCP Server",
     annotations: WRITE,
     description:
-      "Creates a DHCPv6 server bound to an interface on the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    address_pool: IPv6 pool the server delegates prefixes from.\n" +
-      "    lease_time: duration e.g. '1d', '12h', '30m'.\n" +
-      "    rapid_commit: allow the 2-message (Solicit/Reply) exchange.",
+      "Creates an IPv6 DHCPv6 server instance (`/ipv6 dhcp-server`) bound to a network interface, " +
+      "delegating prefixes or addresses from a named IPv6 pool. " +
+      "Use this to provision stateful DHCPv6 service on an interface. " +
+      "For IPv4 DHCP use create_dhcp_server; for pinning a prefix to a known client by DUID use add_ipv6_dhcp_binding. " +
+      "Returns the created server's full detail including its `.id`.\n\n" +
+      "Argument notes:\n" +
+      "    address_pool: IPv6 pool name the server delegates prefixes/addresses from.\n" +
+      "    lease_time: RouterOS duration string e.g. '1d', '12h', '30m'.\n" +
+      "    rapid_commit: enable 2-message (Solicit/Reply) exchange.\n" +
+      "    preference: server preference (0-255) used in multi-server deployments.\n" +
+      "    dhcp_option: list of custom DHCPv6 option names defined via add_ipv6_dhcp_option.",
     inputSchema: {
       name: z.string(),
       interface: z.string(),
@@ -58,9 +64,13 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_dhcp_servers",
-    title: "List DHCPv6 Servers",
+    title: "List IPv6 DHCP Servers",
     annotations: READ,
-    description: "Lists DHCPv6 servers on the MikroTik device.",
+    description:
+      "Lists all IPv6 DHCPv6 server instances (`/ipv6 dhcp-server`) configured on the device. " +
+      "Use to discover which interfaces have DHCPv6 service, their associated pools, and enabled/invalid status. " +
+      "For full detail on a single server use get_ipv6_dhcp_server; for client prefix assignments use list_ipv6_dhcp_bindings. " +
+      "Returns all matching server entries; filterable by name, interface, disabled-only, or invalid-only.",
     inputSchema: {
       name_filter: z.string().optional(),
       interface_filter: z.string().optional(),
@@ -87,9 +97,13 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "get_ipv6_dhcp_server",
-    title: "Get DHCPv6 Server",
+    title: "Get IPv6 DHCP Server Details",
     annotations: READ,
-    description: "Gets detailed information about a specific DHCPv6 server.",
+    description:
+      "Retrieves full configuration detail for a single named IPv6 DHCPv6 server (`/ipv6 dhcp-server print detail`). " +
+      "Use when you need the complete configuration of one server rather than a summary listing. " +
+      "For all servers use list_ipv6_dhcp_servers; for client prefix assignments on this server use list_ipv6_dhcp_bindings. " +
+      "Returns the server's detailed configuration or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting DHCPv6 server details: name=${a.name}`);
@@ -105,9 +119,13 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_dhcp_server",
-    title: "Remove DHCPv6 Server",
+    title: "Remove IPv6 DHCP Server",
     annotations: DESTRUCTIVE,
-    description: "Removes a DHCPv6 server from the MikroTik device.",
+    description:
+      "Permanently deletes a named IPv6 DHCPv6 server instance (`/ipv6 dhcp-server remove`) after confirming it exists. " +
+      "Removing the server stops DHCPv6 service on the bound interface but does not automatically remove its bindings or option definitions. " +
+      "For removing static/dynamic prefix assignments use remove_ipv6_dhcp_binding; for removing option definitions use remove_ipv6_dhcp_option. " +
+      "Returns a success or not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCPv6 server: name=${a.name}`);
@@ -129,14 +147,21 @@ export const ipv6DhcpServerTools: ToolModule = [
   // ── Bindings (static prefix delegation) ─────────────────────────────────────
   defineTool({
     name: "add_ipv6_dhcp_binding",
-    title: "Add DHCPv6 Binding",
+    title: "Add IPv6 DHCP Server Binding",
     annotations: WRITE,
     description:
-      "Adds a DHCPv6 server binding (static prefix/address assignment) on the " +
-      "MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    duid: client DHCP Unique Identifier the binding matches.\n" +
-      "    prefix: the delegated prefix, e.g. '2001:db8:1::/64'.",
+      "Creates a static IPv6 DHCPv6 server binding (`/ipv6 dhcp-server binding add`) that pins a delegated prefix " +
+      "or specific IPv6 address to a client identified by its DUID. " +
+      "Use to ensure a known client always receives the same prefix/address assignment. " +
+      "The binding references a server created by create_ipv6_dhcp_server; for viewing all bindings use list_ipv6_dhcp_bindings. " +
+      "Returns the created binding's detail or a completion notice.\n\n" +
+      "Argument notes:\n" +
+      "    duid: client DHCP Unique Identifier (required) — the binding matches on this.\n" +
+      "    prefix: delegated prefix e.g. '2001:db8:1::/64'.\n" +
+      "    address: specific IPv6 address to assign (alternative or complement to prefix).\n" +
+      "    iaid: Identity Association ID.\n" +
+      "    server: target DHCPv6 server name, or 'all' to match any server.\n" +
+      "    life_time: RouterOS duration string e.g. '1d', '12h'.",
     inputSchema: {
       address: z.string().optional().describe("Assigned IPv6 address, if any"),
       prefix: z.string().optional().describe("Delegated prefix, e.g. '2001:db8:1::/64'"),
@@ -174,9 +199,14 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_dhcp_bindings",
-    title: "List DHCPv6 Bindings",
+    title: "List IPv6 DHCP Server Bindings",
     annotations: READ,
-    description: "Lists DHCPv6 server bindings on the MikroTik device.",
+    description:
+      "Lists IPv6 DHCPv6 server bindings (`/ipv6 dhcp-server binding`) — both static (manually created via add_ipv6_dhcp_binding) " +
+      "and dynamic (auto-leased) client prefix/address assignments. " +
+      "Use to audit which clients have received delegated prefixes and inspect DUID-to-prefix mappings. " +
+      "For server configuration detail use get_ipv6_dhcp_server; to delete a binding use remove_ipv6_dhcp_binding. " +
+      "Returns all matching bindings; filterable by server name, DUID substring, or dynamic-only.",
     inputSchema: {
       server_filter: z.string().optional(),
       duid_filter: z.string().optional(),
@@ -201,9 +231,14 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_dhcp_binding",
-    title: "Remove DHCPv6 Binding",
+    title: "Remove IPv6 DHCP Server Binding",
     annotations: DESTRUCTIVE,
-    description: "Removes a DHCPv6 server binding by ID or DUID from the MikroTik device.",
+    description:
+      "Permanently deletes an IPv6 DHCPv6 server binding (`/ipv6 dhcp-server binding remove`) identified by its RouterOS `.id` or by its client DUID. " +
+      "Use to revoke a static prefix assignment or clear a stale dynamic lease. " +
+      "The `.id` comes from list_ipv6_dhcp_bindings; supply either `.id` (e.g. '*1') or a DUID string — the tool tries `.id` first then falls back to DUID. " +
+      "To remove the server itself use remove_ipv6_dhcp_server. " +
+      "Returns a success or not-found message.",
     inputSchema: {
       binding_id: z.string().describe("RouterOS .id (e.g. '*1') or the DUID"),
     },
@@ -235,13 +270,16 @@ export const ipv6DhcpServerTools: ToolModule = [
   // ── Options ─────────────────────────────────────────────────────────────────
   defineTool({
     name: "add_ipv6_dhcp_option",
-    title: "Add DHCPv6 Option",
+    title: "Add IPv6 DHCP Server Option",
     annotations: WRITE,
     description:
-      "Adds a custom DHCPv6 option on the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    code: numeric DHCPv6 option code.\n" +
-      "    value: option value (use '0x...' for raw hex).",
+      "Defines a named custom IPv6 DHCPv6 option (`/ipv6 dhcp-server option add`) by numeric option code and value. " +
+      "Use to configure vendor-specific or non-standard DHCPv6 options that can then be referenced by name in create_ipv6_dhcp_server via the `dhcp_option` field. " +
+      "For viewing existing options use list_ipv6_dhcp_options; to delete one use remove_ipv6_dhcp_option. " +
+      "Returns the created option's detail or a completion notice.\n\n" +
+      "Argument notes:\n" +
+      "    code: numeric DHCPv6 option code (e.g. 23 for DNS recursive name server).\n" +
+      "    value: option value; use '0x...' prefix for raw hex encoding.",
     inputSchema: {
       name: z.string(),
       code: z.number().int().describe("Numeric DHCPv6 option code"),
@@ -271,9 +309,13 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "list_ipv6_dhcp_options",
-    title: "List DHCPv6 Options",
+    title: "List IPv6 DHCP Server Options",
     annotations: READ,
-    description: "Lists custom DHCPv6 options on the MikroTik device.",
+    description:
+      "Lists all named custom IPv6 DHCPv6 option definitions (`/ipv6 dhcp-server option`) on the device. " +
+      "Use to audit available option codes and values before referencing them in DHCPv6 server configurations via the `dhcp_option` field of create_ipv6_dhcp_server. " +
+      "To add a new option use add_ipv6_dhcp_option; to delete one use remove_ipv6_dhcp_option. " +
+      "Returns all matching option definitions; filterable by name substring.",
     inputSchema: { name_filter: z.string().optional() },
     async handler(a, ctx) {
       ctx.info("Listing DHCPv6 options");
@@ -292,9 +334,13 @@ export const ipv6DhcpServerTools: ToolModule = [
 
   defineTool({
     name: "remove_ipv6_dhcp_option",
-    title: "Remove DHCPv6 Option",
+    title: "Remove IPv6 DHCP Server Option",
     annotations: DESTRUCTIVE,
-    description: "Removes a custom DHCPv6 option by name from the MikroTik device.",
+    description:
+      "Permanently deletes a named custom IPv6 DHCPv6 option definition (`/ipv6 dhcp-server option remove`) after confirming it exists. " +
+      "Note: removing an option that is still referenced by an active server's `dhcp_option` list will affect that server's advertised options. " +
+      "For listing existing options use list_ipv6_dhcp_options; to add options use add_ipv6_dhcp_option. " +
+      "Returns a success or not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCPv6 option: name=${a.name}`);

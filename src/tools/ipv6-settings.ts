@@ -10,9 +10,16 @@ const AcceptMode = z.enum(["yes", "no", "yes-if-forwarding-disabled"]);
 export const ipv6SettingsTools: ToolModule = [
   defineTool({
     name: "get_ipv6_settings",
-    title: "Get IPv6 Settings",
+    title: "Get IPv6 Global Settings",
     annotations: READ,
-    description: "Gets the global IPv6 settings of the MikroTik device (`/ipv6 settings`).",
+    description:
+      "Read IPv6 global settings (`/ipv6 settings`) — the single device-wide control record " +
+      "that governs whether IPv6 is enabled, packet forwarding, ICMP redirect acceptance, " +
+      "router-advertisement acceptance, and the neighbor-cache limit.\n\n" +
+      "Use this to inspect the current state before calling update_ipv6_settings. " +
+      "This is not for per-interface IPv6 addresses (use add_ipv6_address / list_ipv6_addresses) " +
+      "or routes (use list_ipv6_routes / add_ipv6_route) or firewall rules (use list_ipv6_filter_rules).\n\n" +
+      "Returns the full `/ipv6 settings print` output as a text block.",
     async handler(_a, ctx) {
       ctx.info("Getting IPv6 settings");
       const result = await executeMikrotikCommand("/ipv6 settings print", ctx);
@@ -22,15 +29,24 @@ export const ipv6SettingsTools: ToolModule = [
 
   defineTool({
     name: "update_ipv6_settings",
-    title: "Update IPv6 Settings",
+    title: "Update IPv6 Global Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates the global IPv6 settings of the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    disable_ipv6: when true, IPv6 is turned off device-wide.\n" +
-      "    forward: enable/disable IPv6 packet forwarding (routing).\n" +
+      "Update IPv6 global settings (`/ipv6 settings set`) — modify the device-wide IPv6 " +
+      "control record that covers the enable/disable toggle, packet forwarding, ICMP redirect " +
+      "acceptance, router-advertisement acceptance, and the neighbor-cache ceiling.\n\n" +
+      "Use this to toggle IPv6 entirely or tune host-vs-router behavior. " +
+      "This does NOT add IPv6 addresses (use add_ipv6_address), static routes " +
+      "(use add_ipv6_route), or firewall rules (use create_ipv6_filter_rule / " +
+      "create_ipv6_nat_rule / create_ipv6_mangle_rule). " +
+      "To read the current state first, use get_ipv6_settings.\n\n" +
+      "Argument notes:\n" +
+      "    disable_ipv6: true turns off IPv6 device-wide.\n" +
+      "    forward: true enables IPv6 packet forwarding (router mode).\n" +
       "    accept_redirects / accept_router_advertisements: 'yes', 'no', or\n" +
-      "        'yes-if-forwarding-disabled' (the host-like default).",
+      "        'yes-if-forwarding-disabled' (the host-like default).\n" +
+      "    max_neighbor_entries: integer cap on the IPv6 neighbor cache.\n\n" +
+      "Returns the updated `/ipv6 settings print` output on success.",
     inputSchema: {
       disable_ipv6: z.boolean().optional(),
       forward: z.boolean().optional(),
