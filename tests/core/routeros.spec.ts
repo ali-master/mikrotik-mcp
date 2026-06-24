@@ -3,7 +3,12 @@
  * device output into success/failure signals.
  */
 import { describe, expect, test } from "vite-plus/test";
-import { commandUnsupported, splitHostPort } from "../../src/core/routeros";
+import {
+  commandUnsupported,
+  containsRawParserError,
+  indicatesFailure,
+  splitHostPort,
+} from "../../src/core/routeros";
 
 describe("commandUnsupported", () => {
   test("matches a missing/unknown command path", () => {
@@ -15,6 +20,34 @@ describe("commandUnsupported", () => {
     // "expected end of command" means the path was recognized but trailing
     // tokens were rejected — a real syntax error, not a missing feature.
     expect(commandUnsupported("expected end of command (line 1 column 14)")).toBe(false);
+  });
+});
+
+describe("indicatesFailure", () => {
+  test('flags the handler "Failed to …:" error convention', () => {
+    expect(
+      indicatesFailure("Failed to add route: bad parameter routing-mark (line 1 column 79)"),
+    ).toBe(true);
+    expect(
+      indicatesFailure(
+        "Failed to create SSTP client: failure: bad address or dns name (/interface/sstp-client/add; line 1)",
+      ),
+    ).toBe(true);
+  });
+  test("flags a parser coordinate embedded anywhere in the output", () => {
+    expect(indicatesFailure("ROUTES:\n\nsomething (line 2 column 3)")).toBe(true);
+  });
+  test("does not flag successful output", () => {
+    expect(indicatesFailure("Route added successfully:\n\n 0 dst-address=0.0.0.0/0")).toBe(false);
+    expect(indicatesFailure("SSTP CLIENTS:\n\n 0 name=sstp1 running=yes")).toBe(false);
+    // The word "failed" mid-sentence (not at the start of the first line) is fine.
+    expect(indicatesFailure("LOGS:\n\nlogin failed for user admin")).toBe(false);
+  });
+});
+
+describe("containsRawParserError", () => {
+  test("still catches a bare parser error under a success header", () => {
+    expect(containsRawParserError("POE:\n\nbad command name poe (line 1 column 21)")).toBe(true);
   });
 });
 

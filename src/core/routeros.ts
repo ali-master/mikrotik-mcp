@@ -200,3 +200,24 @@ export function containsRawParserError(text: string): boolean {
   const firstLine = body.trimStart().split("\n", 1)[0] ?? "";
   return PARSER_ERROR_HEAD.test(firstLine) && /\(line \d+ column \d+\)/.test(firstLine);
 }
+
+/**
+ * True when a tool's text output represents a FAILED operation that should be
+ * reported as `isError` to the host and the observability dashboard — even
+ * though the handler flattened the device error into a plain string. Catches:
+ *   • this codebase's handler error convention — text whose first line begins
+ *     with "Failed" (e.g. "Failed to add route: bad parameter routing-mark …"),
+ *     used exclusively for errors across the tool modules, and
+ *   • a RouterOS parser-error coordinate "(line N column M)" appearing anywhere
+ *     in the output (a device rejection embedded after a "Failed to …:" prefix,
+ *     which `containsRawParserError` misses because the phrase isn't at the
+ *     start of the line).
+ *
+ * Deliberately narrow: the "Failed" check is anchored to the first line only,
+ * and the coordinate format is unique to RouterOS parser errors — so successful
+ * print/export output is never flagged.
+ */
+export function indicatesFailure(text: string): boolean {
+  const firstLine = text.trimStart().split("\n", 1)[0] ?? "";
+  return /^Failed\b/.test(firstLine) || /\(line \d+ column \d+\)/.test(text);
+}

@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { ZodRawShape } from "zod";
 import { createContext } from "./context";
 import type { ToolContext, SendLog } from "./context";
-import { containsRawParserError } from "./routeros";
+import { containsRawParserError, indicatesFailure } from "./routeros";
 import { buildRecordsView } from "./routeros-parse";
 import { toolUiMeta, uiViewUri } from "./ui-meta";
 import type { UiLink } from "./ui-meta";
@@ -175,11 +175,12 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
           // `structuredContent` for an MCP App view.
           const out = typeof raw === "string" ? { text: raw } : raw;
           outText = out.text;
-          // Backstop: if a handler returned a raw RouterOS parser error (an
-          // unsupported/mistyped command on this device/version), surface it as a
-          // real error instead of a success-looking result.
-          if (containsRawParserError(out.text)) {
-            ctx.error(`Device rejected the command: ${out.text.trim()}`);
+          // Backstop: if a handler returned a raw RouterOS parser error or a
+          // flattened "Failed to …:" device-error string, surface it as a real
+          // error instead of a success-looking result — so the host and the
+          // observability dashboard's status column reflect the failure.
+          if (containsRawParserError(out.text) || indicatesFailure(out.text)) {
+            ctx.error(`Tool reported a failure: ${out.text.trim()}`);
             isErr = true;
             errMsg = out.text.trim();
             return { content: [{ type: "text", text: out.text }], isError: true };
