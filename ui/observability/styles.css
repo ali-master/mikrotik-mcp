@@ -1047,3 +1047,120 @@ pre.body.json .j-null {
 .cfg-diff .d-hunk {
   color: var(--mt-accent);
 }
+
+/* ── Packet Capture Studio ───────────────────────────────────────────────── */
+.cap-idle {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.cap-idle code {
+  color: var(--mt-accent);
+  font-family: var(--mt-mono);
+}
+.cap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cap-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cap-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--mt-text-faint);
+}
+.cap-dot.is-on {
+  background: var(--mt-good);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-good) 22%, transparent);
+}
+.cap-cols {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .cap-cols {
+    grid-template-columns: 1fr;
+  }
+}
+.cap-side {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.cap-h {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mt-text-dim);
+}
+.cap-pbar {
+  display: grid;
+  grid-template-columns: 52px 1fr 34px;
+  align-items: center;
+  gap: 6px;
+  font: 11px var(--mt-mono);
+}
+.cap-ptrack {
+  height: 8px;
+  background: var(--mt-surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.cap-ptrack i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+.cap-pn {
+  text-align: right;
+  color: var(--mt-text-dim);
+}
+.cap-talker {
+  display: flex;
+  justify-content: space-between;
+  font: 11px var(--mt-mono);
+  color: var(--mt-text-dim);
+}
+.cap-talker b {
+  color: var(--mt-text);
+}
+.cap-list {
+  height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  background: var(--mt-bg);
+  font: 11px/1.6 var(--mt-mono);
+}
+.cap-row {
+  display: grid;
+  grid-template-columns: 90px 64px 48px 1fr;
+  gap: 8px;
+  padding: 1px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.cap-row:nth-child(odd) {
+  background: color-mix(in srgb, var(--mt-surface) 40%, transparent);
+}
+.cap-tt {
+  color: var(--mt-text-faint);
+}
+.cap-proto {
+  font-weight: 600;
+}
+.cap-len {
+  color: var(--mt-text-dim);
+  text-align: right;
+}
+.cap-info {
+  color: var(--mt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

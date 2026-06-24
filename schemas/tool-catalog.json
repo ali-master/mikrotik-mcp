@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "2.4.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 657,
+  "toolCount": 664,
   "tools": [
     {
       "name": "list_interfaces",
@@ -10052,6 +10052,35 @@
       }
     },
     {
+      "name": "firewall_audit",
+      "title": "Firewall Audit",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Audits the firewall and explains it in plain language. Analyses the filter ruleset (and optionally NAT/mangle) for unreachable/shadowed rules, overly-broad accepts, a missing default-drop, duplicate rules, and dead rules with no packet hits. Returns a risk score and prioritised, plain-language findings with suggested fixes — and renders an interactive findings table (one-click disable) in MCP App hosts. Use when the user wants to review, harden or understand a router's firewall.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "include_nat": {
+            "default": true,
+            "description": "Also audit `/ip firewall nat`.",
+            "type": "boolean"
+          },
+          "include_mangle": {
+            "default": false,
+            "description": "Also audit `/ip firewall mangle`.",
+            "type": "boolean"
+          }
+        },
+        "required": ["include_nat", "include_mangle"],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "list_certificates",
       "title": "List Certificates",
       "risk": "read",
@@ -17078,6 +17107,134 @@
       }
     },
     {
+      "name": "start_packet_capture",
+      "title": "Start Packet Capture",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Starts a live packet capture: opens a TZSP receiver on this host and configures the device's `/tool sniffer` to stream mirrored packets to it. receiver_host is the IP THIS host has on the segment the device can reach (where TZSP is sent). Optional interface/protocol/port filters narrow what is mirrored. View packets live in the dashboard's Packet Capture panel or via packet_capture_status.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "receiver_host": {
+            "type": "string",
+            "description": "IP this host is reachable at from the device (the TZSP stream destination)."
+          },
+          "port": {
+            "default": 37008,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "interface": {
+            "description": "Capture interface, or omit for all (`filter-interface`).",
+            "type": "string"
+          },
+          "protocol": {
+            "description": "Limit to an IP protocol, e.g. \"tcp\", \"icmp\".",
+            "type": "string"
+          },
+          "port_filter": {
+            "description": "Limit to a TCP/UDP port number.",
+            "type": "string"
+          }
+        },
+        "required": ["receiver_host", "port"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "mirror_traffic_to_capture",
+      "title": "Mirror Traffic to Capture",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds a surgical per-flow mirror: a firewall mangle `action=sniff-tzsp` rule that copies only matching packets to the capture receiver (the original traffic is untouched). Use after start_packet_capture to focus on one host/port/protocol. Rules are tagged for cleanup by stop_packet_capture.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "receiver_host": {
+            "type": "string",
+            "description": "TZSP stream destination (this host's IP)."
+          },
+          "port": {
+            "default": 37008,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "chain": {
+            "default": "forward",
+            "type": "string",
+            "enum": ["forward", "input", "output", "prerouting", "postrouting"]
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "dst_address": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "dst_port": {
+            "type": "string"
+          }
+        },
+        "required": ["receiver_host", "port", "chain"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "packet_capture_status",
+      "title": "Packet Capture Status",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reports the live capture: whether the receiver is running, packet/byte totals, the protocol breakdown, top talkers, and the most recent decoded packets. Works without the dashboard.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "limit": {
+            "default": 40,
+            "description": "Recent packets to include.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "required": ["limit"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "stop_packet_capture",
+      "title": "Stop Packet Capture",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Stops the device sniffer + streaming, removes any capture mirror rules, and closes the host receiver. Returns the final capture summary.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "profile_cpu",
       "title": "Profile CPU",
       "risk": "read",
@@ -19525,7 +19682,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Uploads a file from the device (e.g. a .backup or .rsc export) to the configured S3 bucket. The device streams it directly to S3 via a short-lived presigned URL.\n\nNotes:\n    filename: the file on the device, e.g. 'daily.backup'.\n    key: optional S3 object key; defaults to '<prefix>/<device>/<filename>' so each router's backups are organised separately.",
+      "description": "Uploads a file from the device (e.g. a .backup or .rsc export) to the configured S3 bucket. The device streams it directly to S3 via a short-lived presigned URL.\n\nNotes:\n    filename: the file on the device, e.g. 'daily.backup'.\n    key: optional S3 object key; defaults to '<prefix>/<device>/<device-datetime>-<filename>' so each upload is organised per router and stamped with the DEVICE's local date-time (Jalali calendar in Tehran, Gregorian elsewhere) — so repeat uploads version instead of overwriting.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -19535,7 +19692,7 @@
             "description": "File on the device, e.g. 'daily.backup'"
           },
           "key": {
-            "description": "S3 object key (defaults to prefix + filename)",
+            "description": "S3 object key (defaults to prefix + device-local datetime + filename)",
             "type": "string"
           },
           "expires_in": {
@@ -19794,6 +19951,67 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plan_changes",
+      "title": "Plan Changes (Dry-Run)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Previews a set of intended RouterOS commands WITHOUT touching the device — a 'terraform plan'. Returns ADD/MODIFY/REMOVE counts, a risk score, lock-out warnings (e.g. an input-chain drop or removing your management IP), and the steps reordered into a safe sequence (additive changes before destructive ones). Feed the same commands to apply_plan to execute them under Safe Mode. Provide commands as an array and/or a newline script.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "commands": {
+            "description": "Intended RouterOS CLI commands.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "script": {
+            "description": "Newline-delimited commands (alternative to `commands`).",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "apply_plan",
+      "title": "Apply Plan (Safe Mode)",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Executes intended RouterOS commands inside Safe Mode and reports the EXACT `/export` diff. With confirm=false (default) it applies, shows the diff, then rolls everything back — a true dry-run. With confirm=true it commits, but ONLY after verifying the device is still reachable, so a change that would lock you out auto-reverts instead. Steps run in the safe order from plan_changes. Safe Mode requires SSH (not available on MAC-Telnet devices).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "script": {
+            "type": "string"
+          },
+          "confirm": {
+            "default": false,
+            "description": "false = apply, show diff, roll back (dry-run). true = commit if still reachable.",
+            "type": "boolean"
+          }
+        },
+        "required": ["confirm"],
         "additionalProperties": false
       }
     },

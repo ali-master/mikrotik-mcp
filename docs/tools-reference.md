@@ -2,7 +2,7 @@
 
 > **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v2.4.0. Do not edit by hand.
 
-**657 tools** across **89 modules**. A `*` marks a required parameter.
+**664 tools** across **92 modules**. A `*` marks a required parameter.
 
 Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔ dangerous (high blast radius / not repeatable).
 
@@ -55,6 +55,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [Firewall — Filter](#firewall-filter)                       | Security             |     9 | Filter rules and a guided basic setup (`/ip firewall filter`).                                                                                                                                                             |
 | [Firewall — NAT](#firewall-nat)                             | Security             |     8 | NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).                                                                                                                                                         |
 | [Address Lists](#address-list)                              | Security             |     6 | Firewall address-lists (`/ip firewall address-list`).                                                                                                                                                                      |
+| [Firewall — Audit](#firewall-audit)                         | Security             |     1 | Plain-language firewall audit: shadowed/unreachable rules, broad accepts, missing default-drop, duplicates and dead rules, with a risk score (`firewall_audit`).                                                           |
 | [Certificates](#certificate)                                | Security             |     6 | X.509 certificate management (`/certificate`).                                                                                                                                                                             |
 | [IP Services](#ip-service)                                  | Security             |     5 | Management service ports — ssh/www/api/telnet (`/ip service`).                                                                                                                                                             |
 | [802.1X — Server](#dot1x-server)                            | Security             |     5 | 802.1X authenticator: port-based access control via RADIUS (`/interface dot1x server`).                                                                                                                                    |
@@ -82,6 +83,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [IP Scan](#tool-ip-scan)                                    | Tools                |     1 | Discover live hosts on a range or interface (`/tool ip-scan`).                                                                                                                                                             |
 | [MAC Server](#tool-mac-server)                              | Tools                |     7 | MAC-Telnet/MAC-Winbox/MAC-ping servers and sessions (`/tool mac-server`).                                                                                                                                                  |
 | [Packet Sniffer](#tool-sniffer)                             | Tools                |     9 | Packet capture: settings, start/stop/save, captured hosts/protocols/packets (`/tool sniffer`).                                                                                                                             |
+| [Packet Capture Studio](#packet-capture)                    | Tools                |     4 | Live TZSP capture: stream mirrored packets to this host, decode them in the dashboard, add per-flow mirrors, and export pcap (`/tool sniffer` streaming + `sniff-tzsp`).                                                   |
 | [Profile](#tool-profile)                                    | Tools                |     1 | CPU usage profiler by subsystem (`/tool profile`).                                                                                                                                                                         |
 | [RoMON](#tool-romon)                                        | Tools                |     5 | Router Management Overlay Network settings and ports (`/tool romon`).                                                                                                                                                      |
 | [SMS](#tool-sms)                                            | Tools                |     4 | Send/receive SMS over an LTE modem (`/tool sms`).                                                                                                                                                                          |
@@ -98,6 +100,7 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | [S3 Backup](#s3-backup)                                     | System & Ops         |     6 | Optional: ship device backups/exports to S3-compatible storage, organised per device (`/tool fetch` + Bun S3).                                                                                                             |
 | [Disk](#disk)                                               | System & Ops         |     3 | Storage devices: list/get disks and format-drive (`/disk`).                                                                                                                                                                |
 | [Safe Mode](#safe-mode)                                     | System & Ops         |     4 | Transactional config window with auto-revert (Ctrl+X session).                                                                                                                                                             |
+| [Change Plan](#change-plan)                                 | System & Ops         |     2 | Terraform-style dry-run: preview intended commands (risk, lock-out, safe order) and apply them under Safe Mode with the exact `/export` diff (`plan_changes`, `apply_plan`).                                               |
 | [Apps — Dashboards](#app-views)                             | MCP Apps             |     3 | Tools that render interactive UI views inline (MCP Apps): the device dashboard, the interfaces overview and the firewall-rules table. Every read tool (list*\*/get*\*) additionally renders in the generic records viewer. |
 
 ## Interfaces
@@ -732,6 +735,14 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `enable_address_list_entry`  | 🟡 write·idem  | `entry_id`\*                                            | Enables an address-list entry by its internal id.                                 |
 | `disable_address_list_entry` | 🟡 write·idem  | `entry_id`\*                                            | Disables an address-list entry by its internal id.                                |
 
+## Firewall — Audit
+
+<a id="firewall-audit"></a>Plain-language firewall audit: shadowed/unreachable rules, broad accepts, missing default-drop, duplicates and dead rules, with a risk score (`firewall_audit`).
+
+| Tool             | Risk    | Parameters                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------- | ------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firewall_audit` | 🟢 read | `include_nat`_, `include_mangle`_ | Audits the firewall and explains it in plain language. Analyses the filter ruleset (and optionally NAT/mangle) for unreachable/shadowed rules, overly-broad accepts, a missing default-drop, duplicate rules, and dead rules with no packet hits. Returns a risk score and prioritised, plain-language findings with suggested fixes — and renders an interactive findings table (one-click disable) in MCP App hosts. Use when the user wants to review, harden or understand a router's firewall. |
+
 ## Certificates
 
 <a id="certificate"></a>X.509 certificate management (`/certificate`).
@@ -1159,6 +1170,17 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `list_sniffer_protocols`   | 🟢 read       | _none_                                                                                                                                                              | Lists the protocol distribution seen by the sniffer (`/tool sniffer protocol`).                                            |
 | `list_sniffer_connections` | 🟢 read       | _none_                                                                                                                                                              | Lists connections observed by the sniffer (`/tool sniffer connection`).                                                    |
 
+## Packet Capture Studio
+
+<a id="packet-capture"></a>Live TZSP capture: stream mirrored packets to this host, decode them in the dashboard, add per-flow mirrors, and export pcap (`/tool sniffer` streaming + `sniff-tzsp`).
+
+| Tool                        | Risk           | Parameters                                                                                 | Description                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------- | -------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start_packet_capture`      | 🟡 write       | `receiver_host`_, `port`_, `interface`, `protocol`, `port_filter`                          | Starts a live packet capture: opens a TZSP receiver on this host and configures the device's `/tool sniffer` to stream mirrored packets to it. receiver_host is the IP THIS host has on the segment the device can reach (where TZSP is sent). Optional interface/protocol/port filters narrow what is mirrored. View packets live in the dashboard's Packet Capture panel or via packet_capture_status. |
+| `mirror_traffic_to_capture` | 🟡 write       | `receiver_host`_, `port`_, `chain`\*, `src_address`, `dst_address`, `protocol`, `dst_port` | Adds a surgical per-flow mirror: a firewall mangle `action=sniff-tzsp` rule that copies only matching packets to the capture receiver (the original traffic is untouched). Use after start_packet_capture to focus on one host/port/protocol. Rules are tagged for cleanup by stop_packet_capture.                                                                                                       |
+| `packet_capture_status`     | 🟢 read        | `limit`\*                                                                                  | Reports the live capture: whether the receiver is running, packet/byte totals, the protocol breakdown, top talkers, and the most recent decoded packets. Works without the dashboard.                                                                                                                                                                                                                    |
+| `stop_packet_capture`       | 🔴 destructive | _none_                                                                                     | Stops the device sniffer + streaming, removes any capture mirror rules, and closes the host receiver. Returns the final capture summary.                                                                                                                                                                                                                                                                 |
+
 ## Profile
 
 <a id="tool-profile"></a>CPU usage profiler by subsystem (`/tool profile`).
@@ -1369,6 +1391,15 @@ Risk legend: 🟢 read · 🟡 write · 🔴 destructive (removes config) · ⛔
 | `enable_safe_mode`   | 🟡 write | _none_     | Activates MikroTik Safe Mode on the targeted device; changes are held in memory and auto-reverted on disconnect until committed. |
 | `commit_safe_mode`   | 🟡 write | _none_     | Commits all pending Safe Mode changes on the targeted device to persistent storage and exits Safe Mode.                          |
 | `rollback_safe_mode` | 🟡 write | _none_     | Discards all pending Safe Mode changes on the targeted device by closing the SSH session, triggering automatic rollback.         |
+
+## Change Plan
+
+<a id="change-plan"></a>Terraform-style dry-run: preview intended commands (risk, lock-out, safe order) and apply them under Safe Mode with the exact `/export` diff (`plan_changes`, `apply_plan`).
+
+| Tool           | Risk         | Parameters                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------- | ------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plan_changes` | 🟢 read      | `commands`, `script`              | Previews a set of intended RouterOS commands WITHOUT touching the device — a 'terraform plan'. Returns ADD/MODIFY/REMOVE counts, a risk score, lock-out warnings (e.g. an input-chain drop or removing your management IP), and the steps reordered into a safe sequence (additive changes before destructive ones). Feed the same commands to apply_plan to execute them under Safe Mode. Provide commands as an array and/or a newline script.              |
+| `apply_plan`   | ⛔ dangerous | `commands`, `script`, `confirm`\* | Executes intended RouterOS commands inside Safe Mode and reports the EXACT `/export` diff. With confirm=false (default) it applies, shows the diff, then rolls everything back — a true dry-run. With confirm=true it commits, but ONLY after verifying the device is still reachable, so a change that would lock you out auto-reverts instead. Steps run in the safe order from plan_changes. Safe Mode requires SSH (not available on MAC-Telnet devices). |
 
 ## Apps — Dashboards
 

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "firewall_audit",
+  "type": "object",
+  "properties": {
+    "include_nat": {
+      "default": true,
+      "description": "Also audit `/ip firewall nat`.",
+      "type": "boolean"
+    },
+    "include_mangle": {
+      "default": false,
+      "description": "Also audit `/ip firewall mangle`.",
+      "type": "boolean"
+    }
+  },
+  "required": ["include_nat", "include_mangle"],
+  "additionalProperties": false
+}

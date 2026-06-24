@@ -9,6 +9,7 @@
  *   • `GET /api/event/:id`    one event with full (redacted) bodies
  *   • `GET /api/stats`        computed analytics over a time window
  *   • `GET /api/topology`     live Layer-2 map (devices + discovered neighbours)
+ *   • `*   /api/capture/*`    live packet capture: status, packets, pcap, start/stop
  *   • `GET /api/meta`         facets (tools/devices) + counts for filters
  *   • `GET /api/stream`       WebSocket: live push of every new event
  *   • `GET /health`           liveness probe
@@ -46,6 +47,7 @@ import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
 import { computeStats } from "./stats";
 import { buildTopology } from "./topology";
+import { capture, DEFAULT_TZSP_PORT } from "./capture";
 
 const SERVER_TAG = "mikrotik-mcp";
 
@@ -342,6 +344,42 @@ async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise
   return null;
 }
 
+// ── Packet Capture Studio API ────────────────────────────────────────────────
+/**
+ * Routes for the live capture view: status/stats, the recent-packet ring, a
+ * pcap download, and start/stop of the host-side TZSP receiver (the device-side
+ * mirror is configured by the start_packet_capture tool).
+ */
+async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+  if (p === "/api/capture/status" && req.method === "GET") {
+    return json(capture.stats());
+  }
+  if (p === "/api/capture/packets" && req.method === "GET") {
+    const limit = Number(url.searchParams.get("limit") ?? 200) || 200;
+    return json({ packets: capture.recent(limit), stats: capture.stats() });
+  }
+  if (p === "/api/capture/pcap" && req.method === "GET") {
+    return new Response(capture.pcap(), {
+      headers: {
+        "content-type": "application/vnd.tcpdump.pcap",
+        "content-disposition": `attachment; filename="capture.pcap"`,
+      },
+    });
+  }
+  if (p === "/api/capture/start" && req.method === "POST") {
+    const body = (await readJson(req)) as { port?: number };
+    return json(
+      await capture.start(typeof body?.port === "number" ? body.port : DEFAULT_TZSP_PORT),
+    );
+  }
+  if (p === "/api/capture/stop" && req.method === "POST") {
+    capture.stop();
+    return json({ ok: true, ...capture.stats() });
+  }
+  return null;
+}
+
 export interface DashboardHandle {
   server: Server<SocketData>;
   store: EventStore;
@@ -429,6 +467,9 @@ export async function runDashboard(
       // them before the recorder guard below.
       const configResp = await configRoutes(req, url, configAdmin);
       if (configResp) return configResp;
+
+      const captureResp = await captureRoutes(req, url);
+      if (captureResp) return captureResp;
 
       const db = getEventStore();
       if (!db) return json({ error: "recorder not active" }, 503);

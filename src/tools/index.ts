@@ -12,6 +12,7 @@ import { backupTools } from "./backup";
 import { s3BackupTools } from "./s3-backup";
 import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
+import { changePlanTools } from "./change-plan";
 import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
@@ -46,6 +47,7 @@ import { logTools } from "./logs";
 import { systemLoggingTools } from "./logging";
 import { neighborTools } from "./neighbor";
 import { networkToolTools } from "./network-tools";
+import { packetCaptureTools } from "./packet-capture";
 import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { floodPingTools } from "./tool-flood-ping";
 import { graphingTools } from "./tool-graphing";
@@ -654,6 +656,15 @@ export const moduleCatalog: ModuleInfo[] = [
     tools: snifferTools,
   },
   {
+    label: "Packet Capture Studio",
+    slug: "packet-capture",
+    group: "Tools",
+    description:
+      "Live TZSP capture: stream mirrored packets to this host, decode them in the dashboard, add " +
+      "per-flow mirrors, and export pcap (`/tool sniffer` streaming + `sniff-tzsp`).",
+    tools: packetCaptureTools,
+  },
+  {
     label: "Profile",
     slug: "tool-profile",
     group: "Tools",
@@ -768,6 +779,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "Transactional config window with auto-revert (Ctrl+X session).",
     tools: safeModeTools,
+  },
+  {
+    label: "Change Plan",
+    slug: "change-plan",
+    group: "System & Ops",
+    description:
+      "Terraform-style dry-run: preview intended commands (risk, lock-out, safe order) and apply " +
+      "them under Safe Mode with the exact `/export` diff (`plan_changes`, `apply_plan`).",
+    tools: changePlanTools,
   },
   // ── Interactive views (MCP Apps) ─────────────────────────────────────────
   {

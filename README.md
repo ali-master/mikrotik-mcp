@@ -33,16 +33,16 @@ in memory and auto-reverts if your session drops, so you can't lock yourself out
       "env": {
         "MIKROTIK_HOST": "192.168.88.1",
         "MIKROTIK_USERNAME": "admin",
-        "MIKROTIK_PASSWORD": "your-password"
-      }
-    }
-  }
+        "MIKROTIK_PASSWORD": "your-password",
+      },
+    },
+  },
 }
 ```
 
-> *"Show me the firewall input chain, then block SSH from the WAN under safe mode."*
-> *"Build an IKEv2 site-to-site tunnel to 203.0.113.5 for 192.168.20.0/24."*
-> *"Why can't VLAN 50 reach the internet?"*
+> _"Show me the firewall input chain, then block SSH from the WAN under safe mode."_
+> _"Build an IKEv2 site-to-site tunnel to 203.0.113.5 for 192.168.20.0/24."_
+> _"Why can't VLAN 50 reach the internet?"_
 
 ## Why it's different
 
@@ -118,29 +118,29 @@ bun run build            # bundle to dist/
 **640 tools across 51 modules.** Full, always-current reference (parameters +
 risk per tool) is generated from source: **[docs/tools-reference.md](docs/tools-reference.md)**.
 
-| Group | Tools | Modules |
-|-------|------:|---------|
-| **Interfaces** | 41 | interfaces, VLAN, bridge, wireless, PoE |
-| **Addressing & Routing** | 46 | IP addresses, IP pools, routing, DHCP, DNS |
-| **Dynamic Routing** | 99 | router-id, settings, tables, rules, next-hops, filters, BFD, BGP, OSPF, RIP, PIM-SM, IGMP proxy, GMP, RPKI |
-| **Security** | 34 | firewall filter, NAT, address-lists, certificates, IP services |
-| **VPN & Tunneling** | 96 | WireGuard, IPsec, PPP, L2TP, PPTP, SSTP, OpenVPN, GRE/IPIP/EoIP/VXLAN |
-| **QoS** | 19 | queue types, queue trees, simple queues |
-| **System & Ops** | 102 | system, network tools, scheduler/scripts, users, logs, backup, Safe Mode |
+| Group                    | Tools | Modules                                                                                                    |
+| ------------------------ | ----: | ---------------------------------------------------------------------------------------------------------- |
+| **Interfaces**           |    41 | interfaces, VLAN, bridge, wireless, PoE                                                                    |
+| **Addressing & Routing** |    46 | IP addresses, IP pools, routing, DHCP, DNS                                                                 |
+| **Dynamic Routing**      |    99 | router-id, settings, tables, rules, next-hops, filters, BFD, BGP, OSPF, RIP, PIM-SM, IGMP proxy, GMP, RPKI |
+| **Security**             |    34 | firewall filter, NAT, address-lists, certificates, IP services                                             |
+| **VPN & Tunneling**      |    96 | WireGuard, IPsec, PPP, L2TP, PPTP, SSTP, OpenVPN, GRE/IPIP/EoIP/VXLAN                                      |
+| **QoS**                  |    19 | queue types, queue trees, simple queues                                                                    |
+| **System & Ops**         |   102 | system, network tools, scheduler/scripts, users, logs, backup, Safe Mode                                   |
 
 ## VPN & tunneling — expert coverage
 
 Every MikroTik VPN technology, modeled the way RouterOS actually layers them (the
 PPP-based VPNs share one `/ppp` backend for users and addressing):
 
-| Need | Use | Build it with |
-|------|-----|---------------|
-| MikroTik ↔ MikroTik, modern clients | **WireGuard** | `create_wireguard_interface`, `add_wireguard_peer`, `generate_wireguard_client_config` |
-| Interop site-to-site / native IKEv2 | **IPsec** | `create_ipsec_{profile,peer,identity,proposal,policy}`, `get_ipsec_active_peers` |
-| Built-in OS VPN clients | **L2TP/IPsec** | `set_l2tp_server`, `create_ppp_secret`, `create_ppp_profile` |
-| Through restrictive firewalls | **SSTP** (TLS) | `set_sstp_server`, `create_sstp_client` |
-| Cross-platform OpenVPN | **OpenVPN** | `set_ovpn_server`, `create_ovpn_client` |
-| Route / L2-bridge between sites | **GRE/IPIP/EoIP/VXLAN** | `create_gre_tunnel`, `create_eoip_tunnel`, `create_vxlan_tunnel` |
+| Need                                | Use                     | Build it with                                                                          |
+| ----------------------------------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| MikroTik ↔ MikroTik, modern clients | **WireGuard**           | `create_wireguard_interface`, `add_wireguard_peer`, `generate_wireguard_client_config` |
+| Interop site-to-site / native IKEv2 | **IPsec**               | `create_ipsec_{profile,peer,identity,proposal,policy}`, `get_ipsec_active_peers`       |
+| Built-in OS VPN clients             | **L2TP/IPsec**          | `set_l2tp_server`, `create_ppp_secret`, `create_ppp_profile`                           |
+| Through restrictive firewalls       | **SSTP** (TLS)          | `set_sstp_server`, `create_sstp_client`                                                |
+| Cross-platform OpenVPN              | **OpenVPN**             | `set_ovpn_server`, `create_ovpn_client`                                                |
+| Route / L2-bridge between sites     | **GRE/IPIP/EoIP/VXLAN** | `create_gre_tunnel`, `create_eoip_tunnel`, `create_vxlan_tunnel`                       |
 
 Not sure which? Invoke the **`choose-vpn-solution`** prompt and the server
 recommends one and outlines the build. Details: **[docs/vpn-guide.md](docs/vpn-guide.md)**.
@@ -157,8 +157,8 @@ both ends**. Point the server at a JSON file (or `MIKROTIK_DEVICES`):
   "defaultDevice": "site-a",
   "devices": {
     "site-a": { "host": "203.0.113.10", "username": "admin", "keyFilename": "/keys/site-a" },
-    "site-b": { "host": "198.51.100.20", "username": "admin", "password": "••••" }
-  }
+    "site-b": { "host": "198.51.100.20", "username": "admin", "password": "••••" },
+  },
 }
 ```
 
@@ -193,11 +193,11 @@ See **[docs/prompts.md](docs/prompts.md)**.
 
 ## Transports
 
-| Transport | When | Run |
-|-----------|------|-----|
-| **stdio** (default) | Claude Desktop, local MCP clients | `mikrotik-mcp serve` |
-| **streamable-http** | Remote / shared, behind a proxy | `mikrotik-mcp serve --transport streamable-http --mcp-port 8000` |
-| **sse** | Legacy HTTP clients | `mikrotik-mcp serve --transport sse` |
+| Transport           | When                              | Run                                                              |
+| ------------------- | --------------------------------- | ---------------------------------------------------------------- |
+| **stdio** (default) | Claude Desktop, local MCP clients | `mikrotik-mcp serve`                                             |
+| **streamable-http** | Remote / shared, behind a proxy   | `mikrotik-mcp serve --transport streamable-http --mcp-port 8000` |
+| **sse**             | Legacy HTTP clients               | `mikrotik-mcp serve --transport sse`                             |
 
 HTTP transports expose `POST /mcp` and a `GET /health` check, with DNS-rebinding
 protection that reconciles with your bind host automatically. See
@@ -220,20 +220,20 @@ See **[docs/safe-mode.md](docs/safe-mode.md)**.
 Connection and transport settings come from `MIKROTIK_*` env vars or matching CLI
 flags (highest precedence last: defaults → env → flags).
 
-| Variable | Flag | Default | Purpose |
-|----------|------|---------|---------|
-| `MIKROTIK_HOST` | `--host` | `127.0.0.1` | RouterOS host |
-| `MIKROTIK_USERNAME` | `--username` | `admin` | SSH user |
-| `MIKROTIK_PORT` | `--port` | `22` | SSH port |
-| `MIKROTIK_PASSWORD` | `--password` | — | SSH password _(or use a key →)_ |
-| `MIKROTIK_KEY_FILENAME` | `--key-filename` | — | SSH private-key file path |
-| `MIKROTIK_PRIVATE_KEY` | `--private-key` | — | Inline private key (PEM) |
-| `MIKROTIK_KEY_PASSPHRASE` | `--key-passphrase` | — | Passphrase for an encrypted key |
-| `MIKROTIK_CONFIG_FILE` | `--config` | — | JSON file of named devices ([multi-device](docs/multi-device.md)) |
-| `MIKROTIK_DEVICES` | `--devices` | — | Inline JSON of named devices |
-| `MIKROTIK_MCP__TRANSPORT` | `--transport` | `stdio` | `stdio` / `streamable-http` / `sse` |
-| `MIKROTIK_MCP__PORT` | `--mcp-port` | `8000` | HTTP bind port |
-| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard` | `false` | Real-time observability dashboard ([docs](docs/observability.md)) |
+| Variable                      | Flag               | Default     | Purpose                                                           |
+| ----------------------------- | ------------------ | ----------- | ----------------------------------------------------------------- |
+| `MIKROTIK_HOST`               | `--host`           | `127.0.0.1` | RouterOS host                                                     |
+| `MIKROTIK_USERNAME`           | `--username`       | `admin`     | SSH user                                                          |
+| `MIKROTIK_PORT`               | `--port`           | `22`        | SSH port                                                          |
+| `MIKROTIK_PASSWORD`           | `--password`       | —           | SSH password _(or use a key →)_                                   |
+| `MIKROTIK_KEY_FILENAME`       | `--key-filename`   | —           | SSH private-key file path                                         |
+| `MIKROTIK_PRIVATE_KEY`        | `--private-key`    | —           | Inline private key (PEM)                                          |
+| `MIKROTIK_KEY_PASSPHRASE`     | `--key-passphrase` | —           | Passphrase for an encrypted key                                   |
+| `MIKROTIK_CONFIG_FILE`        | `--config`         | —           | JSON file of named devices ([multi-device](docs/multi-device.md)) |
+| `MIKROTIK_DEVICES`            | `--devices`        | —           | Inline JSON of named devices                                      |
+| `MIKROTIK_MCP__TRANSPORT`     | `--transport`      | `stdio`     | `stdio` / `streamable-http` / `sse`                               |
+| `MIKROTIK_MCP__PORT`          | `--mcp-port`       | `8000`      | HTTP bind port                                                    |
+| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard`      | `false`     | Real-time observability dashboard ([docs](docs/observability.md)) |
 
 Full table (incl. HTTP host, allow-lists, timeouts, `MIKROTIK_LOG_LEVEL`):
 **[docs/configuration.md](docs/configuration.md)**.
@@ -251,33 +251,59 @@ mikrotik-mcp serve --dashboard          # → http://127.0.0.1:9090
 
 See **[docs/observability.md](docs/observability.md)**.
 
+## Beyond the catalog
+
+On top of the per-scope tools, the server ships higher-level workflows:
+
+- **[Change Plan & Dry-Run](docs/change-plan.md)** — preview intended commands as
+  a terraform-style plan (risk-scored, lock-out-aware, safely reordered), then
+  `apply_plan` runs them under Safe Mode, shows the **exact `/export` diff**, and
+  commits only if the device is still reachable (auto-reverts a lock-out).
+- **[Config Snapshots](docs/config-snapshots.md)** — store `/export` snapshots on
+  the host and **time-travel diff** any two, or one against the live device.
+- **[Firewall Audit](docs/firewall-audit.md)** — `firewall_audit` finds shadowed,
+  overly-broad, missing-default-drop, duplicate and dead rules, risk-scored, with
+  one-click fixes in MCP App hosts.
+- **[Packet Capture Studio](docs/packet-capture.md)** — stream mirrored packets to
+  the host as TZSP, decode them live in the dashboard, and export `.pcap`.
+- **[Discovery](docs/discovery.md)** — `bun run discover` lists MikroTik devices on
+  the LAN by MAC (MNDP); the dashboard draws a live **topology map**.
+- **[Config Studio](docs/config-studio.md)** — edit the config JSON in the
+  dashboard with autocomplete, validation, and safe-apply auto-rollback.
+
 ## Schemas
 
 `schemas/` ships machine-readable JSON Schemas, **generated from the TypeScript
 source** (`bun run gen:schemas`) so they can never drift:
 
-- `schemas/tool-catalog.json` — all 640 tools with risk, description, and input schema
+- `schemas/tool-catalog.json` — every tool with risk, description, and input schema
 - `schemas/tools/<name>.json` — per-tool input schema
 - `schemas/config.schema.json` — the runtime configuration
 
 ## Documentation
 
-| Doc | |
-|-----|---|
-| [Getting started](docs/getting-started.md) | Install, verify, first run |
-| [Configuration](docs/configuration.md) | Every env var & flag |
-| [Multiple devices](docs/multi-device.md) | Manage several routers; per-call targeting |
-| [Connecting clients](docs/connecting-clients.md) | Claude Desktop, stdio, HTTP |
-| [Transports](docs/transports.md) | stdio / HTTP / SSE, DNS-rebinding |
-| **[Observability](docs/observability.md)** | Real-time dashboard: live feed + analytics, SQLite |
-| [Safe Mode](docs/safe-mode.md) | Transactional changes |
-| **[VPN guide](docs/vpn-guide.md)** | Every tunnel type + how to build it |
-| [Prompts](docs/prompts.md) | The 9 guided workflows |
-| [Architecture](docs/architecture.md) | How it's built |
-| [Security](docs/security.md) | Credentials, risk gating |
-| [Tool reference](docs/tools-reference.md) | All 640 tools |
-| [MCP Inspector](docs/inspector.md) | Test tools/prompts in the UI or CLI |
-| [Development](docs/development.md) · [Docker](docs/docker.md) | Build, test, deploy |
+| Doc                                                           |                                                             |
+| ------------------------------------------------------------- | ----------------------------------------------------------- |
+| [Getting started](docs/getting-started.md)                    | Install, verify, first run                                  |
+| [Configuration](docs/configuration.md)                        | Every env var & flag                                        |
+| [Multiple devices](docs/multi-device.md)                      | Manage several routers; per-call targeting                  |
+| [Connecting clients](docs/connecting-clients.md)              | Claude Desktop, stdio, HTTP                                 |
+| [Transports](docs/transports.md)                              | stdio / HTTP / SSE, DNS-rebinding                           |
+| **[Observability](docs/observability.md)**                    | Real-time dashboard: live feed + analytics, SQLite          |
+| [Safe Mode](docs/safe-mode.md)                                | Transactional changes                                       |
+| **[Change Plan & Dry-Run](docs/change-plan.md)**              | Preview commands, apply with the exact diff + auto-rollback |
+| **[Config Snapshots](docs/config-snapshots.md)**              | `/export` snapshots + time-travel diff                      |
+| **[Firewall Audit](docs/firewall-audit.md)**                  | Shadowed/broad/dead rules, risk-scored                      |
+| **[Packet Capture Studio](docs/packet-capture.md)**           | Live TZSP capture + pcap export                             |
+| **[Discovery](docs/discovery.md)**                            | `bun run discover`, MNDP neighbours, topology map           |
+| **[Config Studio](docs/config-studio.md)**                    | Edit config in the dashboard with autocomplete              |
+| **[VPN guide](docs/vpn-guide.md)**                            | Every tunnel type + how to build it                         |
+| [Prompts](docs/prompts.md)                                    | The 9 guided workflows                                      |
+| [Architecture](docs/architecture.md)                          | How it's built                                              |
+| [Security](docs/security.md)                                  | Credentials, risk gating                                    |
+| [Tool reference](docs/tools-reference.md)                     | The full generated catalog                                  |
+| [MCP Inspector](docs/inspector.md)                            | Test tools/prompts in the UI or CLI                         |
+| [Development](docs/development.md) · [Docker](docs/docker.md) | Build, test, deploy                                         |
 
 ## Development
 

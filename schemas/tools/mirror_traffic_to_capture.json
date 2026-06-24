@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mirror_traffic_to_capture",
+  "type": "object",
+  "properties": {
+    "receiver_host": {
+      "type": "string",
+      "description": "TZSP stream destination (this host's IP)."
+    },
+    "port": {
+      "default": 37008,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "chain": {
+      "default": "forward",
+      "type": "string",
+      "enum": ["forward", "input", "output", "prerouting", "postrouting"]
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    }
+  },
+  "required": ["receiver_host", "port", "chain"],
+  "additionalProperties": false
+}

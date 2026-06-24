@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "start_packet_capture",
+  "type": "object",
+  "properties": {
+    "receiver_host": {
+      "type": "string",
+      "description": "IP this host is reachable at from the device (the TZSP stream destination)."
+    },
+    "port": {
+      "default": 37008,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "interface": {
+      "description": "Capture interface, or omit for all (`filter-interface`).",
+      "type": "string"
+    },
+    "protocol": {
+      "description": "Limit to an IP protocol, e.g. \"tcp\", \"icmp\".",
+      "type": "string"
+    },
+    "port_filter": {
+      "description": "Limit to a TCP/UDP port number.",
+      "type": "string"
+    }
+  },
+  "required": ["receiver_host", "port"],
+  "additionalProperties": false
+}

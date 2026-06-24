@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "plan_changes",
+  "type": "object",
+  "properties": {
+    "commands": {
+      "description": "Intended RouterOS CLI commands.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "script": {
+      "description": "Newline-delimited commands (alternative to `commands`).",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

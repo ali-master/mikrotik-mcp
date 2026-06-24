@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "apply_plan",
+  "type": "object",
+  "properties": {
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "script": {
+      "type": "string"
+    },
+    "confirm": {
+      "default": false,
+      "description": "false = apply, show diff, roll back (dry-run). true = commit if still reachable.",
+      "type": "boolean"
+    }
+  },
+  "required": ["confirm"],
+  "additionalProperties": false
+}

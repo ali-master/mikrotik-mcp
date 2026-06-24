@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "packet_capture_status",
+  "type": "object",
+  "properties": {
+    "limit": {
+      "default": 40,
+      "description": "Recent packets to include.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500
+    }
+  },
+  "required": ["limit"],
+  "additionalProperties": false
+}
