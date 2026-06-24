@@ -850,7 +850,6 @@
       .radar .sweep {
         fill: url(#rg);
         opacity: 0.5;
-        transform-origin: 110px 60px;
         will-change: transform;
       }
       .radar .node {
@@ -2212,7 +2211,10 @@
             duration: 4,
             ease: "none",
             repeat: -1,
-            transformOrigin: "110px 60px",
+            // svgOrigin pivots in the SVG's user-space coordinates (the radar
+            // centre), unlike transformOrigin px which GSAP measures from the
+            // element's own bounding box — that flung the wedge off-centre.
+            svgOrigin: "110 60",
           });
         gsap.utils.toArray(".radar .node").forEach((n, i) => {
           gsap.to(n, {
