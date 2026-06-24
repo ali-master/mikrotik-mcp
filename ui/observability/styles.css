@@ -7,19 +7,21 @@
  * and DM Mono for data, glass panels, and GSAP-driven scroll reveals (`.reveal`).
  * The in-chat views keep base.css's host-adaptive defaults untouched.
  */
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
 @import "../shared/base.css";
 
 /*
- * Vercel / Geist design language: a true-neutral near-black base with crisp
- * hairline borders and flat surfaces, Geist Sans/Mono, and PURPOSEFUL pops of
- * colour. Each page carries its own accent (`--page-accent`, set on
- * `.main[data-view]`) which drives the title gradient, the active nav item, the
- * ambient backdrop glow, focus rings and key controls — colourful, yet clean.
+ * Vercel/Geist-inspired design language — a true-neutral near-black base with
+ * crisp hairline borders and flat surfaces, and PURPOSEFUL pops of colour. Each
+ * page carries its own accent (`--page-accent`, set on `.main[data-view]`)
+ * driving the title gradient, active nav item, ambient glow, focus rings and key
+ * controls. Type is JetBrains Mono throughout — one monospace voice for every
+ * text in the dashboard, headings and data alike.
  */
 :root {
-  --mt-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mt-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --mt-sans: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --mt-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --mt-display: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   /* Geist neutral scale (dark) */
   --mt-bg: #0a0a0a; /* background */
   --mt-surface: #111111; /* card / panel */
@@ -29,9 +31,9 @@
   --mt-text: #ededed; /* foreground */
   --mt-text-dim: #a1a1a1; /* secondary */
   --mt-text-faint: #6e6e6e; /* tertiary */
-  --mt-good: #2dd4a7; /* Geist green/teal — success */
-  --mt-warn: #f5a623; /* Geist amber — warning */
-  --mt-bad: #ff5c5c; /* Geist red — error */
+  --mt-good: #d4d4d8; /* zinc — neutral "ok" (monochrome theme) */
+  --mt-warn: #a1a1a1; /* zinc — neutral "warning" */
+  --mt-bad: #ff5c5c; /* red — the one functional colour kept for errors */
   --mt-radius: 12px;
   --mt-radius-sm: 8px;
   /* Vibrant Geist accent palette — used for charts, per-domain coding, badges. */
@@ -156,9 +158,10 @@ body::after {
   min-width: 0;
 }
 .nav__brandtext b {
+  font-family: var(--mt-display);
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 .nav__brandtext small {
   font-family: var(--mt-mono);
@@ -266,9 +269,11 @@ body::after {
 }
 .topline__txt h1 {
   margin: 0;
-  font-size: clamp(20px, 2.4vw, 27px);
-  font-weight: 600;
+  font-family: var(--mt-display);
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 700;
   letter-spacing: -0.03em;
+  line-height: 1.15;
   background: linear-gradient(
     100deg,
     var(--mt-text) 30%,
@@ -338,12 +343,11 @@ body::after {
   padding: 16px 18px;
   border-radius: var(--mt-radius);
   border: 1px solid color-mix(in srgb, var(--page-accent) 28%, var(--mt-border));
-  background:
-    linear-gradient(
-      120deg,
-      color-mix(in srgb, var(--page-accent) 9%, var(--mt-surface)),
-      var(--mt-surface) 60%
-    );
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--page-accent) 9%, var(--mt-surface)),
+    var(--mt-surface) 60%
+  );
 }
 .pagehelp__icon {
   display: grid;
@@ -2152,4 +2156,497 @@ pre.body.json .j-null {
   border-radius: 6px;
   border: 1px solid var(--mt-border);
   color: var(--mt-text-dim);
+}
+
+/* ── Copy button: inline "Copied!" tooltip + icon-only variant ────────────── */
+.copybtn {
+  position: relative;
+}
+.copybtn.is-copied {
+  color: var(--page-accent);
+  border-color: color-mix(in srgb, var(--page-accent) 55%, var(--mt-border));
+}
+.copybtn__tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--page-accent);
+  color: #0a0a0a;
+  font-family: var(--mt-sans);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.16s,
+    transform 0.16s var(--ease);
+  z-index: 50;
+}
+.copybtn__tip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--page-accent);
+}
+.copybtn.is-copied .copybtn__tip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Icon-only button (e.g. copy glyph next to a title). */
+.iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid var(--mt-border);
+  background: var(--mt-surface);
+  color: var(--mt-text-dim);
+  cursor: pointer;
+  transition:
+    color 0.16s,
+    border-color 0.16s,
+    background 0.16s;
+}
+.iconbtn:hover {
+  color: var(--page-accent);
+  border-color: color-mix(in srgb, var(--page-accent) 50%, var(--mt-border));
+  background: color-mix(in srgb, var(--page-accent) 10%, var(--mt-surface));
+}
+.copybtn--icon.is-copied {
+  color: var(--page-accent);
+  border-color: color-mix(in srgb, var(--page-accent) 55%, var(--mt-border));
+}
+.sheet__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+/* ── shadcn-style charts (Recharts) ───────────────────────────────────────── */
+.chart {
+  width: 100%;
+  font-family: var(--mt-mono);
+}
+.chart .recharts-cartesian-grid line {
+  stroke: color-mix(in srgb, var(--mt-border) 80%, transparent);
+}
+.chart .recharts-text,
+.chart text {
+  fill: var(--mt-text-faint);
+}
+.chart .recharts-surface:focus,
+.chart svg:focus {
+  outline: none;
+}
+/* Themed tooltip card (ChartTooltipContent). */
+.chart-tip {
+  background: color-mix(in srgb, var(--mt-surface) 96%, transparent);
+  border: 1px solid var(--mt-border-strong);
+  border-radius: var(--mt-radius-sm);
+  padding: 8px 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  font-family: var(--mt-mono);
+  font-size: 11.5px;
+  min-width: 120px;
+}
+.chart-tip__label {
+  color: var(--mt-text-dim);
+  margin-bottom: 5px;
+  font-size: 10.5px;
+}
+.chart-tip__row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.chart-tip__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: none;
+}
+.chart-tip__name {
+  color: var(--mt-text-dim);
+  text-transform: capitalize;
+}
+.chart-tip__val {
+  margin-left: auto;
+  color: var(--mt-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+/* Donut layout + legend. */
+.chart--donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+.chart-donut__svg {
+  width: 100%;
+  max-width: 200px;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: center;
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  color: var(--mt-text-dim);
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+.chart-legend b {
+  color: var(--mt-text);
+  font-weight: 500;
+}
+/* Sparkline-style metric area (with a current-value badge). */
+.chart--spark {
+  position: relative;
+}
+.chart-spark__last {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 1;
+}
+/* Radial gauge (shadcn radial chart). */
+.gauge__radial {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+}
+.gauge__pct {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--mt-mono);
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* ── Geist UI kit (geist.tsx) ─────────────────────────────────────────────── */
+.geist-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: var(--mt-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  border-radius: var(--mt-radius-sm);
+  border: 1px solid var(--mt-border-strong);
+  background: var(--mt-surface);
+  color: var(--mt-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.16s var(--ease),
+    border-color 0.16s,
+    color 0.16s,
+    transform 0.1s var(--ease),
+    box-shadow 0.16s;
+}
+.geist-btn--sm {
+  padding: 6px 11px;
+  font-size: 12px;
+}
+.geist-btn--md {
+  padding: 9px 15px;
+}
+.geist-btn:hover {
+  border-color: var(--mt-text);
+  transform: translateY(-1px);
+}
+.geist-btn:active {
+  transform: translateY(0);
+}
+.geist-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.geist-btn__icon {
+  display: inline-flex;
+}
+/* Accent / semantic fills (Geist's filled buttons). */
+.geist-btn--accent {
+  background: var(--page-accent);
+  border-color: var(--page-accent);
+  color: #0a0a0a;
+  font-weight: 600;
+}
+.geist-btn--accent:hover {
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--page-accent) 40%, transparent);
+  border-color: var(--page-accent);
+}
+.geist-btn--success {
+  border-color: color-mix(in srgb, var(--mt-good) 55%, var(--mt-border));
+  color: var(--mt-good);
+}
+.geist-btn--warning {
+  border-color: color-mix(in srgb, var(--mt-warn) 55%, var(--mt-border));
+  color: var(--mt-warn);
+}
+.geist-btn--error {
+  border-color: color-mix(in srgb, var(--mt-bad) 55%, var(--mt-border));
+  color: var(--mt-bad);
+}
+.geist-btn--error:hover {
+  background: color-mix(in srgb, var(--mt-bad) 14%, var(--mt-surface));
+  border-color: var(--mt-bad);
+}
+.geist-btn--secondary {
+  color: var(--mt-text-dim);
+  border-color: var(--mt-border);
+}
+.geist-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.geist-btn--ghost:hover {
+  background: color-mix(in srgb, var(--mt-text) 7%, transparent);
+  border-color: var(--mt-border);
+}
+
+/* Note (callout). */
+.geist-note {
+  padding: 11px 14px;
+  border-radius: var(--mt-radius-sm);
+  border: 1px solid var(--mt-border);
+  background: var(--mt-surface);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mt-text-dim);
+}
+.geist-note__label {
+  color: var(--mt-text);
+  text-transform: capitalize;
+}
+.geist-note--secondary {
+  border-color: color-mix(in srgb, var(--page-accent) 30%, var(--mt-border));
+  background: color-mix(in srgb, var(--page-accent) 7%, var(--mt-surface));
+}
+.geist-note--success {
+  border-color: color-mix(in srgb, var(--mt-good) 40%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-good) 8%, var(--mt-surface));
+}
+.geist-note--success .geist-note__label {
+  color: var(--mt-good);
+}
+.geist-note--warning {
+  border-color: color-mix(in srgb, var(--mt-warn) 40%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-warn) 8%, var(--mt-surface));
+}
+.geist-note--warning .geist-note__label {
+  color: var(--mt-warn);
+}
+.geist-note--error {
+  border-color: color-mix(in srgb, var(--mt-bad) 40%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-bad) 8%, var(--mt-surface));
+}
+.geist-note--error .geist-note__label {
+  color: var(--mt-bad);
+}
+
+/* Badge. */
+.geist-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mt-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+  background: var(--mt-surface-2);
+  color: var(--mt-text-dim);
+}
+.geist-badge--accent {
+  color: var(--page-accent);
+  border-color: color-mix(in srgb, var(--page-accent) 40%, var(--mt-border));
+  background: color-mix(in srgb, var(--page-accent) 12%, transparent);
+}
+.geist-badge--success {
+  color: var(--mt-good);
+  border-color: color-mix(in srgb, var(--mt-good) 40%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-good) 10%, transparent);
+}
+.geist-badge--warning {
+  color: var(--mt-warn);
+  border-color: color-mix(in srgb, var(--mt-warn) 40%, var(--mt-border));
+}
+.geist-badge--error {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 40%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-bad) 10%, transparent);
+}
+
+/* Dot. */
+.geist-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--mt-text-faint);
+  flex: none;
+}
+.geist-dot--success {
+  background: var(--mt-good);
+}
+.geist-dot--warning {
+  background: var(--mt-warn);
+}
+.geist-dot--error {
+  background: var(--mt-bad);
+}
+.geist-dot--accent {
+  background: var(--page-accent);
+}
+.geist-dot.is-pulse {
+  box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent);
+  animation: geist-pulse 1.8s infinite;
+}
+@keyframes geist-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Spinner (stepped bars). */
+.geist-spinner {
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+.geist-spinner--sm {
+  width: 13px;
+  height: 13px;
+}
+.geist-spinner span {
+  position: absolute;
+  top: 0;
+  left: 46%;
+  width: 8%;
+  height: 28%;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: center 178%;
+  animation: geist-spin 1.2s linear infinite;
+  opacity: 0.15;
+}
+@keyframes geist-spin {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+/* Input / Select. */
+.geist-input,
+.geist-select {
+  font-family: var(--mt-mono);
+  font-size: 12.5px;
+  color: var(--mt-text);
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  padding: 8px 11px;
+  transition:
+    border-color 0.16s,
+    box-shadow 0.16s;
+}
+.geist-input:focus,
+.geist-select:focus {
+  outline: none;
+  border-color: var(--page-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--page-accent) 22%, transparent);
+}
+
+/* Card. */
+.geist-card {
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius);
+  background: var(--mt-surface);
+  padding: 16px;
+}
+.geist-card.is-hoverable {
+  transition:
+    border-color 0.18s,
+    transform 0.18s var(--ease);
+}
+.geist-card.is-hoverable:hover {
+  border-color: color-mix(in srgb, var(--page-accent) 40%, var(--mt-border));
+  transform: translateY(-2px);
+}
+
+/* Tooltip. */
+.geist-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+.geist-tooltip__pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 6px 10px;
+  border-radius: var(--mt-radius-sm);
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color: var(--mt-text);
+  font-family: var(--mt-mono);
+  font-size: 11.5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.16s,
+    transform 0.16s var(--ease);
+  z-index: 60;
+}
+.geist-tooltip:hover .geist-tooltip__pop,
+.geist-tooltip:focus-visible .geist-tooltip__pop {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }

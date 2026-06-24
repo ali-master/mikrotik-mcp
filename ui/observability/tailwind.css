@@ -1,0 +1,71 @@
+/*
+ * Tailwind v4 entry for the shadcn / geistcn component layer.
+ *
+ * Preflight (Tailwind's global reset) is deliberately OMITTED so the dashboard's
+ * existing hand-rolled `styles.css` keeps full control of layout and the legacy
+ * components — only the THEME tokens and UTILITY classes are pulled in, which the
+ * shadcn/geistcn components under `components/ui/*` consume. Because utilities
+ * live in `@layer utilities` (lower precedence than the unlayered legacy CSS),
+ * the two systems coexist: old classes win for old markup, utilities drive the
+ * new components.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* shadcn design tokens, mapped onto the dashboard's Geist palette. `--accent`
+   follows the live per-page accent so geistcn components are colour-coded too. */
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #111111;
+  --card-foreground: #ededed;
+  --popover: #111111;
+  --popover-foreground: #ededed;
+  --primary: #ededed;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ededed;
+  --muted: #1a1a1a;
+  --muted-foreground: #a1a1a1;
+  --accent: var(--page-accent, #3291ff);
+  --accent-foreground: #0a0a0a;
+  --destructive: #ff5c5c;
+  --destructive-foreground: #ffffff;
+  --success: #2dd4a7;
+  --warning: #f5a623;
+  --border: #2a2a2a;
+  --input: #2a2a2a;
+  --ring: var(--page-accent, #3291ff);
+  --radius: 0.5rem;
+}
+
+/* Expose the tokens to Tailwind as `bg-*`, `text-*`, `border-*`, `rounded-*`. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --font-sans: var(--mt-sans);
+  --font-mono: var(--mt-mono);
+}

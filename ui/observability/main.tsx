@@ -19,6 +19,11 @@ import type {
 import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { api, deleteEvents, postJson, withToken } from "./api";
+import { ActivityChart, MetricArea, RadialGauge, RiskDonut } from "./charts";
+import { ConfigHistoryPanel, FieldGuidePanel } from "./config-panels";
+import { Badge, Button, Dot, Note, Spinner } from "./geist";
+import "./tailwind.css";
 import "./styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -218,50 +223,6 @@ const RISK_COLOR: Record<Risk, string> = {
   DANGEROUS: "#ef4444",
 };
 
-// ── token + API ──────────────────────────────────────────────────────────────
-const TOKEN = new URLSearchParams(location.search).get("token") ?? "";
-const withToken = (path: string): string =>
-  TOKEN ? `${path}${path.includes("?") ? "&" : "?"}token=${encodeURIComponent(TOKEN)}` : path;
-async function api<T>(path: string): Promise<T> {
-  const res = await fetch(withToken(path), {
-    headers: TOKEN ? { authorization: `Bearer ${TOKEN}` } : {},
-  });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return (await res.json()) as T;
-}
-
-/** Delete events: a list of ids, or everything (`{ all: true }`). */
-async function deleteEvents(body: {
-  ids?: string[];
-  all?: boolean;
-}): Promise<{ removed: number; total: number }> {
-  const res = await fetch(withToken("/api/events"), {
-    method: "DELETE",
-    headers: {
-      "content-type": "application/json",
-      ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return (await res.json()) as { removed: number; total: number };
-}
-
-/** POST JSON to an API path, forwarding the token; returns the parsed JSON body. */
-async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(withToken(path), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  // Config routes return structured errors with non-2xx; surface the JSON body.
-  const data = (await res.json().catch(() => ({}))) as T;
-  return data;
-}
-
 const WINDOWS: [string, number][] = [
   ["5m", 300_000],
   ["15m", 900_000],
@@ -318,126 +279,6 @@ function StatCard({
       <div className="v">
         {v}
         {sub != null && <small> {sub}</small>}
-      </div>
-    </div>
-  );
-}
-
-// ── charts (SVG) ─────────────────────────────────────────────────────────────
-function TimeSeries({ series }: { series: Bucket[] }): ReactNode {
-  const W = 720;
-  const H = 140;
-  const pad = 6;
-  const n = series.length || 1;
-  const bw = (W - pad * 2) / n;
-  const max = Math.max(1, ...series.map((b) => b.ok + b.error));
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
-      {series.map((b, i) => {
-        const x = pad + i * bw;
-        const okH = ((H - 18) * b.ok) / max;
-        const errH = ((H - 18) * b.error) / max;
-        const gap = bw > 3 ? 1 : 0;
-        return (
-          <g key={i}>
-            {okH > 0 && (
-              <rect
-                x={x + gap}
-                y={H - 14 - okH}
-                width={bw - gap * 2}
-                height={okH}
-                fill="#d4d4d8"
-                opacity={0.85}
-                rx={1}
-              />
-            )}
-            {errH > 0 && (
-              <rect
-                x={x + gap}
-                y={H - 14 - okH - errH}
-                width={bw - gap * 2}
-                height={errH}
-                fill="#f87171"
-                rx={1}
-              />
-            )}
-          </g>
-        );
-      })}
-      <line x1={pad} y1={H - 14} x2={W - pad} y2={H - 14} stroke="#27272a" />
-      {series.length > 0 && (
-        <>
-          <text x={pad} y={H - 2} fill="#71717a" fontSize={10}>
-            {clock(series[0].t)}
-          </text>
-          <text x={W - pad} y={H - 2} fill="#71717a" fontSize={10} textAnchor="end">
-            {clock(series[series.length - 1].t)}
-          </text>
-        </>
-      )}
-    </svg>
-  );
-}
-
-function Donut({
-  segments,
-}: {
-  segments: { label: string; value: number; color: string }[];
-}): ReactNode {
-  const total = segments.reduce((a, b) => a + b.value, 0);
-  const R = 46;
-  const C = 2 * Math.PI * R;
-  let offset = 0;
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        alignItems: "center",
-        justifyContent: "center",
-        flex: 1,
-      }}
-    >
-      <svg viewBox="0 0 120 120" width={120} height={120}>
-        <circle cx={60} cy={60} r={R} fill="none" stroke="#27272a" strokeWidth={16} />
-        {segments
-          .filter((s) => s.value > 0)
-          .map((s, i) => {
-            const frac = s.value / (total || 1);
-            const el = (
-              <circle
-                key={i}
-                cx={60}
-                cy={60}
-                r={R}
-                fill="none"
-                stroke={s.color}
-                strokeWidth={16}
-                strokeDasharray={`${C * frac} ${C}`}
-                strokeDashoffset={-offset}
-                transform="rotate(-90 60 60)"
-              />
-            );
-            offset += C * frac;
-            return el;
-          })}
-        <text x={60} y={58} textAnchor="middle" fill="#fafafa" fontSize={20} fontWeight={650}>
-          {total}
-        </text>
-        <text x={60} y={74} textAnchor="middle" fill="#a1a1aa" fontSize={9}>
-          calls
-        </text>
-      </svg>
-      <div className="legend" style={{ justifyContent: "center", marginTop: 0 }}>
-        {segments
-          .filter((s) => s.value > 0)
-          .map((s) => (
-            <span key={s.label}>
-              <i style={{ background: s.color }} />
-              {s.label} {s.value}
-            </span>
-          ))}
       </div>
     </div>
   );
@@ -829,7 +670,7 @@ function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
       <div className="dev-card__top">
         <span className="dot" style={{ background: col }} title="device colour" />
         <span className="dev-card__name">{d.name}</span>
-        {d.isDefault && <span className="badge">default</span>}
+        {d.isDefault && <Badge type="accent">default</Badge>}
         <span className="dot dot--status" style={{ background: info.color }} title={info.label} />
         <span style={{ flex: 1 }} />
         <span className="chip">{d.authMode}</span>
@@ -859,120 +700,6 @@ function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
 
 // ── device system-health charts ─────────────────────────────────────────────
 /** A compact line+area sparkline over a series that may contain gaps (`null`). */
-function Sparkline({
-  values,
-  color,
-  maxValue,
-  unit,
-}: {
-  values: (number | null)[];
-  color: string;
-  maxValue?: number;
-  unit?: string;
-}): ReactNode {
-  const W = 220;
-  const H = 46;
-  const pad = 4;
-  const nums = values.filter((v): v is number => v != null);
-  if (nums.length === 0) return <div className="spark spark--empty">no samples yet</div>;
-  const max = Math.max(maxValue ?? 0, ...nums, 1);
-  const n = values.length;
-  const xAt = (i: number): number => pad + (i * (W - pad * 2)) / Math.max(1, n - 1);
-  const yAt = (v: number): number => H - pad - (Math.min(v, max) / max) * (H - pad * 2);
-  // Build a line path, lifting the pen across null gaps (offline samples).
-  let line = "";
-  let penDown = false;
-  values.forEach((v, i) => {
-    if (v == null) {
-      penDown = false;
-      return;
-    }
-    line += `${penDown ? "L" : "M"}${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`;
-    penDown = true;
-  });
-  const hasGap = values.some((v) => v == null);
-  const firstIdx = values.findIndex((v) => v != null);
-  const lastIdx = n - 1 - [...values].reverse().findIndex((v) => v != null);
-  const area =
-    !hasGap && nums.length > 1
-      ? `M${xAt(firstIdx).toFixed(1)},${(H - pad).toFixed(1)} ${line.slice(1)} L${xAt(lastIdx).toFixed(1)},${(H - pad).toFixed(1)} Z`
-      : "";
-  const lastVal = values[lastIdx] as number;
-  const gid = `spark-${color.replace("#", "")}`;
-  return (
-    <svg
-      className="spark"
-      viewBox={`0 0 ${W} ${H}`}
-      width="100%"
-      height={H}
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={color} stopOpacity="0.35" />
-          <stop offset="1" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {area && <path d={area} fill={`url(#${gid})`} stroke="none" />}
-      <path d={line} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
-      <circle cx={xAt(lastIdx)} cy={yAt(lastVal)} r={2.6} fill={color} />
-      <text x={W - pad} y={11} textAnchor="end" fill={color} fontSize={10} fontWeight={650}>
-        {lastVal.toFixed(unit === "%" ? 0 : 1)}
-        {unit ?? ""}
-      </text>
-    </svg>
-  );
-}
-
-/** A radial 0–100% gauge for an instantaneous reading (CPU / memory). */
-function Gauge({
-  value,
-  label,
-  color,
-}: {
-  value: number | undefined;
-  label: string;
-  color: string;
-}): ReactNode {
-  // Distinguish "no reading" (null → faint "n/a", no arc) from a genuine 0%, so an
-  // un-probed device reads as missing data rather than a broken/empty gauge.
-  const has = value != null;
-  const v = has ? Math.max(0, Math.min(100, value)) : 0;
-  const R = 24;
-  const C = 2 * Math.PI * R;
-  return (
-    <div className="gauge">
-      <svg viewBox="0 0 64 64" width={64} height={64}>
-        <circle cx={32} cy={32} r={R} fill="none" stroke="#27272a" strokeWidth={7} />
-        {has && (
-          <circle
-            cx={32}
-            cy={32}
-            r={R}
-            fill="none"
-            stroke={color}
-            strokeWidth={7}
-            strokeLinecap="round"
-            strokeDasharray={`${(C * v) / 100} ${C}`}
-            transform="rotate(-90 32 32)"
-          />
-        )}
-        <text
-          x={32}
-          y={35}
-          textAnchor="middle"
-          fill={has ? "#fafafa" : "#71717a"}
-          fontSize={has ? 13 : 10}
-          fontWeight={700}
-        >
-          {has ? `${Math.round(v)}%` : "n/a"}
-        </text>
-      </svg>
-      <span className="gauge__label">{label}</span>
-    </div>
-  );
-}
-
 const memHuman = (b?: number): string => (b == null ? "?" : bytes(b));
 
 /** One device's realtime system-health card: gauges + sparkline charts. */
@@ -984,9 +711,9 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
     return (
       <div className="card health-card health-card--na">
         <div className="health-card__hd">
-          <span className="dot" style={{ background: statusInfo(s).color }} />
+          <Dot color={statusInfo(s).color} />
           <span className="dev-card__name">{d.name}</span>
-          {d.isDefault && <span className="badge">default</span>}
+          {d.isDefault && <Badge type="accent">default</Badge>}
         </div>
         <p className="muted" style={{ margin: 0 }}>
           {s.reachable === false
@@ -1001,11 +728,11 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
   return (
     <div className="card health-card">
       <div className="health-card__hd">
-        <span className="dot" style={{ background: statusInfo(s).color }} />
+        <Dot color={statusInfo(s).color} />
         <span className="dev-card__name">{d.name}</span>
-        {d.isDefault && <span className="badge">default</span>}
+        {d.isDefault && <Badge type="accent">default</Badge>}
         <span style={{ flex: 1 }} />
-        <span className="chip">{s.version ? `v${s.version}` : "—"}</span>
+        <Badge type={s.version ? "success" : "default"}>{s.version ? `v${s.version}` : "—"}</Badge>
       </div>
       <div className="health-card__sub muted">
         {s.boardName ?? "router"}
@@ -1014,27 +741,27 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         {s.uptime ? ` · up ${s.uptime}` : ""}
       </div>
       <div className="health-card__gauges">
-        <Gauge value={s.cpuLoad} label="CPU" color="#38bdf8" />
-        <Gauge value={s.memUsedPct} label="MEM" color="#34d399" />
-        <Gauge value={s.hddUsedPct} label="DISK" color="#fbbf24" />
+        <RadialGauge value={s.cpuLoad} label="CPU" color="#ededed" />
+        <RadialGauge value={s.memUsedPct} label="MEM" color="#bdbdc4" />
+        <RadialGauge value={s.hddUsedPct} label="DISK" color="#8a8a92" />
       </div>
       <div className="health-card__charts">
         <div className="health-chart">
           <span className="health-chart__k">CPU load</span>
-          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#38bdf8" maxValue={100} unit="%" />
+          <MetricArea values={hist.map((h) => h.cpuLoad)} color="#ededed" maxValue={100} unit="%" />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Memory used</span>
-          <Sparkline
+          <MetricArea
             values={hist.map((h) => h.memUsedPct)}
-            color="#34d399"
+            color="#bdbdc4"
             maxValue={100}
             unit="%"
           />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Probe latency</span>
-          <Sparkline values={hist.map((h) => h.latencyMs)} color="#22d3ee" unit="ms" />
+          <MetricArea values={hist.map((h) => h.latencyMs)} color="#bdbdc4" unit="ms" />
         </div>
       </div>
       <div className="health-card__foot muted">
@@ -1855,22 +1582,16 @@ function TopologyMap({
                     2,
                   )}
                 </pre>
-                <button
+                <CopyButton
                   className="topo-btn"
-                  onClick={() =>
-                    void navigator.clipboard?.writeText(
-                      JSON.stringify(
-                        {
-                          [pickedNode.suggestedConfig!.name]: stubBody(pickedNode.suggestedConfig!),
-                        },
-                        null,
-                        2,
-                      ),
-                    )
-                  }
-                >
-                  Copy config stub
-                </button>
+                  title="Copy config stub"
+                  label="Copy config stub"
+                  text={JSON.stringify(
+                    { [pickedNode.suggestedConfig.name]: stubBody(pickedNode.suggestedConfig) },
+                    null,
+                    2,
+                  )}
+                />
                 {onOnboard && (
                   <button
                     className="topo-btn cfg-save"
@@ -2215,9 +1936,9 @@ function SnapshotsView(): ReactNode {
           title={`Snapshot · ${sel.label ?? sel.id}`}
           className="reveal"
           extra={
-            <button className="btn" onClick={() => setSel(null)}>
+            <Button type="secondary" size="sm" onClick={() => setSel(null)}>
               ✕ Close
-            </button>
+            </Button>
           }
         >
           <pre className="body" style={{ maxHeight: 460 }}>
@@ -2829,9 +2550,9 @@ function BackupsView(): ReactNode {
           title={`Backup · ${body.name}`}
           className="reveal"
           extra={
-            <button className="btn" onClick={() => setBody(null)}>
+            <Button type="secondary" size="sm" onClick={() => setBody(null)}>
               ✕ Close
-            </button>
+            </Button>
           }
         >
           <pre className="body" style={{ maxHeight: 460 }}>
@@ -2922,9 +2643,9 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
             <CopyButton text={event.tool} className="iconbtn" icon title="Copy tool name" />
           </h3>
           <span style={{ flex: 1 }} />
-          <button className="btn" onClick={onClose}>
+          <Button type="secondary" size="sm" onClick={onClose}>
             ✕ Close
-          </button>
+          </Button>
         </div>
         <div className="kv__body">
           <div className="kv__k">title</div>
@@ -3025,17 +2746,21 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
  * `--page-accent-2` CSS variables set on `.main[data-view]`. Colour-coding the
  * pages makes the dashboard feel alive and helps orientation at a glance.
  */
+// Monochrome chrome: every page uses the same white→light-zinc accent, so the
+// sidebar, title, nav, glow and focus rings carry zero colour (only functional
+// status colours — error/ok — remain, elsewhere).
+const MONO_ACCENT: [string, string] = ["#ededed", "#a1a1a1"];
 const VIEW_ACCENT: Record<ViewId, [string, string]> = {
-  overview: ["#38bdf8", "#2dd4bf"], // sky → teal
-  devices: ["#2dd4bf", "#a3e635"], // teal → lime
-  topology: ["#818cf8", "#22d3ee"], // indigo → cyan
-  packets: ["#a3e635", "#fbbf24"], // lime → amber
-  snapshots: ["#22d3ee", "#818cf8"], // cyan → indigo
-  plan: ["#fbbf24", "#fb7185"], // amber → coral
-  s3: ["#f472b6", "#818cf8"], // pink → indigo
-  backups: ["#34d399", "#22d3ee"], // emerald → cyan
-  config: ["#fb7185", "#fbbf24"], // coral → amber
-  feed: ["#38bdf8", "#a3e635"], // sky → lime
+  overview: MONO_ACCENT,
+  devices: MONO_ACCENT,
+  topology: MONO_ACCENT,
+  packets: MONO_ACCENT,
+  snapshots: MONO_ACCENT,
+  plan: MONO_ACCENT,
+  s3: MONO_ACCENT,
+  backups: MONO_ACCENT,
+  config: MONO_ACCENT,
+  feed: MONO_ACCENT,
 };
 
 /**
@@ -3143,352 +2868,6 @@ function HelpPanel({ view }: { view: ViewId }): ReactNode {
         </ul>
       </div>
     </div>
-  );
-}
-
-// ── Config: version history (point-in-time) ─────────────────────────────────
-interface CfgVersion {
-  id: string;
-  ts: number;
-  kind: "auto" | "checkpoint";
-  label?: string;
-  bytes: number;
-  drift: { added: number; removed: number };
-}
-interface HistoryResp {
-  versions: CfgVersion[];
-  bytes: number;
-  retention: number;
-}
-
-function fmtBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
-function fmtWhen(ts: number): string {
-  const d = new Date(ts);
-  return d.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-/** Point-in-time config history: timeline, drift vs current, diff, restore, checkpoint. */
-function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): ReactNode {
-  const [data, setData] = useState<HistoryResp | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [diffFor, setDiffFor] = useState<string | null>(null);
-  const [diff, setDiff] = useState<{ summary: { added: number; removed: number }; unified: string } | null>(
-    null,
-  );
-  const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
-  const [labelDraft, setLabelDraft] = useState<string | null>(null); // null = checkpoint editor closed
-
-  const load = useCallback(() => {
-    void api<HistoryResp>("/api/config/history")
-      .then(setData)
-      .catch(() => setData({ versions: [], bytes: 0, retention: 50 }));
-  }, []);
-  useEffect(() => load(), [load]);
-
-  type Simple = { ok?: boolean; error?: string; persisted?: boolean };
-  const post = (path: string, b: unknown): Promise<Simple> =>
-    postJson<Simple>(path, b).catch((): Simple => ({ error: "request failed" }));
-
-  const saveCheckpoint = async (): Promise<void> => {
-    const label = (labelDraft ?? "").trim();
-    setLabelDraft(null);
-    const r = await post("/api/config/history/checkpoint", { label: label || undefined });
-    setMsg(r.ok ? `Checkpoint saved${label ? ` · “${label}”` : ""}` : `Failed: ${r.error}`);
-    if (r.ok) load();
-  };
-  const showDiff = async (id: string): Promise<void> => {
-    if (diffFor === id) {
-      setDiffFor(null);
-      setDiff(null);
-      return;
-    }
-    setDiffFor(id);
-    setDiff(null);
-    const d = await api<{ summary: { added: number; removed: number }; unified: string }>(
-      `/api/config/history/diff?id=${encodeURIComponent(id)}`,
-    ).catch(() => null);
-    setDiff(d);
-  };
-  const restore = async (id: string): Promise<void> => {
-    setConfirmRestore(null);
-    setBusy(true);
-    const r = await post("/api/config/history/restore", { id });
-    setBusy(false);
-    setMsg(
-      r.ok
-        ? `Restored ${id}${r.persisted === false ? " (applied live, not persisted)" : ""}`
-        : `Restore failed: ${r.error}`,
-    );
-    if (r.ok) {
-      load();
-      onRestored();
-    }
-  };
-  const del = async (id: string): Promise<void> => {
-    const r = await post("/api/config/history/delete", { id });
-    setMsg(r.ok ? "Version deleted" : `Failed: ${r.error}`);
-    if (r.ok) load();
-  };
-
-  if (!data) return <div className="muted">loading history…</div>;
-
-  return (
-    <>
-      {msg && <div className="cfg-msg">{msg}</div>}
-      <div className="toolbar" style={{ marginBottom: 14 }}>
-        {labelDraft === null ? (
-          <button className="btn is-active" onClick={() => setLabelDraft("")}>
-            ★ Save checkpoint
-          </button>
-        ) : (
-          <span className="cfgver-cp">
-            <input
-              className="backup-path-input"
-              autoFocus
-              placeholder="checkpoint name (e.g. pre-upgrade)"
-              value={labelDraft}
-              onChange={(e) => setLabelDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void saveCheckpoint();
-                if (e.key === "Escape") setLabelDraft(null);
-              }}
-            />
-            <button className="topo-btn cfg-save" onClick={() => void saveCheckpoint()}>
-              Save
-            </button>
-            <button className="topo-btn" onClick={() => setLabelDraft(null)}>
-              Cancel
-            </button>
-          </span>
-        )}
-        <span style={{ flex: 1 }} />
-        <span className="muted">
-          {data.versions.length} versions · {fmtBytes(data.bytes)} · auto-keep {data.retention}
-        </span>
-      </div>
-
-      {data.versions.length === 0 ? (
-        <div className="muted">No versions yet — they appear here after each config change.</div>
-      ) : (
-        <ol className="cfgver">
-          {data.versions.map((v, i) => {
-            const changed = v.drift.added + v.drift.removed;
-            return (
-              <li key={v.id} className={`cfgver__row${i === 0 ? " is-head" : ""}`}>
-                <span className="cfgver__dot" aria-hidden="true" />
-                <div className="cfgver__main">
-                  <div className="cfgver__line">
-                    <span className={`cfgver__kind cfgver__kind--${v.kind}`}>
-                      {v.kind === "checkpoint" ? "★ checkpoint" : "auto"}
-                    </span>
-                    {v.label && <span className="cfgver__label">{v.label}</span>}
-                    <span className="cfgver__time">{fmtWhen(v.ts)}</span>
-                    {i === 0 ? (
-                      <span className="cfgver__cur">latest</span>
-                    ) : changed === 0 ? (
-                      <span className="cfgver__same">identical to current</span>
-                    ) : (
-                      <span className="cfgver__drift">
-                        <span className="add">+{v.drift.added}</span>
-                        <span className="rem">−{v.drift.removed}</span>
-                        <span className="muted"> vs current</span>
-                      </span>
-                    )}
-                  </div>
-                  {diffFor === v.id && (
-                    <div className="cfgver__diff">
-                      {diff ? (
-                        diff.unified.trim() ? (
-                          <pre className="body diff">{diff.unified}</pre>
-                        ) : (
-                          <span className="muted">No differences from the current config.</span>
-                        )
-                      ) : (
-                        <span className="muted">computing diff…</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="cfgver__actions">
-                  <button className="topo-btn" onClick={() => void showDiff(v.id)}>
-                    {diffFor === v.id ? "Hide" : "Diff"}
-                  </button>
-                  {confirmRestore === v.id ? (
-                    <>
-                      <button
-                        className="topo-btn cfg-save"
-                        disabled={busy}
-                        onClick={() => void restore(v.id)}
-                      >
-                        Confirm restore
-                      </button>
-                      <button className="topo-btn" onClick={() => setConfirmRestore(null)}>
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      className="topo-btn"
-                      disabled={i === 0}
-                      title={i === 0 ? "This is the current config" : "Restore this version"}
-                      onClick={() => setConfirmRestore(v.id)}
-                    >
-                      Restore
-                    </button>
-                  )}
-                  {v.kind === "checkpoint" && (
-                    <button className="topo-btn cfgver__del" title="Delete" onClick={() => void del(v.id)}>
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-    </>
-  );
-}
-
-// ── Config: schema-driven Field Guide ────────────────────────────────────────
-interface GuideField {
-  path: string;
-  section: string;
-  type: string;
-  def?: string;
-  desc?: string;
-  enumv?: string[];
-  required: boolean;
-}
-/** Flatten a JSON Schema into a documented, grouped field list. */
-function flattenSchema(schema: Record<string, unknown> | null): GuideField[] {
-  if (!schema) return [];
-  const out: GuideField[] = [];
-  const typeOf = (n: Record<string, unknown> | undefined): string => {
-    if (!n) return "any";
-    if (Array.isArray(n.enum)) return "enum";
-    if (n.type === "array") return `array<${typeOf(n.items as Record<string, unknown>)}>`;
-    if (Array.isArray(n.type)) return (n.type as string[]).join(" | ");
-    return (n.type as string) ?? (n.properties ? "object" : "any");
-  };
-  const walk = (
-    node: Record<string, unknown>,
-    prefix: string,
-    section: string,
-    required: Set<string>,
-  ): void => {
-    const props = (node.properties as Record<string, Record<string, unknown>>) ?? {};
-    for (const [k, v] of Object.entries(props)) {
-      const path = prefix ? `${prefix}.${k}` : k;
-      const sec = section || k;
-      out.push({
-        path,
-        section: sec,
-        type: typeOf(v),
-        def: v.default !== undefined ? JSON.stringify(v.default) : undefined,
-        desc: v.description as string | undefined,
-        enumv: Array.isArray(v.enum) ? (v.enum as string[]) : undefined,
-        required: required.has(k),
-      });
-      if (v.properties) walk(v, path, sec, new Set((v.required as string[]) ?? []));
-      const ap = v.additionalProperties as Record<string, unknown> | undefined;
-      if (ap?.properties) walk(ap, `${path}.<name>`, sec, new Set((ap.required as string[]) ?? []));
-      const items = v.items as Record<string, unknown> | undefined;
-      if (items?.properties) walk(items, `${path}[]`, sec, new Set((items.required as string[]) ?? []));
-    }
-  };
-  walk(schema, "", "", new Set((schema.required as string[]) ?? []));
-  return out;
-}
-
-/** A searchable, grouped guide to every config option — straight from the schema. */
-function FieldGuidePanel(): ReactNode {
-  const [schema, setSchema] = useState<Record<string, unknown> | null>(null);
-  const [q, setQ] = useState("");
-  useEffect(() => {
-    void api<Record<string, unknown>>("/api/config-schema")
-      .then(setSchema)
-      .catch(() => {});
-  }, []);
-  const fields = useMemo(() => flattenSchema(schema), [schema]);
-  const needle = q.trim().toLowerCase();
-  const filtered = needle
-    ? fields.filter(
-        (f) => f.path.toLowerCase().includes(needle) || (f.desc ?? "").toLowerCase().includes(needle),
-      )
-    : fields;
-  const sections = useMemo(() => {
-    const m = new Map<string, GuideField[]>();
-    for (const f of filtered) {
-      const arr = m.get(f.section) ?? [];
-      arr.push(f);
-      m.set(f.section, arr);
-    }
-    return [...m.entries()];
-  }, [filtered]);
-
-  if (!schema) return <div className="muted">loading schema…</div>;
-
-  return (
-    <>
-      <div className="toolbar" style={{ marginBottom: 12 }}>
-        <input
-          className="backup-path-input"
-          style={{ width: "min(360px, 60vw)" }}
-          placeholder="Search fields & descriptions…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <span style={{ flex: 1 }} />
-        <span className="muted">{filtered.length} options</span>
-      </div>
-      {sections.length === 0 ? (
-        <div className="muted">No fields match “{q}”.</div>
-      ) : (
-        <div className="fguide">
-          {sections.map(([sec, fs]) => (
-            <div key={sec} className="fguide__sec">
-              <h4 className="fguide__sechd">{sec}</h4>
-              <div className="fguide__list">
-                {fs.map((f) => (
-                  <div key={f.path} className="fguide__item">
-                    <div className="fguide__top">
-                      <code className="fguide__path">{f.path}</code>
-                      <span className="fguide__type">{f.type}</span>
-                      {f.required && <span className="fguide__req">required</span>}
-                      {f.def !== undefined && (
-                        <span className="fguide__def">
-                          default <code>{f.def}</code>
-                        </span>
-                      )}
-                    </div>
-                    {f.desc && <p className="fguide__desc">{f.desc}</p>}
-                    {f.enumv && (
-                      <div className="fguide__enum">
-                        {f.enumv.map((e) => (
-                          <code key={e}>{e}</code>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </>
   );
 }
 
@@ -3979,25 +3358,15 @@ function App(): ReactNode {
             <div className="bento reveal">
               <Panel title="Calls over time" className="b-series">
                 {stats ? (
-                  <TimeSeries series={stats.series} />
+                  <ActivityChart series={stats.series} />
                 ) : (
                   <div className="muted">no data</div>
                 )}
-                <div className="legend">
-                  <span>
-                    <i style={{ background: "#d4d4d8" }} />
-                    ok
-                  </span>
-                  <span>
-                    <i style={{ background: "#f87171" }} />
-                    error
-                  </span>
-                </div>
               </Panel>
               {stats && (
                 <>
                   <Panel title="By risk" className="b-risk">
-                    <Donut
+                    <RiskDonut
                       segments={(Object.keys(stats.byRisk) as Risk[]).map((r) => ({
                         label: r,
                         value: stats.byRisk[r],
@@ -4011,15 +3380,16 @@ function App(): ReactNode {
                         label: t.tool,
                         value: t.count,
                         sub: `${t.count}× · ${ms(t.p95Ms)} p95${t.errors ? ` · ${t.errors} err` : ""}`,
-                        color: t.errors ? "#f87171" : undefined,
+                        color: t.errors ? "var(--mt-bad)" : undefined,
                       }))}
                     />
                   </Panel>
                   <Panel title="Status" className="b-status">
-                    <Donut
+                    <RiskDonut
+                      centerLabel="calls"
                       segments={[
-                        { label: "ok", value: feedStatus.ok, color: "#d4d4d8" },
-                        { label: "error", value: feedStatus.error, color: "#f87171" },
+                        { label: "ok", value: feedStatus.ok, color: "#a1a1a1" },
+                        { label: "error", value: feedStatus.error, color: "#ff5c5c" },
                       ]}
                     />
                   </Panel>
@@ -4149,9 +3519,9 @@ function App(): ReactNode {
             <div className="feed-empty">
               <div className="feed-empty__icon">🖧</div>
               <p className="feed-empty__title">No devices configured</p>
-              <p className="feed-empty__sub">
+              <Note type="secondary" label="Tip">
                 Add a device to your config to see connectivity and system health here.
-              </p>
+              </Note>
             </div>
           ))}
 
@@ -4274,35 +3644,33 @@ function App(): ReactNode {
                 )}
               </Panel>
 
-              {!editingConfig && (
-                <>
-                  <Panel
-                    title="Version history"
-                    className="reveal"
-                    extra={<span className="muted">point-in-time snapshots · diff &amp; restore</span>}
-                  >
-                    <ConfigHistoryPanel
-                      onRestored={() =>
-                        void api<Record<string, unknown>>("/api/config")
-                          .then(setConfig)
-                          .catch(() => {})
-                      }
-                    />
-                  </Panel>
+              <Panel
+                title="Version history"
+                className="reveal"
+                extra={<span className="muted">point-in-time snapshots · diff &amp; restore</span>}
+              >
+                <ConfigHistoryPanel
+                  onRestored={() =>
+                    void api<Record<string, unknown>>("/api/config")
+                      .then(setConfig)
+                      .catch(() => {})
+                  }
+                />
+              </Panel>
 
-                  <Panel
-                    title="Field guide"
-                    className="reveal"
-                    extra={<span className="muted">every config option, documented from the schema</span>}
-                  >
-                    <FieldGuidePanel />
-                  </Panel>
-                </>
-              )}
+              <Panel
+                title="Field guide"
+                className="reveal"
+                extra={
+                  <span className="muted">every config option, documented from the schema</span>
+                }
+              >
+                <FieldGuidePanel />
+              </Panel>
             </section>
           ) : (
             <div className="feed-empty">
-              <div className="feed-empty__icon">⚙️</div>
+              <Spinner />
               <p className="feed-empty__title">Loading configuration…</p>
             </div>
           ))}
