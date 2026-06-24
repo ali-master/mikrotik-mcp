@@ -91,7 +91,12 @@ export const firewallFilterTools: ToolModule = [
     title: "Create Firewall Filter Rule",
     annotations: WRITE,
     description:
-      "Creates a firewall filter rule in the specified chain on the MikroTik device. " +
+      "Creates an IPv4 firewall FILTER rule (`/ip firewall filter`) — the accept/drop/reject " +
+      "decision table for traffic TO the router (chain=input), THROUGH it (forward) or FROM it " +
+      "(output). Use this to allow or block traffic. For address translation use the NAT tools, " +
+      "for packet marking use mangle, for pre-connection-tracking drops use raw, and for IPv6 use " +
+      "create_ipv6_filter_rule. Rule order matters (first match wins) — use place_before or " +
+      "move_filter_rule to position it. Returns the created rule's detail including its `.id`. " +
       'connection_state: comma-separated e.g. "established,related,new,invalid". ' +
       'limit: RouterOS rate/burst string e.g. "10,5:packet" or "10/1s:packet". ' +
       'tcp_flags: RouterOS flag expression e.g. "syn,!ack". ' +
@@ -198,7 +203,12 @@ export const firewallFilterTools: ToolModule = [
     name: "list_filter_rules",
     title: "List Firewall Filter Rules",
     annotations: READ,
-    description: "Lists firewall filter rules on the MikroTik device.",
+    description:
+      "Lists IPv4 firewall FILTER rules (`/ip firewall filter`) in chain/match order — each with " +
+      "its `.id`, chain, action, matchers, comment and packet/byte counters. This is the " +
+      "accept/drop decision table, NOT NAT (address translation), mangle (marking) or raw " +
+      "(pre-conntrack); for IPv6 use list_ipv6_filter_rules. Optional filters narrow by chain, " +
+      "action, src/dst address, protocol or interface, or to only disabled/invalid/dynamic rules.",
     inputSchema: {
       chain_filter: z.string().optional(),
       action_filter: z.string().optional(),
@@ -245,8 +255,9 @@ export const firewallFilterTools: ToolModule = [
     title: "Get Firewall Filter Rule",
     annotations: READ,
     description:
-      "Gets detailed information about a specific firewall filter rule. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0".',
+      "Gets the full detail of one IPv4 firewall FILTER rule (`/ip firewall filter`) by id — " +
+      "every matcher, action, counter and flag. For IPv6 use get_ipv6_filter_rule. " +
+      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0".',
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
@@ -267,8 +278,10 @@ export const firewallFilterTools: ToolModule = [
     title: "Update Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing firewall filter rule on the MikroTik device. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0". ' +
+      "Updates an existing IPv4 firewall FILTER rule (`/ip firewall filter`) in place and returns " +
+      "its new detail. To reorder it use move_filter_rule; to toggle it on/off use " +
+      "enable_filter_rule / disable_filter_rule; for IPv6 use update_ipv6_filter_rule. " +
+      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0". ' +
       'connection_state: comma-separated e.g. "established,related". ' +
       'limit: RouterOS rate string e.g. "10,5:packet". ' +
       'tcp_flags: RouterOS flag expression e.g. "syn,!ack". ' +
@@ -305,8 +318,10 @@ export const firewallFilterTools: ToolModule = [
     title: "Remove Firewall Filter Rule",
     annotations: DESTRUCTIVE,
     description:
-      "Removes a firewall filter rule from the MikroTik device. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0".',
+      "Permanently deletes one IPv4 firewall FILTER rule (`/ip firewall filter`) by id (verifies " +
+      "it exists first). To keep a rule but stop it matching, use disable_filter_rule instead; " +
+      "for IPv6 use remove_ipv6_filter_rule. " +
+      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0".',
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing firewall filter rule: rule_id=${a.rule_id}`);
@@ -325,11 +340,13 @@ export const firewallFilterTools: ToolModule = [
 
   defineTool({
     name: "move_filter_rule",
-    title: "Move Filter Rule",
+    title: "Move Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Moves a firewall filter rule to a different position in the chain. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0". ' +
+      "Reorders one IPv4 firewall FILTER rule (`/ip firewall filter`) within its chain. Order is " +
+      "significant — the first matching rule decides the packet's fate, so position an accept " +
+      "before a broad drop. For IPv6 use move_ipv6_filter_rule. " +
+      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0". ' +
       "destination: 0-based target position index.",
     inputSchema: {
       rule_id: z.string(),
@@ -355,9 +372,12 @@ export const firewallFilterTools: ToolModule = [
 
   defineTool({
     name: "enable_filter_rule",
-    title: "Enable Filter Rule",
+    title: "Enable Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a firewall filter rule.",
+    description:
+      "Enables (un-disables) one IPv4 firewall FILTER rule (`/ip firewall filter`) by id so it " +
+      "takes effect again. Idempotent. For IPv6 use enable_ipv6_filter_rule. " +
+      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0".',
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateFilterRule({ rule_id: a.rule_id, disabled: false }, ctx);
@@ -366,9 +386,13 @@ export const firewallFilterTools: ToolModule = [
 
   defineTool({
     name: "disable_filter_rule",
-    title: "Disable Filter Rule",
+    title: "Disable Firewall Filter Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a firewall filter rule.",
+    description:
+      "Disables one IPv4 firewall FILTER rule (`/ip firewall filter`) by id WITHOUT deleting it, " +
+      "so it stops matching traffic but stays in the config. Idempotent and reversible with " +
+      "enable_filter_rule. For IPv6 use disable_ipv6_filter_rule. " +
+      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0".',
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateFilterRule({ rule_id: a.rule_id, disabled: true }, ctx);
@@ -380,7 +404,11 @@ export const firewallFilterTools: ToolModule = [
     title: "Create Basic Firewall Setup",
     annotations: DANGEROUS,
     description:
-      "Creates a basic firewall setup with common security rules on the MikroTik device.",
+      "Appends a starter set of IPv4 input-chain FILTER rules (`/ip firewall filter`): accept " +
+      "established/related, drop invalid, accept ICMP, and a management allow — a safe baseline " +
+      "for a fresh router. DANGEROUS: adds several live rules at once and is NOT idempotent " +
+      "(running twice duplicates them). Ensure a management-allow rule precedes any drop, or you " +
+      "can lock yourself out — prefer plan_changes/apply_plan (Safe Mode) to stage it safely.",
     async handler(_a, ctx) {
       ctx.info("Creating basic firewall setup");
 

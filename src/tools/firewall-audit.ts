@@ -27,16 +27,22 @@ async function fetchRules(path: string, ctx: ToolContext): Promise<Record<string
 export const firewallAuditTools: ToolModule = [
   defineTool({
     name: "firewall_audit",
-    title: "Firewall Audit",
+    title: "Audit IPv4 Firewall Rulesets",
     annotations: READ,
     ui: { resourceUri: uiViewUri("firewall-audit"), visibility: ["model", "app"] },
     description:
-      "Audits the firewall and explains it in plain language. Analyses the filter " +
-      "ruleset (and optionally NAT/mangle) for unreachable/shadowed rules, overly-broad " +
-      "accepts, a missing default-drop, duplicate rules, and dead rules with no packet " +
-      "hits. Returns a risk score and prioritised, plain-language findings with suggested " +
-      "fixes — and renders an interactive findings table (one-click disable) in MCP App hosts. " +
-      "Use when the user wants to review, harden or understand a router's firewall.",
+      "Audits IPv4 firewall rulesets (`/ip firewall filter print detail`; optionally " +
+      "`/ip firewall nat print detail` when include_nat=true (default on); " +
+      "`/ip firewall mangle print detail` when include_mangle=true (default off)) — " +
+      "use to review, harden, or understand a router's full firewall posture in one pass. " +
+      "Detects unreachable/shadowed rules, overly-broad accepts, a missing default-drop, " +
+      "duplicate rules, and dead rules with zero packet hits. " +
+      "For browsing individual rules without analysis use list_filter_rules, list_nat_rules; " +
+      "for IPv6 filter rules use list_ipv6_filter_rules; for IPv6 NAT use list_ipv6_nat_rules; " +
+      "for IPv6 mangle use list_ipv6_mangle_rules. " +
+      "Returns a risk score and a prioritised list of plain-language findings with suggested " +
+      "per-rule fixes; in MCP App hosts also renders an interactive findings table with " +
+      "one-click disable. Scoped to IPv4 paths only — no IPv6 audit twin exists.",
     inputSchema: {
       include_nat: z.boolean().default(true).describe("Also audit `/ip firewall nat`."),
       include_mangle: z.boolean().default(false).describe("Also audit `/ip firewall mangle`."),

@@ -13,9 +13,14 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const addressListTools: ToolModule = [
   defineTool({
     name: "add_address_list_entry",
-    title: "Add Address-List Entry",
+    title: "Add Firewall Address-List Entry",
     annotations: WRITE,
-    description: "Adds an address to a firewall address-list.",
+    description:
+      "Adds an address or subnet to a named IPv4 firewall address-list (`/ip firewall address-list`) — " +
+      "the mechanism for grouping IPs so firewall filter, NAT, and mangle rules can match them via " +
+      "`src-address-list` or `dst-address-list`. Use this for static entries; dynamic entries are " +
+      "auto-populated by firewall rules with `action=add-to-list`. Accepts a `timeout` (e.g. " +
+      "`'1d00:00:00'`) to auto-expire the entry. Returns the created entry's details including its `.id`.",
     inputSchema: {
       list: z.string().describe("Address-list name"),
       address: z.string().describe("Address or subnet to add, e.g. '10.0.0.1' or '10.0.0.0/24'"),
@@ -47,9 +52,14 @@ export const addressListTools: ToolModule = [
 
   defineTool({
     name: "list_address_lists",
-    title: "List Address-Lists",
+    title: "List Firewall Address-List Entries",
     annotations: READ,
-    description: "Lists firewall address-list entries with optional filters.",
+    description:
+      "Lists all IPv4 firewall address-list entries (`/ip firewall address-list print`) with optional " +
+      "filters — partial list name (`list_filter`), partial address match (`address_filter`), or " +
+      "dynamic-only entries (`dynamic_only`). Use this to browse all lists and retrieve the `.id` " +
+      "values needed by get_address_list_entry, remove_address_list_entry, enable_address_list_entry, " +
+      "and disable_address_list_entry. Returns a formatted table of all matching entries.",
     inputSchema: {
       list_filter: z.string().optional().describe("Partial list-name match"),
       address_filter: z.string().optional().describe("Partial address match"),
@@ -73,10 +83,12 @@ export const addressListTools: ToolModule = [
 
   defineTool({
     name: "get_address_list_entry",
-    title: "Get Address-List Entry",
+    title: "Get Firewall Address-List Entry Detail",
     annotations: READ,
     description:
-      "Gets detailed information about a specific address-list entry by its internal id.",
+      "Returns full detail for a single IPv4 firewall address-list entry (`/ip firewall address-list " +
+      "print detail`) by its `.id` (e.g. `'*1'`). Use this to inspect one entry precisely; to browse " +
+      "all entries or find `.id` values use list_address_lists instead.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },
@@ -94,9 +106,13 @@ export const addressListTools: ToolModule = [
 
   defineTool({
     name: "remove_address_list_entry",
-    title: "Remove Address-List Entry",
+    title: "Remove Firewall Address-List Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes an address-list entry by its internal id.",
+    description:
+      "Permanently removes an IPv4 firewall address-list entry (`/ip firewall address-list remove`) " +
+      "by its `.id` (e.g. `'*1'`). Confirms the entry exists first (count-only check) and returns an " +
+      "error if not found. To temporarily suspend an entry without deleting it use " +
+      "disable_address_list_entry instead. The `entry_id` is the `.id` from list_address_lists output.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },
@@ -119,9 +135,14 @@ export const addressListTools: ToolModule = [
 
   defineTool({
     name: "enable_address_list_entry",
-    title: "Enable Address-List Entry",
+    title: "Enable Firewall Address-List Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an address-list entry by its internal id.",
+    description:
+      "Re-activates a disabled IPv4 firewall address-list entry (`/ip firewall address-list enable`) " +
+      "by its `.id` (e.g. `'*1'`), making it visible again to firewall rules that reference the list. " +
+      "Use this to restore an entry suspended with disable_address_list_entry without re-adding it. " +
+      "To delete permanently use remove_address_list_entry. The `entry_id` is the `.id` from " +
+      "list_address_lists output.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },
@@ -138,9 +159,13 @@ export const addressListTools: ToolModule = [
 
   defineTool({
     name: "disable_address_list_entry",
-    title: "Disable Address-List Entry",
+    title: "Disable Firewall Address-List Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an address-list entry by its internal id.",
+    description:
+      "Suspends an IPv4 firewall address-list entry (`/ip firewall address-list disable`) by its `.id` " +
+      "(e.g. `'*1'`), making firewall rules that reference the list ignore this address without removing " +
+      "it. Use enable_address_list_entry to restore it, or remove_address_list_entry to delete it " +
+      "permanently. The `entry_id` is the `.id` from list_address_lists output.",
     inputSchema: {
       entry_id: z.string().describe("Internal entry id, e.g. '*1'"),
     },

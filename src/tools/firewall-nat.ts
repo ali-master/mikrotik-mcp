@@ -73,10 +73,12 @@ async function updateNatRule(
 export const firewallNatTools: ToolModule = [
   defineTool({
     name: "create_nat_rule",
-    title: "Create NAT Rule",
+    title: "Create IPv4 Firewall NAT Rule",
     annotations: WRITE,
     description:
-      "Creates a NAT rule (srcnat or dstnat) on the MikroTik device. " +
+      "Creates an IPv4 NAT rule (`/ip firewall nat add`) — the address-translation table for outbound masquerade or source NAT (chain=srcnat: actions masquerade, src-nat, netmap, same) and for port-forwarding or destination NAT (chain=dstnat: actions dst-nat, redirect, netmap, same). " +
+      "For accept/drop/reject packet filtering use create_filter_rule; for IPv6 NAT use create_ipv6_nat_rule. " +
+      "Returns the created rule's detail including its `.id`. " +
       'to_addresses: single IP or range e.g. "10.0.0.1" or "10.0.0.1-10.0.0.10". ' +
       'to_ports: single port or range e.g. "8080" or "8080-8090". ' +
       'place_before: rule number or ID (*N) to insert before e.g. "0" or "*3".',
@@ -191,9 +193,12 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "list_nat_rules",
-    title: "List NAT Rules",
+    title: "List IPv4 Firewall NAT Rules",
     annotations: READ,
-    description: "Lists NAT rules on the MikroTik device.",
+    description:
+      "Lists IPv4 NAT rules (`/ip firewall nat print`) — returns all srcnat and dstnat rules, optionally filtered by chain, action, address, protocol, or interface. " +
+      "Use the returned `.id` values with get_nat_rule, update_nat_rule, move_nat_rule, enable_nat_rule, disable_nat_rule, and remove_nat_rule. " +
+      "For IPv6 NAT rules use list_ipv6_nat_rules; for IPv4 filter rules use list_filter_rules.",
     inputSchema: {
       chain_filter: z.string().optional(),
       action_filter: z.string().optional(),
@@ -235,11 +240,13 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "get_nat_rule",
-    title: "Get NAT Rule",
+    title: "Get IPv4 Firewall NAT Rule Details",
     annotations: READ,
     description:
-      "Gets detailed information about a specific NAT rule. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0".',
+      "Fetches full detail for a single IPv4 NAT rule (`/ip firewall nat print detail where .id=<rule_id>`). " +
+      "Returns chain, action, address matchers, port matchers, to-addresses, to-ports, and rule flags for that rule. " +
+      'rule_id takes the `.id` from list_nat_rules e.g. "*1" or "0". ' +
+      "To list all rules use list_nat_rules; for IPv6 NAT use get_ipv6_nat_rule.",
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
@@ -257,11 +264,12 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "update_nat_rule",
-    title: "Update NAT Rule",
+    title: "Update IPv4 Firewall NAT Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing NAT rule on the MikroTik device. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0". ' +
+      "Modifies fields of an existing IPv4 NAT rule (`/ip firewall nat set`) without recreating it. " +
+      'rule_id takes the `.id` from list_nat_rules e.g. "*1" or "0"; returns the updated rule\'s full detail. ' +
+      "For IPv6 NAT use update_ipv6_nat_rule; to toggle enabled state only use enable_nat_rule or disable_nat_rule. " +
       'to_addresses: single IP or range e.g. "10.0.0.1" or "10.0.0.1-10.0.0.10". ' +
       'to_ports: single port or range e.g. "8080" or "8080-8090". ' +
       'Pass "" to clear an optional field.',
@@ -290,11 +298,13 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "remove_nat_rule",
-    title: "Remove NAT Rule",
+    title: "Remove IPv4 Firewall NAT Rule",
     annotations: DESTRUCTIVE,
     description:
-      "Removes a NAT rule from the MikroTik device. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0".',
+      "Permanently deletes an IPv4 NAT rule (`/ip firewall nat remove`). " +
+      "Verifies existence with a count-only check before deleting; returns an error if the rule is not found. " +
+      'rule_id takes the `.id` from list_nat_rules e.g. "*1" or "0". ' +
+      "To disable without deleting use disable_nat_rule; for IPv6 NAT use remove_ipv6_nat_rule.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing NAT rule: rule_id=${a.rule_id}`);
@@ -313,12 +323,13 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "move_nat_rule",
-    title: "Move NAT Rule",
+    title: "Move IPv4 Firewall NAT Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Moves a NAT rule to a different position in the chain. " +
-      'rule_id: use the ID from list output e.g. "*1" or "0". ' +
-      "destination: 0-based target position index.",
+      "Reorders an IPv4 NAT rule within the NAT chain (`/ip firewall nat move`). " +
+      "NAT rules are evaluated top to bottom and the first match wins, so position matters. " +
+      'rule_id takes the `.id` from list_nat_rules e.g. "*1" or "0"; destination is the 0-based target position index. ' +
+      "For filter rule reordering use move_filter_rule; for IPv6 NAT reordering use move_ipv6_nat_rule.",
     inputSchema: {
       rule_id: z.string(),
       destination: z.number().int().describe("0-based target position index"),
@@ -343,9 +354,12 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "enable_nat_rule",
-    title: "Enable NAT Rule",
+    title: "Enable IPv4 Firewall NAT Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a NAT rule.",
+    description:
+      "Re-enables a disabled IPv4 NAT rule (`/ip firewall nat set disabled=no`). " +
+      'rule_id takes the `.id` from list_nat_rules e.g. "*1" or "0"; returns the updated rule detail. ' +
+      "To disable use disable_nat_rule; to edit other fields use update_nat_rule; for IPv6 NAT use enable_ipv6_nat_rule.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateNatRule({ rule_id: a.rule_id, disabled: false }, ctx);
@@ -354,9 +368,12 @@ export const firewallNatTools: ToolModule = [
 
   defineTool({
     name: "disable_nat_rule",
-    title: "Disable NAT Rule",
+    title: "Disable IPv4 Firewall NAT Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a NAT rule.",
+    description:
+      "Disables an active IPv4 NAT rule without removing it (`/ip firewall nat set disabled=yes`). " +
+      'rule_id takes the `.id` from list_nat_rules e.g. "*1" or "0"; returns the updated rule detail after disabling. ' +
+      "To re-enable use enable_nat_rule; to permanently delete use remove_nat_rule; for IPv6 NAT use disable_ipv6_nat_rule.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateNatRule({ rule_id: a.rule_id, disabled: true }, ctx);
