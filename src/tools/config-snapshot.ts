@@ -35,7 +35,13 @@ function snapshots(): Promise<SnapshotStore> {
 /** Build the `/export` command used for both capture and live diff. */
 function exportCommand(opts: { section?: string; terse: boolean; showSensitive: boolean }): string {
   const base = opts.section ? `/${opts.section} export` : "/export";
-  return new Cmd(base).flag("terse", opts.terse).flag("show-sensitive", opts.showSensitive).build();
+  // RouterOS `/export` flags are BARE words ("terse", "show-sensitive") — NOT
+  // key=value. `/export terse=yes` is a parser error ("expected end of command"),
+  // so emit raw fragments rather than Cmd.flag() (which appends `=yes`).
+  return new Cmd(base)
+    .raw(opts.terse ? "terse" : undefined)
+    .raw(opts.showSensitive ? "show-sensitive" : undefined)
+    .build();
 }
 
 /** Run `/export` on the device and return its body, or throw on a device error. */
