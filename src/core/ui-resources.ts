@@ -59,6 +59,13 @@ export const UI_VIEWS: UiView[] = [
     description:
       "Ordered firewall filter rules: chain, action, matchers, packet/byte counters and enabled state.",
   },
+  {
+    id: "firewall-audit",
+    name: "MikroTik Firewall Audit",
+    description:
+      "Prioritised firewall findings (shadowed/broad/missing-drop/duplicate/dead) with a risk " +
+      "score and one-click fixes.",
+  },
 ];
 
 /** Placeholder served when a view's HTML hasn't been built yet. */

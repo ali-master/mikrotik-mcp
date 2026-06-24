@@ -34,6 +34,7 @@ export default defineConfig({
         records: resolve(here, "records/index.html"),
         interfaces: resolve(here, "interfaces/index.html"),
         firewall: resolve(here, "firewall/index.html"),
+        "firewall-audit": resolve(here, "firewall-audit/index.html"),
       },
     },
   },

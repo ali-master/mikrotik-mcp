@@ -19,6 +19,7 @@ import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
 import { dot1xServerTools } from "./dot1x-server";
 import { dot1xClientTools } from "./dot1x-client";
+import { firewallAuditTools } from "./firewall-audit";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
 import { interfaceTools } from "./interfaces";
@@ -439,6 +440,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "Firewall address-lists (`/ip firewall address-list`).",
     tools: addressListTools,
+  },
+  {
+    label: "Firewall — Audit",
+    slug: "firewall-audit",
+    group: "Security",
+    description:
+      "Plain-language firewall audit: shadowed/unreachable rules, broad accepts, missing " +
+      "default-drop, duplicates and dead rules, with a risk score (`firewall_audit`).",
+    tools: firewallAuditTools,
   },
   {
     label: "Certificates",

@@ -1,0 +1,128 @@
+/* MikroTik Firewall Audit — shared base plus findings-specific styles. */
+@import "../shared/base.css";
+
+.hd {
+  align-items: center;
+  gap: 14px;
+}
+.hd__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.counts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Risk gauge */
+.gauge {
+  width: 64px;
+  height: 64px;
+  flex: none;
+}
+.gauge__bg {
+  fill: none;
+  stroke: var(--mt-border);
+  stroke-width: 9;
+}
+.gauge__fg {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke: var(--mt-good);
+  transition: stroke-dasharray 0.4s ease;
+}
+.gauge.is-warn .gauge__fg {
+  stroke: var(--mt-warn);
+}
+.gauge.is-bad .gauge__fg {
+  stroke: var(--mt-bad);
+}
+.gauge__num {
+  fill: var(--mt-text);
+  font: 700 22px var(--mt-mono);
+}
+
+.is-good {
+  color: var(--mt-good);
+}
+.is-warn {
+  color: var(--mt-warn);
+}
+.is-bad {
+  color: var(--mt-bad);
+}
+
+.chip.is-low {
+  color: var(--mt-text-dim);
+  border-color: var(--mt-border);
+}
+
+/* Findings list */
+.f-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.f-card {
+  border: 1px solid var(--mt-border);
+  border-left-width: 3px;
+  border-radius: var(--mt-radius-sm);
+  background: var(--mt-surface);
+  padding: 11px 13px;
+}
+.f-card.is-bad {
+  border-left-color: var(--mt-bad);
+}
+.f-card.is-warn {
+  border-left-color: var(--mt-warn);
+}
+.f-card.is-low {
+  border-left-color: var(--mt-text-faint);
+}
+.f-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.f-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+.f-where {
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  color: var(--mt-text-faint);
+}
+.f-body {
+  margin-top: 6px;
+}
+.f-detail {
+  margin: 0 0 5px;
+  font-size: 13px;
+  color: var(--mt-text);
+  line-height: 1.45;
+}
+.f-fix {
+  margin: 0;
+  font-size: 12px;
+  color: var(--mt-text-dim);
+  line-height: 1.45;
+}
+.f-actions {
+  margin-top: 9px;
+}
+
+/* Danger button (layers on .btn) */
+.btn-danger {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+}
+.btn-danger:hover {
+  border-color: var(--mt-bad);
+  background: color-mix(in srgb, var(--mt-bad) 12%, transparent);
+}
