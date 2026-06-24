@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>@usex/mikrotik-mcp — Ali Torki</title>
+    <title>@usex/mikrotik-mcp — drive your MikroTik with words</title>
     <meta
       name="description"
-      content="@usex/mikrotik-mcp — a Bun-native Model Context Protocol (MCP) server that exposes MikroTik RouterOS over SSH as 640+ risk-annotated AI tools across 88 modules: firewall, NAT, routing, IPv6, DHCP/DNS, WireGuard, QoS, switching, 802.1X and more."
+      content="@usex/mikrotik-mcp v2.5.0 — a Bun-native Model Context Protocol (MCP) server that exposes MikroTik RouterOS as 664 risk-annotated AI tools across 92 modules, plus higher-level workflows: terraform-style change planning with Safe-Mode dry-run, live packet capture, a firewall auditor, config snapshots with time-travel diff, MNDP discovery and a real-time dashboard."
     />
     <meta
       name="keywords"
-      content="mikrotik, mikrotik mcp, routeros, mcp server, model context protocol, bun, ssh, firewall, wireguard, ipv6, dhcp, dns, qos, ai tools, claude, network automation, ali torki"
+      content="mikrotik, mikrotik mcp, routeros, mcp server, model context protocol, bun, ssh, mac-telnet, firewall audit, packet capture, tzsp, change plan, dry run, config snapshot, wireguard, ipv6, mndp, ai tools, claude, network automation, ali torki"
     />
     <meta name="author" content="Ali Torki" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#6366f1" />
+    <meta name="theme-color" content="#2dd4bf" />
     <meta name="color-scheme" content="dark" />
     <link rel="canonical" href="https://github.com/ali-master/mikrotik-mcp" />
     <link rel="icon" type="image/svg+xml" href="./logo-icon.svg" />
@@ -29,7 +29,7 @@
     />
     <meta
       property="og:description"
-      content="Bun-native MCP server: 640+ risk-annotated RouterOS tools over SSH, with transactional Safe Mode and live observability."
+      content="v2.5.0 — 664 risk-annotated RouterOS tools over SSH, plus a change-plan dry-run engine, live packet capture, firewall audit, config snapshots and live observability. Bun-native, with transactional Safe Mode."
     />
     <meta property="og:url" content="https://github.com/ali-master/mikrotik-mcp" />
     <meta
@@ -45,7 +45,7 @@
     <meta name="twitter:title" content="@usex/mikrotik-mcp — MikroTik RouterOS, driven by AI" />
     <meta
       name="twitter:description"
-      content="640+ risk-annotated RouterOS tools over SSH. Bun-native MCP server with Safe Mode and live observability."
+      content="664 risk-annotated RouterOS tools + terraform-style change planning, live packet capture, firewall audit and snapshots. Bun-native MCP server with Safe Mode."
     />
     <meta
       name="twitter:image"
@@ -61,8 +61,8 @@
         "name": "@usex/mikrotik-mcp",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Cross-platform (Bun >= 1.3)",
-        "description": "A Bun-native Model Context Protocol server that exposes MikroTik RouterOS over SSH as 640+ risk-annotated AI tools across 88 modules.",
-        "softwareVersion": "2.0.0",
+        "description": "A Bun-native Model Context Protocol server that exposes MikroTik RouterOS as 664 risk-annotated AI tools across 92 modules, with a change-plan dry-run engine, live packet capture, a firewall auditor, config snapshots and a real-time dashboard.",
+        "softwareVersion": "2.5.0",
         "license": "https://opensource.org/licenses/MIT",
         "url": "https://github.com/ali-master/mikrotik-mcp",
         "downloadUrl": "https://www.npmjs.com/package/@usex/mikrotik-mcp",
@@ -74,22 +74,28 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --violet: #8b5cf6;
-        --indigo: #6366f1;
-        --cyan: #06b6d4;
-        --bg: #07080f;
-        --bg-2: #0b1020;
-        --ink: #eef1ff;
-        --muted: #8a90b8;
-        --line: rgba(140, 150, 210, 0.14);
-        --glass: rgba(20, 24, 48, 0.5);
-        --grad: linear-gradient(110deg, var(--violet), var(--indigo) 45%, var(--cyan));
+        --teal: #2dd4bf;
+        --sky: #38bdf8;
+        --cyan: #22d3ee;
+        --lime: #bef264;
+        --coral: #fb7185;
+        --amber: #fbbf24;
+        --bg: #04080d;
+        --bg-2: #07131f;
+        --ink: #eaf6f3;
+        --muted: #8493a3;
+        --faint: #4f6072;
+        --line: rgba(120, 200, 205, 0.14);
+        --glass: rgba(9, 22, 28, 0.5);
+        --grad: linear-gradient(115deg, var(--sky), var(--teal) 45%, var(--lime));
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --disp: "Space Grotesk", system-ui, sans-serif;
+        --mono: "DM Mono", ui-monospace, monospace;
       }
 
       * {
@@ -103,7 +109,7 @@
       body {
         background: var(--bg);
         color: var(--ink);
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
         cursor: none;
@@ -114,7 +120,7 @@
         }
       }
       ::selection {
-        background: var(--violet);
+        background: var(--teal);
         color: #fff;
       }
       a {
@@ -122,7 +128,7 @@
         text-decoration: none;
       }
 
-      /* film grain + vignette over everything */
+      /* film grain + vignette */
       body::after {
         content: "";
         position: fixed;
@@ -130,12 +136,12 @@
         pointer-events: none;
         z-index: 90;
         background:
-          radial-gradient(120% 80% at 50% 0%, transparent 55%, rgba(0, 0, 0, 0.55)),
+          radial-gradient(125% 80% at 50% 0%, transparent 52%, rgba(0, 0, 0, 0.6)),
           url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/></svg>");
         mix-blend-mode: screen;
       }
 
-      /* ---------- custom cursor ---------- */
+      /* custom cursor */
       .cursor,
       .cursor-dot {
         position: fixed;
@@ -151,7 +157,6 @@
         width: 38px;
         height: 38px;
         border: 1px solid rgba(160, 170, 255, 0.6);
-        backdrop-filter: invert(0.04);
         transition:
           width 0.3s var(--ease),
           height 0.3s var(--ease),
@@ -170,7 +175,7 @@
         background: var(--cyan);
       }
 
-      /* ---------- preloader ---------- */
+      /* preloader */
       #loader {
         position: fixed;
         inset: 0;
@@ -190,7 +195,7 @@
         bottom: 13%;
         left: 50%;
         transform: translateX(-50%);
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         font-size: 11px;
         letter-spacing: 0.34em;
         text-transform: uppercase;
@@ -205,7 +210,7 @@
         background: var(--grad);
       }
 
-      /* ---------- ambient orbs ---------- */
+      /* ambient orbs */
       .orbs {
         position: fixed;
         inset: 0;
@@ -216,14 +221,14 @@
       .orb {
         position: absolute;
         border-radius: 50%;
-        filter: blur(70px);
+        filter: blur(72px);
         opacity: 0.5;
         will-change: transform;
       }
       .orb.a {
         width: 46vw;
         height: 46vw;
-        background: var(--violet);
+        background: var(--teal);
         top: -8vw;
         left: -6vw;
       }
@@ -233,28 +238,41 @@
         background: var(--cyan);
         bottom: -12vw;
         right: -8vw;
-        opacity: 0.4;
+        opacity: 0.36;
       }
       .orb.c {
         width: 30vw;
         height: 30vw;
-        background: var(--indigo);
-        top: 40%;
-        left: 55%;
-        opacity: 0.35;
+        background: var(--sky);
+        top: 42%;
+        left: 56%;
+        opacity: 0.33;
+      }
+      /* faint grid */
+      .grid-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-image:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(120% 90% at 50% 0%, #000 35%, transparent 75%);
+        opacity: 0.5;
       }
 
-      /* ---------- layout ---------- */
+      /* layout */
       .wrap {
         max-width: 1200px;
-        margin: 10px auto;
+        margin: 0 auto;
         padding: 20px 28px;
       }
       section {
         position: relative;
       }
       .eyebrow {
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         font-size: 12px;
         letter-spacing: 0.28em;
         text-transform: uppercase;
@@ -271,7 +289,7 @@
         display: inline-block;
       }
 
-      /* ---------- nav ---------- */
+      /* nav */
       nav {
         position: fixed;
         top: 0;
@@ -281,24 +299,22 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 20px 28px;
+        padding: 18px 28px;
         mix-blend-mode: difference;
       }
       nav .brand {
-        font-family: "DM Mono", Georgia, serif;
+        font-family: var(--disp);
         font-weight: 700;
-        letter-spacing: 0;
         font-size: 18px;
       }
       nav .brand b {
-        letter-spacing: 0;
-        color: var(--indigo);
+        color: var(--sky);
       }
       nav .links {
         display: flex;
         gap: 26px;
         font-size: 13px;
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
       }
       nav .links a {
         opacity: 0.8;
@@ -307,27 +323,43 @@
       nav .links a:hover {
         opacity: 1;
       }
-      @media (max-width: 720px) {
+      @media (max-width: 820px) {
         nav .links {
           display: none;
         }
       }
+      .ver {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--cyan);
+        border: 1px solid var(--line);
+        border-radius: 100px;
+        padding: 3px 10px;
+        letter-spacing: 0.1em;
+      }
 
-      /* ---------- hero ---------- */
+      /* hero */
       .hero {
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 120px 0 80px;
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        align-items: center;
+        gap: 40px;
+        padding: 120px 0 70px;
+      }
+      @media (max-width: 980px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 30px;
+        }
       }
       .hero h1 {
-        font-family: "DM Serif Display", Georgia, serif;
+        font-family: var(--disp);
         font-weight: 700;
-        font-size: clamp(2.6rem, 9vw, 8.4rem);
-        line-height: 0.95;
+        font-size: clamp(2.5rem, 7.4vw, 6.4rem);
+        line-height: 0.96;
         letter-spacing: -0.03em;
-        margin: 22px 0;
+        margin: 20px 0;
       }
       .hero h1 .line {
         display: block;
@@ -345,20 +377,20 @@
         color: transparent;
       }
       .hero .sub {
-        max-width: 540px;
+        max-width: 520px;
         color: var(--muted);
-        font-size: clamp(1rem, 2.2vw, 1.25rem);
+        font-size: clamp(1rem, 2vw, 1.2rem);
         line-height: 1.6;
-        margin-top: 8px;
+        margin-top: 6px;
       }
       .hero .sub b {
         color: var(--ink);
-        font-weight: 600;
+        font-weight: 500;
       }
       .cta-row {
         display: flex;
-        gap: 16px;
-        margin-top: 38px;
+        gap: 14px;
+        margin-top: 34px;
         flex-wrap: wrap;
       }
       .btn {
@@ -366,9 +398,9 @@
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        padding: 16px 28px;
+        padding: 15px 26px;
         border-radius: 100px;
-        font-weight: 600;
+        font-weight: 500;
         font-size: 15px;
         border: 1px solid var(--line);
         overflow: hidden;
@@ -376,8 +408,9 @@
       }
       .btn.primary {
         background: var(--grad);
-        color: #0a0c18;
+        color: #07091a;
         border: none;
+        font-weight: 600;
       }
       .btn .lbl {
         position: relative;
@@ -395,43 +428,130 @@
       .btn.ghost:hover::after {
         opacity: 0.16;
       }
+
+      /* hero terminal */
+      .term {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(14, 18, 38, 0.86), rgba(8, 11, 26, 0.86));
+        backdrop-filter: blur(16px);
+        box-shadow: 0 40px 120px -40px rgba(99, 102, 241, 0.5);
+        overflow: hidden;
+        will-change: transform;
+      }
+      .term-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .term-bar i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #2a3050;
+      }
+      .term-bar i:nth-child(1) {
+        background: var(--coral);
+      }
+      .term-bar i:nth-child(2) {
+        background: var(--amber);
+      }
+      .term-bar i:nth-child(3) {
+        background: var(--lime);
+      }
+      .term-bar span {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--faint);
+        letter-spacing: 0.12em;
+      }
+      .term-body {
+        padding: 18px 18px 20px;
+        font-size: 13px;
+        line-height: 1.85;
+        min-height: 280px;
+      }
+      .term-body .you {
+        color: var(--ink);
+      }
+      .term-body .you::before {
+        content: "you ";
+        color: var(--teal);
+      }
+      .term-body .ai {
+        color: var(--cyan);
+      }
+      .term-body .ai::before {
+        content: "mcp ";
+        color: var(--cyan);
+        opacity: 0.7;
+      }
+      .term-body .mut {
+        color: var(--faint);
+      }
+      .term-line {
+        white-space: pre-wrap;
+      }
+      .diff-add {
+        color: var(--lime);
+      }
+      .diff-del {
+        color: var(--coral);
+      }
+      .caret {
+        display: inline-block;
+        width: 8px;
+        height: 1.05em;
+        background: var(--cyan);
+        vertical-align: -2px;
+        margin-left: 2px;
+      }
+      .chip-ok {
+        display: inline-block;
+        font-size: 11px;
+        color: var(--lime);
+        border: 1px solid color-mix(in srgb, var(--lime) 40%, var(--line));
+        border-radius: 100px;
+        padding: 1px 9px;
+      }
+
       .scroll-cue {
         position: absolute;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-family: "DM Mono", ui-monospace, monospace;
+        bottom: 24px;
+        left: 28px;
+        font-family: var(--mono);
         font-size: 11px;
         letter-spacing: 0.2em;
         color: var(--muted);
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
       .scroll-cue .bar {
-        width: 1px;
-        height: 50px;
-        background: linear-gradient(var(--cyan), transparent);
+        width: 46px;
+        height: 1px;
+        background: linear-gradient(90deg, var(--cyan), transparent);
       }
 
-      /* ---------- marquee ---------- */
+      /* marquee */
       .marquee {
         border-top: 1px solid var(--line);
         border-bottom: 1px solid var(--line);
-        padding: 26px 0;
+        padding: 24px 0;
         overflow: hidden;
         white-space: nowrap;
         background: rgba(10, 12, 26, 0.4);
       }
       .marquee .track {
         display: inline-flex;
-        gap: 56px;
+        gap: 52px;
         will-change: transform;
       }
       .marquee span {
-        font-family: "DM Serif Display", Georgia, serif;
-        font-size: clamp(1.4rem, 4vw, 2.6rem);
+        font-family: var(--disp);
+        font-size: clamp(1.3rem, 3.6vw, 2.3rem);
         font-weight: 600;
         color: transparent;
         -webkit-text-stroke: 1px rgba(160, 170, 255, 0.4);
@@ -441,12 +561,12 @@
         -webkit-text-stroke: 0;
       }
 
-      /* ---------- stats ---------- */
+      /* stats */
       .stats {
-        padding: 130px 0;
+        padding: 120px 0 90px;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 24px;
+        gap: 22px;
       }
       @media (max-width: 820px) {
         .stats {
@@ -454,12 +574,12 @@
         }
       }
       .stat {
-        padding: 28px 0;
+        padding: 26px 0;
         border-top: 1px solid var(--line);
       }
       .stat .num {
-        font-family: "DM Serif Display", Georgia, serif;
-        font-size: clamp(2.6rem, 7vw, 4.6rem);
+        font-family: var(--disp);
+        font-size: clamp(2.4rem, 6.4vw, 4.4rem);
         font-weight: 700;
         line-height: 1;
         letter-spacing: -0.02em;
@@ -474,21 +594,27 @@
         margin-top: 12px;
         color: var(--muted);
         font-size: 14px;
-        font-family: "DM Mono", ui-monospace, monospace;
       }
 
-      /* ---------- section heading ---------- */
+      /* section heads */
       .head {
-        padding: 60px 0 50px;
-        max-width: 760px;
+        padding: 60px 0 44px;
+        max-width: 820px;
       }
       .head h2 {
-        font-family: "DM Serif Display", Georgia, serif;
+        font-family: var(--disp);
         font-weight: 700;
-        font-size: clamp(2rem, 6vw, 4rem);
-        line-height: 1.02;
+        font-size: clamp(2rem, 5.6vw, 3.8rem);
+        line-height: 1.04;
         letter-spacing: -0.025em;
-        margin: 18px 0 0;
+        margin: 16px 0 0;
+      }
+      .head .ital {
+        font-style: italic;
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
       }
       .reveal-word {
         display: inline-block;
@@ -500,9 +626,392 @@
         will-change: transform;
       }
 
-      /* ---------- features ---------- */
+      /* ===== WORKFLOWS (flagship) ===== */
+      .flows {
+        padding-bottom: 80px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 880px) {
+        .flows {
+          grid-template-columns: 1fr;
+        }
+      }
+      .flow {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--glass);
+        backdrop-filter: blur(14px);
+        padding: 26px;
+        overflow: hidden;
+        min-height: 270px;
+        display: flex;
+        flex-direction: column;
+        will-change: transform;
+      }
+      .flow::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          440px circle at var(--mx, 50%) var(--my, 0%),
+          color-mix(in srgb, var(--accent, var(--teal)) 16%, transparent),
+          transparent 46%
+        );
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+      .flow:hover::before {
+        opacity: 1;
+      }
+      .flow .tagline {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent, var(--cyan));
+      }
+      .flow h3 {
+        font-family: var(--disp);
+        font-size: 1.45rem;
+        font-weight: 600;
+        margin: 10px 0 8px;
+        letter-spacing: -0.01em;
+      }
+      .flow p {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .flow code {
+        font-family: var(--mono);
+        color: var(--ink);
+        font-size: 0.85em;
+      }
+      .flow .viz {
+        margin-top: auto;
+        padding-top: 22px;
+      }
+
+      /* viz: change plan (reordering steps) */
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        padding: 7px 10px;
+        border-radius: 9px;
+        border: 1px solid var(--line);
+        background: rgba(140, 150, 210, 0.05);
+        will-change: transform;
+      }
+      .step .badge {
+        width: 16px;
+        height: 16px;
+        display: grid;
+        place-items: center;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 12px;
+        flex: none;
+      }
+      .step.add .badge {
+        background: color-mix(in srgb, var(--lime) 20%, transparent);
+        color: var(--lime);
+      }
+      .step.del .badge {
+        background: color-mix(in srgb, var(--coral) 20%, transparent);
+        color: var(--coral);
+      }
+      .step .risk {
+        margin-left: auto;
+        color: var(--faint);
+      }
+
+      /* viz: packet capture (streaming rows) */
+      .pkt {
+        height: 118px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        position: relative;
+      }
+      .pkt-stream {
+        position: absolute;
+        inset: 0;
+        padding: 6px 10px;
+        will-change: transform;
+      }
+      .pkt-row {
+        display: grid;
+        grid-template-columns: 52px 42px 1fr;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        line-height: 1.7;
+        white-space: nowrap;
+      }
+      .pkt-row .t {
+        color: var(--faint);
+      }
+      .pkt-row .p {
+        font-weight: 600;
+      }
+
+      /* viz: firewall audit (gauge) */
+      .gauge-wrap {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .gauge {
+        width: 92px;
+        height: 92px;
+        flex: none;
+      }
+      .gauge .bg {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 9;
+      }
+      .gauge .fg {
+        fill: none;
+        stroke: var(--coral);
+        stroke-width: 9;
+        stroke-linecap: round;
+      }
+      .gauge text {
+        fill: var(--ink);
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 26px;
+      }
+      .findings {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .findings i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+      }
+      .sev-hi {
+        background: var(--coral);
+      }
+      .sev-md {
+        background: var(--amber);
+      }
+      .sev-lo {
+        background: var(--faint);
+      }
+
+      /* viz: snapshots (diff) */
+      .difflines {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        line-height: 1.85;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        padding: 10px 12px;
+        overflow: hidden;
+      }
+      .dl {
+        white-space: pre;
+        will-change: transform, opacity;
+      }
+
+      /* viz: discovery radar */
+      .radar {
+        width: 100%;
+        max-width: 220px;
+        margin: 0 auto;
+        display: block;
+      }
+      .radar .ring {
+        fill: none;
+        stroke: var(--line);
+      }
+      .radar .sweep {
+        fill: url(#rg);
+        opacity: 0.5;
+        transform-origin: 110px 60px;
+        will-change: transform;
+      }
+      .radar .node {
+        fill: var(--cyan);
+        filter: drop-shadow(0 0 6px var(--cyan));
+      }
+      .radar .me {
+        fill: var(--teal);
+      }
+
+      /* viz: config studio (typing json) */
+      .codeblk {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        line-height: 1.85;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        padding: 10px 12px;
+        white-space: pre;
+        min-height: 110px;
+        color: var(--muted);
+      }
+      .codeblk .k {
+        color: var(--cyan);
+      }
+      .codeblk .s {
+        color: var(--lime);
+      }
+
+      /* domains horizontal gallery */
+      .domains-intro {
+        padding: 90px 0 6px;
+        max-width: 840px;
+      }
+      .domains-intro h2 {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: clamp(2.1rem, 6.4vw, 4.6rem);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        margin-top: 16px;
+      }
+      .domains-hint {
+        margin-top: 20px;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .domains-hint .arrow {
+        display: inline-block;
+        will-change: transform;
+      }
+      .dviewport {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+      }
+      .dtrack {
+        display: flex;
+        gap: 24px;
+        padding: 0 28px;
+        width: max-content;
+      }
+      .dslide {
+        position: relative;
+        width: min(80vw, 540px);
+        height: 70vh;
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: var(--glass);
+        backdrop-filter: blur(14px);
+        padding: clamp(24px, 4vw, 42px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+      .dslide::before {
+        content: "";
+        position: absolute;
+        width: 340px;
+        height: 340px;
+        border-radius: 50%;
+        filter: blur(85px);
+        opacity: 0.3;
+        top: -120px;
+        right: -100px;
+        background: var(--accent, var(--teal));
+        pointer-events: none;
+      }
+      .dindex {
+        font-family: var(--disp);
+        font-style: italic;
+        font-size: clamp(3.6rem, 11vw, 8rem);
+        line-height: 0.8;
+        color: transparent;
+        -webkit-text-stroke: 1.5px rgba(160, 170, 255, 0.42);
+      }
+      .dmeta {
+        position: relative;
+        z-index: 1;
+      }
+      .dhead {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .dname {
+        font-family: var(--disp);
+        font-size: clamp(1.7rem, 3.6vw, 2.7rem);
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+      }
+      .dcount {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--cyan);
+        border: 1px solid var(--line);
+        padding: 4px 11px;
+        border-radius: 100px;
+        white-space: nowrap;
+      }
+      .dtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 22px;
+      }
+      .dtag {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink);
+        padding: 7px 12px;
+        border-radius: 11px;
+        background: rgba(140, 150, 210, 0.08);
+        border: 1px solid var(--line);
+        will-change: transform;
+        transition:
+          background 0.25s,
+          border-color 0.25s;
+      }
+      .dtag.is-new {
+        color: var(--lime);
+        border-color: color-mix(in srgb, var(--lime) 36%, var(--line));
+      }
+      .dtag:hover {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        border-color: var(--accent);
+      }
+
+      /* capabilities cards */
       .features {
-        padding-bottom: 120px;
+        padding-bottom: 110px;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 20px;
@@ -514,7 +1023,7 @@
       }
       .card {
         position: relative;
-        padding: 30px;
+        padding: 28px;
         border-radius: 22px;
         background: var(--glass);
         border: 1px solid var(--line);
@@ -539,184 +1048,50 @@
         opacity: 1;
       }
       .card .ic {
-        width: 50px;
-        height: 50px;
-        border-radius: 14px;
+        width: 48px;
+        height: 48px;
+        border-radius: 13px;
         display: grid;
         place-items: center;
         background: rgba(139, 92, 246, 0.14);
         border: 1px solid var(--line);
-        margin-bottom: 22px;
+        margin-bottom: 20px;
       }
       .card .ic svg {
-        width: 24px;
-        height: 24px;
+        width: 23px;
+        height: 23px;
         stroke: var(--cyan);
         fill: none;
         stroke-width: 1.6;
       }
       .card h3 {
-        font-family: "DM Serif Display", Georgia, serif;
-        font-size: 1.35rem;
+        font-family: var(--disp);
+        font-size: 1.3rem;
         font-weight: 600;
-        margin-bottom: 10px;
+        margin-bottom: 9px;
         letter-spacing: -0.01em;
       }
       .card p {
         color: var(--muted);
-        font-size: 14.5px;
+        font-size: 14px;
         line-height: 1.6;
       }
       .card code {
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         font-size: 0.85em;
         color: var(--ink);
       }
       .card .tag {
-        margin-top: 18px;
-        font-family: "DM Mono", ui-monospace, monospace;
+        margin-top: 16px;
+        font-family: var(--mono);
         font-size: 11px;
         color: var(--cyan);
         letter-spacing: 0.1em;
       }
 
-      /* ---------- domains (horizontal pinned gallery) ---------- */
-      .domains-intro {
-        padding: 100px 0 10px;
-        max-width: 820px;
-      }
-      .domains-intro h2 {
-        font-family: "DM Serif Display", Georgia, serif;
-        font-size: clamp(2.2rem, 7vw, 5rem);
-        line-height: 1;
-        letter-spacing: -0.02em;
-        margin-top: 16px;
-      }
-      .domains-intro .ital {
-        font-style: italic;
-        background: var(--grad);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-      }
-      .domains-hint {
-        margin-top: 20px;
-        color: var(--cyan);
-        font-family: "DM Mono", ui-monospace, monospace;
-        font-size: 12px;
-        letter-spacing: 0.3em;
-        text-transform: uppercase;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .domains-hint .arrow {
-        display: inline-block;
-        will-change: transform;
-      }
-      .dviewport {
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-      }
-      .dtrack {
-        display: flex;
-        gap: 26px;
-        padding: 0 28px;
-        width: max-content;
-      }
-      .dslide {
-        position: relative;
-        width: min(80vw, 560px);
-        height: 72vh;
-        border: 1px solid var(--line);
-        border-radius: 28px;
-        background: var(--glass);
-        backdrop-filter: blur(14px);
-        padding: clamp(26px, 4vw, 46px);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        overflow: hidden;
-      }
-      .dslide::before {
-        content: "";
-        position: absolute;
-        width: 360px;
-        height: 360px;
-        border-radius: 50%;
-        filter: blur(85px);
-        opacity: 0.32;
-        top: -130px;
-        right: -110px;
-        background: var(--accent, var(--violet));
-        pointer-events: none;
-      }
-      .dindex {
-        font-family: "DM Serif Display", Georgia, serif;
-        font-style: italic;
-        font-size: clamp(4rem, 12vw, 9rem);
-        line-height: 0.8;
-        color: transparent;
-        -webkit-text-stroke: 1.5px rgba(160, 170, 255, 0.45);
-      }
-      .dmeta {
-        position: relative;
-        z-index: 1;
-      }
-      .dhead {
-        display: flex;
-        align-items: baseline;
-        gap: 14px;
-        flex-wrap: wrap;
-      }
-      .dname {
-        font-family: "DM Serif Display", Georgia, serif;
-        font-size: clamp(1.8rem, 4vw, 2.9rem);
-        letter-spacing: -0.01em;
-        line-height: 1.05;
-      }
-      .dcount {
-        font-family: "DM Mono", ui-monospace, monospace;
-        font-size: 12px;
-        color: var(--cyan);
-        border: 1px solid var(--line);
-        padding: 4px 11px;
-        border-radius: 100px;
-        white-space: nowrap;
-      }
-      .dtags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 9px;
-        margin-top: 24px;
-      }
-      .dtag {
-        font-family: "DM Mono", ui-monospace, monospace;
-        font-size: 12px;
-        color: var(--ink);
-        padding: 7px 12px;
-        border-radius: 11px;
-        background: rgba(140, 150, 210, 0.08);
-        border: 1px solid var(--line);
-        will-change: transform;
-        transition:
-          background 0.25s,
-          border-color 0.25s,
-          color 0.25s;
-      }
-      .dslide:hover .dtag {
-        border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-      }
-      .dtag:hover {
-        background: color-mix(in srgb, var(--accent) 18%, transparent);
-        border-color: var(--accent);
-      }
-
-      /* ---------- pipeline (pinned, scrubbed) ---------- */
+      /* pipeline */
       .pipeline {
-        padding: 40px 0 160px;
+        padding: 30px 0 150px;
       }
       .pipe-stage {
         position: relative;
@@ -747,7 +1122,7 @@
       }
       .pipe-svg .node text {
         fill: var(--ink);
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         font-size: 12px;
         text-anchor: middle;
       }
@@ -763,23 +1138,23 @@
         text-align: center;
         margin-top: 26px;
         color: var(--muted);
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         font-size: 13px;
       }
       .pipe-caption b {
         color: var(--ink);
       }
 
-      /* ---------- big quote / outro ---------- */
+      /* outro */
       .outro {
-        padding: 140px 0 80px;
+        padding: 130px 0 70px;
         text-align: center;
       }
       .outro h2 {
-        font-family: "DM Serif Display", Georgia, serif;
+        font-family: var(--disp);
         font-weight: 700;
-        font-size: clamp(2.2rem, 8vw, 6rem);
-        line-height: 1.02;
+        font-size: clamp(2.1rem, 7vw, 5.4rem);
+        line-height: 1.03;
         letter-spacing: -0.03em;
       }
       .outro h2 .grad {
@@ -790,19 +1165,19 @@
       }
       .outro p {
         color: var(--muted);
-        max-width: 480px;
-        margin: 26px auto 0;
+        max-width: 500px;
+        margin: 24px auto 0;
         line-height: 1.6;
       }
       footer {
         border-top: 1px solid var(--line);
-        padding: 40px 0;
+        padding: 38px 0;
         display: flex;
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 14px;
         color: var(--muted);
-        font-family: "DM Mono", ui-monospace, monospace;
+        font-family: var(--mono);
         font-size: 12px;
       }
       footer b {
@@ -820,6 +1195,12 @@
         background: var(--grad);
         z-index: 85;
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -828,6 +1209,7 @@
       <div class="orb b" data-speed="0.7"></div>
       <div class="orb c" data-speed="0.55"></div>
     </div>
+    <div class="grid-bg"></div>
 
     <div class="cursor"></div>
     <div class="cursor-dot"></div>
@@ -844,9 +1226,9 @@
             y2="232"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0" stop-color="#8B5CF6" />
-            <stop offset="0.55" stop-color="#6366F1" />
-            <stop offset="1" stop-color="#06B6D4" />
+            <stop offset="0" stop-color="#38BDF8" />
+            <stop offset="0.55" stop-color="#2DD4BF" />
+            <stop offset="1" stop-color="#BEF264" />
           </linearGradient>
           <linearGradient
             id="pl-sheen"
@@ -891,42 +1273,48 @@
           class="pl-chevron"
           d="M120 120.5 L127.5 128 L120 135.5"
           fill="none"
-          stroke="#6366F1"
+          stroke="#2DD4BF"
           stroke-width="4.5"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
       </svg>
-      <div class="pl-cap">MikroTik · MCP</div>
+      <div class="pl-cap">MikroTik · MCP · v2.5.0</div>
       <div class="pl-bar"></div>
     </div>
 
     <nav>
       <div class="brand">MikroTik<b>·</b>MCP</div>
       <div class="links">
-        <a href="#tools" data-hover>Tools</a>
+        <a href="#workflows" data-hover>Workflows</a>
+        <a href="#surface" data-hover>Surface</a>
         <a href="#capabilities" data-hover>Capabilities</a>
-        <a href="#flow" data-hover>Flow</a>
-        <a href="https://github.com/ali-master/mikrotik-mcp" data-hover>Github ↗</a>
+        <a href="#flow" data-hover>Anatomy</a>
+        <a href="https://github.com/ali-master/mikrotik-mcp" data-hover>GitHub ↗</a>
       </div>
+      <a class="ver" href="https://github.com/ali-master/mikrotik-mcp/releases" data-hover
+        >v2.5.0</a
+      >
     </nav>
 
     <!-- HERO -->
-    <header class="hero">
-      <div class="wrap">
-        <span class="eyebrow">Bun-native · MCP · RouterOS</span>
+    <header class="hero wrap">
+      <div>
+        <span class="eyebrow">Bun-native · MCP · RouterOS 6.x ∴ 7.x</span>
         <h1>
           <span class="line"><span class="w">Drive&nbsp;your</span></span>
           <span class="line"><span class="w grad">router</span></span>
           <span class="line"><span class="w">with&nbsp;words.</span></span>
         </h1>
         <p class="sub">
-          <b>640+ risk-annotated tools</b> over SSH turn one — or a whole fleet — of MikroTik
-          devices into something your AI can read, configure and secure in natural language.
+          <b>664 risk-annotated tools</b> across <b>92 modules</b> turn one — or a whole fleet — of
+          MikroTik devices into something your AI can read, configure and secure in plain language.
+          Now with a <b>change-plan dry-run engine</b>, <b>live packet capture</b>, a
+          <b>firewall auditor</b> and <b>config snapshots</b>.
         </p>
         <div class="cta-row">
-          <a class="btn primary" href="#tools" data-hover data-magnetic>
-            <span class="lbl">Explore the surface</span>
+          <a class="btn primary" href="#workflows" data-hover data-magnetic>
+            <span class="lbl">See what's new in 2.5</span>
           </a>
           <a
             class="btn ghost"
@@ -938,50 +1326,202 @@
           </a>
         </div>
       </div>
-      <div class="scroll-cue">
-        <span>SCROLL</span>
-        <span class="bar"></span>
+
+      <!-- live terminal motif -->
+      <div class="term" id="term" aria-hidden="true">
+        <div class="term-bar"><i></i><i></i><i></i><span>plan_changes · apply_plan</span></div>
+        <div class="term-body" id="termBody"></div>
       </div>
+
+      <div class="scroll-cue"><span class="bar"></span><span>SCROLL</span></div>
     </header>
 
     <!-- MARQUEE -->
     <div class="marquee" aria-hidden="true">
       <div class="track">
-        <span class="fill">FIREWALL</span><span>·</span><span>ROUTING</span
-        ><span class="fill">·</span><span>IPv6</span><span>·</span
-        ><span class="fill">WIREGUARD</span><span>·</span><span>DHCP</span
-        ><span class="fill">·</span><span>QoS</span><span>·</span><span class="fill">802.1X</span
-        ><span>·</span><span>SWITCH</span><span class="fill">·</span><span>DNS</span><span>·</span>
+        <span class="fill">FIREWALL AUDIT</span><span>·</span><span>CHANGE PLAN</span
+        ><span class="fill">·</span><span>PACKET CAPTURE</span><span>·</span
+        ><span class="fill">SNAPSHOTS</span><span>·</span><span>MNDP DISCOVERY</span
+        ><span class="fill">·</span><span>WIREGUARD</span><span>·</span
+        ><span class="fill">SAFE MODE</span><span>·</span><span>TOPOLOGY</span
+        ><span class="fill">·</span><span>IPv6</span><span>·</span>
       </div>
     </div>
 
     <!-- STATS -->
     <section class="wrap stats" id="tools">
       <div class="stat">
-        <div class="num" data-count="640" data-suffix="+">
+        <div class="num" data-count="664" data-suffix="+">
           <span>0</span><span class="suffix"></span>
         </div>
         <div class="lbl">tools exposed</div>
       </div>
       <div class="stat">
-        <div class="num" data-count="88"><span>0</span></div>
+        <div class="num" data-count="92"><span>0</span></div>
         <div class="lbl">RouterOS modules</div>
+      </div>
+      <div class="stat">
+        <div class="num" data-count="6"><span>0</span></div>
+        <div class="lbl">flagship workflows</div>
       </div>
       <div class="stat">
         <div class="num" data-count="5"><span>0</span></div>
         <div class="lbl">risk tiers</div>
       </div>
-      <div class="stat">
-        <div class="num" data-count="3"><span>0</span></div>
-        <div class="lbl">MCP transports</div>
+    </section>
+
+    <!-- WORKFLOWS (NEW in 2.5) -->
+    <section class="wrap" id="workflows">
+      <div class="head">
+        <span class="eyebrow">New in 2.5.0</span>
+        <h2 data-reveal>
+          Beyond the catalog: workflows that <span class="ital">think</span> before they touch the
+          wire.
+        </h2>
+      </div>
+      <div class="flows">
+        <!-- change plan -->
+        <article class="flow" data-hover style="--accent: var(--teal)">
+          <div class="tagline">Change Plan &amp; Dry-Run</div>
+          <h3>Preview before you break it</h3>
+          <p>
+            <code>plan_changes</code> scores risk and flags lock-outs; <code>apply_plan</code> runs
+            it in <b>Safe Mode</b>, shows the exact <code>/export</code> diff, and commits only if
+            the device still answers — else it auto-reverts.
+          </p>
+          <div class="viz">
+            <div class="steps" id="stepViz">
+              <div class="step add" data-grp="0">
+                <span class="badge">+</span> add accept · mgmt 10.0.0.0/24
+                <span class="risk">low</span>
+              </div>
+              <div class="step add" data-grp="0">
+                <span class="badge">+</span> add address 10.0.0.1/24 <span class="risk">low</span>
+              </div>
+              <div class="step del" data-grp="2">
+                <span class="badge">−</span> remove old mgmt ip <span class="risk">high</span>
+              </div>
+              <div class="step del" data-grp="2">
+                <span class="badge">!</span> drop chain=input <span class="risk">high</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- packet capture -->
+        <article class="flow" data-hover style="--accent: var(--cyan)">
+          <div class="tagline">Packet Capture Studio</div>
+          <h3>A remote Wireshark, in the dashboard</h3>
+          <p>
+            Stream mirrored packets to your host as <b>TZSP</b>, decode them live — protocol mix,
+            top talkers, a scrolling list — and export <code>.pcap</code>. No hardware needed.
+          </p>
+          <div class="viz">
+            <div class="pkt"><div class="pkt-stream" id="pktStream"></div></div>
+          </div>
+        </article>
+
+        <!-- firewall audit -->
+        <article class="flow" data-hover style="--accent: var(--coral)">
+          <div class="tagline">Firewall Audit</div>
+          <h3>Make the firewall legible</h3>
+          <p>
+            <code>firewall_audit</code> finds shadowed, overly-broad, missing-default-drop,
+            duplicate and dead rules — IPv4 &amp; IPv6 — risk-scored, with one-click fixes.
+          </p>
+          <div class="viz">
+            <div class="gauge-wrap">
+              <svg class="gauge" viewBox="0 0 92 92">
+                <circle class="bg" cx="46" cy="46" r="38" />
+                <circle
+                  class="fg"
+                  id="gaugeFg"
+                  cx="46"
+                  cy="46"
+                  r="38"
+                  transform="rotate(-90 46 46)"
+                />
+                <text x="46" y="55" text-anchor="middle" id="gaugeNum">0</text>
+              </svg>
+              <div class="findings">
+                <div><i class="sev-hi"></i>2 unreachable rules</div>
+                <div><i class="sev-hi"></i>missing default-drop</div>
+                <div><i class="sev-md"></i>1 duplicate NAT</div>
+                <div><i class="sev-lo"></i>3 dead rules</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- snapshots -->
+        <article class="flow" data-hover style="--accent: var(--sky)">
+          <div class="tagline">Config Snapshots</div>
+          <h3>Time-travel diff your config</h3>
+          <p>
+            Store <code>/export</code> snapshots on the host and diff any two — or one against the
+            live device — to see exactly what drifted, and when.
+          </p>
+          <div class="viz">
+            <div class="difflines" id="diffViz">
+              <div class="dl mut">/ip firewall filter</div>
+              <div class="dl diff-del">- add chain=input action=accept</div>
+              <div class="dl diff-add">+ add chain=input action=drop</div>
+              <div class="dl diff-add">+ add chain=input connection-state=established</div>
+              <div class="dl mut">/ip address</div>
+              <div class="dl diff-del">- add address=192.168.88.1/24</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- discovery -->
+        <article class="flow" data-hover style="--accent: var(--cyan)">
+          <div class="tagline">Discovery · MNDP · Topology</div>
+          <h3>Find devices by MAC, before an IP</h3>
+          <p>
+            <code>bun run discover</code> lists MikroTik devices on the LAN over MNDP; the dashboard
+            draws a live Layer-2 <b>topology map</b> — onboard new neighbours in a click.
+          </p>
+          <div class="viz">
+            <svg class="radar" viewBox="0 0 220 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#22d3ee" stop-opacity="0.5" />
+                  <stop offset="1" stop-color="#22d3ee" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <circle class="ring" cx="110" cy="60" r="50" />
+              <circle class="ring" cx="110" cy="60" r="33" />
+              <circle class="ring" cx="110" cy="60" r="16" />
+              <path class="sweep" id="sweep" d="M110 60 L160 60 A50 50 0 0 1 145 95 Z" />
+              <circle class="me" cx="110" cy="60" r="5" />
+              <circle class="node n" cx="150" cy="40" r="4" />
+              <circle class="node n" cx="78" cy="86" r="4" />
+              <circle class="node n" cx="148" cy="84" r="4" />
+              <circle class="node n" cx="72" cy="44" r="4" />
+            </svg>
+          </div>
+        </article>
+
+        <!-- config studio -->
+        <article class="flow" data-hover style="--accent: var(--teal)">
+          <div class="tagline">Config Studio</div>
+          <h3>Edit the config, safely, in the browser</h3>
+          <p>
+            A schema-aware JSON editor with autocomplete and validation, per-device connection
+            tests, and a <b>safe-apply that auto-reverts</b> if it locks you out.
+          </p>
+          <div class="viz">
+            <div class="codeblk" id="codeViz"></div>
+          </div>
+        </article>
       </div>
     </section>
 
-    <!-- DOMAINS (horizontal pinned gallery, built from data) -->
+    <!-- DOMAINS (horizontal pinned gallery) -->
     <section class="domains" id="surface" aria-label="Tools and modules by domain">
       <div class="domains-intro wrap">
         <span class="eyebrow">The surface</span>
-        <h2>640+ tools. 88 modules.<br /><span class="ital">Twelve domains.</span></h2>
+        <h2>664 tools. 92 modules.<br /><span class="ital">Thirteen domains.</span></h2>
         <p class="domains-hint">Scroll to traverse <span class="arrow">→</span></p>
       </div>
       <div class="dviewport">
@@ -1022,6 +1562,20 @@
         <div class="card" data-hover>
           <div class="ic">
             <svg viewBox="0 0 24 24">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+              <circle cx="4" cy="12" r="1.4" />
+            </svg>
+          </div>
+          <h3>Reach by MAC, no IP</h3>
+          <p>
+            MAC-Telnet (Layer-2, UDP 20561) reaches a router with a wrong, missing or unroutable IP
+            — the classic provisioning &amp; recovery case — behind the same tool surface.
+          </p>
+          <div class="tag">// mac-telnet/</div>
+        </div>
+        <div class="card" data-hover>
+          <div class="ic">
+            <svg viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="3" />
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
             </svg>
@@ -1029,7 +1583,8 @@
           <h3>Fleet-aware</h3>
           <p>
             Manage many routers from one server. Tools auto-expose a <code>device</code> selector
-            and the registry peels it off before your handler runs.
+            and the registry peels it off before your handler runs — configure both ends of a tunnel
+            in one chat.
           </p>
           <div class="tag">// runtime.ts</div>
         </div>
@@ -1040,23 +1595,9 @@
           <h3>Live observability</h3>
           <p>
             An opt-in localhost dashboard streams every tool call in real time — latency, errors,
-            per-device health and a redaction-aware feed.
+            per-device health, a topology map, packet capture and an editable config studio.
           </p>
           <div class="tag">// dashboard.ts</div>
-        </div>
-        <div class="card" data-hover>
-          <div class="ic">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="3" />
-              <path d="M9 9h6v6H9z" />
-            </svg>
-          </div>
-          <h3>MCP Apps UI</h3>
-          <p>
-            Interactive <code>ui://</code> views for interfaces, firewall, records and the device
-            dashboard — built as self-contained single-file apps.
-          </p>
-          <div class="tag">// ui-resources.ts</div>
         </div>
         <div class="card" data-hover>
           <div class="ic">
@@ -1065,7 +1606,7 @@
           <h3>Anywhere transport</h3>
           <p>
             stdio, SSE and streamable-HTTP — with CORS and a read-only mode for safe public
-            exposure, plus a self-contained Docker image.
+            exposure, plus a self-contained Docker image and MCP App UI views.
           </p>
           <div class="tag">// cli.ts</div>
         </div>
@@ -1083,9 +1624,9 @@
           <svg class="pipe-svg" viewBox="0 0 980 220">
             <defs>
               <linearGradient id="pg" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#8b5cf6" />
-                <stop offset="0.5" stop-color="#6366f1" />
-                <stop offset="1" stop-color="#06b6d4" />
+                <stop offset="0" stop-color="#38bdf8" />
+                <stop offset="0.5" stop-color="#2dd4bf" />
+                <stop offset="1" stop-color="#bef264" />
               </linearGradient>
             </defs>
             <path class="wire" d="M70 110 H910" />
@@ -1110,7 +1651,7 @@
             <g class="node" transform="translate(910,110)">
               <circle r="30" />
               <text y="-44">RouterOS</text>
-              <text class="sub" y="4">SSH</text>
+              <text class="sub" y="4">SSH / MAC</text>
             </g>
             <circle class="packet" r="7" cx="70" cy="110" />
           </svg>
@@ -1123,11 +1664,11 @@
 
     <!-- OUTRO -->
     <section class="wrap outro">
-      <span class="eyebrow" style="justify-content: center">v2.0.0 — first release</span>
+      <span class="eyebrow" style="justify-content: center">v2.5.0 · MIT</span>
       <h2 data-reveal-html>Configuration<br /><span class="grad">as conversation.</span></h2>
       <p>
         Point any MCP client at your MikroTik and start talking. Bun ≥ 1.3 · RouterOS 6.x ∴ 7.x ·
-        MIT.
+        SSH or MAC-Telnet.
       </p>
       <div class="cta-row" style="justify-content: center">
         <a
@@ -1135,9 +1676,15 @@
           href="https://www.npmjs.com/package/@usex/mikrotik-mcp"
           data-hover
           data-magnetic
+          ><span class="lbl">Get it on npm</span></a
         >
-          <span class="lbl">Get it on npm</span>
-        </a>
+        <a
+          class="btn ghost"
+          href="https://github.com/ali-master/mikrotik-mcp"
+          data-hover
+          data-magnetic
+          ><span class="lbl">Read the docs</span></a
+        >
       </div>
     </section>
 
@@ -1150,12 +1697,13 @@
           rel="noopener noreferrer"
           title="@usex/mikrotik-mcp"
           ><b>@usex/mikrotik-mcp</b></a
-        ></span
+        >
+        · v2.5.0</span
       >
       <span
         >∴
         <a
-          href="https://github.com/ali-torki"
+          href="https://github.com/ali-master"
           target="_blank"
           rel="noopener noreferrer"
           title="Ali Torki"
@@ -1172,7 +1720,6 @@
       gsap.registerPlugin(ScrollTrigger);
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      /* ---------- split helper: wrap each char of an element (safe DOM) ---------- */
       function splitChars(el) {
         const text = el.textContent;
         el.textContent = "";
@@ -1180,14 +1727,12 @@
         [...text].forEach((ch) => {
           const s = document.createElement("span");
           s.className = "char";
-          s.textContent = ch === " " ? " " : ch;
+          s.textContent = ch === " " ? " " : ch;
           frag.appendChild(s);
         });
         el.appendChild(frag);
         return el.querySelectorAll(".char");
       }
-
-      /* ---------- tiny safe element factory ---------- */
       function make(tag, cls, text) {
         const e = document.createElement(tag);
         if (cls) e.className = cls;
@@ -1195,10 +1740,9 @@
         return e;
       }
 
-      /* ---------- preloader: build the MikroTik MCP logo with motion ---------- */
+      /* ---------- preloader logo ---------- */
       function buildLogo() {
         const tl = gsap.timeline();
-        // prime the draw-on strokes (links + chevron) from their own lengths
         gsap.utils.toArray("#pl-logo .pl-links line").forEach((ln) => {
           const len = ln.getTotalLength();
           gsap.set(ln, { strokeDasharray: len, strokeDashoffset: len });
@@ -1208,7 +1752,6 @@
         gsap.set(chev, { strokeDasharray: cl, strokeDashoffset: cl });
         gsap.set("#pl-logo .pl-tile", { scale: 0.55, opacity: 0, transformOrigin: "center" });
         gsap.set("#pl-logo .pl-hub, #pl-logo .pl-leaf", { scale: 0, transformOrigin: "center" });
-
         tl.to("#pl-logo .pl-tile", { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.5)" })
           .to("#pl-logo .pl-hub", { scale: 1, duration: 0.5, ease: "back.out(2.2)" }, "-=0.25")
           .to(
@@ -1227,7 +1770,6 @@
             "-=0.15",
           )
           .from(".pl-cap", { opacity: 0, y: 8, duration: 0.4 }, "-=0.3");
-        // a gentle infinite breathing while the bar finishes loading
         gsap.to("#pl-logo", {
           scale: 1.04,
           duration: 1.1,
@@ -1241,6 +1783,7 @@
 
       if (reduce) {
         gsap.set("#loader", { display: "none" });
+        introHero();
       } else {
         const loadTl = gsap.timeline();
         loadTl
@@ -1263,7 +1806,7 @@
           .add(introHero, "-=0.4");
       }
 
-      /* ---------- hero intro ---------- */
+      /* ---------- hero intro + terminal ---------- */
       function introHero() {
         const chars = [];
         document.querySelectorAll(".hero h1 .w").forEach((w) => chars.push(...splitChars(w)));
@@ -1278,7 +1821,76 @@
           .from(".hero .eyebrow", { opacity: 0, y: 16, duration: 0.6 }, 0.2)
           .from(".hero .sub", { opacity: 0, y: 24, duration: 0.8 }, "-=0.7")
           .from(".cta-row .btn", { opacity: 0, y: 24, duration: 0.6, stagger: 0.1 }, "-=0.6")
-          .from(".scroll-cue", { opacity: 0, duration: 0.6 }, "-=0.3");
+          .from(
+            ".term",
+            {
+              opacity: 0,
+              y: 40,
+              rotateX: 8,
+              duration: 1,
+              ease: "expo.out",
+              transformPerspective: 900,
+            },
+            "-=0.8",
+          )
+          .add(typeTerminal, "-=0.2");
+      }
+
+      /* ---------- typing terminal (plan -> apply) ---------- */
+      function typeTerminal() {
+        const body = document.getElementById("termBody");
+        if (!body) return;
+        const script = [
+          { c: "you", t: "block SSH from the WAN — but plan it first" },
+          { c: "ai", t: "plan_changes ▸ +1 add, -0 modify, ~1 reorder" },
+          { c: "mut", t: "  risk 38/100 · reordered for safety" },
+          { c: "ai", t: "apply_plan ▸ Safe Mode · exact /export diff:" },
+          { c: "del", t: "  - chain=input action=accept dst-port=22" },
+          { c: "add", t: "  + chain=input action=drop in-interface=WAN" },
+          { c: "ok", t: "device still reachable ✓ committed" },
+        ];
+        const caret = make("span", "caret");
+        const tl = gsap.timeline({ repeat: -1, repeatDelay: 2.4 });
+        tl.call(() => {
+          body.textContent = "";
+          body.appendChild(caret);
+        });
+        script.forEach((ln) => {
+          const div = make(
+            "div",
+            "term-line " +
+              (ln.c === "you"
+                ? "you"
+                : ln.c === "ai"
+                  ? "ai"
+                  : ln.c === "mut"
+                    ? "mut"
+                    : ln.c === "del"
+                      ? "diff-del"
+                      : ln.c === "add"
+                        ? "diff-add"
+                        : ""),
+          );
+          if (ln.c === "ok") {
+            div.className = "term-line";
+            div.appendChild(make("span", "chip-ok", ln.t));
+            tl.call(() => body.insertBefore(div, caret));
+            tl.from(div, { opacity: 0, y: 6, duration: 0.4 });
+            return;
+          }
+          tl.call(() => body.insertBefore(div, caret));
+          const full = ln.t;
+          const obj = { i: 0 };
+          tl.to(obj, {
+            i: full.length,
+            duration: Math.max(0.25, full.length * 0.022),
+            ease: "none",
+            onUpdate: () => (div.textContent = full.slice(0, Math.round(obj.i))),
+          });
+          tl.to({}, { duration: 0.35 });
+        });
+        tl.to({}, { duration: 1.4 });
+        gsap.to(caret, { opacity: 0, duration: 0.5, repeat: -1, yoyo: true, ease: "steps(1)" });
       }
 
       /* ---------- custom cursor ---------- */
@@ -1294,10 +1906,13 @@
         dx(e.clientX);
         dy(e.clientY);
       });
-      document.querySelectorAll("[data-hover]").forEach((el) => {
-        el.addEventListener("mouseenter", () => cursor.classList.add("is-hover"));
-        el.addEventListener("mouseleave", () => cursor.classList.remove("is-hover"));
-      });
+      function bindHover(scope) {
+        (scope || document).querySelectorAll("[data-hover]").forEach((el) => {
+          el.addEventListener("mouseenter", () => cursor.classList.add("is-hover"));
+          el.addEventListener("mouseleave", () => cursor.classList.remove("is-hover"));
+        });
+      }
+      bindHover();
 
       /* ---------- magnetic buttons ---------- */
       document.querySelectorAll("[data-magnetic]").forEach((el) => {
@@ -1357,9 +1972,9 @@
         });
       }
 
-      /* ---------- marquee (clone nodes; scroll-velocity aware) ---------- */
+      /* ---------- marquee ---------- */
       const track = document.querySelector(".marquee .track");
-      [...track.children].forEach((n) => track.appendChild(n.cloneNode(true))); // seamless loop
+      [...track.children].forEach((n) => track.appendChild(n.cloneNode(true)));
       let mLoop = gsap.to(track, { xPercent: -50, duration: 18, ease: "none", repeat: -1 });
       ScrollTrigger.create({
         start: 0,
@@ -1374,7 +1989,7 @@
         },
       });
 
-      /* ---------- word-reveal headings (safe DOM split) ---------- */
+      /* ---------- word-reveal headings ---------- */
       gsap.utils.toArray("[data-reveal]").forEach((h) => {
         const words = h.textContent.trim().split(/\s+/);
         h.textContent = "";
@@ -1397,7 +2012,6 @@
           scrollTrigger: { trigger: h, start: "top 85%" },
         });
       });
-      /* the outro keeps its <br> markup — reveal the whole block instead of splitting */
       gsap.utils.toArray("[data-reveal-html]").forEach((h) => {
         gsap.from(h, {
           yPercent: 30,
@@ -1430,25 +2044,30 @@
         });
       });
 
-      /* ---------- feature cards: rise + glow tracking + tilt ---------- */
-      gsap.utils.toArray(".card").forEach((card, i) => {
+      /* ---------- workflow + capability cards ---------- */
+      gsap.utils.toArray(".flow, .card").forEach((card, i) => {
         gsap.from(card, {
-          y: 60,
+          y: 56,
           opacity: 0,
           duration: 0.9,
           ease: "power3.out",
           scrollTrigger: { trigger: card, start: "top 90%" },
-          delay: (i % 3) * 0.08,
+          delay: (i % 2) * 0.08,
         });
         card.addEventListener("mousemove", (e) => {
           const r = card.getBoundingClientRect();
-          const px = (e.clientX - r.left) / r.width;
-          const py = (e.clientY - r.top) / r.height;
-          card.style.setProperty("--mx", px * 100 + "%");
-          card.style.setProperty("--my", py * 100 + "%");
+          card.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
+          card.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
+        });
+      });
+      gsap.utils.toArray(".card").forEach((card) => {
+        card.addEventListener("mousemove", (e) => {
+          const r = card.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width,
+            py = (e.clientY - r.top) / r.height;
           gsap.to(card, {
-            rotateY: (px - 0.5) * 10,
-            rotateX: (0.5 - py) * 10,
+            rotateY: (px - 0.5) * 8,
+            rotateX: (0.5 - py) * 8,
             duration: 0.4,
             ease: "power2.out",
             transformPerspective: 800,
@@ -1459,20 +2078,234 @@
         );
       });
 
-      /* ---------- domains: data-driven, horizontal pinned scroll ---------- */
+      /* ---- motif: change-plan step reorder ---- */
+      (function () {
+        const steps = gsap.utils.toArray("#stepViz .step");
+        if (!steps.length) return;
+        ScrollTrigger.create({
+          trigger: "#stepViz",
+          start: "top 80%",
+          once: true,
+          onEnter: () => {
+            gsap.from(steps, {
+              x: -16,
+              opacity: 0,
+              duration: 0.5,
+              stagger: 0.09,
+              ease: "power3.out",
+            });
+            const dels = steps.filter((s) => s.dataset.grp === "2");
+            gsap.fromTo(
+              dels,
+              { backgroundColor: "rgba(251,113,133,0.18)" },
+              {
+                backgroundColor: "rgba(140,150,210,0.05)",
+                duration: 1.4,
+                delay: 0.7,
+                ease: "power2.out",
+              },
+            );
+          },
+        });
+      })();
+
+      /* ---- motif: packet stream ---- */
+      (function () {
+        const host = document.getElementById("pktStream");
+        if (!host) return;
+        const protos = [
+          ["TCP", "#22d3ee"],
+          ["UDP", "#bef264"],
+          ["ICMP", "#fbbf24"],
+          ["TCP", "#22d3ee"],
+          ["ARP", "#2dd4bf"],
+          ["UDP", "#bef264"],
+        ];
+        const ips = ["10.0.0.1", "10.0.0.8", "8.8.8.8", "192.168.88.10", "1.1.1.1", "10.0.0.20"];
+        const pick = (a, i) => a[i % a.length];
+        for (let i = 0; i < 16; i++) {
+          const [p, c] = protos[i % protos.length];
+          const row = make("div", "pkt-row");
+          const pe = make("span", "p", p);
+          pe.style.color = c;
+          row.append(
+            make("span", "t", "0." + (100 + i)),
+            pe,
+            make("span", "i", pick(ips, i) + " → " + pick(ips, i + 3)),
+          );
+          host.appendChild(row);
+        }
+        if (!reduce)
+          gsap.fromTo(
+            host,
+            { y: 0 },
+            {
+              y: -130,
+              duration: 6,
+              ease: "none",
+              repeat: -1,
+              modifiers: { y: (y) => (parseFloat(y) % 130) + "px" },
+            },
+          );
+      })();
+
+      /* ---- motif: audit gauge ---- */
+      (function () {
+        const fg = document.getElementById("gaugeFg");
+        const numEl = document.getElementById("gaugeNum");
+        if (!fg) return;
+        const r = 38,
+          C = 2 * Math.PI * r,
+          score = 58;
+        gsap.set(fg, { strokeDasharray: C, strokeDashoffset: C });
+        ScrollTrigger.create({
+          trigger: fg,
+          start: "top 82%",
+          once: true,
+          onEnter: () => {
+            gsap.to(fg, {
+              strokeDashoffset: C * (1 - score / 100),
+              duration: 1.4,
+              ease: "power3.out",
+            });
+            const o = { v: 0 };
+            gsap.to(o, {
+              v: score,
+              duration: 1.4,
+              ease: "power3.out",
+              onUpdate: () => (numEl.textContent = Math.round(o.v)),
+            });
+          },
+        });
+      })();
+
+      /* ---- motif: diff lines slide ---- */
+      (function () {
+        const lines = gsap.utils.toArray("#diffViz .dl");
+        if (!lines.length) return;
+        ScrollTrigger.create({
+          trigger: "#diffViz",
+          start: "top 82%",
+          once: true,
+          onEnter: () =>
+            gsap.from(lines, {
+              x: (i) =>
+                lines[i].classList.contains("diff-del")
+                  ? -14
+                  : lines[i].classList.contains("diff-add")
+                    ? 14
+                    : 0,
+              opacity: 0,
+              duration: 0.5,
+              stagger: 0.08,
+              ease: "power3.out",
+            }),
+        });
+      })();
+
+      /* ---- motif: radar sweep ---- */
+      (function () {
+        const sweep = document.getElementById("sweep");
+        if (sweep && !reduce)
+          gsap.to(sweep, {
+            rotation: 360,
+            duration: 4,
+            ease: "none",
+            repeat: -1,
+            transformOrigin: "110px 60px",
+          });
+        gsap.utils.toArray(".radar .node").forEach((n, i) => {
+          gsap.to(n, {
+            opacity: 0.25,
+            scale: 0.7,
+            duration: 1.1,
+            delay: i * 0.4,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+            transformOrigin: "center",
+          });
+        });
+      })();
+
+      /* ---- motif: config studio typing (safe DOM, no innerHTML) ---- */
+      (function () {
+        const host = document.getElementById("codeViz");
+        if (!host) return;
+        // each line is an array of [text, className?] segments
+        const lines = [
+          [["{"]],
+          [["  "], ['"devices"', "k"], [": {"]],
+          [
+            ["    "],
+            ['"edge"', "k"],
+            [": { "],
+            ['"mac"', "k"],
+            [": "],
+            ['"48:A9:8A:C6:42:F7"', "s"],
+            [" }"],
+          ],
+          [["  },"]],
+          [
+            ["  "],
+            ['"dashboard"', "k"],
+            [": { "],
+            ['"enabled"', "k"],
+            [": "],
+            ["true", "s"],
+            [" }"],
+          ],
+          [["}"]],
+        ];
+        function buildLine(segs) {
+          const div = document.createElement("div");
+          segs.forEach((seg) => {
+            const txt = seg[0];
+            const cls = seg[1];
+            if (cls) {
+              const s = document.createElement("span");
+              s.className = cls;
+              s.textContent = txt;
+              div.appendChild(s);
+            } else {
+              div.appendChild(document.createTextNode(txt));
+            }
+          });
+          return div;
+        }
+        ScrollTrigger.create({
+          trigger: host,
+          start: "top 80%",
+          once: true,
+          onEnter: () => {
+            host.replaceChildren();
+            const tl = gsap.timeline();
+            lines.forEach((segs) => {
+              const div = buildLine(segs);
+              tl.call(() => host.appendChild(div));
+              tl.from(div, { opacity: 0, x: 8, duration: 0.28, ease: "power2.out" });
+              tl.to({}, { duration: 0.12 });
+            });
+          },
+        });
+      })();
+
+      /* ---------- domains: data-driven horizontal pin ---------- */
       const DOMAINS = [
         {
           n: "Security",
-          c: 7,
+          c: 8,
           tags: [
             "Firewall — Filter",
             "Firewall — NAT",
+            "Firewall — Audit",
             "Address Lists",
             "Certificates",
             "IP Services",
             "802.1X — Server",
             "802.1X — Client",
           ],
+          new: ["Firewall — Audit"],
         },
         {
           n: "Addressing & Routing",
@@ -1510,7 +2343,6 @@
             "IPv6 FW — Mangle",
             "IPv6 ND",
             "IPv6 Neighbors",
-            "IPv6 Pool",
             "IPv6 Routes",
           ],
         },
@@ -1528,26 +2360,30 @@
         { n: "QoS", c: 2, tags: ["Queues / QoS", "Queues — Interface"] },
         {
           n: "System & Ops",
-          c: 12,
+          c: 15,
           tags: [
             "System",
             "Users",
             "Scheduler / Scripts",
             "Backup",
             "S3 Backup",
+            "Config Snapshots",
+            "Change Plan",
+            "Neighbors / MNDP",
             "Logs",
             "Disk",
             "Safe Mode",
             "Network Tools",
-            "Devices",
           ],
+          new: ["Config Snapshots", "Change Plan", "Neighbors / MNDP"],
         },
         {
           n: "Tools",
-          c: 13,
+          c: 14,
           tags: [
-            "Speed Test",
+            "Packet Capture Studio",
             "Packet Sniffer",
+            "Speed Test",
             "Traffic Monitor",
             "Traffic Generator",
             "IP Scan",
@@ -1557,15 +2393,27 @@
             "Btest Server",
             "Flood Ping",
             "Graphing",
-            "Profile",
           ],
+          new: ["Packet Capture Studio"],
         },
         { n: "AAA", c: 2, tags: ["RADIUS", "User Manager"] },
-        { n: "MCP Apps", c: 1, tags: ["Apps — Dashboards"] },
+        {
+          n: "Observability",
+          c: 1,
+          tags: [
+            "Live dashboard",
+            "Topology map",
+            "Packet capture",
+            "Config Studio",
+            "Records / Firewall views",
+          ],
+          new: ["Topology map", "Packet capture", "Config Studio"],
+        },
+        { n: "MCP Apps", c: 1, tags: ["Apps — Dashboards", "Firewall Audit view"] },
       ];
       const dtrack = document.querySelector(".dtrack");
       if (dtrack) {
-        const accents = ["#8b5cf6", "#6366f1", "#06b6d4"];
+        const accents = ["#38bdf8", "#2dd4bf", "#bef264"];
         DOMAINS.forEach((d, i) => {
           const slide = make("article", "dslide");
           slide.style.setProperty("--accent", accents[i % accents.length]);
@@ -1574,7 +2422,7 @@
           head.append(make("h3", "dname", d.n), make("span", "dcount", d.c + " modules"));
           const tags = make("div", "dtags");
           d.tags.forEach((t) => {
-            const tag = make("span", "dtag", t);
+            const tag = make("span", "dtag" + (d.new && d.new.includes(t) ? " is-new" : ""), t);
             tag.setAttribute("data-hover", "");
             tags.appendChild(tag);
           });
@@ -1620,14 +2468,7 @@
               scrollTrigger: { trigger: s, containerAnimation: horiz, start: "left 72%" },
             });
           });
-          // re-bind the custom-cursor hover state to the freshly-built tags
-          slides
-            .flatMap((s) => [...s.querySelectorAll("[data-hover]")])
-            .forEach((el) => {
-              el.addEventListener("mouseenter", () => cursor.classList.add("is-hover"));
-              el.addEventListener("mouseleave", () => cursor.classList.remove("is-hover"));
-            });
-          // nudge the scroll hint
+          bindHover(dtrack);
           gsap.to(".domains-hint .arrow", {
             x: 6,
             duration: 0.8,
@@ -1638,7 +2479,7 @@
         }
       }
 
-      /* ---------- pinned pipeline: scrub the packet + draw the flow ---------- */
+      /* ---------- pinned pipeline scrub ---------- */
       const flow = document.querySelector(".pipe-svg .flow");
       const len = flow.getTotalLength();
       gsap.set(flow, { strokeDasharray: len, strokeDashoffset: len });
@@ -1648,7 +2489,7 @@
         ["tool call", " · the model picks a tool by its description"],
         ["risk gate", " · validated against a five-tier preset"],
         ["Cmd build", " · quoteValue escapes every argument"],
-        ["on the wire", " · executeMikrotikCommand over SSH"],
+        ["on the wire", " · executeMikrotikCommand over SSH or MAC-Telnet"],
       ];
       function setCaption(arr) {
         cap.textContent = "";
@@ -1684,13 +2525,10 @@
           },
           0,
         )
-        .to(".pipe-svg .node circle", { stroke: "#06b6d4", stagger: 0.2, duration: 0.3 }, 0);
+        .to(".pipe-svg .node circle", { stroke: "#22d3ee", stagger: 0.2, duration: 0.3 }, 0);
 
       /* ---------- scroll cue fade ---------- */
-      gsap.to(".scroll-cue", {
-        opacity: 0,
-        scrollTrigger: { start: 80, end: 300, scrub: true },
-      });
+      gsap.to(".scroll-cue", { opacity: 0, scrollTrigger: { start: 80, end: 300, scrub: true } });
     </script>
   </body>
 </html>
