@@ -136,9 +136,16 @@ async function updateDnsStatic(a: UpdateDnsStaticArgs, ctx: ToolContext): Promis
 export const dnsTools: ToolModule = [
   defineTool({
     name: "set_dns_servers",
-    title: "Set DNS Servers",
+    title: "Configure DNS Resolver Settings",
     annotations: WRITE,
-    description: "Sets DNS server configuration.",
+    description:
+      "Configures the DNS resolver (`/ip dns set`) — sets upstream server IPs, enables or disables " +
+      "forwarding client queries to this router (allow_remote_requests), tunes cache limits " +
+      "(cache_size in KiB, cache_max_ttl, max_udp_packet_size, max_concurrent_queries), and " +
+      "optionally switches to DNS-over-HTTPS (use_doh=true + doh_server URL + verify_doh_cert). " +
+      "Use this when you need to CHANGE which servers the router queries or how its resolver behaves. " +
+      "To read current settings without changing them use get_dns_settings. " +
+      "Returns the updated `/ip dns print` output after applying changes.",
     inputSchema: {
       servers: z.array(z.string()).describe("DNS server IP addresses"),
       allow_remote_requests: z.boolean().default(false),
@@ -176,9 +183,15 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "get_dns_settings",
-    title: "DNS Settings",
+    title: "Get DNS Resolver Settings",
     annotations: READ,
-    description: "Gets current DNS configuration.",
+    description:
+      "Reads the current DNS resolver configuration (`/ip dns print`) — upstream server IPs, " +
+      "allow-remote-requests flag, cache-size, cache-max-ttl, max-udp-packet-size, " +
+      "max-concurrent-queries, and DNS-over-HTTPS settings. " +
+      "To change these settings use set_dns_servers. " +
+      "For cache entry counts and utilization metrics use get_dns_cache_statistics. " +
+      "Returns the full `/ip dns print` settings block.",
     async handler(_a, ctx) {
       ctx.info("Getting DNS settings");
       const result = await executeMikrotikCommand("/ip dns print", ctx);
@@ -188,9 +201,17 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "add_dns_static",
-    title: "Add DNS Static Entry",
+    title: "Add DNS Static Record",
     annotations: WRITE,
-    description: "Adds a static DNS entry.",
+    description:
+      "Creates a static DNS record in `/ip dns static` — the local override table that answers " +
+      "DNS queries before upstream resolvers are consulted. Supports A (address), CNAME (cname), " +
+      "MX (mx_preference + mx_exchange), TXT (text), and SRV (srv_priority + srv_weight + " +
+      "srv_port + srv_target) record types; provide exactly one record type's fields per call. " +
+      "A regexp pattern may also be set for wildcard hostname matching — for a simpler regexp-only " +
+      "interface use add_dns_regexp instead. " +
+      "To inspect existing records use list_dns_static. " +
+      "Returns the created entry's full detail including its `.id`.",
     inputSchema: {
       name: z.string(),
       address: z.string().optional(),
@@ -212,9 +233,15 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "list_dns_static",
-    title: "List DNS Static Entries",
+    title: "List DNS Static Records",
     annotations: READ,
-    description: "Lists static DNS entries.",
+    description:
+      "Lists static DNS records from `/ip dns static print` — the local resolver override table. " +
+      "Supports optional filters: name_filter (substring match on hostname), address_filter " +
+      '(substring match on IP), type_filter (exact record type, e.g. "A", "CNAME", "MX"), ' +
+      "disabled_only (only disabled entries), regexp_only (only regexp-pattern entries). " +
+      "To retrieve full field detail for one specific entry by `.id` use get_dns_static. " +
+      "Returns a table of all matching static DNS records with their `.id` values.",
     inputSchema: {
       name_filter: z.string().optional(),
       address_filter: z.string().optional(),
@@ -244,9 +271,14 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "get_dns_static",
-    title: "Get DNS Static Entry",
+    title: "Get DNS Static Record Detail",
     annotations: READ,
-    description: "Gets details of a specific static DNS entry.",
+    description:
+      "Retrieves full detail of a single static DNS record (`/ip dns static print detail where .id=…`). " +
+      "Use when you need all field values for one known entry rather than a table of all records. " +
+      "The `entry_id` is the `.id` returned by list_dns_static. " +
+      "For a table of all records (or to search by name/address/type) use list_dns_static. " +
+      "Returns the full detail output for the specified entry, or a not-found message.",
     inputSchema: { entry_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting static DNS entry details: entry_id=${a.entry_id}`);
@@ -262,9 +294,17 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "update_dns_static",
-    title: "Update DNS Static Entry",
+    title: "Update DNS Static Record",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a static DNS entry.",
+    description:
+      "Modifies fields on an existing static DNS record (`/ip dns static set`) — can update the " +
+      "hostname (name), record-type data (address, cname, mx_preference, mx_exchange, text, srv " +
+      "fields), ttl, comment, disabled state, or regexp pattern. Pass an empty string for a field " +
+      'to clear it (e.g. address="" removes the address field). ' +
+      "The `entry_id` is the `.id` from list_dns_static. " +
+      "To activate or deactivate without touching other fields use enable_dns_static or " +
+      "disable_dns_static. " +
+      "Returns the updated entry's full detail.",
     inputSchema: {
       entry_id: z.string(),
       name: z.string().optional(),
@@ -287,9 +327,14 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "remove_dns_static",
-    title: "Remove DNS Static Entry",
+    title: "Remove DNS Static Record",
     annotations: DESTRUCTIVE,
-    description: "Removes a static DNS entry.",
+    description:
+      "Permanently deletes a static DNS record from `/ip dns static` — verifies the entry exists " +
+      "first via a count-only check, then runs `/ip dns static remove`. " +
+      "The `entry_id` is the `.id` from list_dns_static. " +
+      "To temporarily suppress a record without deleting it use disable_dns_static. " +
+      "Returns confirmation of deletion, or a not-found message if the ID does not exist.",
     inputSchema: { entry_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing static DNS entry: entry_id=${a.entry_id}`);
@@ -309,27 +354,46 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "enable_dns_static",
-    title: "Enable DNS Static Entry",
+    title: "Enable DNS Static Record",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a static DNS entry.",
+    description:
+      "Re-activates a disabled static DNS record (`/ip dns static set disabled=no`) so it " +
+      "participates in local DNS resolution again. " +
+      "The `entry_id` is the `.id` from list_dns_static. " +
+      "To suppress a record temporarily use disable_dns_static. " +
+      "To permanently delete use remove_dns_static. " +
+      "Returns the updated entry's full detail.",
     inputSchema: { entry_id: z.string() },
     handler: (a, ctx) => updateDnsStatic({ entry_id: a.entry_id, disabled: false }, ctx),
   }),
 
   defineTool({
     name: "disable_dns_static",
-    title: "Disable DNS Static Entry",
+    title: "Disable DNS Static Record",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a static DNS entry.",
+    description:
+      "Deactivates a static DNS record (`/ip dns static set disabled=yes`) without deleting it — " +
+      "the entry is retained but ignored during resolution. " +
+      "The `entry_id` is the `.id` from list_dns_static. " +
+      "To re-activate use enable_dns_static. " +
+      "To permanently delete use remove_dns_static. " +
+      "Returns the updated entry's full detail.",
     inputSchema: { entry_id: z.string() },
     handler: (a, ctx) => updateDnsStatic({ entry_id: a.entry_id, disabled: true }, ctx),
   }),
 
   defineTool({
     name: "get_dns_cache",
-    title: "DNS Cache",
+    title: "Get DNS Cache Entries",
     annotations: READ,
-    description: "Gets the current DNS cache.",
+    description:
+      "Lists all hostnames currently held in the router's DNS resolver cache (`/ip dns cache print`). " +
+      "Use to inspect what the router has already resolved and what is available without re-querying " +
+      "upstream servers. " +
+      "For summary statistics (cache-size, cache-used, cache-max-ttl, total entry count) use " +
+      "get_dns_cache_statistics. " +
+      "To clear the cache use flush_dns_cache. " +
+      "Returns the full cache table, or a message if the cache is empty.",
     async handler(_a, ctx) {
       ctx.info("Getting DNS cache");
       const result = await executeMikrotikCommand("/ip dns cache print", ctx);
@@ -341,7 +405,12 @@ export const dnsTools: ToolModule = [
     name: "flush_dns_cache",
     title: "Flush DNS Cache",
     annotations: DESTRUCTIVE,
-    description: "Flushes the DNS cache.",
+    description:
+      "Clears all cached DNS entries from the router's resolver (`/ip dns cache flush`) — forces " +
+      "the router to re-query upstream servers for all subsequent lookups. " +
+      "Use after changing upstream servers or adding static records to evict stale cached responses. " +
+      "To inspect the cache before flushing use get_dns_cache. " +
+      "Returns confirmation of the flush.",
     async handler(_a, ctx) {
       ctx.info("Flushing DNS cache");
       const result = await executeMikrotikCommand("/ip dns cache flush", ctx);
@@ -351,11 +420,17 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "get_dns_cache_statistics",
-    title: "DNS Cache Statistics",
+    title: "Get DNS Cache Statistics",
     annotations: READ,
     description:
-      "Gets DNS cache statistics — cache size/used/max-ttl (from `/ip dns print`) and the number of " +
-      "cached entries. Works on RouterOS v6 and v7 (there is no `/ip dns cache print stats` command).",
+      "Reports DNS cache utilization metrics — extracts cache-size, cache-used, and cache-max-ttl " +
+      "from `/ip dns print`, then appends the live count of cached entries from " +
+      "`/ip dns cache print count-only`. " +
+      "Use to assess cache utilization without listing every entry. Works on RouterOS v6 and v7 " +
+      "(there is no `/ip dns cache print stats` command). " +
+      "To see all cached entries use get_dns_cache. " +
+      "To change cache-size or cache-max-ttl use set_dns_servers. " +
+      "Returns cache-related fields and the total entry count.",
     async handler(_a, ctx) {
       ctx.info("Getting DNS cache statistics");
       // RouterOS exposes cache stats on the DNS settings, not as a cache sub-command.
@@ -377,9 +452,17 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "add_dns_regexp",
-    title: "Add DNS Regexp Entry",
+    title: "Add DNS Regexp Static Record",
     annotations: WRITE,
-    description: "Adds a DNS regexp entry.",
+    description:
+      "Creates a regexp-pattern static DNS record (`/ip dns static add`) that matches any hostname " +
+      "satisfying the given regular expression and resolves it to a fixed IP address (IPv4 or IPv6) — useful for " +
+      "wildcard domains, captive portals, or ad-blocking. " +
+      "Simplified interface requiring only `regexp` (RouterOS regex) and `address` (IPv4 or IPv6), plus " +
+      "optional `ttl` (default 1d), `comment`, and `disabled`. " +
+      "For full record-type support (CNAME, MX, SRV, TXT) or to set both a hostname and regexp " +
+      "use add_dns_static. " +
+      "Returns the created entry's full detail including its `.id`.",
     inputSchema: {
       regexp: z.string(),
       address: z.string(),
@@ -403,9 +486,16 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "test_dns_query",
-    title: "Test DNS Query",
+    title: "Test DNS Resolution From Router",
     annotations: READ,
-    description: "Tests a DNS query.",
+    description:
+      "Resolves a hostname using the router's own DNS resolver (`/resolve`) — tests what address " +
+      "the router itself would obtain for a given name. Optionally directs the query to a specific " +
+      'upstream `server` (IP) and supports record types via `type` (e.g. "A", "AAAA", "MX"; ' +
+      'default "A"). ' +
+      "Use to verify DNS reachability, that a static record override is active, or that DoH is " +
+      "working — all from the router's perspective, not from a client behind it. " +
+      "Returns the resolver's answer for the queried name and type.",
     inputSchema: {
       name: z.string(),
       server: z.string().optional(),
@@ -427,9 +517,16 @@ export const dnsTools: ToolModule = [
 
   defineTool({
     name: "export_dns_config",
-    title: "Export DNS Config",
+    title: "Export DNS Configuration to File",
     annotations: READ,
-    description: "Exports DNS configuration to a file.",
+    description:
+      "Exports the full DNS configuration (resolver settings and static records) to a RouterOS " +
+      "script file on the router's flash storage (`/ip dns export file=<filename>`). " +
+      "The router appends `.rsc` to the filename automatically; defaults to `dns_config.rsc`. " +
+      "The exported file can be imported on another RouterOS device to replicate DNS configuration. " +
+      "To read current settings as structured output without writing a file use get_dns_settings. " +
+      "To list static records use list_dns_static. " +
+      "Returns the filename of the exported `.rsc` file on the router.",
     inputSchema: { filename: z.string().optional() },
     async handler(a, ctx) {
       ctx.info("Exporting DNS configuration");

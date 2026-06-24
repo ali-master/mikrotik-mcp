@@ -14,10 +14,10 @@ import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const ipServiceTools: ToolModule = [
   defineTool({
     name: "list_ip_services",
-    title: "List IP Services",
+    title: "List IP Management Services",
     annotations: READ,
     description:
-      "Lists the management services (telnet, ftp, www, ssh, api, winbox, …) and their state.",
+      "Lists all built-in router management services (`/ip service`) — telnet, ftp, www, ssh, www-ssl, api, api-ssl, winbox — with their port, allowed source subnets, certificate, and enabled/disabled state. Use this to audit which management protocols are exposed before hardening. Returns the full `/ip service print` table. For a single service's detail use `get_ip_service`.",
     async handler(_a, ctx) {
       ctx.info("Listing IP services");
       const result = await executeMikrotikCommand("/ip service print", ctx);
@@ -27,9 +27,10 @@ export const ipServiceTools: ToolModule = [
 
   defineTool({
     name: "get_ip_service",
-    title: "Get IP Service",
+    title: "Get IP Management Service Details",
     annotations: READ,
-    description: "Gets detailed information about a specific management service.",
+    description:
+      "Retrieves full detail for a single router management service (`/ip service print detail`) — port, allowed source subnets, TLS certificate, and enabled/disabled state. Accepts a service name such as `ssh`, `www`, `winbox`, `api`, `api-ssl`, `telnet`, `ftp`, or `www-ssl`. To view all services at once use `list_ip_services`; to change the service use `set_ip_service`.",
     inputSchema: {
       name: z.string().describe("Service name, e.g. 'ssh', 'www', 'winbox'"),
     },
@@ -47,10 +48,10 @@ export const ipServiceTools: ToolModule = [
 
   defineTool({
     name: "set_ip_service",
-    title: "Set IP Service",
+    title: "Configure IP Management Service",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates a management service's port, allowed source addresses, certificate, or enabled state.",
+      "Updates one or more attributes of a router management service (`/ip service set`) — port number, allowed source subnets (`address`, comma-separated CIDRs), TLS certificate name, or enabled/disabled state (`disabled: true/false`). Accepts a service name such as `ssh`, `winbox`, `api`, or `api-ssl`. To toggle only the enabled state use `enable_ip_service` or `disable_ip_service` instead. Returns updated service detail on success.",
     inputSchema: {
       name: z.string().describe("Service name to update, e.g. 'ssh'"),
       port: z.number().int().optional().describe("Listening port"),
@@ -82,9 +83,10 @@ export const ipServiceTools: ToolModule = [
 
   defineTool({
     name: "enable_ip_service",
-    title: "Enable IP Service",
+    title: "Enable IP Management Service",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a management service.",
+    description:
+      "Enables a previously disabled router management service (`/ip service enable`). Accepts a service name such as `ssh`, `winbox`, or `api`. To also change the port, source address filter, or certificate use `set_ip_service` instead; to disable a service use `disable_ip_service`.",
     inputSchema: {
       name: z.string().describe("Service name to enable, e.g. 'ssh'"),
     },
@@ -101,9 +103,10 @@ export const ipServiceTools: ToolModule = [
 
   defineTool({
     name: "disable_ip_service",
-    title: "Disable IP Service",
+    title: "Disable IP Management Service",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a management service (useful for hardening: telnet, ftp, www).",
+    description:
+      "Disables a router management service (`/ip service disable`) — use this to harden the router by turning off insecure or unused protocols such as `telnet`, `ftp`, or `www`. Accepts a service name. To also change the port, source address filter, or certificate use `set_ip_service` instead; to re-enable a service use `enable_ip_service`.",
     inputSchema: {
       name: z.string().describe("Service name to disable, e.g. 'telnet'"),
     },

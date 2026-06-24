@@ -10,11 +10,15 @@ const Authoritative = z.enum(["yes", "no", "after-2sec-delay"]);
 export const dhcpTools: ToolModule = [
   defineTool({
     name: "create_dhcp_server",
-    title: "Create DHCP Server",
+    title: "Create DHCP Server Instance",
     annotations: WRITE,
     description:
-      "Creates a DHCP server bound to the specified interface on the MikroTik device.\n\n" +
-      'Notes:\n    lease_time: duration e.g. "1d", "12h", "30m", "1h30m"',
+      "Creates an IPv4 DHCP server (`/ip dhcp-server`) bound to a specific interface — assigns a name, address pool, lease time, and authoritative mode to the server process. " +
+      "For the subnet parameters pushed to clients (gateway, DNS, domain, NTP) use `create_dhcp_network`. " +
+      "For the IP address range the server draws from use `create_dhcp_pool`. " +
+      "Returns the created server's full detail including its `.id`.\n\n" +
+      'Notes:\n    lease_time: duration e.g. "1d", "12h", "30m", "1h30m"\n' +
+      '    authoritative: "yes" | "no" | "after-2sec-delay"',
     inputSchema: {
       name: z.string(),
       interface: z.string(),
@@ -57,7 +61,11 @@ export const dhcpTools: ToolModule = [
     name: "list_dhcp_servers",
     title: "List DHCP Servers",
     annotations: READ,
-    description: "Lists DHCP servers on the MikroTik device.",
+    description:
+      "Lists all IPv4 DHCP server instances (`/ip dhcp-server`) — returns name, interface, address-pool, lease-time, authoritative mode, and enabled/disabled state for each. " +
+      "Optionally filter by name substring (`name_filter`), exact interface (`interface_filter`), disabled-only, or invalid-only. " +
+      "To inspect a single server in full detail use `get_dhcp_server`. " +
+      "To configure the subnet/gateway/DNS parameters pushed to clients use `create_dhcp_network`; to configure the IP address ranges use `create_dhcp_pool`.",
     inputSchema: {
       name_filter: z.string().optional(),
       interface_filter: z.string().optional(),
@@ -87,9 +95,12 @@ export const dhcpTools: ToolModule = [
 
   defineTool({
     name: "get_dhcp_server",
-    title: "Get DHCP Server",
+    title: "Get DHCP Server Details",
     annotations: READ,
-    description: "Gets detailed information about a specific DHCP server.",
+    description:
+      "Fetches full detail for a single IPv4 DHCP server (`/ip dhcp-server print detail`) by name — returns all fields including `.id`, bound interface, address-pool, lease-time, authoritative mode, and status flags. " +
+      "Use `list_dhcp_servers` first to discover server names. " +
+      "To create or update the subnet/gateway/DNS parameters this server advertises use `create_dhcp_network`; to create or update the IP pool range use `create_dhcp_pool`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting DHCP server details: name=${a.name}`);
@@ -105,10 +116,14 @@ export const dhcpTools: ToolModule = [
 
   defineTool({
     name: "create_dhcp_network",
-    title: "Create DHCP Network",
+    title: "Create DHCP Network (Subnet Parameters)",
     annotations: WRITE,
     description:
-      "Creates a DHCP network configuration (gateway, DNS, domain, etc.) on the MikroTik device.",
+      "Creates an IPv4 DHCP network entry (`/ip dhcp-server network`) that defines the subnet parameters pushed to DHCP clients — including gateway, DNS servers, domain, WINS servers, NTP servers, and DHCP options for a given address prefix. " +
+      "This is the network/scope record, NOT the server process; to create the server process itself use `create_dhcp_server`. " +
+      "To define the IP range the server assigns use `create_dhcp_pool`. " +
+      "dns_servers, wins_servers, and ntp_servers accept arrays of IP address strings; dhcp_option accepts an array of DHCP option names. " +
+      "Returns the created network entry's full detail.",
     inputSchema: {
       network: z.string(),
       gateway: z.string(),
@@ -148,11 +163,14 @@ export const dhcpTools: ToolModule = [
 
   defineTool({
     name: "create_dhcp_pool",
-    title: "Create DHCP Pool",
+    title: "Create IP Address Pool",
     annotations: WRITE,
     description:
-      "Creates a DHCP address pool with the given IP ranges on the MikroTik device.\n\n" +
-      'Notes:\n    ranges: hyphen-separated range(s) e.g. "192.168.1.1-192.168.1.100"\n' +
+      "Creates an IPv4 address pool (`/ip pool`) that defines IP ranges a DHCP server (or PPP) can assign to clients. " +
+      "To create the DHCP server process that uses this pool, call `create_dhcp_server` with `address_pool` set to this pool's name. " +
+      "Optionally chains to `next_pool` when this pool is exhausted. " +
+      "Returns the created pool's full detail including its `.id`.\n\n" +
+      'Notes:\n    ranges: hyphen-separated range e.g. "192.168.1.1-192.168.1.100"\n' +
       '        Multiple ranges comma-separated: "10.0.0.1-10.0.0.50,10.0.0.100-10.0.0.120"',
     inputSchema: {
       name: z.string(),
@@ -183,9 +201,13 @@ export const dhcpTools: ToolModule = [
 
   defineTool({
     name: "remove_dhcp_server",
-    title: "Remove DHCP Server",
+    title: "Remove DHCP Server Instance",
     annotations: DESTRUCTIVE,
-    description: "Removes a DHCP server from the MikroTik device.",
+    description:
+      "Permanently removes an IPv4 DHCP server instance (`/ip dhcp-server remove`) by name — first verifies existence via count-only, then deletes. " +
+      "Does NOT remove the associated network entry (`/ip dhcp-server network`) or address pool (`/ip pool`); those must be removed separately. " +
+      "Stops DHCP service on the bound interface immediately. " +
+      "Use `list_dhcp_servers` to confirm the server name before removing.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCP server: name=${a.name}`);

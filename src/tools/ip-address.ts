@@ -8,9 +8,13 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const ipAddressTools: ToolModule = [
   defineTool({
     name: "add_ip_address",
-    title: "Add IP Address",
+    title: "Add IPv4 Address to Interface",
     annotations: WRITE,
-    description: "Adds an IP address to an interface on the MikroTik device.",
+    description:
+      "Assigns an IPv4 address to an interface (`/ip address add`). Use this to add a CIDR" +
+      " address (e.g. '192.168.1.1/24') as the router's own address on a network segment —" +
+      " sets the interface's local address, optional network, and broadcast. For IPv6 use" +
+      " add_ipv6_address. Returns the full detail of the new address entry including its `.id`.",
     inputSchema: {
       address: z.string().describe("Address with CIDR, e.g. '192.168.1.1/24'"),
       interface: z.string(),
@@ -42,9 +46,15 @@ export const ipAddressTools: ToolModule = [
 
   defineTool({
     name: "list_ip_addresses",
-    title: "List IP Addresses",
+    title: "List IPv4 Addresses",
     annotations: READ,
-    description: "Lists IP addresses on the MikroTik device.",
+    description:
+      "Lists IPv4 interface address assignments (`/ip address print`). Use this to enumerate" +
+      " which addresses are bound to which interfaces, or to find `.id` values needed by" +
+      " get_ip_address and remove_ip_address. Supports filtering by interface name" +
+      " (interface_filter), address substring (address_filter), network (network_filter)," +
+      " disabled-only, or dynamic-only. For IPv6 use list_ipv6_addresses. Returns all matching" +
+      " entries with address/prefix, interface, network, flags, and `.id`.",
     inputSchema: {
       interface_filter: z.string().optional(),
       address_filter: z.string().optional(),
@@ -70,9 +80,14 @@ export const ipAddressTools: ToolModule = [
 
   defineTool({
     name: "get_ip_address",
-    title: "Get IP Address",
+    title: "Get IPv4 Address Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IP address by ID or address value.",
+    description:
+      "Retrieves full detail for a single IPv4 address entry (`/ip address print detail`)." +
+      " Accepts either a RouterOS `.id` (e.g. '*1', obtained from list_ip_addresses) or the" +
+      " dotted-decimal CIDR address string (e.g. '192.168.1.1/24'). Use this to inspect one" +
+      " specific assignment rather than the full list. For IPv6 use get_ipv6_address. Returns" +
+      " the complete record including interface, network, broadcast, flags, and `.id`.",
     inputSchema: {
       address_id: z.string().describe("RouterOS .id (e.g. '*1') or the address value"),
     },
@@ -96,9 +111,14 @@ export const ipAddressTools: ToolModule = [
 
   defineTool({
     name: "remove_ip_address",
-    title: "Remove IP Address",
+    title: "Remove IPv4 Address",
     annotations: DESTRUCTIVE,
-    description: "Removes an IP address from the MikroTik device by ID or address value.",
+    description:
+      "Removes an IPv4 interface address from the device (`/ip address remove`). Accepts" +
+      " either a RouterOS `.id` (e.g. '*1', from list_ip_addresses) or the CIDR address value" +
+      " (e.g. '192.168.1.1/24'); performs an existence check before deletion and returns a" +
+      " not-found message if the entry is absent. For IPv6 use remove_ipv6_address. Returns" +
+      " confirmation of successful removal.",
     inputSchema: { address_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IP address: address_id=${a.address_id}`);
