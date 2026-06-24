@@ -8,7 +8,7 @@
       "type": "string"
     },
     "group_filter": {
-      "description": "Substring match on the multicast group address",
+      "description": "Regex match on the multicast group address",
       "type": "string"
     }
   },
