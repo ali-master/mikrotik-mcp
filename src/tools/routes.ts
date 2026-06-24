@@ -86,9 +86,16 @@ async function setRouteDisabled(
 export const routeTools: ToolModule = [
   defineTool({
     name: "add_route",
-    title: "Add Route",
+    title: "Add IPv4 Static Route",
     annotations: WRITE,
-    description: "Adds a route to the routing table.",
+    description:
+      "Adds an IPv4 static route (`/ip route add`) to the routing table — use this to define any " +
+      "non-default unicast next-hop (host, subnet, or summarized prefix). " +
+      "For the 0.0.0.0/0 default gateway use add_default_route; for null/drop routes use " +
+      "add_blackhole_route; for IPv6 use add_ipv6_route. " +
+      "`distance` sets priority (1–255, lower wins); `routing_mark` assigns the route to a " +
+      'policy-routing table; `check_gateway` ("ping" or "arp") enables active gateway monitoring. ' +
+      "Returns the created route's detail including its `.id`.",
     inputSchema: {
       dst_address: z.string().describe('CIDR e.g. "0.0.0.0/0", "192.168.1.0/24"'),
       gateway: z.string(),
@@ -109,9 +116,16 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "list_routes",
-    title: "List Routes",
+    title: "List IPv4 Routes",
     annotations: READ,
-    description: "Lists routes in MikroTik routing table.",
+    description:
+      "Lists IPv4 routes from `/ip route` with optional filters — the primary tool for inspecting " +
+      "what routes the router knows. `dst_filter` and `gateway_filter` do substring matching; " +
+      "`routing_mark_filter` and `distance_filter` do exact matching; " +
+      "`active_only`/`disabled_only`/`dynamic_only`/`static_only` are boolean flags. " +
+      "For a table-scoped view of active routes use get_routing_table; for counts and summary stats " +
+      "use get_route_statistics; for IPv6 use list_ipv6_routes. " +
+      "Returns all matching route entries.",
     inputSchema: {
       dst_filter: z.string().optional(),
       gateway_filter: z.string().optional(),
@@ -141,9 +155,14 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "get_route",
-    title: "Get Route",
+    title: "Get IPv4 Route Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific route.",
+    description:
+      "Fetches full detail for a single IPv4 route (`/ip route print detail where .id=…`) — " +
+      "use this after list_routes to inspect one entry's flags, nexthop, distance, scope, and " +
+      "all attributes. `route_id` is the `*N` or `N` `.id` value from list_routes. " +
+      "For listing multiple routes use list_routes; for a table-scoped view use get_routing_table. " +
+      "Returns the complete detail block for that route, or a not-found message.",
     inputSchema: {
       route_id: z.string().describe('"*N" or "N" from list output e.g. "*3"'),
     },
@@ -161,10 +180,15 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "update_route",
-    title: "Update Route",
+    title: "Update IPv4 Route",
     annotations: WRITE_IDEMPOTENT,
     description:
-      'Updates a route. Pass "" to routing_mark, vrf_interface, or pref_src to clear them.',
+      "Modifies an existing IPv4 static route (`/ip route set`) — change its gateway, dst-address, " +
+      "distance, scope, routing-mark, VRF interface, preferred-source, or gateway check method. " +
+      "`route_id` is the `*N` `.id` from list_routes. " +
+      'Pass an empty string ("") for `routing_mark`, `vrf_interface`, or `pref_src` to clear those fields. ' +
+      "For toggling active state without editing attributes use enable_route / disable_route. " +
+      "Returns the updated route detail.",
     inputSchema: {
       route_id: z.string().describe('"*N" or "N" from list output e.g. "*3"'),
       dst_address: z.string().optional().describe('CIDR e.g. "192.168.1.0/24"'),
@@ -223,9 +247,13 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "remove_route",
-    title: "Remove Route",
+    title: "Remove IPv4 Route",
     annotations: DESTRUCTIVE,
-    description: "Removes a route.",
+    description:
+      "Permanently deletes an IPv4 route (`/ip route remove`) — verifies the entry exists first " +
+      "(count-only check) then removes it. `route_id` is the `*N` `.id` from list_routes. " +
+      "To temporarily take a route out of service without deleting it use disable_route instead. " +
+      "Confirms deletion or reports not-found.",
     inputSchema: {
       route_id: z.string().describe('"*N" or "N" from list output e.g. "*3"'),
     },
@@ -245,9 +273,14 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "enable_route",
-    title: "Enable Route",
+    title: "Enable IPv4 Route",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a route.",
+    description:
+      "Activates a disabled IPv4 route (`/ip route set disabled=no`) — makes it eligible for " +
+      "route selection without altering any other attributes. " +
+      "`route_id` is the `*N` `.id` from list_routes. " +
+      "To deactivate a route use disable_route; to remove it permanently use remove_route. " +
+      "Returns the updated route detail.",
     inputSchema: {
       route_id: z.string().describe('"*N" or "N" from list output e.g. "*3"'),
     },
@@ -258,9 +291,14 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "disable_route",
-    title: "Disable Route",
+    title: "Disable IPv4 Route",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a route.",
+    description:
+      "Deactivates an IPv4 route (`/ip route set disabled=yes`) — removes it from route selection " +
+      "without deleting it so it can be re-enabled later. " +
+      "`route_id` is the `*N` `.id` from list_routes. " +
+      "To re-activate use enable_route; to permanently delete use remove_route. " +
+      "Returns the updated route detail.",
     inputSchema: {
       route_id: z.string().describe('"*N" or "N" from list output e.g. "*3"'),
     },
@@ -271,9 +309,17 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "get_routing_table",
-    title: "Routing Table",
+    title: "Get IPv4 Routing Table by Name",
     annotations: READ,
-    description: "Gets a specific routing table.",
+    description:
+      "Reads IPv4 route entries scoped by routing table (`/ip route print`) — for any `table_name` " +
+      'other than "main" adds `where routing-table=<name>`; for the implicit default "main" table ' +
+      "the routing-table filter is omitted (routes without an explicit table belong to main). " +
+      'Designed for policy-routing setups with multiple tables (e.g. "main", "ISP1", "ISP2"). ' +
+      'Filters by `table_name` (default "main"), optional `protocol_filter`, and `active_only` ' +
+      "(default true, showing only routes currently used for forwarding). " +
+      "For an unfiltered list across all tables use list_routes; for total/active/static counts " +
+      "use get_route_statistics. Returns matching route entries from the specified table.",
     inputSchema: {
       table_name: z.string().default("main"),
       protocol_filter: z.string().optional(),
@@ -295,9 +341,14 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "check_route_path",
-    title: "Check Route Path",
+    title: "Check IPv4 Route Path",
     annotations: READ,
-    description: "Checks the route path to a destination.",
+    description:
+      "Resolves which nexthop RouterOS would use for a given IPv4 destination (`/ip route check`) " +
+      '— answers "which gateway will this packet take?" without sending any traffic. ' +
+      "Optionally scoped by `source` address and `routing_mark` for policy-routing table lookups. " +
+      "For listing all known routes use list_routes; for a named-table view use get_routing_table. " +
+      "Returns the resolved nexthop and interface detail.",
     inputSchema: {
       destination: z.string(),
       source: z.string().optional(),
@@ -318,12 +369,15 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "get_route_cache",
-    title: "Get Route Cache",
+    title: "Get IPv4 Route Cache / Forwarding Table",
     annotations: READ,
     description:
-      "Shows the route/forwarding cache. Version-aware: on RouterOS v6 it reads the real route cache " +
-      "(`/ip route cache`); on v7+ — which removed the separate cache — it returns the active forwarding " +
-      "table (FIB), i.e. `/ip route` entries with active=yes, the closest equivalent.",
+      "Shows the IPv4 route cache or active forwarding table — version-aware: on RouterOS v6 reads " +
+      "the real per-flow route cache (`/ip route cache print`); on v7+ (where the cache was removed) " +
+      "returns active `/ip route` entries with active=yes (the FIB equivalent). " +
+      "Use this to inspect what the dataplane is actually forwarding. " +
+      "For all routes including inactive/disabled entries use list_routes. " +
+      "Returns cache entries (v6) or active forwarding-table entries (v7+).",
     async handler(_a, ctx) {
       ctx.info("Getting route cache");
       // v6: a real per-flow route cache exists.
@@ -343,11 +397,15 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "flush_route_cache",
-    title: "Flush Route Cache",
+    title: "Flush IPv4 Route Cache",
     annotations: DESTRUCTIVE,
     description:
-      "Flushes the route cache (`/ip route cache flush`). Version-aware: on RouterOS v6 it flushes the cache; " +
-      "on v7+ there is no separate cache, so it reports a no-op (the FIB is rebuilt from /ip route directly).",
+      "Clears the IPv4 per-flow route cache (`/ip route cache flush`) — forces the dataplane to " +
+      "re-resolve nexthops from the routing table, useful after manual route changes that have not " +
+      "yet propagated to the cache. " +
+      "Version-aware: on RouterOS v7+ there is no separate cache (the FIB is rebuilt directly from " +
+      "`/ip route`), so this is a no-op and reports accordingly. " +
+      "To view the current cache before flushing use get_route_cache.",
     async handler(_a, ctx) {
       ctx.info("Flushing route cache");
       const result = await executeMikrotikCommand("/ip route cache flush", ctx);
@@ -361,9 +419,15 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "add_default_route",
-    title: "Add Default Route",
+    title: "Add IPv4 Default Route",
     annotations: WRITE,
-    description: "Adds a default route.",
+    description:
+      "Adds an IPv4 default route (`/ip route add dst-address=0.0.0.0/0`) with gateway health " +
+      "monitoring — a convenience wrapper around add_route fixed to the 0.0.0.0/0 prefix. " +
+      '`check_gateway` defaults to "ping" (active gateway probing); set `distance` to control ' +
+      "failover priority when multiple default routes exist. " +
+      "For any other prefix use add_route; for null/drop routes use add_blackhole_route; " +
+      "for IPv6 use add_ipv6_route. Returns the created route detail including its `.id`.",
     inputSchema: {
       gateway: z.string(),
       distance: z.number().int().default(1),
@@ -386,9 +450,14 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "add_blackhole_route",
-    title: "Add Blackhole Route",
+    title: "Add IPv4 Blackhole Route",
     annotations: WRITE,
-    description: "Adds a blackhole route.",
+    description:
+      "Adds an IPv4 null/blackhole route (`/ip route add type=blackhole`) — traffic to `dst_address` " +
+      "is silently dropped at the routing layer without generating an ICMP unreachable. " +
+      "Used for traffic engineering, bogon suppression, or null-routing abusive prefixes. " +
+      "For a normal next-hop route use add_route; for a default gateway use add_default_route. " +
+      "Returns the created route's `.id` on success.",
     inputSchema: {
       dst_address: z.string().describe('CIDR e.g. "10.0.0.0/8"'),
       distance: z.number().int().default(1).describe("1-255"),
@@ -416,9 +485,14 @@ export const routeTools: ToolModule = [
 
   defineTool({
     name: "get_route_statistics",
-    title: "Route Statistics",
+    title: "Get IPv4 Route Statistics",
     annotations: READ,
-    description: "Gets routing table statistics.",
+    description:
+      "Returns a count summary of the IPv4 routing table (`/ip route print count-only`) broken down " +
+      "by total, active, dynamic, static, and disabled entries — a fast health-check without " +
+      "returning the full route list. " +
+      "For the actual route entries use list_routes; for a named-table view use get_routing_table. " +
+      "Returns a formatted ROUTE STATISTICS block with five counters.",
     async handler(_a, ctx) {
       ctx.info("Getting route statistics");
       const total = await executeMikrotikCommand("/ip route print count-only", ctx);

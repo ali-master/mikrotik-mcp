@@ -15,8 +15,11 @@ export const routingOspfTools: ToolModule = [
     title: "List OSPF Instances",
     annotations: READ,
     description:
-      "Lists OSPF instances (`/routing ospf instance`). An instance is one OSPF process: it fixes the protocol " +
-      "version (2 for IPv4, 3 for IPv6), router-id, redistribution and import/export filter chains.",
+      "List all OSPF instances (`/routing ospf instance`) — each instance is one OSPF process with a fixed " +
+      "protocol version (2=OSPFv2/IPv4, 3=OSPFv3/IPv6), router-id, redistribution list, and import/export " +
+      "filter chains. Use this to verify running processes before adding areas or interface templates. " +
+      "For area topology use list_ospf_areas; for per-link config use list_ospf_interface_templates; " +
+      "for adjacency state use list_ospf_neighbors. Returns full detail for every instance including disabled ones.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF instances");
       const result = await executeMikrotikCommand("/routing ospf instance print detail", ctx);
@@ -30,8 +33,13 @@ export const routingOspfTools: ToolModule = [
     title: "Add OSPF Instance",
     annotations: WRITE,
     description:
-      "Adds an OSPF instance. `version` 2 = OSPFv2 (IPv4), 3 = OSPFv3 (IPv6). `router_id` may be an IPv4 address, " +
-      "'main', or the name of a `/routing id`. `redistribute` is a comma list (connected,static,rip,bgp,…).",
+      "Create an OSPF instance (`/routing ospf instance add`) — the top-level OSPF process. " +
+      "`version` 2 = OSPFv2 (IPv4 routing), 3 = OSPFv3 (IPv6 routing); each address family needs its own instance. " +
+      "`router_id` may be an IPv4 address, 'main', or the name of a `/routing id`. " +
+      "`redistribute` is a comma-separated list (connected,static,rip,bgp,…). " +
+      "Requires RouterOS v7 with the routing package. " +
+      "After creating an instance, add areas with add_ospf_area and bind interfaces with add_ospf_interface_template. " +
+      "Returns the created instance's full detail.",
     inputSchema: {
       name: z.string().describe("Unique instance name"),
       version: z.number().int().min(2).max(3).default(2).describe("2 = OSPFv2, 3 = OSPFv3"),
@@ -77,7 +85,12 @@ export const routingOspfTools: ToolModule = [
     name: "update_ospf_instance",
     title: "Update OSPF Instance",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an OSPF instance by name.",
+    description:
+      "Update an existing OSPF instance (`/routing ospf instance set`) by name — change router-id, " +
+      "redistribution list, import/export filter chains, originate-default policy, comment, or disabled state. " +
+      "Only supplied fields are modified; omitting a field leaves it unchanged. " +
+      "`name` identifies the target instance (use list_ospf_instances to find names). " +
+      "Returns the updated instance detail. To remove an instance entirely use remove_ospf_instance.",
     inputSchema: {
       name: z.string().describe("Existing OSPF instance name"),
       router_id: z.string().optional(),
@@ -118,7 +131,13 @@ export const routingOspfTools: ToolModule = [
     name: "remove_ospf_instance",
     title: "Remove OSPF Instance",
     annotations: DESTRUCTIVE,
-    description: "Removes an OSPF instance by name.",
+    description:
+      "Remove an OSPF instance by name (`/routing ospf instance remove`) — permanently stops the named OSPF process. " +
+      "Use list_ospf_instances to find the instance name. " +
+      "Remove dependent areas (remove_ospf_area), area ranges (remove_ospf_area_range), and interface templates " +
+      "(remove_ospf_interface_template) first to avoid orphaned config or removal errors. " +
+      "Irreversible — all OSPF adjacencies for that process will drop immediately. " +
+      "For a non-destructive pause use update_ospf_instance with disabled=true.",
     inputSchema: { name: z.string().describe("OSPF instance name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing OSPF instance: ${a.name}`);
@@ -138,8 +157,11 @@ export const routingOspfTools: ToolModule = [
     title: "List OSPF Areas",
     annotations: READ,
     description:
-      "Lists OSPF areas (`/routing ospf area`). An area groups links inside an instance; `type` controls LSA " +
-      "flooding (default/backbone, stub, nssa).",
+      "List all OSPF areas (`/routing ospf area`) — areas group links within an OSPF instance and control " +
+      "LSA flooding scope; `type` is default (normal), stub, or nssa; area-id 0.0.0.0 is the backbone. " +
+      "Use this to verify area membership before adding area ranges or interface templates. " +
+      "For prefix summarisation use list_ospf_area_ranges; for adjacency health use list_ospf_neighbors. " +
+      "Returns full detail for every area including its instance and type.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF areas");
       const result = await executeMikrotikCommand("/routing ospf area print detail", ctx);
@@ -152,7 +174,14 @@ export const routingOspfTools: ToolModule = [
     name: "add_ospf_area",
     title: "Add OSPF Area",
     annotations: WRITE,
-    description: "Adds an OSPF area to an instance. The backbone is area-id 0.0.0.0.",
+    description:
+      "Create an OSPF area (`/routing ospf area add`) within a named instance — area-id must be in IPv4 " +
+      "dotted notation (backbone = '0.0.0.0'). `type` controls LSA flooding: default (normal), stub (no external " +
+      "LSAs), or nssa (allow external redistribution via NSSA LSAs). `no_summaries=true` makes a totally-stubby " +
+      "or totally-NSSA area by blocking summary LSAs. " +
+      "Requires the instance to already exist (add_ospf_instance). " +
+      "After adding an area, bind interfaces to it with add_ospf_interface_template. " +
+      "Returns a success confirmation.",
     inputSchema: {
       name: z.string().describe("Unique area name"),
       area_id: z.string().describe('Area id in IPv4 notation, e.g. "0.0.0.0" for backbone'),
@@ -186,7 +215,11 @@ export const routingOspfTools: ToolModule = [
     name: "remove_ospf_area",
     title: "Remove OSPF Area",
     annotations: DESTRUCTIVE,
-    description: "Removes an OSPF area by name.",
+    description:
+      "Remove an OSPF area by name (`/routing ospf area remove`) — permanently deletes the area and its " +
+      "association with the instance. Use list_ospf_areas to find the area name. " +
+      "Remove any area ranges (remove_ospf_area_range) and interface templates (remove_ospf_interface_template) " +
+      "that reference this area first to avoid orphaned config or removal errors.",
     inputSchema: { name: z.string().describe("OSPF area name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing OSPF area: ${a.name}`);
@@ -206,8 +239,11 @@ export const routingOspfTools: ToolModule = [
     title: "List OSPF Area Ranges",
     annotations: READ,
     description:
-      "Lists OSPF area ranges (`/routing ospf area range`): aggregate prefixes advertised at an area boundary " +
-      "to summarise intra-area routes.",
+      "List OSPF area summarisation ranges (`/routing ospf area range`) — aggregate prefixes that an ABR " +
+      "(area border router) advertises to condense intra-area routes into fewer inter-area Type-3 LSAs. " +
+      "Use this to verify summarisation config before adding or removing ranges. " +
+      "For the areas themselves use list_ospf_areas. " +
+      "Returns full detail including prefix, area, cost, and advertise flag.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF area ranges");
       const result = await executeMikrotikCommand("/routing ospf area range print detail", ctx);
@@ -220,7 +256,13 @@ export const routingOspfTools: ToolModule = [
     name: "add_ospf_area_range",
     title: "Add OSPF Area Range",
     annotations: WRITE,
-    description: "Adds a summarisation range to an OSPF area.",
+    description:
+      "Add an OSPF area summarisation range (`/routing ospf area range add`) to a named area — the ABR will " +
+      "aggregate matching intra-area prefixes into a single Type-3 LSA advertised to other areas. " +
+      "`advertise=false` suppresses the summary entirely (null-routes the aggregate). " +
+      "`cost` overrides the auto-computed metric. Area must already exist (add_ospf_area). " +
+      "`prefix` is the aggregate prefix, e.g. '10.10.0.0/16'. " +
+      "Use list_ospf_area_ranges to verify after creation. Returns a success confirmation.",
     inputSchema: {
       area: z.string().describe("OSPF area name"),
       prefix: z.string().describe('Aggregate prefix, e.g. "10.10.0.0/16"'),
@@ -249,7 +291,10 @@ export const routingOspfTools: ToolModule = [
     name: "remove_ospf_area_range",
     title: "Remove OSPF Area Range",
     annotations: DESTRUCTIVE,
-    description: "Removes an OSPF area range by id.",
+    description:
+      "Remove an OSPF area summarisation range (`/routing ospf area range remove`) by its `.id` — " +
+      "use list_ospf_area_ranges to obtain the id (e.g. '*1'). " +
+      "The ABR will revert to advertising individual intra-area prefixes instead of the aggregate.",
     inputSchema: { range_id: z.string().describe('Range id, e.g. "*1"') },
     async handler(a, ctx) {
       ctx.info(`Removing OSPF area range ${a.range_id}`);
@@ -269,8 +314,12 @@ export const routingOspfTools: ToolModule = [
     title: "List OSPF Interface Templates",
     annotations: READ,
     description:
-      "Lists OSPF interface templates (`/routing ospf interface-template`). A template binds interfaces/networks " +
-      "to an area and sets per-link parameters (cost, type, timers, authentication, passive).",
+      "List OSPF interface templates (`/routing ospf interface-template`) — templates bind interfaces or network " +
+      "prefixes to an area and set per-link OSPF parameters (cost, type, timers, authentication, passive). " +
+      "This is the RouterOS v7 mechanism that activates OSPF on interfaces; there is no per-interface sub-menu. " +
+      "Use this before adding or removing templates. " +
+      "For area membership use list_ospf_areas; for active adjacencies use list_ospf_neighbors. " +
+      "Returns full detail for every template including its area, interfaces/networks, and auth settings.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF interface templates");
       const result = await executeMikrotikCommand(
@@ -289,9 +338,14 @@ export const routingOspfTools: ToolModule = [
     title: "Add OSPF Interface Template",
     annotations: WRITE,
     description:
-      "Adds an OSPF interface template. Match links via `interfaces` and/or `networks`; `type` sets the link model " +
-      "(broadcast/ptp/nbma/ptmp), `passive` advertises the subnet without forming adjacencies, and the `auth_*` " +
-      "fields enable per-interface authentication.",
+      "Bind interfaces or network prefixes to an OSPF area (`/routing ospf interface-template add`). " +
+      "Match links via `interfaces` (interface or interface-list name) and/or `networks` (prefix, " +
+      "e.g. '10.0.0.0/24'). `type` sets the link model: broadcast (LAN), ptp (point-to-point), " +
+      "nbma, ptmp, or virtual-link. `passive=true` advertises the subnet without forming OSPF adjacencies " +
+      "(for stub networks). `auth`/`auth_id`/`auth_key` enable per-interface authentication; `hello_interval` " +
+      "e.g. '10s', `dead_interval` e.g. '40s'. " +
+      "Requires the area to already exist (add_ospf_area). " +
+      "Returns the new template id (e.g. '*2') if RouterOS echoes one; use list_ospf_interface_templates to verify.",
     inputSchema: {
       area: z.string().describe("OSPF area name to attach matched interfaces to"),
       interfaces: z.string().optional().describe("Interface or interface-list name"),
@@ -343,7 +397,10 @@ export const routingOspfTools: ToolModule = [
     name: "remove_ospf_interface_template",
     title: "Remove OSPF Interface Template",
     annotations: DESTRUCTIVE,
-    description: "Removes an OSPF interface template by id.",
+    description:
+      "Remove an OSPF interface template (`/routing ospf interface-template remove`) by its `.id` — " +
+      "use list_ospf_interface_templates to obtain the id (e.g. '*2'). " +
+      "Removing a template stops OSPF on all matched interfaces; existing adjacencies will drop immediately.",
     inputSchema: { template_id: z.string().describe('Template id, e.g. "*2"') },
     async handler(a, ctx) {
       ctx.info(`Removing OSPF interface template ${a.template_id}`);
@@ -363,8 +420,11 @@ export const routingOspfTools: ToolModule = [
     title: "List OSPF Neighbors",
     annotations: READ,
     description:
-      "Lists OSPF neighbors (`/routing ospf neighbor`): adjacency state (Full/2-Way/…), neighbor router-id and " +
-      "address. Read-only — the key health check for OSPF adjacencies.",
+      "List active OSPF adjacencies (`/routing ospf neighbor`) — shows each neighbor's router-id, address, " +
+      "interface, instance, area, and adjacency state (Full/2-Way/ExStart/Exchange/Loading/…). " +
+      "Read-only — the primary health check for confirming OSPF is forming Full adjacencies. " +
+      "For the link-state database use list_ospf_lsa; for per-interface config use list_ospf_interface_templates. " +
+      "Returns full detail for every discovered neighbor.",
     async handler(_a, ctx) {
       ctx.info("Listing OSPF neighbors");
       const result = await executeMikrotikCommand("/routing ospf neighbor print detail", ctx);
@@ -378,8 +438,12 @@ export const routingOspfTools: ToolModule = [
     title: "List OSPF LSAs",
     annotations: READ,
     description:
-      "Lists the OSPF link-state database (`/routing ospf lsa`): every LSA the router holds, by type, area and " +
-      "originator. Read-only — used to inspect topology and diagnose flooding/summarisation problems.",
+      "List the OSPF link-state database (`/routing ospf lsa`) — every LSA the router holds, by type " +
+      "(Router/Network/Summary/ASBR-Summary/External/NSSA/…), area, and originating router-id. " +
+      "Read-only — used to inspect topology, verify summarisation (Type-3 LSAs), confirm external " +
+      "redistribution (Type-5/Type-7), and diagnose flooding or database synchronisation problems. " +
+      "Filter to a single area with `area_filter`. " +
+      "For adjacency state use list_ospf_neighbors; for instance/area config use list_ospf_instances.",
     inputSchema: {
       area_filter: z.string().optional().describe("Show only LSAs for this area"),
     },

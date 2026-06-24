@@ -11,11 +11,16 @@ const UNSUPPORTED =
 export const routingTableTools: ToolModule = [
   defineTool({
     name: "list_routing_tables",
-    title: "List Routing Tables",
+    title: "List Routing Table Definitions",
     annotations: READ,
     description:
-      "Lists routing tables (`/routing table`). Each named table is a separate RIB; set `fib` on a table to " +
-      "also install its routes into the forwarding plane (FIB). The built-in `main` table is always present.",
+      "Lists named routing table definitions (`/routing table print detail`) — the RIB (Routing Information Base) " +
+      "containers used by RouterOS v7 policy-based routing. Each table isolates a routing domain; `fib=true` means its " +
+      "routes are installed into the forwarding plane. The built-in `main` table is always present. " +
+      "For actual IPv4 routes stored inside a table use `list_routes`; for IPv6 routes use `list_ipv6_routes`; " +
+      "for the policy rules that steer packets into a table use `list_routing_rules`. " +
+      "Returns all table definitions with name, fib flag, disabled state, and comment; " +
+      "supports optional `name_filter` substring match.",
     inputSchema: {
       name_filter: z.string().optional().describe("Substring match on table name"),
     },
@@ -30,9 +35,14 @@ export const routingTableTools: ToolModule = [
 
   defineTool({
     name: "get_routing_table_def",
-    title: "Get Routing Table",
+    title: "Get Routing Table Definition",
     annotations: READ,
-    description: "Gets detailed information about a specific routing table definition by name.",
+    description:
+      "Gets the definition of a single named routing table (`/routing table print detail where name=…`) — " +
+      "inspects whether `fib` is active and whether the table is disabled. " +
+      "For listing all tables use `list_routing_tables`. " +
+      "For the IPv4 routes stored inside a table use `list_routes`; for IPv6 routes use `list_ipv6_routes`. " +
+      "Returns the full detail record for the named table, or a not-found message if the name does not exist.",
     inputSchema: { name: z.string().describe("Routing table name") },
     async handler(a, ctx) {
       ctx.info(`Getting routing table: ${a.name}`);
@@ -49,11 +59,17 @@ export const routingTableTools: ToolModule = [
 
   defineTool({
     name: "add_routing_table",
-    title: "Add Routing Table",
+    title: "Add Routing Table Definition",
     annotations: WRITE,
     description:
-      "Adds a named routing table. Enable `fib` to install the table's routes into the forwarding plane " +
-      "(otherwise the table is RIB-only and used purely for lookups by routing rules/marks).",
+      "Creates a named routing table (`/routing table add`) on RouterOS v7 — establishes a new RIB container " +
+      "for policy-based routing. `fib` defaults to `true`, which installs the table's routes into the forwarding plane; " +
+      "set `fib=false` to keep it RIB-only, used purely for lookups by routing rules/marks. " +
+      "After creation, assign IPv4 routes to this table via `add_route` (set its `routing-table` argument); " +
+      "for IPv6 routes use `add_ipv6_route`. " +
+      "For the policy rules that steer packets into a table use `list_routing_rules` / `update_routing_rule`. " +
+      "To modify an existing table use `update_routing_table`. " +
+      "Returns the new table's full detail record on success.",
     inputSchema: {
       name: z.string().describe("Unique table name, referenced by routes and routing rules"),
       fib: z.boolean().default(true).describe("Install routes into the FIB (forwarding plane)"),
@@ -82,9 +98,14 @@ export const routingTableTools: ToolModule = [
 
   defineTool({
     name: "update_routing_table",
-    title: "Update Routing Table",
+    title: "Update Routing Table Definition",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a routing table's fib flag, comment, or disabled state.",
+    description:
+      "Modifies an existing routing table (`/routing table set [find name=…]`) — changes its `fib` flag, " +
+      "`comment`, or `disabled` state. " +
+      "To create a new table use `add_routing_table`; to toggle only the enabled/disabled state use `set_routing_table_enabled`. " +
+      "No-ops safely if no optional arguments are provided. " +
+      "Returns the updated table's full detail record on success.",
     inputSchema: {
       name: z.string().describe("Existing routing table name"),
       fib: z.boolean().optional().describe("Install routes into the FIB"),
@@ -115,9 +136,14 @@ export const routingTableTools: ToolModule = [
 
   defineTool({
     name: "remove_routing_table",
-    title: "Remove Routing Table",
+    title: "Remove Routing Table Definition",
     annotations: DESTRUCTIVE,
-    description: "Removes a routing table by name. The built-in `main` table cannot be removed.",
+    description:
+      "Permanently deletes a named routing table (`/routing table remove [find name=…]`). " +
+      "The built-in `main` table cannot be removed. " +
+      "Routes referencing this table should be removed first via `remove_route` to avoid orphaned entries. " +
+      "To disable without deleting use `set_routing_table_enabled`; to modify properties use `update_routing_table`. " +
+      "Confirms deletion by name on success.",
     inputSchema: { name: z.string().describe("Routing table name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing routing table: ${a.name}`);
@@ -133,9 +159,14 @@ export const routingTableTools: ToolModule = [
 
   defineTool({
     name: "set_routing_table_enabled",
-    title: "Enable/Disable Routing Table",
+    title: "Enable or Disable Routing Table",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables a routing table by name.",
+    description:
+      "Enables or disables a named routing table (`/routing table set [find name=…] disabled=yes/no`) without " +
+      "removing it — a disabled table is inactive in the routing engine. " +
+      "To permanently delete a table use `remove_routing_table`; to change other properties (fib, comment) use `update_routing_table`. " +
+      "Pass `enabled=true` to enable, `enabled=false` to disable. " +
+      "Confirms the new state by name on success.",
     inputSchema: {
       name: z.string().describe("Routing table name"),
       enabled: z.boolean().describe("true to enable, false to disable"),

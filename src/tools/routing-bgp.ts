@@ -22,8 +22,11 @@ export const routingBgpTools: ToolModule = [
     title: "List BGP Connections",
     annotations: READ,
     description:
-      "Lists BGP connections (`/routing bgp connection`). In RouterOS v7 a 'connection' is one configured peer " +
-      "(or listener) that pulls common settings from optional templates. Shows local/remote AS, addresses and role.",
+      "Lists configured BGP peer connections (`/routing bgp connection`) — the static configuration of each peer " +
+      "or listener, including local/remote AS, addresses, and role. For runtime peering state (established/idle, " +
+      "uptime, prefix counts) use `list_bgp_sessions`. For shared configuration objects inherited by connections " +
+      "use `list_bgp_templates`. Optionally filters by connection name substring. Returns all matching connection " +
+      "entries. Requires RouterOS v7 with the routing package.",
     inputSchema: {
       name_filter: z.string().optional().describe("Substring match on connection name"),
     },
@@ -42,9 +45,13 @@ export const routingBgpTools: ToolModule = [
 
   defineTool({
     name: "get_bgp_connection",
-    title: "Get BGP Connection",
+    title: "Get BGP Connection Details",
     annotations: READ,
-    description: "Gets detailed configuration for a specific BGP connection by name.",
+    description:
+      "Fetches full configuration detail for a single BGP connection by name " +
+      '(`/routing bgp connection print detail where name="<name>"`). Use this to inspect one peer\'s full ' +
+      "settings; to browse all connections use `list_bgp_connections`. For runtime session status (established, " +
+      "uptime, prefix counts) use `list_bgp_sessions`. Returns the complete connection record or a not-found message.",
     inputSchema: { name: z.string().describe("BGP connection name") },
     async handler(a, ctx) {
       ctx.info(`Getting BGP connection: ${a.name}`);
@@ -64,9 +71,15 @@ export const routingBgpTools: ToolModule = [
     title: "Add BGP Connection",
     annotations: WRITE,
     description:
-      "Adds a BGP connection (peer). At minimum give `name`, the peer `remote_address`/`remote_as`, the local `as` " +
-      "and a `local_role` (ebgp or ibgp). Input/output route filters reference `/routing filter` chains. " +
-      "Common settings can be factored into a template referenced via `templates`.",
+      "Creates a BGP peer connection (`/routing bgp connection add`) — the per-peer configuration that " +
+      "initiates or accepts a BGP session. At minimum supply `name`, `remote_address`, and `as`/`local_role` for " +
+      "the local side. `local_role` values: `ebgp`, `ibgp`, `ebgp-customer`, `ebgp-provider`, `ibgp-rr`, " +
+      '`ibgp-rr-client`. For `address_families` pass a comma-separated list, e.g. `"ip"` or `"ip,ipv6,l2vpn"`. ' +
+      'For `hold_time`/`keepalive_time` use RouterOS duration strings, e.g. `"3m"` or `"180s"`. ' +
+      "`input_filter`/`output_filter` reference `/routing filter` chain names. Common settings (AS, filters, timers) " +
+      "can be factored into a template referenced via `templates`; to create templates use `add_bgp_template`. " +
+      "To modify an existing connection use `update_bgp_connection`. Returns the created connection's full detail. " +
+      "Requires RouterOS v7 with the routing package.",
     inputSchema: {
       name: z.string().describe("Unique connection name"),
       remote_address: z.string().describe("Peer IP address (remote.address)"),
@@ -138,7 +151,11 @@ export const routingBgpTools: ToolModule = [
     name: "update_bgp_connection",
     title: "Update BGP Connection",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates settings of an existing BGP connection by name.",
+    description:
+      'Modifies settings of an existing BGP connection by name (`/routing bgp connection set [find name="<name>"]`). ' +
+      "Only supplied fields are changed; omitted fields are left unchanged. To enable or disable a connection " +
+      "without touching other settings use `set_bgp_connection_enabled`. To delete a connection use " +
+      "`remove_bgp_connection`. Returns the full updated connection detail on success.",
     inputSchema: {
       name: z.string().describe("Existing BGP connection name"),
       remote_address: z.string().optional(),
@@ -195,7 +212,11 @@ export const routingBgpTools: ToolModule = [
     name: "remove_bgp_connection",
     title: "Remove BGP Connection",
     annotations: DESTRUCTIVE,
-    description: "Removes a BGP connection by name (tears down the peering).",
+    description:
+      'Permanently deletes a BGP peer connection by name (`/routing bgp connection remove [find name="<name>"]`), ' +
+      "tearing down the peering and removing all its configuration. To only suspend a connection without deleting it " +
+      "use `set_bgp_connection_enabled`. To remove a shared settings object use `remove_bgp_template`. " +
+      "The `name` is the connection name visible in `list_bgp_connections`.",
     inputSchema: { name: z.string().describe("BGP connection name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing BGP connection: ${a.name}`);
@@ -211,9 +232,13 @@ export const routingBgpTools: ToolModule = [
 
   defineTool({
     name: "set_bgp_connection_enabled",
-    title: "Enable/Disable BGP Connection",
+    title: "Enable or Disable BGP Connection",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables a BGP connection by name.",
+    description:
+      'Enables or disables a BGP connection by name (`/routing bgp connection set [find name="<name>"] ' +
+      "disabled=yes/no`). Pass `enabled=true` to bring a peer up, `enabled=false` to suspend it without deleting " +
+      "its configuration. To change other connection settings use `update_bgp_connection`. To permanently delete " +
+      "the connection use `remove_bgp_connection`.",
     inputSchema: {
       name: z.string().describe("BGP connection name"),
       enabled: z.boolean(),
@@ -236,8 +261,11 @@ export const routingBgpTools: ToolModule = [
     title: "List BGP Templates",
     annotations: READ,
     description:
-      "Lists BGP templates (`/routing bgp template`). Templates hold shared settings (AS, address-families, " +
-      "filters, timers) that connections inherit via their `templates` property.",
+      "Lists BGP template objects (`/routing bgp template print detail`). Templates hold shared peer settings — " +
+      "AS number, address-families, route filters, timers — that individual connections inherit via their `templates` " +
+      "field, avoiding repetition across many peers. For per-peer connection configuration use `list_bgp_connections`. " +
+      "For runtime session state use `list_bgp_sessions`. Returns all defined templates. Requires RouterOS v7 " +
+      "with the routing package.",
     async handler(_a, ctx) {
       ctx.info("Listing BGP templates");
       const result = await executeMikrotikCommand("/routing bgp template print detail", ctx);
@@ -250,7 +278,13 @@ export const routingBgpTools: ToolModule = [
     name: "add_bgp_template",
     title: "Add BGP Template",
     annotations: WRITE,
-    description: "Adds a BGP template carrying shared peer settings.",
+    description:
+      "Creates a BGP template (`/routing bgp template add`) to hold shared peer settings (AS, address-families, " +
+      "route filters, routing table) that multiple connections can inherit via their `templates` field, avoiding " +
+      'repetition across many peers. For `address_families` pass a comma-separated list, e.g. `"ip,ipv6"`. ' +
+      "`input_filter`/`output_filter` reference `/routing filter` chain names. To create a peer that references " +
+      "this template use `add_bgp_connection`. To remove a template use `remove_bgp_template`. Returns success " +
+      "confirmation; verify with `list_bgp_templates`. Requires RouterOS v7 with the routing package.",
     inputSchema: {
       name: z.string().describe("Template name"),
       as: z.number().int().optional().describe("Local AS number"),
@@ -287,7 +321,11 @@ export const routingBgpTools: ToolModule = [
     name: "remove_bgp_template",
     title: "Remove BGP Template",
     annotations: DESTRUCTIVE,
-    description: "Removes a BGP template by name.",
+    description:
+      'Permanently deletes a BGP template by name (`/routing bgp template remove [find name="<name>"]`). ' +
+      "Connections that referenced this template lose the inherited settings — review with `list_bgp_connections` " +
+      "before removing. To remove a peer connection instead use `remove_bgp_connection`. The `name` is the template " +
+      "name visible in `list_bgp_templates`.",
     inputSchema: { name: z.string().describe("BGP template name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing BGP template: ${a.name}`);
@@ -307,8 +345,11 @@ export const routingBgpTools: ToolModule = [
     title: "List BGP Sessions",
     annotations: READ,
     description:
-      "Lists active BGP sessions (`/routing bgp session`): negotiated state (established/idle/…), remote AS, " +
-      "uptime and prefix counts. Read-only — the authoritative view of which peerings are actually up.",
+      "Lists runtime BGP session state (`/routing bgp session print detail`) — negotiated peering status " +
+      "(established/idle/active/…), remote AS, uptime, and received/advertised prefix counts. This is the live " +
+      "operational view, not configuration; to view or change peer configuration use `list_bgp_connections`. " +
+      "Pass `established_only=true` to filter to established (fully up) sessions only. For prefixes being sent to a peer use " +
+      "`list_bgp_advertisements`. Returns all matching session entries. Requires RouterOS v7 with the routing package.",
     inputSchema: {
       established_only: z.boolean().default(false).describe("Show only established sessions"),
     },
@@ -330,8 +371,11 @@ export const routingBgpTools: ToolModule = [
     title: "List BGP Advertisements",
     annotations: READ,
     description:
-      "Lists prefixes advertised to BGP peers (`/routing bgp advertisements`). Read-only — useful to confirm " +
-      "exactly what this router is sending to a given peer after output filters are applied.",
+      "Lists prefixes currently being advertised to BGP peers (`/routing bgp advertisements print`) after output " +
+      "filters are applied — use this to verify exactly what routes this router is sending to a given peer. " +
+      "Read-only operational data; to see session status (prefix counts, uptime) use `list_bgp_sessions`. " +
+      "Filter by peer name substring with `peer_filter`. Returns advertisement entries per peer, or a not-found message. " +
+      "Requires RouterOS v7 with the routing package.",
     inputSchema: {
       peer_filter: z.string().optional().describe("Substring match on the peer name"),
     },

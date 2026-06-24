@@ -22,9 +22,11 @@ export const routingBfdTools: ToolModule = [
     title: "List BFD Configurations",
     annotations: READ,
     description:
-      "Lists BFD configuration entries (`/routing bfd configuration`). BFD gives sub-second failure detection " +
-      "for a link/neighbor so routing protocols (OSPF/BGP) can tear down a session far faster than their own " +
-      "hold timers. Each entry binds timers to a set of interfaces in a VRF.",
+      "Lists all BFD timer-profile entries (`/routing bfd configuration`) — each entry binds min-rx/min-tx " +
+      "intervals and a detection multiplier to one or more interfaces in a VRF, controlling how fast BFD detects " +
+      "a link failure so routing protocols (OSPF/BGP) can tear down sessions far faster than their own hold timers. " +
+      "Requires RouterOS v7 with the routing package. To see live BFD neighbor state use `list_bfd_sessions`. " +
+      "Returns all configuration entries with full detail.",
     async handler(_a, ctx) {
       ctx.info("Listing BFD configurations");
       const result = await executeMikrotikCommand("/routing bfd configuration print detail", ctx);
@@ -38,9 +40,12 @@ export const routingBfdTools: ToolModule = [
     title: "Add BFD Configuration",
     annotations: WRITE,
     description:
-      "Adds a BFD configuration. `interfaces` selects where BFD runs (an interface or interface-list); " +
-      "`min_rx`/`min_tx` are the desired minimum receive/transmit intervals and `multiplier` is how many " +
-      "missed packets declare the session down (detection time ≈ interval × multiplier).",
+      "Creates a BFD timer-profile entry (`/routing bfd configuration add`) that binds sub-second " +
+      "failure-detection parameters to an interface or interface-list in a VRF. `interfaces` names the " +
+      "interface or interface-list where BFD runs; `min_rx`/`min_tx` set the desired minimum receive/transmit " +
+      'intervals (e.g. "200ms"); `multiplier` sets how many missed packets declare a session down ' +
+      "(detection time ≈ interval × multiplier). To view existing configurations use `list_bfd_configurations`; " +
+      "to see live session state use `list_bfd_sessions`. Returns the new entry's `.id`.",
     inputSchema: {
       interfaces: z.string().describe("Interface or interface-list name BFD runs on"),
       vrf: z.string().optional().describe("VRF (default 'main')"),
@@ -74,7 +79,11 @@ export const routingBfdTools: ToolModule = [
     name: "update_bfd_configuration",
     title: "Update BFD Configuration",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a BFD configuration entry by id.",
+    description:
+      "Updates an existing BFD timer-profile entry (`/routing bfd configuration set`) by its `.id` " +
+      "(obtain from `list_bfd_configurations`). Adjusts `interfaces`, `vrf`, `min_rx`/`min_tx` intervals " +
+      '(e.g. "200ms"), `multiplier`, `comment`, or `disabled` state. To toggle enabled state only use ' +
+      "`set_bfd_configuration_enabled`. Returns the updated entry's full detail.",
     inputSchema: {
       config_id: z.string().describe('Configuration id, e.g. "*1"'),
       interfaces: z.string().optional(),
@@ -115,7 +124,10 @@ export const routingBfdTools: ToolModule = [
     name: "remove_bfd_configuration",
     title: "Remove BFD Configuration",
     annotations: DESTRUCTIVE,
-    description: "Removes a BFD configuration entry by id.",
+    description:
+      "Permanently removes a BFD timer-profile entry (`/routing bfd configuration remove`) by its `.id` " +
+      "(obtain from `list_bfd_configurations`). Any BFD sessions driven by this configuration will stop. " +
+      "To suspend BFD without deleting the configuration use `set_bfd_configuration_enabled`.",
     inputSchema: {
       config_id: z.string().describe('Configuration id, e.g. "*1"'),
     },
@@ -133,9 +145,13 @@ export const routingBfdTools: ToolModule = [
 
   defineTool({
     name: "set_bfd_configuration_enabled",
-    title: "Enable/Disable BFD Configuration",
+    title: "Enable or Disable BFD Configuration",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables a BFD configuration entry by id.",
+    description:
+      "Enables or disables a BFD configuration entry (`/routing bfd configuration set ... disabled=yes/no`) " +
+      "by its `.id` (obtain from `list_bfd_configurations`). Use this to suspend BFD on specific interfaces " +
+      "without removing the configuration. To change timer parameters use `update_bfd_configuration`; " +
+      "to delete the entry permanently use `remove_bfd_configuration`.",
     inputSchema: {
       config_id: z.string().describe('Configuration id, e.g. "*1"'),
       enabled: z.boolean(),
@@ -158,8 +174,11 @@ export const routingBfdTools: ToolModule = [
     title: "List BFD Sessions",
     annotations: READ,
     description:
-      "Lists live BFD sessions (`/routing bfd session`): each neighbor's state (up/down), local/remote discriminators " +
-      "and negotiated timers. Read-only — use it to confirm BFD is actually up before relying on it for fast failover.",
+      "Lists live BFD neighbor sessions (`/routing bfd session print detail`) — shows each peer's state " +
+      "(up/down), local/remote discriminators, and negotiated rx/tx intervals. Read-only runtime state; " +
+      "use it to verify BFD is actually up before relying on fast failover for OSPF/BGP. Filter to only " +
+      "up sessions with `up_only=true`. To manage the timer-profile entries that drive these sessions use " +
+      "`list_bfd_configurations`.",
     inputSchema: {
       up_only: z.boolean().default(false).describe("Show only sessions currently up"),
     },

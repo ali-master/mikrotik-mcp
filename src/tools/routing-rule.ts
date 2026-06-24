@@ -20,11 +20,15 @@ const ACTIONS = ["lookup", "lookup-only-in-table", "drop", "unreachable"] as con
 export const routingRuleTools: ToolModule = [
   defineTool({
     name: "list_routing_rules",
-    title: "List Routing Rules",
+    title: "List Policy Routing Rules",
     annotations: READ,
     description:
-      "Lists policy routing rules (`/routing rule`). Rules are evaluated top-down and pick which routing " +
-      "table a packet is looked up in based on source/destination, interface or routing-mark.",
+      "List policy routing rules (`/routing rule`) — the ordered table that steers packets into specific " +
+      "routing tables based on src/dst prefix, incoming interface, or routing-mark. Rules are evaluated " +
+      "top-down; requires RouterOS v7 with the routing package. For static routes in the main table use " +
+      "`list_routes`; for IPv6 static routes use `list_ipv6_routes`. Returns all matching rules with full " +
+      "detail, including `.id` values needed by `get_routing_rule`, `update_routing_rule`, " +
+      "`remove_routing_rule`, and `set_routing_rule_enabled`.",
     inputSchema: {
       table_filter: z.string().optional().describe("Match rules targeting this table"),
       disabled_only: z.boolean().default(false),
@@ -45,9 +49,13 @@ export const routingRuleTools: ToolModule = [
 
   defineTool({
     name: "get_routing_rule",
-    title: "Get Routing Rule",
+    title: "Get Policy Routing Rule",
     annotations: READ,
-    description: "Gets detailed information about a specific routing rule by its internal id.",
+    description:
+      "Fetch full detail for a single policy routing rule (`/routing rule`) by its `.id` " +
+      "(obtain the `.id` from `list_routing_rules`). Requires RouterOS v7 with the routing package. " +
+      "For static route details use `get_route`. Returns the rule's complete property set, or a not-found " +
+      "message if the id does not exist.",
     inputSchema: {
       rule_id: z.string().describe('Rule id from list output, e.g. "*3"'),
     },
@@ -66,12 +74,16 @@ export const routingRuleTools: ToolModule = [
 
   defineTool({
     name: "add_routing_rule",
-    title: "Add Routing Rule",
+    title: "Add Policy Routing Rule",
     annotations: WRITE,
     description:
-      "Adds a policy routing rule. Match on source/destination prefix, incoming interface and/or routing-mark; " +
-      "`action=lookup` resolves in `table` (and continues to lower-priority tables if no match), " +
-      "`lookup-only-in-table` stops at that table, `drop`/`unreachable` discard the packet.",
+      "Add a policy routing rule (`/routing rule add`) to steer matched packets into a specific routing table. " +
+      "Rules are evaluated top-down: `action=lookup` consults `table` then falls through to lower-priority " +
+      "tables on no match; `lookup-only-in-table` stops at that table; `drop`/`unreachable` discard the packet. " +
+      'Match on `src_address` (e.g. `"192.168.10.0/24"`), `dst_address`, `routing_mark`, or incoming ' +
+      "`interface`. Use `place_before` with a rule `.id` to control insertion order. Requires RouterOS v7 with " +
+      "the routing package. For static routes in the main or a named table use `add_route`; for IPv6 static " +
+      "routes use `add_ipv6_route`. Returns the new rule's `.id`.",
     inputSchema: {
       action: z.enum(ACTIONS).default("lookup"),
       table: z.string().optional().describe("Target routing table for lookup actions"),
@@ -114,10 +126,13 @@ export const routingRuleTools: ToolModule = [
 
   defineTool({
     name: "update_routing_rule",
-    title: "Update Routing Rule",
+    title: "Update Policy Routing Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      'Updates a routing rule by id. Pass "" to src_address, dst_address, routing_mark, interface or table to clear.',
+      "Modify an existing policy routing rule (`/routing rule set`) by its `.id` (obtain from `list_routing_rules`). " +
+      'Pass `""` for `src_address`, `dst_address`, `routing_mark`, `interface`, or `table` to clear that field. ' +
+      "Requires RouterOS v7 with the routing package. For updating static routes use `update_route`. " +
+      "Returns the rule's updated detail after applying changes.",
     inputSchema: {
       rule_id: z.string().describe('Rule id, e.g. "*3"'),
       action: z.enum(ACTIONS).optional(),
@@ -163,9 +178,12 @@ export const routingRuleTools: ToolModule = [
 
   defineTool({
     name: "remove_routing_rule",
-    title: "Remove Routing Rule",
+    title: "Remove Policy Routing Rule",
     annotations: DESTRUCTIVE,
-    description: "Removes a routing rule by id.",
+    description:
+      "Delete a policy routing rule (`/routing rule remove`) by its `.id` (obtain from `list_routing_rules`). " +
+      "This is irreversible — confirm the correct rule with `get_routing_rule` before removing. Requires RouterOS v7 " +
+      "with the routing package. For removing static routes use `remove_route`. Returns a confirmation message on success.",
     inputSchema: { rule_id: z.string().describe('Rule id, e.g. "*3"') },
     async handler(a, ctx) {
       ctx.info(`Removing routing rule: ${a.rule_id}`);
@@ -178,9 +196,13 @@ export const routingRuleTools: ToolModule = [
 
   defineTool({
     name: "set_routing_rule_enabled",
-    title: "Enable/Disable Routing Rule",
+    title: "Enable or Disable Policy Routing Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables a routing rule by id.",
+    description:
+      "Enable or disable a policy routing rule (`/routing rule set disabled=yes/no`) by its `.id` " +
+      "(obtain from `list_routing_rules`). Set `enabled=true` to activate or `enabled=false` to temporarily " +
+      "suspend the rule without deleting it. Requires RouterOS v7 with the routing package. To permanently " +
+      "delete a rule use `remove_routing_rule`. Returns a confirmation of the new enabled/disabled state.",
     inputSchema: {
       rule_id: z.string().describe('Rule id, e.g. "*3"'),
       enabled: z.boolean().describe("true to enable, false to disable"),

@@ -15,8 +15,11 @@ export const routingRipTools: ToolModule = [
     title: "List RIP Instances",
     annotations: READ,
     description:
-      "Lists RIP instances (`/routing rip instance`). An instance is one RIP process with its own router-id, " +
-      "redistribution and import/export filter chains.",
+      "List RIP process instances (`/routing rip instance`) — each instance is one RIPv2 process with its own " +
+      "router-id, redistribution policy, and import/export filter chains. Use before creating or updating an instance " +
+      "with add_rip_instance or update_rip_instance. For OSPF use the OSPF tools; for BGP use list_bgp_connections; " +
+      "for static routes use list_routes. Returns all instance details including router-id, VRF, redistribution " +
+      "config, and enabled/disabled state. Requires RouterOS v7 with the routing package.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP instances");
       const result = await executeMikrotikCommand("/routing rip instance print detail", ctx);
@@ -30,8 +33,13 @@ export const routingRipTools: ToolModule = [
     title: "Add RIP Instance",
     annotations: WRITE,
     description:
-      "Adds a RIP instance. `redistribute` is a comma list (connected,static,ospf,bgp,…); filter chains " +
-      "reference `/routing filter`.",
+      "Create a RIP process instance (`/routing rip instance add`) — the top-level RIPv2 process object that " +
+      "governs route redistribution and filter chains. Required before attaching interfaces with " +
+      'add_rip_interface_template. `redistribute` is a comma-separated list (e.g. "connected,static,ospf,bgp"); ' +
+      "`originate_default` accepts never, if-installed, or always; `router_id` accepts an IPv4 address, 'main', " +
+      "or a /routing id name; filter chains reference /routing filter. For OSPF use the OSPF tools; for BGP use " +
+      "add_bgp_connection. Returns the created instance's detail including its name. Requires RouterOS v7 with " +
+      "the routing package.",
     inputSchema: {
       name: z.string().describe("Unique instance name"),
       router_id: z.string().optional().describe("IPv4 address, 'main', or a /routing id name"),
@@ -72,7 +80,12 @@ export const routingRipTools: ToolModule = [
     name: "update_rip_instance",
     title: "Update RIP Instance",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a RIP instance by name.",
+    description:
+      "Modify an existing RIP process instance (`/routing rip instance set`) identified by its name. Use to " +
+      "change redistribution policy, filter chains, router-id, or enabled/disabled state without recreating the " +
+      "instance. Obtain the name from list_rip_instances. For creating a new instance use add_rip_instance; for " +
+      "removing one use remove_rip_instance. Returns the updated instance's detail. Requires RouterOS v7 with " +
+      "the routing package.",
     inputSchema: {
       name: z.string().describe("Existing RIP instance name"),
       router_id: z.string().optional(),
@@ -113,7 +126,11 @@ export const routingRipTools: ToolModule = [
     name: "remove_rip_instance",
     title: "Remove RIP Instance",
     annotations: DESTRUCTIVE,
-    description: "Removes a RIP instance by name.",
+    description:
+      "Delete a RIP process instance (`/routing rip instance remove`) by its name, removing the process and all " +
+      "associated routing state. Obtain the name from list_rip_instances. Remove associated interface templates " +
+      "first with remove_rip_interface_template to avoid orphaned entries. To disable without deleting use " +
+      "update_rip_instance with disabled=true. Requires RouterOS v7 with the routing package.",
     inputSchema: { name: z.string().describe("RIP instance name to remove") },
     async handler(a, ctx) {
       ctx.info(`Removing RIP instance: ${a.name}`);
@@ -133,8 +150,12 @@ export const routingRipTools: ToolModule = [
     title: "List RIP Interface Templates",
     annotations: READ,
     description:
-      "Lists RIP interface templates (`/routing rip interface-template`): which interfaces participate in an " +
-      "instance and their per-link options (passive, authentication, key-chain).",
+      "List RIP interface templates (`/routing rip interface-template`) — records that bind one or more interfaces " +
+      "to a RIP instance and set per-link options such as passive mode and authentication key-chain. Use to inspect " +
+      "which interfaces participate in RIP before adding or removing templates with add_rip_interface_template or " +
+      "remove_rip_interface_template. For static unicast neighbors use list_rip_static_neighbors; for discovered " +
+      "active peers use list_rip_neighbors. Returns all templates with their instance, interface(s), passive, " +
+      "key-chain, and enabled/disabled state. Requires RouterOS v7 with the routing package.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP interface templates");
       const result = await executeMikrotikCommand(
@@ -153,8 +174,12 @@ export const routingRipTools: ToolModule = [
     title: "Add RIP Interface Template",
     annotations: WRITE,
     description:
-      "Adds a RIP interface template binding interfaces to an instance. `passive` advertises without sending " +
-      "updates; `key_chain` enables authentication.",
+      "Bind interfaces to a RIP instance (`/routing rip interface-template add`) so they participate in RIP " +
+      "route advertisement. The `instance` must already exist — create it first with add_rip_instance. " +
+      "`passive=true` suppresses outbound RIP updates while still receiving; `key_chain` names a /routing " +
+      "key-chain for MD5 authentication. For static unicast neighbors on non-broadcast links use " +
+      "add_rip_static_neighbor instead. Returns the new template's .id. Requires RouterOS v7 with the " +
+      "routing package.",
     inputSchema: {
       instance: z.string().describe("RIP instance name"),
       interfaces: z.string().describe("Interface or interface-list name"),
@@ -187,7 +212,11 @@ export const routingRipTools: ToolModule = [
     name: "remove_rip_interface_template",
     title: "Remove RIP Interface Template",
     annotations: DESTRUCTIVE,
-    description: "Removes a RIP interface template by id.",
+    description:
+      "Remove a RIP interface template (`/routing rip interface-template remove`) by its `.id`, detaching the " +
+      "bound interfaces from the RIP instance. Obtain the `.id` from list_rip_interface_templates. To re-configure " +
+      "instead of removing, delete and recreate with add_rip_interface_template. Requires RouterOS v7 with the " +
+      "routing package.",
     inputSchema: { template_id: z.string().describe('Template id, e.g. "*1"') },
     async handler(a, ctx) {
       ctx.info(`Removing RIP interface template ${a.template_id}`);
@@ -207,8 +236,11 @@ export const routingRipTools: ToolModule = [
     title: "List RIP Static Neighbors",
     annotations: READ,
     description:
-      "Lists statically-configured RIP neighbors (`/routing rip static-neighbor`) — used to unicast RIP updates " +
-      "to peers across non-broadcast links.",
+      "List manually configured RIP static neighbors (`/routing rip static-neighbor`) — IPv4 unicast targets for " +
+      "RIP updates on non-broadcast or point-to-point links where multicast does not reach. Use before adding or " +
+      "removing entries with add_rip_static_neighbor or remove_rip_static_neighbor. For dynamically discovered " +
+      "active peers see list_rip_neighbors; for interface participation config see list_rip_interface_templates. " +
+      "Returns address, instance, and enabled/disabled state. Requires RouterOS v7 with the routing package.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP static neighbors");
       const result = await executeMikrotikCommand("/routing rip static-neighbor print detail", ctx);
@@ -223,7 +255,12 @@ export const routingRipTools: ToolModule = [
     name: "add_rip_static_neighbor",
     title: "Add RIP Static Neighbor",
     annotations: WRITE,
-    description: "Adds a static RIP neighbor to unicast updates to.",
+    description:
+      "Add a static RIP neighbor entry (`/routing rip static-neighbor add`) to unicast RIP updates to a specific " +
+      "IPv4 address on non-broadcast or point-to-point links. Optionally scope to a specific RIP instance by name " +
+      "(obtain from list_rip_instances). For multicast-reachable peers, binding an interface with " +
+      "add_rip_interface_template is sufficient. Returns a confirmation message on success. Requires RouterOS v7 " +
+      "with the routing package.",
     inputSchema: {
       address: z.string().describe("Neighbor IP address"),
       instance: z.string().optional().describe("RIP instance name"),
@@ -250,7 +287,10 @@ export const routingRipTools: ToolModule = [
     name: "remove_rip_static_neighbor",
     title: "Remove RIP Static Neighbor",
     annotations: DESTRUCTIVE,
-    description: "Removes a RIP static neighbor by id.",
+    description:
+      "Delete a static RIP neighbor entry (`/routing rip static-neighbor remove`) by its `.id`, stopping unicast " +
+      "RIP updates to that IPv4 peer. Obtain the `.id` from list_rip_static_neighbors. The link itself is " +
+      "unaffected. Requires RouterOS v7 with the routing package.",
     inputSchema: {
       neighbor_id: z.string().describe('Static-neighbor id, e.g. "*1"'),
     },
@@ -269,11 +309,14 @@ export const routingRipTools: ToolModule = [
   // ── Operational neighbors (read-only) ─────────────────────────────────────
   defineTool({
     name: "list_rip_neighbors",
-    title: "List RIP Neighbors",
+    title: "List Active RIP Neighbors",
     annotations: READ,
     description:
-      "Lists discovered RIP neighbors (`/routing rip neighbor`): peers this router is exchanging routes with, " +
-      "with last-update timing. Read-only.",
+      "List dynamically discovered RIP peers (`/routing rip neighbor`) — read-only operational state showing " +
+      "which IPv4 peers this router is currently exchanging routes with, including last-update timestamps. For " +
+      "manually configured unicast targets see list_rip_static_neighbors; for interface participation config see " +
+      "list_rip_interface_templates. For BGP peers use list_bgp_sessions; for static routes use list_routes. " +
+      "Returns peer addresses, uptime, and last-update timing. Requires RouterOS v7 with the routing package.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP neighbors");
       const result = await executeMikrotikCommand("/routing rip neighbor print detail", ctx);

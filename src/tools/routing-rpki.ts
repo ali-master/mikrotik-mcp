@@ -21,9 +21,11 @@ export const routingRpkiTools: ToolModule = [
     title: "List RPKI Sessions",
     annotations: READ,
     description:
-      "Lists RPKI sessions (`/routing rpki`). Each session is an RTR connection to a validator cache that streams " +
-      "Validated ROA Payloads (VRPs); BGP filters reference the session `group` to mark routes valid/invalid/unknown " +
-      "for Route Origin Validation. Shows connection status and VRP counts.",
+      "Lists all RPKI RTR sessions (`/routing rpki print detail`) — each session is a connection to a validator " +
+      "cache that streams Validated ROA Payloads (VRPs) for BGP Route Origin Validation. BGP route-policy filters " +
+      "reference the session `group` name to mark prefixes valid/invalid/unknown. Use `add_rpki_session` to create " +
+      "a session; for BGP peer configuration use `add_bgp_connection`. Returns connection status, group, address, " +
+      "port, VRP counts, and refresh/expire state for each session; filtered to `group_filter` when supplied.",
     inputSchema: {
       group_filter: z.string().optional().describe("Show only sessions in this group"),
     },
@@ -45,9 +47,12 @@ export const routingRpkiTools: ToolModule = [
     title: "Add RPKI Session",
     annotations: WRITE,
     description:
-      "Adds an RPKI session to a validator cache. `group` is the name BGP filters match against; `address`/`port` " +
-      "point at the RTR cache (port 8282 is the common rpki-rtr default). Tune refresh/retry/expire intervals to " +
-      "control how often VRPs are pulled and when stale data is dropped.",
+      "Adds an RPKI RTR session (`/routing rpki add`) connecting to a validator cache for BGP Route Origin " +
+      "Validation. The `group` name is what BGP route-policy filters match against to mark prefixes " +
+      "valid/invalid/unknown; `address`/`port` identify the RTR cache (port 8282 is the common default, 323 for " +
+      'RTR-over-TLS). Tune `refresh_interval`, `retry_interval`, and `expire_interval` (e.g. "10m", "30s", ' +
+      '"2h") to control how frequently VRPs are pulled and when stale data is dropped. For BGP peer configuration ' +
+      "use `add_bgp_connection`; to inspect existing sessions use `list_rpki_sessions`. Returns the new session `.id`.",
     inputSchema: {
       group: z.string().describe("RPKI group name referenced by BGP route filters"),
       address: z.string().describe("Validator (RTR cache) IP address or hostname"),
@@ -87,7 +92,12 @@ export const routingRpkiTools: ToolModule = [
     name: "update_rpki_session",
     title: "Update RPKI Session",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an RPKI session by id.",
+    description:
+      "Modifies an existing RPKI RTR session (`/routing rpki set`) by its `.id`. Use `list_rpki_sessions` to " +
+      'obtain the `session_id` (e.g. "*1"). Updatable fields include `address`, `port`, interval timings ' +
+      '(`refresh_interval`, `expire_interval`, `retry_interval`, e.g. "10m", "30s", "2h"), `comment`, and ' +
+      "`disabled`. To toggle enabled/disabled only, prefer `set_rpki_session_enabled`. Returns the updated session " +
+      "detail.",
     inputSchema: {
       session_id: z.string().describe('Session id, e.g. "*1"'),
       address: z.string().optional(),
@@ -129,7 +139,10 @@ export const routingRpkiTools: ToolModule = [
     title: "Remove RPKI Session",
     annotations: DESTRUCTIVE,
     description:
-      "Removes an RPKI session by id (BGP routes using its group fall back to 'unknown').",
+      "Permanently removes an RPKI RTR session (`/routing rpki remove`) by its `.id`. Use `list_rpki_sessions` " +
+      'to obtain the `session_id` (e.g. "*1"). After removal, BGP routes that matched this session\'s `group` ' +
+      "fall back to validation state 'unknown'; ensure BGP filters are updated before removing. To deactivate " +
+      "without deleting, use `set_rpki_session_enabled` instead.",
     inputSchema: { session_id: z.string().describe('Session id, e.g. "*1"') },
     async handler(a, ctx) {
       ctx.info(`Removing RPKI session ${a.session_id}`);
@@ -142,9 +155,14 @@ export const routingRpkiTools: ToolModule = [
 
   defineTool({
     name: "set_rpki_session_enabled",
-    title: "Enable/Disable RPKI Session",
+    title: "Enable or Disable RPKI Session",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables an RPKI session by id.",
+    description:
+      "Toggles an RPKI RTR session active or inactive (`/routing rpki set disabled=yes/no`) by its `.id`. Use " +
+      '`list_rpki_sessions` to obtain the `session_id` (e.g. "*1"). Disabling suspends the RTR connection and ' +
+      "stops VRP updates without deleting the session; BGP routes referencing its group fall back to 'unknown' " +
+      "while disabled. To change address, port, or intervals use `update_rpki_session`; to delete the session " +
+      "permanently use `remove_rpki_session`.",
     inputSchema: {
       session_id: z.string().describe('Session id, e.g. "*1"'),
       enabled: z.boolean(),

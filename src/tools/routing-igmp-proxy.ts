@@ -12,11 +12,14 @@ export const routingIgmpProxyTools: ToolModule = [
   // ── Global settings ───────────────────────────────────────────────────────
   defineTool({
     name: "get_igmp_proxy_settings",
-    title: "Get IGMP Proxy Settings",
+    title: "Get IGMP Proxy Global Settings",
     annotations: READ,
     description:
-      "Shows global IGMP-proxy settings (`/routing igmp-proxy`). IGMP proxy forwards multicast between a single " +
-      "upstream and one or more downstream interfaces without a full multicast routing protocol — ideal for IPTV.",
+      "Read global IGMP proxy settings (`/routing igmp-proxy print`). IGMP proxy forwards IPv4 multicast between a single " +
+      "upstream interface and one or more downstream interfaces without a full multicast routing daemon — ideal for " +
+      "IPTV distribution. For interface membership configuration use `list_igmp_proxy_interfaces`; for live " +
+      "forwarding state use `list_igmp_proxy_mfc`. Returns the current `quick-leave`, `query-interval`, and " +
+      "`query-response-interval` values.",
     async handler(_a, ctx) {
       ctx.info("Getting IGMP proxy settings");
       const result = await executeMikrotikCommand("/routing igmp-proxy print", ctx);
@@ -29,11 +32,14 @@ export const routingIgmpProxyTools: ToolModule = [
 
   defineTool({
     name: "update_igmp_proxy_settings",
-    title: "Update IGMP Proxy Settings",
+    title: "Update IGMP Proxy Global Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates global IGMP-proxy settings. `quick_leave` prunes a group immediately on leave (good for IPTV " +
-      "channel zapping); query intervals tune membership refresh behaviour.",
+      "Update global IGMP proxy settings (`/routing igmp-proxy set`). Tunes IPv4 multicast membership refresh " +
+      "timing and fast-leave behaviour for the proxy daemon. For interface-level changes use " +
+      "`update_igmp_proxy_interface`. `quick_leave` prunes a multicast group immediately on member leave — " +
+      'recommended for IPTV channel zapping; `query_interval` e.g. "125s"; `query_response_interval` e.g. ' +
+      '"10s". Returns updated settings on success.',
     inputSchema: {
       quick_leave: z.boolean().optional(),
       query_interval: z.string().optional().describe('e.g. "125s"'),
@@ -63,8 +69,11 @@ export const routingIgmpProxyTools: ToolModule = [
     title: "List IGMP Proxy Interfaces",
     annotations: READ,
     description:
-      "Lists IGMP-proxy interfaces (`/routing igmp-proxy interface`). Exactly one interface should be `upstream` " +
-      "(toward the multicast source); the rest are downstream toward receivers.",
+      "List all IGMP proxy interface entries (`/routing igmp-proxy interface print detail`). Shows each " +
+      "interface's role (upstream vs downstream), alternative subnets, TTL threshold, and enabled state. " +
+      "Exactly one interface must be `upstream` (toward the IPv4 multicast source); all others are downstream " +
+      "toward receivers. For live forwarding state use `list_igmp_proxy_mfc`; to add an entry use " +
+      "`add_igmp_proxy_interface`. Returns all configured IGMP proxy interfaces with their properties.",
     async handler(_a, ctx) {
       ctx.info("Listing IGMP proxy interfaces");
       const result = await executeMikrotikCommand(
@@ -83,8 +92,12 @@ export const routingIgmpProxyTools: ToolModule = [
     title: "Add IGMP Proxy Interface",
     annotations: WRITE,
     description:
-      "Adds an interface to the IGMP proxy. Set `upstream=true` for the interface facing the multicast source; " +
-      "`alternative_subnets` whitelists extra source subnets reachable through this interface.",
+      "Add an interface to the IGMP proxy configuration (`/routing igmp-proxy interface add`). Registers a " +
+      "network interface as either upstream (`upstream=true`, toward the IPv4 multicast source) or downstream " +
+      "(toward receivers). Only one upstream interface is permitted per proxy instance. " +
+      "`alternative_subnets` whitelists extra source subnets reachable through this interface (e.g. " +
+      '"10.0.0.0/8"); `threshold` sets the minimum TTL required to forward. For updating an existing entry ' +
+      "use `update_igmp_proxy_interface`; to view current entries use `list_igmp_proxy_interfaces`.",
     inputSchema: {
       interface: z.string().describe("Interface name"),
       upstream: z
@@ -121,7 +134,12 @@ export const routingIgmpProxyTools: ToolModule = [
     name: "update_igmp_proxy_interface",
     title: "Update IGMP Proxy Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an IGMP-proxy interface by its interface name.",
+    description:
+      "Update an existing IGMP proxy interface entry by name (`/routing igmp-proxy interface set " +
+      "[find interface=...]`). Modifies the upstream/downstream role, alternative subnets, TTL threshold, " +
+      "comment, or disabled state of the named interface. For adding a new interface use " +
+      "`add_igmp_proxy_interface`; to toggle only the enabled state use `set_igmp_proxy_interface_enabled`. " +
+      "Returns updated interface detail on success.",
     inputSchema: {
       interface: z.string().describe("Existing IGMP-proxy interface name"),
       upstream: z.boolean().optional(),
@@ -158,7 +176,12 @@ export const routingIgmpProxyTools: ToolModule = [
     name: "remove_igmp_proxy_interface",
     title: "Remove IGMP Proxy Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes an IGMP-proxy interface by its interface name.",
+    description:
+      "Remove an IGMP proxy interface entry by name (`/routing igmp-proxy interface remove " +
+      "[find interface=...]`). Permanently deletes the interface from the proxy configuration; multicast " +
+      "groups that relied on it will stop being forwarded. For disabling without removal use " +
+      "`set_igmp_proxy_interface_enabled`. Provide the interface name as it appears in " +
+      "`list_igmp_proxy_interfaces`.",
     inputSchema: {
       interface: z.string().describe("IGMP-proxy interface name to remove"),
     },
@@ -176,9 +199,14 @@ export const routingIgmpProxyTools: ToolModule = [
 
   defineTool({
     name: "set_igmp_proxy_interface_enabled",
-    title: "Enable/Disable IGMP Proxy Interface",
+    title: "Enable or Disable IGMP Proxy Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables an IGMP-proxy interface by name.",
+    description:
+      "Enable or disable a single IGMP proxy interface by name (`/routing igmp-proxy interface set " +
+      "[find interface=...] disabled=yes/no`). Pauses multicast forwarding through the interface without " +
+      "removing its configuration. For full property changes use `update_igmp_proxy_interface`; to " +
+      "permanently remove the entry use `remove_igmp_proxy_interface`. Provide the interface name as it " +
+      "appears in `list_igmp_proxy_interfaces`.",
     inputSchema: {
       interface: z.string().describe("IGMP-proxy interface name"),
       enabled: z.boolean(),
@@ -198,11 +226,14 @@ export const routingIgmpProxyTools: ToolModule = [
   // ── Forwarding cache (read-only) ──────────────────────────────────────────
   defineTool({
     name: "list_igmp_proxy_mfc",
-    title: "List IGMP Proxy Forwarding Cache",
+    title: "List IGMP Proxy Multicast Forwarding Cache",
     annotations: READ,
     description:
-      "Lists the IGMP-proxy multicast forwarding cache (`/routing igmp-proxy mfc`): active (source, group) entries " +
-      "and which downstream interfaces each is being forwarded to. Read-only — the live multicast forwarding state.",
+      "List the live multicast forwarding cache (MFC) entries (`/routing igmp-proxy mfc print detail`). " +
+      "Shows each active IPv4 (source, group) pair and the downstream interfaces each is currently being " +
+      "forwarded to — runtime state populated by IGMP join messages, not user-configured entries. Read-only; " +
+      "entries cannot be created or removed via this tool. For interface configuration see " +
+      "`list_igmp_proxy_interfaces`; for global settings see `get_igmp_proxy_settings`.",
     async handler(_a, ctx) {
       ctx.info("Listing IGMP proxy MFC");
       const result = await executeMikrotikCommand("/routing igmp-proxy mfc print detail", ctx);

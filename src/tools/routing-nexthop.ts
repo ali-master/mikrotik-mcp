@@ -11,12 +11,18 @@ const UNSUPPORTED =
 export const routingNexthopTools: ToolModule = [
   defineTool({
     name: "list_routing_nexthops",
-    title: "List Routing Next-hops",
+    title: "List Routing Next-Hops",
     annotations: READ,
     description:
-      "Lists resolved routing next-hops (`/routing nexthop`). This is the recursive next-hop resolution table: " +
-      "it shows how each gateway resolves to a concrete interface + immediate gateway, which routes reference it, " +
-      "and whether it is currently active. Read-only and diagnostic — useful for debugging recursive/BGP next-hops.",
+      "List resolved routing next-hops (`/routing nexthop`) — the recursive next-hop resolution table that shows " +
+      "how each gateway maps to a concrete egress interface and immediate next-hop address, " +
+      "and whether it is currently active. Use this to debug recursive or BGP next-hop resolution failures where " +
+      "a route exists but traffic is not forwarded as expected. " +
+      "For the IPv4 route table use list_routes; for IPv6 routes use list_ipv6_routes; " +
+      "for routing policy rules use list_routing_rules; for next-hop counts only use get_routing_nexthop_stats. " +
+      "Requires RouterOS v7 with the routing package. " +
+      "Returns full detail for each next-hop entry. " +
+      "Filter with gateway_filter (substring match on gateway address) and active_only=true to restrict to active entries.",
     inputSchema: {
       gateway_filter: z
         .string()
@@ -40,9 +46,15 @@ export const routingNexthopTools: ToolModule = [
 
   defineTool({
     name: "get_routing_nexthop_stats",
-    title: "Routing Next-hop Statistics",
+    title: "Get Routing Next-Hop Statistics",
     annotations: READ,
-    description: "Summarises the routing next-hop table: total vs active next-hop count.",
+    description:
+      "Summarise the routing next-hop table (`/routing nexthop`) — returns total and active next-hop counts. " +
+      "Use this for a quick health check on next-hop resolution capacity without fetching full entry detail. " +
+      "For the full per-entry list with gateway and interface detail use list_routing_nexthops; " +
+      "for the IPv4 route table use list_routes; for IPv6 routes use list_ipv6_routes. " +
+      "Requires RouterOS v7 with the routing package. " +
+      "Returns two counts: total next-hops and active next-hops.",
     async handler(_a, ctx) {
       ctx.info("Getting routing next-hop statistics");
       const total = await executeMikrotikCommand("/routing nexthop print count-only", ctx);

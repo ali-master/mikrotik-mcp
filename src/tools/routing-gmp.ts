@@ -14,9 +14,11 @@ export const routingGmpTools: ToolModule = [
     title: "List GMP Interfaces",
     annotations: READ,
     description:
-      "Lists GMP interfaces (`/routing gmp interface`). GMP is RouterOS's shared Group Management Protocol layer " +
-      "(IGMP for IPv4, MLD for IPv6) used by PIM-SM and IGMP-proxy to learn receiver group memberships. " +
-      "Read-only — shows the querier role, version and timers per interface.",
+      "Lists GMP interface records (`/routing gmp interface`) — returns per-interface querier role, protocol version, " +
+      "and timer state for RouterOS's Group Management Protocol layer (IGMP for IPv4, MLD for IPv6), which PIM-SM " +
+      "and IGMP-proxy use to discover downstream receiver group memberships. " +
+      "For the actual multicast groups joined on each interface use list_gmp_group_memberships. " +
+      "Read-only; requires RouterOS v7 with the routing/multicast package.",
     async handler(_a, ctx) {
       ctx.info("Listing GMP interfaces");
       const result = await executeMikrotikCommand("/routing gmp interface print detail", ctx);
@@ -30,14 +32,15 @@ export const routingGmpTools: ToolModule = [
     title: "List GMP Group Memberships",
     annotations: READ,
     description:
-      "Lists GMP group memberships (`/routing gmp group`): the multicast groups currently joined per interface, " +
-      "as learned from IGMP/MLD reports. Read-only — the source of truth for which downstream segments want which groups.",
+      "Lists GMP group membership records (`/routing gmp group`) — returns the multicast groups currently joined " +
+      "per interface as learned from downstream IGMP (IPv4) or MLD (IPv6) reports; the source of truth for which " +
+      "segments want which groups, used by PIM-SM and IGMP-proxy for forwarding decisions. " +
+      "For per-interface querier role and timer state use list_gmp_interfaces. " +
+      "Accepts optional filters: interface_filter (exact interface name) and group_filter (regex match on multicast group address). " +
+      "Read-only; requires RouterOS v7 with the routing/multicast package.",
     inputSchema: {
       interface_filter: z.string().optional().describe("Show only memberships on this interface"),
-      group_filter: z
-        .string()
-        .optional()
-        .describe("Substring match on the multicast group address"),
+      group_filter: z.string().optional().describe("Regex match on the multicast group address"),
     },
     async handler(a, ctx) {
       ctx.info("Listing GMP group memberships");
