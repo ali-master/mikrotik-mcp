@@ -62,8 +62,13 @@ lines.push("## Modules");
 lines.push("");
 lines.push("| Module | Group | Tools | Scope |");
 lines.push("|--------|-------|------:|-------|");
+// Escape `|` in cell text so a description like "`/interface gre|ipip|eoip`"
+// doesn't inject extra table columns (mirrors the per-tool table below).
+const cell = (s: string): string => s.replace(/\|/g, "\\|");
 for (const m of moduleCatalog) {
-  lines.push(`| [${m.label}](#${m.slug}) | ${m.group} | ${m.tools.length} | ${m.description} |`);
+  lines.push(
+    `| [${cell(m.label)}](#${m.slug}) | ${cell(m.group)} | ${m.tools.length} | ${cell(m.description)} |`,
+  );
 }
 lines.push("");
 
