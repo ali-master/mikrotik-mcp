@@ -1,7 +1,7 @@
 {
   "name": "@usex/mikrotik-mcp",
   "version": "2.5.0",
-  "description": "Bun-native MCP server for MikroTik RouterOS — 200+ tools over SSH for firewall, NAT, routing, DHCP, DNS, WireGuard, wireless, QoS and more.",
+  "description": "MCP server for MikroTik RouterOS — 660+ tools over SSH for firewall, NAT, routing, DHCP, DNS, WireGuard, wireless, QoS and more.",
   "keywords": [
     "ai",
     "bun",
@@ -120,5 +120,6 @@
       "breaking change": "Breaking changes"
     }
   },
-  "logo": "https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/logo.svg"
+  "logo": "https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/logo.svg",
+  "logoIcon": "https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/logo-icon.svg"
 }

@@ -7,4 +7,8 @@
 import pkg from "../package.json" with { type: "json" };
 
 export const VERSION: string = pkg.version;
+export const WEBSITE_URL: string = pkg.homepage;
+export const LOGO_URL: string = pkg.logoIcon;
+export const SERVER_TITLE: string = pkg.name;
+export const SERVER_DESCRIPTION: string = pkg.description;
 export const SERVER_NAME = "mcp-mikrotik";

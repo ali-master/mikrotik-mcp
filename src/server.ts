@@ -9,7 +9,14 @@ import { registerUiResources } from "./core/ui-resources";
 import { listDevices, getConfig } from "./core/runtime";
 import { registerPrompts } from "./prompts";
 import { allToolModules } from "./tools";
-import { VERSION, SERVER_NAME } from "./version";
+import {
+  VERSION,
+  SERVER_NAME,
+  SERVER_DESCRIPTION,
+  SERVER_TITLE,
+  WEBSITE_URL,
+  LOGO_URL,
+} from "./version";
 
 const INSTRUCTIONS = `MikroTik RouterOS management over SSH.
 
@@ -57,7 +64,21 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
       : INSTRUCTIONS;
 
   const server = new McpServer(
-    { name: SERVER_NAME, version: VERSION },
+    {
+      name: SERVER_NAME,
+      version: VERSION,
+      websiteUrl: WEBSITE_URL,
+      title: SERVER_TITLE,
+      description: SERVER_DESCRIPTION,
+      icons: [
+        {
+          src: LOGO_URL,
+          mimeType: "image/png",
+          sizes: ["192x192"],
+          theme: "light",
+        },
+      ],
+    },
     {
       capabilities: { tools: {}, prompts: {}, resources: {}, logging: {} },
       instructions,
