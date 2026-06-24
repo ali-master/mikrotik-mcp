@@ -715,43 +715,49 @@ function ConnectivityGraph({
           const info = statusInfo(d.status);
           const online = d.status.reachable === true;
           const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
-          const short = d.name.length > 11 ? `${d.name.slice(0, 10)}…` : d.name;
+          // Keep the node a circle, but scale its radius to the device name so the
+          // label always fits inside the diameter (≈6.2px per char in DM Mono at
+          // 10px). Names longer than the max radius can hold are truncated to fit.
+          const maxR = 70;
+          const maxChars = Math.floor((2 * maxR - 24) / 6.2);
+          const name = d.name.length > maxChars ? `${d.name.slice(0, maxChars - 1)}…` : d.name;
+          const r = Math.max(23, Math.min(maxR, name.length * 3.1 + 12));
           return (
             <g key={`n-${d.name}`} className="conn-node">
               {online && (
-                <circle className="conn-node-halo" cx={x} cy={y} r={24} stroke={info.color} />
+                <circle className="conn-node-halo" cx={x} cy={y} r={r + 1} stroke={info.color} />
               )}
               <circle
                 cx={x}
                 cy={y}
-                r={23}
+                r={r}
                 fill="url(#conn-orb)"
                 stroke={info.color}
                 strokeWidth={2}
               />
               <circle
                 className={online ? "conn-blink" : undefined}
-                cx={x + 16}
-                cy={y - 16}
+                cx={x + r * 0.7}
+                cy={y - r * 0.7}
                 r={4.5}
                 fill={info.color}
               />
               <text
                 x={x}
-                y={y + 3}
+                y={y + 3.5}
                 textAnchor="middle"
                 fill="#e8eaed"
                 fontSize={10}
                 fontWeight={600}
               >
-                {short}
+                {name}
               </text>
-              <text x={x} y={y + 40} textAnchor="middle" fill="#9aa3af" fontSize={9}>
+              <text x={x} y={y + r + 14} textAnchor="middle" fill="#9aa3af" fontSize={9}>
                 {d.address ?? d.host}
               </text>
               <text
                 x={x}
-                y={y + 52}
+                y={y + r + 26}
                 textAnchor="middle"
                 fill={info.color}
                 fontSize={9}
