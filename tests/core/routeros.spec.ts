@@ -7,6 +7,7 @@ import {
   commandUnsupported,
   containsRawParserError,
   indicatesFailure,
+  placeBeforeError,
   splitHostPort,
 } from "../../src/core/routeros";
 
@@ -66,5 +67,25 @@ describe("splitHostPort", () => {
   test("splits a bracketed IPv6 with a port", () => {
     expect(splitHostPort("[2001:db8::1]:443")).toEqual({ host: "2001:db8::1", port: 443 });
     expect(splitHostPort("[2001:db8::1]")).toEqual({ host: "2001:db8::1" });
+  });
+});
+
+describe("placeBeforeError", () => {
+  const err =
+    "item referred by 'place-before' does not exist (11) (/ip/firewall/filter/add; line 1)";
+  test("explains a non-existent *N .id and suggests the bare ordinal", () => {
+    const msg = placeBeforeError(err, "*13");
+    expect(msg).toBeDefined();
+    expect(msg).toContain("*13");
+    expect(msg).toContain(".id");
+    expect(msg).toContain("'13'"); // suggests the bare ordinal
+  });
+  test("handles a bare-number place_before that was rejected", () => {
+    const msg = placeBeforeError(err, "13");
+    expect(msg).toContain("ordinal");
+  });
+  test("returns undefined when place_before was not supplied or the error is unrelated", () => {
+    expect(placeBeforeError(err, undefined)).toBeUndefined();
+    expect(placeBeforeError("failure: already have such entry", "*13")).toBeUndefined();
   });
 });

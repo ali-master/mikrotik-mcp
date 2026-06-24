@@ -10,7 +10,14 @@ import {
   DANGEROUS,
 } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  placeBeforeError,
+  Cmd,
+} from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -137,7 +144,11 @@ export const firewallFilterTools: ToolModule = [
       place_before: z
         .string()
         .optional()
-        .describe('Rule number or ID (*N) to insert before e.g. "0" or "*3"'),
+        .describe(
+          'Insert before this position. Either a bare ordinal/row number (e.g. "0", "13") OR a ' +
+            'CURRENT internal .id ("*N") from list_filter_rules. Note: a "*N" .id is hexadecimal ' +
+            'and reassigned over time — it is NOT the row number, so "*13" ≠ the 13th rule.',
+        ),
     },
     async handler(a, ctx) {
       ctx.info(`Creating firewall filter rule: chain=${a.chain}, action=${a.action}`);
@@ -179,7 +190,8 @@ export const firewallFilterTools: ToolModule = [
             ? `Firewall filter rule created successfully:\n\n${details}`
             : `Firewall filter rule created with ID: ${result}`;
         }
-        return `Failed to create firewall filter rule: ${result}`;
+        const hint = placeBeforeError(result, a.place_before);
+        return `Failed to create firewall filter rule: ${hint ?? result}`;
       }
 
       // No output might mean success — verify by fetching the last rule.

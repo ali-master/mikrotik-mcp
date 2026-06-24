@@ -159,6 +159,30 @@ export function looksLikeError(result: string): boolean {
 }
 
 /**
+ * When an ordered-rule `add` failed because its `place-before` referenced an
+ * item that does not exist, return actionable guidance; otherwise `undefined`.
+ *
+ * RouterOS rejects `place-before` with "item referred by 'place-before' does not
+ * exist" when the value is an internal `.id` (`*N`) that isn't present. This is a
+ * very common confusion: the `*N` `.id` values are HEX, assigned internally and
+ * reassigned over time — they are NOT the row/ordinal number shown by `print`.
+ * So `place-before=*13` is not "before the 13th rule"; it's "before the rule
+ * whose .id is *13", which may not exist. The guidance steers the caller to use
+ * a bare ordinal (e.g. `13`) for a position, or a CURRENT `.id` from a list call.
+ */
+export function placeBeforeError(result: string, placeBefore?: string): string | undefined {
+  if (!placeBefore) return undefined;
+  const t = result.toLowerCase();
+  if (!t.includes("place-before") || !(t.includes("does not exist") || t.includes("not found"))) {
+    return undefined;
+  }
+  const detail = placeBefore.startsWith("*")
+    ? `A '*N' value is an internal .id (hexadecimal, reassigned over time), NOT the row number — list the rules first and use a CURRENT .id, or pass a bare ordinal position instead (e.g. '${placeBefore.slice(1)}').`
+    : "Pass a bare ordinal position (e.g. '0') or a current internal .id ('*N') from a list call.";
+  return `place_before '${placeBefore}' does not exist on the device. ${detail}`;
+}
+
+/**
  * True when RouterOS rejected the command *word* itself — i.e. the command path
  * does not exist on this RouterOS version (e.g. `/ip route cache`, removed in
  * v7) or was mistyped. Distinct from a value-level `failure:`; lets a tool give

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 670,
   "tools": [
@@ -9335,7 +9335,7 @@
             "type": "string"
           },
           "place_before": {
-            "description": "Rule number or ID (*N) to insert before e.g. \"0\" or \"*3\"",
+            "description": "Insert before this position. Either a bare ordinal/row number (e.g. \"0\", \"13\") OR a CURRENT internal .id (\"*N\") from list_filter_rules. Note: a \"*N\" .id is hexadecimal and reassigned over time — it is NOT the row number, so \"*13\" ≠ the 13th rule.",
             "type": "string"
           }
         },

@@ -3,7 +3,14 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  placeBeforeError,
+  Cmd,
+} from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -174,7 +181,8 @@ export const firewallNatTools: ToolModule = [
             ? `NAT rule created successfully:\n\n${details}`
             : `NAT rule created with ID: ${result}`;
         }
-        return `Failed to create NAT rule: ${result}`;
+        const hint = placeBeforeError(result, a.place_before);
+        return `Failed to create NAT rule: ${hint ?? result}`;
       }
 
       // No output might mean success — verify by fetching the last rule.

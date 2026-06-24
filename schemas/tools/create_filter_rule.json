@@ -78,7 +78,7 @@
       "type": "string"
     },
     "place_before": {
-      "description": "Rule number or ID (*N) to insert before e.g. \"0\" or \"*3\"",
+      "description": "Insert before this position. Either a bare ordinal/row number (e.g. \"0\", \"13\") OR a CURRENT internal .id (\"*N\") from list_filter_rules. Note: a \"*N\" .id is hexadecimal and reassigned over time — it is NOT the row number, so \"*13\" ≠ the 13th rule.",
       "type": "string"
     }
   },
