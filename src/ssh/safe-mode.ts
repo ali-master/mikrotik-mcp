@@ -33,6 +33,20 @@ function stripAnsi(text: string): string {
 
 const CTRL_X = "\x18";
 
+/**
+ * True when a RouterOS Ctrl+X response confirms Safe Mode is active. RouterOS
+ * signals this in one of two ways depending on version and terminal type:
+ *   • the prompt redraws with the `<SAFE>` marker (the common case), or
+ *   • it prints a textual confirmation like "Taking Safe Mode session...
+ *     Success!" or "Safe Mode taken" (seen on `dumb` terminals / some v7
+ *     builds) while leaving the prompt unchanged.
+ * Accept either so activation isn't falsely reported as a failure.
+ */
+export function isSafeModeActivated(response: string): boolean {
+  if (response.includes("<SAFE>")) return true;
+  return /safe mode[^\n]*\b(?:success|taken|enabled|active)\b/i.test(response);
+}
+
 export class SafeModeManager {
   private ssh: MikroTikSSHClient | null = null;
   private channel: ClientChannel | null = null;
@@ -97,7 +111,12 @@ export class SafeModeManager {
 
       this.channel.write(CTRL_X);
       const response = await this.readUntilPrompt(10_000);
-      if (!response.includes("<SAFE>")) {
+      // Activation is confirmed EITHER by the prompt switching to the `<SAFE>`
+      // marker (the usual case) OR by RouterOS printing a textual confirmation
+      // — some versions/terminal types emit "Taking Safe Mode session...
+      // Success!" (or "Safe Mode taken") instead of redrawing the prompt with
+      // `<SAFE>`, especially on a `dumb` terminal. Treat either as success.
+      if (!isSafeModeActivated(response)) {
         this.cleanup();
         return `Error: Safe mode did not activate. Response: ${JSON.stringify(response.slice(0, 300))}`;
       }
