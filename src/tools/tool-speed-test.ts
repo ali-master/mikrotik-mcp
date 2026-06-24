@@ -8,12 +8,19 @@ import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const speedTestTools: ToolModule = [
   defineTool({
     name: "speed_test",
-    title: "Speed Test",
+    title: "Run RouterOS Speed Test",
     annotations: READ,
     description:
-      "Runs a latency and throughput test to another reachable RouterOS device " +
-      "(`/tool speed-test`). The run is bounded by `duration`, so it terminates " +
-      "rather than streaming.",
+      "Runs a bandwidth and latency speed test from the router to a target RouterOS device " +
+      "(`/tool speed-test`) — measures TCP throughput and round-trip latency between two " +
+      "MikroTik/RouterOS nodes. The target `address` must be a reachable RouterOS device " +
+      "running the bandwidth-test server; this is NOT a general ICMP ping/traceroute (for " +
+      "that use the ping or traceroute tools). The test runs for `duration` seconds then " +
+      "terminates rather than streaming. `direction` controls traffic flow: 'receive' (router " +
+      "pulls data from the target), 'transmit' (router pushes data to the target), or 'both' " +
+      "(default). `tcp_connection_count` sets the number of parallel TCP streams. Optional " +
+      "`user`/`password` authenticate to the remote bandwidth-test server. Returns measured " +
+      "throughput (tx/rx Mbps) and latency figures.",
     inputSchema: {
       address: z.string().describe("Target RouterOS device address"),
       duration: z

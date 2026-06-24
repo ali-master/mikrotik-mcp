@@ -8,11 +8,15 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const bandwidthServerTools: ToolModule = [
   defineTool({
     name: "get_bandwidth_server",
-    title: "Get Bandwidth Server",
+    title: "Get Bandwidth Test Server Settings",
     annotations: READ,
     description:
-      "Gets the bandwidth-test server settings of the MikroTik device " +
-      "(`/tool bandwidth-server`).",
+      "Reads bandwidth-test server configuration (`/tool bandwidth-server print`) — " +
+      "use to inspect whether the server is enabled, requires client authentication, " +
+      "and what session/port limits are active. " +
+      "For live in-progress tests use `list_bandwidth_server_sessions`. " +
+      "Returns the full settings block including `enabled`, `authenticate`, " +
+      "`max-sessions`, and `allocate-udp-ports-from`.",
     async handler(_a, ctx) {
       ctx.info("Getting bandwidth-server settings");
       const result = await executeMikrotikCommand("/tool bandwidth-server print", ctx);
@@ -24,14 +28,19 @@ export const bandwidthServerTools: ToolModule = [
 
   defineTool({
     name: "update_bandwidth_server",
-    title: "Update Bandwidth Server",
+    title: "Update Bandwidth Test Server Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates the bandwidth-test server settings of the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    enabled: accept incoming bandwidth-test sessions.\n" +
-      "    authenticate: require valid device credentials from test clients.\n" +
-      "    max_sessions: cap concurrent test sessions.",
+      "Configures the bandwidth-test server (`/tool bandwidth-server set`) — " +
+      "enables or disables the server, toggles client authentication, caps concurrent " +
+      "sessions, and sets the UDP port allocation base. " +
+      "To inspect current values before changing them use `get_bandwidth_server`. " +
+      "Returns the updated settings block after applying changes.\n\n" +
+      "Arguments:\n" +
+      "    `enabled`: accept incoming bandwidth-test sessions.\n" +
+      "    `authenticate`: require valid device credentials from test clients.\n" +
+      "    `max_sessions`: cap concurrent test sessions.\n" +
+      "    `allocate_udp_ports_from`: first UDP port used for test streams.",
     inputSchema: {
       enabled: z.boolean().optional(),
       authenticate: z.boolean().optional(),
@@ -59,9 +68,16 @@ export const bandwidthServerTools: ToolModule = [
 
   defineTool({
     name: "list_bandwidth_server_sessions",
-    title: "List Bandwidth Server Sessions",
+    title: "List Active Bandwidth Test Server Sessions",
     annotations: READ,
-    description: "Lists active bandwidth-test server sessions (`/tool bandwidth-server session`).",
+    description:
+      "Lists currently active bandwidth-test server sessions " +
+      "(`/tool bandwidth-server session print`) — use to see in-progress tests " +
+      "accepted by this device's server side, including remote client usernames. " +
+      "Optionally filter by partial username with `user_filter`. " +
+      "To inspect or change the server's global settings use `get_bandwidth_server` " +
+      "or `update_bandwidth_server`. " +
+      "Returns zero or more active session records; empty when no tests are running.",
     inputSchema: {
       user_filter: z.string().optional().describe("Partial user match"),
     },

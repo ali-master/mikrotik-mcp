@@ -19,8 +19,11 @@ export const trafficGeneratorTools: ToolModule = [
     title: "Add Traffic Generator Port",
     annotations: WRITE,
     description:
-      "Adds a traffic-generator port binding a name to a physical interface " +
-      "(`/tool traffic-generator port`).",
+      "Adds a traffic-generator port (`/tool traffic-generator port add`), binding a logical " +
+      "name to a physical interface — required before any stream can reference that interface. " +
+      "For listing existing ports use list_traffic_generator_ports; for defining what to " +
+      "transmit on a port use add_traffic_generator_stream. " +
+      "Returns the newly created port's detail.",
     inputSchema: {
       name: z.string(),
       interface: z.string(),
@@ -49,7 +52,10 @@ export const trafficGeneratorTools: ToolModule = [
     name: "list_traffic_generator_ports",
     title: "List Traffic Generator Ports",
     annotations: READ,
-    description: "Lists traffic-generator ports (`/tool traffic-generator port`).",
+    description:
+      "Lists traffic-generator port entries (`/tool traffic-generator port print`) — returns " +
+      "the name-to-interface bindings that streams reference. Optionally filter by name " +
+      "substring (name_filter). For stream definitions use list_traffic_generator_streams.",
     inputSchema: {
       name_filter: z.string().optional(),
     },
@@ -71,7 +77,11 @@ export const trafficGeneratorTools: ToolModule = [
     name: "remove_traffic_generator_port",
     title: "Remove Traffic Generator Port",
     annotations: DESTRUCTIVE,
-    description: "Removes a traffic-generator port by name or '.id' from the MikroTik device.",
+    description:
+      "Removes a traffic-generator port (`/tool traffic-generator port remove`) — destroys " +
+      "the interface binding, which also invalidates any streams referencing it. Accepts the " +
+      "port name or RouterOS `.id` (e.g. `*1`) from list_traffic_generator_ports. Verifies " +
+      "existence before attempting removal. For removing streams use remove_traffic_generator_stream.",
     inputSchema: {
       port_id: z.string().describe("Port name or RouterOS '.id'"),
     },
@@ -98,11 +108,12 @@ export const trafficGeneratorTools: ToolModule = [
     title: "Add Traffic Generator Stream",
     annotations: WRITE,
     description:
-      "Adds a traffic-generator stream describing what to transmit on a port " +
-      "(`/tool traffic-generator stream`).\n\n" +
-      "Notes:\n" +
-      "    tx_template: name of an existing packet-template to send.\n" +
-      "    tx_rate: transmit rate in bits/second.",
+      "Adds a traffic-generator stream (`/tool traffic-generator stream add`) — defines what " +
+      "to transmit on a named port: packet template (name of an existing packet-template to " +
+      "send), packet size or range, and transmit rate in bits/second. The referenced port must " +
+      "already exist (use add_traffic_generator_port). For listing streams use " +
+      "list_traffic_generator_streams; to begin transmission use start_traffic_generator. " +
+      "Returns the created stream's detail.",
     inputSchema: {
       name: z.string(),
       port: z.string().describe("Traffic-generator port name"),
@@ -139,7 +150,11 @@ export const trafficGeneratorTools: ToolModule = [
     name: "list_traffic_generator_streams",
     title: "List Traffic Generator Streams",
     annotations: READ,
-    description: "Lists traffic-generator streams (`/tool traffic-generator stream`).",
+    description:
+      "Lists traffic-generator stream definitions (`/tool traffic-generator stream print`) — " +
+      "shows name, port binding, packet template, packet size, and transmit rate for each " +
+      "configured stream. Optionally filter by name substring (name_filter) or exact port name " +
+      "(port_filter). For port bindings use list_traffic_generator_ports.",
     inputSchema: {
       name_filter: z.string().optional(),
       port_filter: z.string().optional(),
@@ -163,7 +178,11 @@ export const trafficGeneratorTools: ToolModule = [
     name: "remove_traffic_generator_stream",
     title: "Remove Traffic Generator Stream",
     annotations: DESTRUCTIVE,
-    description: "Removes a traffic-generator stream by name or '.id' from the MikroTik device.",
+    description:
+      "Removes a traffic-generator stream (`/tool traffic-generator stream remove`) — deletes " +
+      "the transmit definition without affecting the port it referenced. Accepts the stream name " +
+      "or RouterOS `.id` (e.g. `*1`) from list_traffic_generator_streams. Verifies existence " +
+      "before removal. For removing the port binding use remove_traffic_generator_port.",
     inputSchema: {
       stream_id: z.string().describe("Stream name or RouterOS '.id'"),
     },
@@ -192,8 +211,11 @@ export const trafficGeneratorTools: ToolModule = [
     title: "Start Traffic Generator",
     annotations: WRITE,
     description:
-      "Starts the traffic generator, transmitting the configured streams " +
-      "(`/tool traffic-generator start`).",
+      "Starts the traffic generator (`/tool traffic-generator start`) — begins transmitting " +
+      "packets for all enabled streams on their configured ports. Accepts an optional duration " +
+      "in seconds; omit to run until explicitly halted with stop_traffic_generator. Requires " +
+      "ports (add_traffic_generator_port) and streams (add_traffic_generator_stream) to be " +
+      "configured first.",
     inputSchema: {
       duration: z
         .number()
@@ -217,7 +239,11 @@ export const trafficGeneratorTools: ToolModule = [
     name: "stop_traffic_generator",
     title: "Stop Traffic Generator",
     annotations: WRITE,
-    description: "Stops the traffic generator (`/tool traffic-generator stop`).",
+    description:
+      "Stops a running traffic generator (`/tool traffic-generator stop`) — halts all active " +
+      "stream transmission immediately. Use when a timed run (start_traffic_generator with " +
+      "duration) needs to be aborted early, or when the generator was started without a " +
+      "duration limit.",
     async handler(_a, ctx) {
       ctx.info("Stopping traffic generator");
       const result = await executeMikrotikCommand("/tool traffic-generator stop", ctx);

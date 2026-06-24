@@ -10,11 +10,16 @@ const Kind = z.enum(["interface", "queue", "resource"]);
 export const graphingTools: ToolModule = [
   defineTool({
     name: "add_graphing_interface",
-    title: "Add Interface Graphing",
+    title: "Add Interface Graphing Rule",
     annotations: WRITE,
     description:
-      "Adds an interface graphing rule so the device records traffic graphs " +
-      "for an interface (`/tool graphing interface`).",
+      "Adds an interface graphing rule (`/tool graphing interface add`) so the device begins " +
+      "recording per-interface bandwidth graphs viewable via the router's built-in web graph page. " +
+      "Use `interface='all'` to graph every interface. `allow_address` restricts which subnet may " +
+      "view the graphs (e.g. '0.0.0.0/0' for all). " +
+      "For simple-queue bandwidth graphs use `add_graphing_queue`; " +
+      "for CPU/memory/disk graphs use `add_graphing_resource`. " +
+      "Returns a confirmation string on success.",
     inputSchema: {
       interface: z.string().default("all").describe("Interface to graph, or 'all'"),
       allow_address: z
@@ -38,9 +43,17 @@ export const graphingTools: ToolModule = [
 
   defineTool({
     name: "add_graphing_queue",
-    title: "Add Queue Graphing",
+    title: "Add Queue Graphing Rule",
     annotations: WRITE,
-    description: "Adds a simple-queue graphing rule (`/tool graphing queue`).",
+    description:
+      "Adds a simple-queue graphing rule (`/tool graphing queue add`) so the device records " +
+      "bandwidth graphs for a named simple queue, viewable via the router's built-in web graph page. " +
+      "Use `simple_queue='all'` to graph every simple queue. `allow_address` restricts which subnet " +
+      "may view the graphs (e.g. '0.0.0.0/0' for all). " +
+      "For interface traffic graphs use `add_graphing_interface`; " +
+      "for CPU/memory/disk graphs use `add_graphing_resource`. " +
+      "Note: this targets simple queues only — for queue-tree entries there is no separate graphing scope. " +
+      "Returns a confirmation string on success.",
     inputSchema: {
       simple_queue: z.string().default("all").describe("Simple queue to graph, or 'all'"),
       allow_address: z.string().optional(),
@@ -61,10 +74,15 @@ export const graphingTools: ToolModule = [
 
   defineTool({
     name: "add_graphing_resource",
-    title: "Add Resource Graphing",
+    title: "Add Resource Graphing Rule",
     annotations: WRITE,
     description:
-      "Adds a system-resource graphing rule (CPU, memory, disk) " + "(`/tool graphing resource`).",
+      "Adds a system-resource graphing rule (`/tool graphing resource add`) so the device records " +
+      "CPU load, memory usage, and disk usage graphs viewable via the router's built-in web graph page. " +
+      "`allow_address` restricts which subnet may view the graphs (e.g. '0.0.0.0/0' for all). " +
+      "For per-interface bandwidth graphs use `add_graphing_interface`; " +
+      "for simple-queue graphs use `add_graphing_queue`. " +
+      "Returns a confirmation string on success.",
     inputSchema: {
       allow_address: z.string().optional(),
       store_on_disk: z.boolean().optional(),
@@ -85,7 +103,12 @@ export const graphingTools: ToolModule = [
     name: "list_graphing",
     title: "List Graphing Rules",
     annotations: READ,
-    description: "Lists graphing rules of the given kind (interface, queue or resource).",
+    description:
+      "Lists all graphing rules of a given kind (`/tool graphing {kind} print`) — specify `kind` " +
+      "as `interface`, `queue`, or `resource` to select the matching table. " +
+      "Use this to audit which interfaces, queues, or resource metrics are being graphed and to " +
+      "retrieve the `.id` values needed by `remove_graphing`. " +
+      "Returns all configured graphing entries for the selected table, or an empty-result message.",
     inputSchema: {
       kind: Kind.describe("Which graphing table to list"),
     },
@@ -105,7 +128,13 @@ export const graphingTools: ToolModule = [
     name: "remove_graphing",
     title: "Remove Graphing Rule",
     annotations: DESTRUCTIVE,
-    description: "Removes a graphing rule of the given kind by '.id' (from list output).",
+    description:
+      "Removes a graphing rule of the given kind (`/tool graphing {kind} remove`) by `.id`, " +
+      "stopping the device from recording graphs for that entry. " +
+      "Verifies the entry exists with a count-only check before deleting. " +
+      "`kind` must be `interface`, `queue`, or `resource`; `entry_id` is the RouterOS `.id` " +
+      "(e.g. '*1') obtained from `list_graphing`. " +
+      "Returns a confirmation string on success, or a not-found message if the `.id` does not exist.",
     inputSchema: {
       kind: Kind,
       entry_id: z.string().describe("RouterOS '.id', e.g. '*1'"),

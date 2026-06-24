@@ -8,9 +8,14 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const romonTools: ToolModule = [
   defineTool({
     name: "get_romon",
-    title: "Get RoMON",
+    title: "Get RoMON Global Settings",
     annotations: READ,
-    description: "Gets the RoMON settings of the MikroTik device (`/tool romon`).",
+    description:
+      "Read the global RoMON (Router Management Overlay Network) settings (`/tool romon print`). " +
+      "Use to check whether the Layer-2 management overlay is enabled, inspect the RoMON ID, " +
+      "and review configured secrets. " +
+      "Returns the current `enabled`, `id`, and `secrets` fields. " +
+      "For per-interface port entries use `list_romon_ports`.",
     async handler(_a, ctx) {
       ctx.info("Getting romon settings");
       const result = await executeMikrotikCommand("/tool romon print", ctx);
@@ -20,14 +25,15 @@ export const romonTools: ToolModule = [
 
   defineTool({
     name: "update_romon",
-    title: "Update RoMON",
+    title: "Update RoMON Global Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates the RoMON settings of the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    enabled: turn the Layer-2 RoMON management overlay on/off.\n" +
-      "    id: RoMON ID (defaults to a MAC); secrets: shared secret(s) for the\n" +
-      "        overlay.",
+      "Set global RoMON (Router Management Overlay Network) parameters (`/tool romon set`) — " +
+      "toggle the Layer-2 management overlay on/off, change the RoMON ID, or update shared secrets. " +
+      "For per-interface participation settings use `add_romon_port` or `remove_romon_port`. " +
+      "Returns the full updated settings after applying changes. " +
+      "Arguments: `enabled` (bool, turns overlay on/off), `id` (MAC-style RoMON node ID, " +
+      "defaults to device MAC), `secrets` (comma-separated shared secret(s) for the overlay).",
     inputSchema: {
       enabled: z.boolean().optional(),
       id: z.string().optional().describe("RoMON ID (MAC-style)"),
@@ -53,11 +59,17 @@ export const romonTools: ToolModule = [
 
   defineTool({
     name: "add_romon_port",
-    title: "Add RoMON Port",
+    title: "Add RoMON Port Entry",
     annotations: WRITE,
     description:
-      "Adds a RoMON port entry controlling which interfaces participate in the " +
-      "overlay (`/tool romon port`).",
+      "Add an interface entry to the RoMON port table (`/tool romon port add`) — " +
+      "controls which interfaces participate in the Layer-2 management overlay and their path cost. " +
+      "Use `interface='all'` to configure the global default entry that applies to all interfaces. " +
+      "For listing existing entries use `list_romon_ports`; to delete an entry use `remove_romon_port`. " +
+      "Returns port detail for the added interface after creation. " +
+      "Arguments: `interface` (interface name or 'all'), `cost` (integer path cost for the overlay), " +
+      "`secrets` (per-port shared secret), `forbid` (bool, block RoMON on this interface), " +
+      "`disabled` (bool).",
     inputSchema: {
       interface: z.string().default("all").describe("Interface, or 'all' for the default entry"),
       cost: z.number().int().optional().describe("Path cost for the overlay"),
@@ -88,9 +100,15 @@ export const romonTools: ToolModule = [
 
   defineTool({
     name: "list_romon_ports",
-    title: "List RoMON Ports",
+    title: "List RoMON Port Entries",
     annotations: READ,
-    description: "Lists RoMON port entries (`/tool romon port`).",
+    description:
+      "List RoMON port entries (`/tool romon port print`) — shows all interfaces registered " +
+      "in the Layer-2 management overlay with their cost, secrets, forbid, and disabled flags. " +
+      "Optionally filter by `interface_filter` to narrow results to a single interface name. " +
+      "For the global RoMON toggle and ID use `get_romon`; " +
+      "to add or delete a port entry use `add_romon_port` or `remove_romon_port`. " +
+      "Returns the `.id` values needed by `remove_romon_port`.",
     inputSchema: {
       interface_filter: z.string().optional(),
     },
@@ -111,9 +129,15 @@ export const romonTools: ToolModule = [
 
   defineTool({
     name: "remove_romon_port",
-    title: "Remove RoMON Port",
+    title: "Remove RoMON Port Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes a RoMON port entry by interface or '.id' from the MikroTik device.",
+    description:
+      "Remove a RoMON port entry from the overlay port table (`/tool romon port remove`). " +
+      "`port_id` accepts either an interface name (e.g. `ether1`) or a RouterOS `.id` " +
+      "(e.g. `*1`) taken from `list_romon_ports`. " +
+      "Verifies the entry exists before removing and returns an error if not found. " +
+      "To recreate an entry with different parameters use `add_romon_port`; " +
+      "to change global overlay settings use `update_romon`.",
     inputSchema: {
       port_id: z.string().describe("Interface name or RouterOS '.id'"),
     },

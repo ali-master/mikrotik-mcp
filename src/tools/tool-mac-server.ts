@@ -9,9 +9,14 @@ export const macServerTools: ToolModule = [
   // ── MAC-Telnet server ───────────────────────────────────────────────────────
   defineTool({
     name: "get_mac_server",
-    title: "Get MAC Server",
+    title: "Get MAC-Telnet Server Settings",
     annotations: READ,
-    description: "Gets the MAC-Telnet server settings (`/tool mac-server`).",
+    description:
+      "Read MAC-Telnet server settings (`/tool mac-server`). Returns the current " +
+      "`allowed-interface-list` controlling which interfaces accept inbound MAC-Telnet " +
+      "connections — the Layer-2 terminal protocol that reaches MikroTik devices by MAC " +
+      "address when no IP is reachable. For MAC-Winbox settings use `get_mac_winbox`; " +
+      "for MAC-ping use `get_mac_ping`. Returns the full `/tool mac-server print` output.",
     async handler(_a, ctx) {
       ctx.info("Getting mac-server settings");
       const result = await executeMikrotikCommand("/tool mac-server print", ctx);
@@ -21,13 +26,16 @@ export const macServerTools: ToolModule = [
 
   defineTool({
     name: "update_mac_server",
-    title: "Update MAC Server",
+    title: "Update MAC-Telnet Server Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates the MAC-Telnet server settings of the MikroTik device.\n\n" +
+      "Update the MAC-Telnet server's `allowed-interface-list` (`/tool mac-server set`). " +
+      "Controls which interface list accepts inbound MAC-Telnet sessions — the Layer-2 " +
+      "terminal protocol for reaching the router by MAC address without an IP. " +
+      "For MAC-Winbox interface control use `update_mac_winbox`; for MAC-ping toggle " +
+      "use `update_mac_ping`. Returns the updated settings after the change.\n\n" +
       "Notes:\n" +
-      "    allowed_interface_list: which interfaces accept MAC-Telnet — an\n" +
-      "        interface-list name, or 'all' / 'none'.",
+      "    allowed_interface_list: interface-list name, or 'all' / 'none'.",
     inputSchema: {
       allowed_interface_list: z.string().describe("Interface-list name, or 'all' / 'none'"),
     },
@@ -46,9 +54,14 @@ export const macServerTools: ToolModule = [
   // ── MAC-Winbox server ───────────────────────────────────────────────────────
   defineTool({
     name: "get_mac_winbox",
-    title: "Get MAC Winbox Server",
+    title: "Get MAC-Winbox Server Settings",
     annotations: READ,
-    description: "Gets the MAC-Winbox server settings (`/tool mac-server mac-winbox`).",
+    description:
+      "Read MAC-Winbox server settings (`/tool mac-server mac-winbox`). Returns which " +
+      "interface list is allowed to connect via Winbox over MAC (Layer-2 Winbox access " +
+      "without an IP address). Distinct from MAC-Telnet — for MAC-Telnet settings use " +
+      "`get_mac_server`; for MAC-ping use `get_mac_ping`. Returns the full " +
+      "`/tool mac-server mac-winbox print` output.",
     async handler(_a, ctx) {
       ctx.info("Getting mac-winbox settings");
       const result = await executeMikrotikCommand("/tool mac-server mac-winbox print", ctx);
@@ -60,11 +73,14 @@ export const macServerTools: ToolModule = [
 
   defineTool({
     name: "update_mac_winbox",
-    title: "Update MAC Winbox Server",
+    title: "Update MAC-Winbox Server Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates the MAC-Winbox server settings of the MikroTik device " +
-      "(which interfaces accept Winbox over MAC).",
+      "Update the MAC-Winbox server's `allowed-interface-list` " +
+      "(`/tool mac-server mac-winbox set`). Controls which interfaces accept Winbox " +
+      "connections over MAC (Layer-2, no IP required). Set to an interface-list name, " +
+      "'all', or 'none'. For MAC-Telnet interface control use `update_mac_server`; " +
+      "for MAC-ping toggle use `update_mac_ping`. Returns the updated settings after the change.",
     inputSchema: {
       allowed_interface_list: z.string().describe("Interface-list name, or 'all' / 'none'"),
     },
@@ -83,9 +99,14 @@ export const macServerTools: ToolModule = [
   // ── MAC-ping ────────────────────────────────────────────────────────────────
   defineTool({
     name: "get_mac_ping",
-    title: "Get MAC Ping",
+    title: "Get MAC-Ping Server Settings",
     annotations: READ,
-    description: "Gets the MAC-ping server setting (`/tool mac-server ping`).",
+    description:
+      "Read MAC-ping server settings (`/tool mac-server ping`). Returns whether MAC-ping " +
+      "is enabled — the Layer-2 ping that reaches devices by MAC address rather than IP, " +
+      "used to check reachability when no IP is configured. For MAC-Telnet settings use " +
+      "`get_mac_server`; for MAC-Winbox settings use `get_mac_winbox`. Returns the full " +
+      "`/tool mac-server ping print` output.",
     async handler(_a, ctx) {
       ctx.info("Getting mac-ping settings");
       const result = await executeMikrotikCommand("/tool mac-server ping print", ctx);
@@ -95,9 +116,14 @@ export const macServerTools: ToolModule = [
 
   defineTool({
     name: "update_mac_ping",
-    title: "Update MAC Ping",
+    title: "Update MAC-Ping Server Settings",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables or disables the MAC-ping server (`/tool mac-server ping`).",
+    description:
+      "Enable or disable the MAC-ping server (`/tool mac-server ping set`). Toggles " +
+      "whether the router responds to Layer-2 MAC-ping requests (pings by MAC address, " +
+      "no IP needed). Accepts a boolean `enabled` argument. For MAC-Telnet interface " +
+      "control use `update_mac_server`; for MAC-Winbox use `update_mac_winbox`. " +
+      "Returns the updated settings after the change.",
     inputSchema: {
       enabled: z.boolean().describe("Whether MAC-ping is enabled"),
     },
@@ -114,9 +140,14 @@ export const macServerTools: ToolModule = [
   // ── Sessions ────────────────────────────────────────────────────────────────
   defineTool({
     name: "list_mac_server_sessions",
-    title: "List MAC Server Sessions",
+    title: "List Active MAC-Telnet Sessions",
     annotations: READ,
-    description: "Lists active MAC-Telnet sessions (`/tool mac-server session`).",
+    description:
+      "List active MAC-Telnet sessions (`/tool mac-server session`). Shows currently " +
+      "connected MAC-Telnet clients — useful for auditing who has Layer-2 terminal access " +
+      "to the router without an IP. Optionally filter by `interface_filter` (interface name " +
+      "string). Distinct from MAC-Winbox connections (managed via `get_mac_winbox`/ " +
+      "`update_mac_winbox`). Returns all active session entries or a no-sessions message.",
     inputSchema: {
       interface_filter: z.string().optional(),
     },

@@ -8,13 +8,16 @@ import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const floodPingTools: ToolModule = [
   defineTool({
     name: "flood_ping",
-    title: "Flood Ping",
+    title: "Flood Ping Host",
     annotations: READ,
     description:
-      "Sends a burst of ICMP echo requests as fast as possible and reports " +
-      "sent/received counts and min/avg/max round-trip times " +
-      "(`/tool flood-ping`). The run is bounded by `count`, so it terminates " +
-      "rather than streaming.",
+      "Sends a burst of ICMP echo requests as fast as possible to a target host or IP " +
+      "(`/tool flood-ping`). Use to stress-test packet loss and measure raw round-trip " +
+      "latency under maximum-rate load rather than at a timed interval; the run terminates " +
+      "after `count` packets (default 1000) so it does not stream indefinitely. " +
+      "Returns sent/received packet counts and min/avg/max round-trip times. " +
+      "Optional: `size` (packet size in bytes), `interface` (outgoing interface), " +
+      "`src_address` (source IP address to use).",
     inputSchema: {
       address: z.string().describe("Target host or IP"),
       count: z

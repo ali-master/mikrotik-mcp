@@ -8,9 +8,14 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const snifferTools: ToolModule = [
   defineTool({
     name: "get_sniffer_settings",
-    title: "Get Sniffer Settings",
+    title: "Get Packet Sniffer Settings",
     annotations: READ,
-    description: "Gets the packet sniffer configuration and running state (`/tool sniffer`).",
+    description:
+      "Reads the current packet sniffer configuration and running state (`/tool sniffer`). " +
+      "Use this to inspect active filter rules (interface, IP/CIDR, port, MAC protocol), " +
+      "TZSP streaming target, memory buffer limit, and file output name before starting a capture. " +
+      "To change settings use update_sniffer_settings; to start or stop the sniffer use " +
+      "start_sniffer / stop_sniffer. Returns the full `/tool sniffer print` output.",
     async handler(_a, ctx) {
       ctx.info("Getting sniffer settings");
       const result = await executeMikrotikCommand("/tool sniffer print", ctx);
@@ -22,15 +27,24 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "update_sniffer_settings",
-    title: "Update Sniffer Settings",
+    title: "Update Packet Sniffer Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates the packet sniffer configuration on the MikroTik device.\n\n" +
+      "Configures the packet sniffer (`/tool sniffer set`) — sets capture filters, TZSP streaming, " +
+      "buffer size, and output file before a capture session. " +
+      "Call this before start_sniffer to narrow what traffic is captured or where it is forwarded. " +
+      "For reading already-captured data use list_sniffer_packets, list_sniffer_hosts, " +
+      "list_sniffer_protocols, or list_sniffer_connections. " +
+      "Returns the updated sniffer settings after applying.\n\n" +
       "Notes:\n" +
       "    streaming_enabled + streaming_server: forward captured packets as\n" +
-      "        TZSP to a remote analyzer (e.g. Wireshark).\n" +
+      "        TZSP to a remote analyzer (e.g. Wireshark); streaming_server e.g. '192.168.88.2'.\n" +
       "    memory_limit: capture buffer size, e.g. '10M'.\n" +
-      "    only_headers: capture packet headers only (smaller buffer).",
+      "    filter_ip_address: match IP/CIDR, e.g. '10.0.0.0/24'.\n" +
+      "    only_headers: capture packet headers only (smaller buffer).\n" +
+      "    file_name: file name for continuous on-disk packet output during capture (RouterOS writes\n" +
+      "        packets to this file while the sniffer runs); save_sniffer takes its own independent\n" +
+      "        file_name parameter and does not use this value.",
     inputSchema: {
       filter_interface: z.string().optional(),
       filter_ip_address: z.string().optional().describe("Match IP/CIDR, e.g. '10.0.0.0/24'"),
@@ -67,11 +81,13 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "start_sniffer",
-    title: "Start Sniffer",
+    title: "Start Packet Sniffer",
     annotations: WRITE,
     description:
-      "Starts the packet sniffer capturing into memory (and a file if " +
-      "configured). Stop it with stop_sniffer to read the results.",
+      "Starts the packet sniffer (`/tool sniffer start`) — begins capturing packets into the " +
+      "in-memory ring buffer (and to file if file_name was set via update_sniffer_settings). " +
+      "Required before list_sniffer_packets, list_sniffer_hosts, list_sniffer_protocols, or " +
+      "list_sniffer_connections can return live data. Stop the capture with stop_sniffer.",
     async handler(_a, ctx) {
       ctx.info("Starting sniffer");
       const result = await executeMikrotikCommand("/tool sniffer start", ctx);
@@ -82,9 +98,13 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "stop_sniffer",
-    title: "Stop Sniffer",
+    title: "Stop Packet Sniffer",
     annotations: WRITE,
-    description: "Stops the packet sniffer.",
+    description:
+      "Stops the packet sniffer (`/tool sniffer stop`) — halts an active capture session started " +
+      "with start_sniffer. The in-memory buffer remains readable via list_sniffer_packets, " +
+      "list_sniffer_hosts, list_sniffer_protocols, and list_sniffer_connections after stopping. " +
+      "To save the buffer to a .pcap file on the device filesystem use save_sniffer.",
     async handler(_a, ctx) {
       ctx.info("Stopping sniffer");
       const result = await executeMikrotikCommand("/tool sniffer stop", ctx);
@@ -95,9 +115,14 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "save_sniffer",
-    title: "Save Sniffer Capture",
+    title: "Save Packet Sniffer Capture to File",
     annotations: WRITE,
-    description: "Saves the current sniffer buffer to a .pcap file on the device.",
+    description:
+      "Saves the current in-memory sniffer buffer to a .pcap file on the device filesystem " +
+      "(`/tool sniffer save`) — use after stop_sniffer to persist a capture for later download " +
+      "or off-device analysis. The file is stored on the router's local storage. " +
+      "To read individual packets from the in-memory buffer without saving use list_sniffer_packets. " +
+      "Requires file_name (basename without extension, e.g. 'capture').",
     inputSchema: {
       file_name: z.string().describe("Output file name, e.g. 'capture'"),
     },
@@ -114,9 +139,15 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "list_sniffer_packets",
-    title: "List Sniffer Packets",
+    title: "List Captured Sniffer Packets",
     annotations: READ,
-    description: "Lists captured packets (`/tool sniffer packet`).",
+    description:
+      "Lists individual packets from the sniffer's in-memory ring buffer (`/tool sniffer packet print`) " +
+      "— use to inspect packet-level detail (src/dst address, protocol, size, timestamp) after " +
+      "start_sniffer. Optionally filter by partial src/dst address (address_filter) or protocol name " +
+      "(protocol_filter). For per-host byte/packet aggregates use list_sniffer_hosts; for protocol " +
+      "distribution use list_sniffer_protocols; for connection-pair (flow) view use " +
+      "list_sniffer_connections. Requires an active or recently stopped sniffer session.",
     inputSchema: {
       address_filter: z.string().optional().describe("Partial src/dst address match"),
       protocol_filter: z.string().optional(),
@@ -140,9 +171,15 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "list_sniffer_hosts",
-    title: "List Sniffer Hosts",
+    title: "List Sniffer Observed Hosts",
     annotations: READ,
-    description: "Lists hosts seen by the sniffer with byte/packet counts (`/tool sniffer host`).",
+    description:
+      "Lists hosts observed by the packet sniffer with per-host byte and packet counts " +
+      "(`/tool sniffer host print`) — use to identify the most active talkers in the current capture. " +
+      "Optionally filter by partial address string (address_filter). " +
+      "For individual packet detail use list_sniffer_packets; for protocol breakdown use " +
+      "list_sniffer_protocols; for connection-pair (flow) view use list_sniffer_connections. " +
+      "Requires an active or recently stopped sniffer session started with start_sniffer.",
     inputSchema: {
       address_filter: z.string().optional(),
     },
@@ -163,9 +200,15 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "list_sniffer_protocols",
-    title: "List Sniffer Protocols",
+    title: "List Sniffer Protocol Distribution",
     annotations: READ,
-    description: "Lists the protocol distribution seen by the sniffer (`/tool sniffer protocol`).",
+    description:
+      "Lists the protocol breakdown of traffic observed by the packet sniffer " +
+      "(`/tool sniffer protocol print`) — returns each protocol with its byte and packet share. " +
+      "Use to identify which protocols dominate the captured traffic. " +
+      "For per-host statistics use list_sniffer_hosts; for individual packet detail use " +
+      "list_sniffer_packets; for connection-pair (flow) view use list_sniffer_connections. " +
+      "Requires an active or recently stopped sniffer session started with start_sniffer.",
     async handler(_a, ctx) {
       ctx.info("Listing sniffer protocols");
       const result = await executeMikrotikCommand("/tool sniffer protocol print", ctx);
@@ -177,9 +220,14 @@ export const snifferTools: ToolModule = [
 
   defineTool({
     name: "list_sniffer_connections",
-    title: "List Sniffer Connections",
+    title: "List Sniffer Observed Connections",
     annotations: READ,
-    description: "Lists connections observed by the sniffer (`/tool sniffer connection`).",
+    description:
+      "Lists connection pairs (src/dst address and port tuples) observed by the packet sniffer " +
+      "(`/tool sniffer connection print`) — use to identify active or recent flows at a session level. " +
+      "For individual packet detail use list_sniffer_packets; for per-host byte/packet aggregates use " +
+      "list_sniffer_hosts; for protocol breakdown use list_sniffer_protocols. " +
+      "Requires an active or recently stopped sniffer session started with start_sniffer.",
     async handler(_a, ctx) {
       ctx.info("Listing sniffer connections");
       const result = await executeMikrotikCommand("/tool sniffer connection print", ctx);

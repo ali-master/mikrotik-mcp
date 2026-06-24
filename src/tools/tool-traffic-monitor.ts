@@ -11,16 +11,22 @@ const Trigger = z.enum(["above", "below", "always"]);
 export const trafficMonitorTools: ToolModule = [
   defineTool({
     name: "add_traffic_monitor",
-    title: "Add Traffic Monitor",
+    title: "Add Traffic Monitor Entry",
     annotations: WRITE,
     description:
-      "Adds a traffic-monitor entry that runs a script when an interface's " +
-      "traffic crosses a threshold (`/tool traffic-monitor`).\n\n" +
-      "Notes:\n" +
-      "    traffic: which direction to watch (received or transmitted).\n" +
-      "    trigger: fire when traffic goes 'above' or 'below' the threshold\n" +
-      "        (or 'always').\n" +
-      "    threshold: rate in bits/second.",
+      "Creates a traffic-monitor entry (`/tool traffic-monitor add`) that fires a RouterOS script " +
+      "when an interface's receive or transmit rate crosses a threshold — for event-driven automation " +
+      "such as alerting, logging, or triggering throttling. " +
+      "Not for real-time bandwidth measurement (use `/tool bandwidth-test`) or traffic shaping " +
+      "(use `create_simple_queue` or `create_queue_tree`). " +
+      "Returns the created entry's full detail.\n\n" +
+      "Args:\n" +
+      "    name: unique name for this entry.\n" +
+      "    interface: name of the interface to watch.\n" +
+      "    traffic: direction to watch — `received` or `transmitted`.\n" +
+      "    trigger: fire when rate goes `above`, `below`, or `always` relative to the threshold.\n" +
+      "    threshold: rate in bits/second.\n" +
+      "    on_event: RouterOS script source or script name to execute when the trigger fires.",
     inputSchema: {
       name: z.string(),
       interface: z.string(),
@@ -57,9 +63,15 @@ export const trafficMonitorTools: ToolModule = [
 
   defineTool({
     name: "list_traffic_monitors",
-    title: "List Traffic Monitors",
+    title: "List Traffic Monitor Entries",
     annotations: READ,
-    description: "Lists traffic-monitor entries (`/tool traffic-monitor`).",
+    description:
+      "Lists all traffic-monitor entries (`/tool traffic-monitor print`) — for auditing " +
+      "which interface thresholds and on-event scripts are configured on the device. " +
+      "Optionally filter by `name_filter` (substring match on name), `interface_filter` " +
+      "(exact interface name), or `disabled_only`. " +
+      "Returns all matching entries with their threshold, trigger direction, and script. " +
+      "To inspect a single entry in full detail use `get_traffic_monitor`.",
     inputSchema: {
       name_filter: z.string().optional(),
       interface_filter: z.string().optional(),
@@ -83,9 +95,14 @@ export const trafficMonitorTools: ToolModule = [
 
   defineTool({
     name: "get_traffic_monitor",
-    title: "Get Traffic Monitor",
+    title: "Get Traffic Monitor Entry Detail",
     annotations: READ,
-    description: "Gets a specific traffic-monitor entry by name.",
+    description:
+      "Fetches the full detail of one traffic-monitor entry by name " +
+      "(`/tool traffic-monitor print detail where name=...`) — for inspecting the watched " +
+      "interface, traffic direction, trigger condition, threshold, on-event script, and " +
+      "enabled/disabled state of a specific monitor. " +
+      "To see all entries use `list_traffic_monitors`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting traffic-monitor: name=${a.name}`);
@@ -101,10 +118,16 @@ export const trafficMonitorTools: ToolModule = [
 
   defineTool({
     name: "update_traffic_monitor",
-    title: "Update Traffic Monitor",
+    title: "Update Traffic Monitor Entry",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates a traffic-monitor entry by name. " + 'Pass comment="" to clear the comment.',
+      "Modifies an existing traffic-monitor entry by name (`/tool traffic-monitor set [find name=...]`) — " +
+      "for changing the watched interface, traffic direction (`received`/`transmitted`), trigger condition " +
+      "(`above`/`below`/`always`), threshold (bits/second), or on-event script without removing and re-adding. " +
+      "Supply only the fields to change; omitted fields are left unchanged. " +
+      'Pass `comment=""` to clear the comment. ' +
+      "Returns the updated entry's full detail. " +
+      "To create a new entry use `add_traffic_monitor`.",
     inputSchema: {
       name: z.string(),
       interface: z.string().optional(),
@@ -142,9 +165,13 @@ export const trafficMonitorTools: ToolModule = [
 
   defineTool({
     name: "remove_traffic_monitor",
-    title: "Remove Traffic Monitor",
+    title: "Remove Traffic Monitor Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes a traffic-monitor entry by name.",
+    description:
+      "Permanently deletes a traffic-monitor entry by name (`/tool traffic-monitor remove [find name=...]`). " +
+      "Performs a count-only existence check first and returns an error if the name is not found. " +
+      "Use `disable_traffic_monitor` instead to keep the entry inactive without deleting it. " +
+      "Returns confirmation on success.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing traffic-monitor: name=${a.name}`);
@@ -164,9 +191,13 @@ export const trafficMonitorTools: ToolModule = [
 
   defineTool({
     name: "enable_traffic_monitor",
-    title: "Enable Traffic Monitor",
+    title: "Enable Traffic Monitor Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a traffic-monitor entry by name.",
+    description:
+      "Enables a disabled traffic-monitor entry by name (`/tool traffic-monitor enable [find name=...]`) — " +
+      "resumes threshold checking and on-event script execution without modifying any parameters. " +
+      "To suspend monitoring temporarily without deleting use `disable_traffic_monitor`; " +
+      "to delete permanently use `remove_traffic_monitor`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling traffic-monitor: name=${a.name}`);
@@ -181,9 +212,13 @@ export const trafficMonitorTools: ToolModule = [
 
   defineTool({
     name: "disable_traffic_monitor",
-    title: "Disable Traffic Monitor",
+    title: "Disable Traffic Monitor Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a traffic-monitor entry by name.",
+    description:
+      "Disables an active traffic-monitor entry by name (`/tool traffic-monitor disable [find name=...]`) — " +
+      "suspends threshold checking and on-event script execution without removing the entry. " +
+      "To resume monitoring use `enable_traffic_monitor`; " +
+      "to delete the entry permanently use `remove_traffic_monitor`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling traffic-monitor: name=${a.name}`);

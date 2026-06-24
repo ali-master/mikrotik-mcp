@@ -8,12 +8,18 @@ import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const profileTools: ToolModule = [
   defineTool({
     name: "profile_cpu",
-    title: "Profile CPU",
+    title: "Sample CPU Usage by Process",
     annotations: READ,
     description:
-      "Profiles CPU usage by process/classifier over a bounded sampling " +
-      "window, showing which subsystems consume CPU (`/tool profile`). The " +
-      "run is bounded by `duration`, so it terminates rather than streaming.",
+      "Sample CPU usage by RouterOS process/classifier over a bounded window (`/tool profile`) — " +
+      "identifies which subsystem (firewall, routing, wireless, bridging, etc.) is consuming CPU during " +
+      "a spike or slowdown. Runs for exactly `duration` seconds then returns; it is a one-shot sample, " +
+      "not a streaming monitor. " +
+      "This tool measures CPU load breakdown across internal RouterOS classifiers; for throughput " +
+      "measurement between endpoints use `bandwidth_test` instead. " +
+      "Optionally scope the sample to a single core via `cpu` (e.g. '0'); omit or pass 'all' for " +
+      "aggregate totals across all cores. " +
+      "Returns a table of process names with their CPU-time percentage for the sampling window.",
     inputSchema: {
       duration: z
         .number()
