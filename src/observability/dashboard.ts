@@ -54,6 +54,15 @@ import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
 import { createConfigAdmin, validateConfig } from "./config-admin";
 import type { ConfigAdmin } from "./config-admin";
+import {
+  AUTO_RETENTION,
+  deleteVersion,
+  historyBytes,
+  isEmpty as historyIsEmpty,
+  listVersions,
+  readVersion,
+  recordVersion,
+} from "./config-history";
 import { redact } from "./event";
 import type { Risk, ToolEvent } from "./event";
 import {
@@ -354,13 +363,101 @@ async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise
 
   if (p === "/api/config/keep" && req.method === "POST") {
     const body = (await readJson(req)) as { pendingId?: string };
-    return json({ kept: admin.keepConfig(String(body?.pendingId ?? "")) });
+    const kept = admin.keepConfig(String(body?.pendingId ?? ""));
+    // A kept change is now permanent — snapshot it to the version timeline.
+    if (kept) recordVersion(getConfig(), "auto", Date.now());
+    return json({ kept });
   }
 
   if (p === "/api/config/rollback" && req.method === "POST") {
     const body = (await readJson(req)) as { pendingId?: string };
     const rolledBack = admin.rollback(String(body?.pendingId ?? ""));
     return json({ rolledBack, config: redact(getConfig()) });
+  }
+
+  // ── Config version history (point-in-time snapshots) ───────────────────────
+  if (p === "/api/config/history" && req.method === "GET") {
+    const current = JSON.stringify(redact(getConfig()), null, 2);
+    const versions = listVersions().map((v) => {
+      let added = 0;
+      let removed = 0;
+      try {
+        const vc = JSON.stringify(redact(readVersion(v.id).config), null, 2);
+        const d = diffLines(vc, current);
+        added = d.summary.added;
+        removed = d.summary.removed;
+      } catch {
+        /* drift stays 0 for an unreadable version */
+      }
+      return { ...v, drift: { added, removed } };
+    });
+    return json({ versions, bytes: historyBytes(), retention: AUTO_RETENTION });
+  }
+
+  if (p === "/api/config/history/get" && req.method === "GET") {
+    const id = url.searchParams.get("id");
+    if (!id) return json({ error: "id required" }, 400);
+    try {
+      const v = readVersion(id);
+      return json({
+        ts: v.ts,
+        kind: v.kind,
+        label: v.label,
+        config: JSON.stringify(redact(v.config), null, 2),
+      });
+    } catch {
+      return json({ error: "not found" }, 404);
+    }
+  }
+
+  if (p === "/api/config/history/diff" && req.method === "GET") {
+    const id = url.searchParams.get("id");
+    if (!id) return json({ error: "id required" }, 400);
+    try {
+      const before = JSON.stringify(redact(readVersion(id).config), null, 2);
+      const after = JSON.stringify(redact(getConfig()), null, 2);
+      const d = diffLines(before, after, { fromLabel: "this version", toLabel: "current" });
+      return json({ summary: d.summary, unified: d.unified });
+    } catch {
+      return json({ error: "not found" }, 404);
+    }
+  }
+
+  if (p === "/api/config/history/checkpoint" && req.method === "POST") {
+    const b = (await readJson(req)) as { label?: string };
+    const label = b?.label?.trim() || "checkpoint";
+    return json({ ok: true, version: recordVersion(getConfig(), "checkpoint", Date.now(), label) });
+  }
+
+  if (p === "/api/config/history/restore" && req.method === "POST") {
+    const b = (await readJson(req)) as { id?: string };
+    if (!b?.id) return json({ error: "id required" }, 400);
+    let target;
+    try {
+      target = readVersion(b.id);
+    } catch {
+      return json({ error: "not found" }, 404);
+    }
+    const v = validateConfig(target.config);
+    if (!v.ok || !v.value) return json({ ok: false, errors: v.errors }, 400);
+    // Snapshot the current state first so the restore itself is reversible.
+    recordVersion(getConfig(), "auto", Date.now(), "before restore");
+    setConfig(v.value);
+    let persisted = true;
+    try {
+      atomicWrite(getConfigSource().path, serializeConfig(v.value));
+    } catch {
+      persisted = false;
+    }
+    const label = target.label ? `restored "${target.label}"` : `restored ${b.id}`;
+    recordVersion(getConfig(), "auto", Date.now(), label);
+    return json({ ok: true, persisted, restored: b.id, config: redact(getConfig()) });
+  }
+
+  if (p === "/api/config/history/delete" && req.method === "POST") {
+    const b = (await readJson(req)) as { id?: string };
+    if (!b?.id) return json({ error: "id required" }, 400);
+    return deleteVersion(b.id) ? json({ ok: true }) : json({ error: "not found" }, 404);
   }
 
   return null;
@@ -540,6 +637,7 @@ async function featureRoutes(req: Request, url: URL): Promise<Response | null> {
         warning: `applied live but not saved: ${e instanceof Error ? e.message : String(e)}`,
       });
     }
+    recordVersion(getConfig(), "auto", Date.now(), "backup path changed");
     return json({ ok: true, dir: backupDir(), persisted: true });
   }
   if (p === "/api/backups/get" && req.method === "GET") {
@@ -647,6 +745,14 @@ export async function runDashboard(
   // Periodically probe each configured device's SSH reachability for the
   // connectivity graph/status (one immediate pass, then every 30s).
   startHealthChecks(30_000);
+
+  // Seed an initial config baseline so the version timeline always has at least
+  // one restore point (the state the dashboard started with).
+  try {
+    if (historyIsEmpty()) recordVersion(getConfig(), "auto", Date.now(), "baseline");
+  } catch (e) {
+    logger.warn(`[${SERVER_TAG}] could not seed config history baseline: ${String(e)}`);
+  }
 
   // Config Studio: a safe-apply state machine bound to real fs/clock/timers. It
   // backs up the config file, hot-swaps via setConfig, and auto-reverts unless

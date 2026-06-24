@@ -7,37 +7,49 @@
  * and DM Mono for data, glass panels, and GSAP-driven scroll reveals (`.reveal`).
  * The in-chat views keep base.css's host-adaptive defaults untouched.
  */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
 @import "../shared/base.css";
 
-/* ── Token override (scoped to this page) ─────────────────────────────────── */
+/*
+ * Vercel / Geist design language: a true-neutral near-black base with crisp
+ * hairline borders and flat surfaces, Geist Sans/Mono, and PURPOSEFUL pops of
+ * colour. Each page carries its own accent (`--page-accent`, set on
+ * `.main[data-view]`) which drives the title gradient, the active nav item, the
+ * ambient backdrop glow, focus rings and key controls — colourful, yet clean.
+ */
 :root {
-  --mt-sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mt-mono: "DM Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
-  /* shadcn "zinc" dark scale */
-  --mt-bg: #09090b; /* zinc-950 */
-  --mt-surface: #18181b; /* zinc-900 */
-  --mt-surface-2: #27272a; /* zinc-800 */
-  --mt-border: #27272a; /* zinc-800 */
-  --mt-text: #fafafa; /* zinc-50 */
-  --mt-text-dim: #a1a1aa; /* zinc-400 */
-  --mt-text-faint: #71717a; /* zinc-500 */
-  --mt-accent: #e4e4e7; /* zinc-200 — primary accent */
-  --mt-good: #d4d4d8; /* zinc-300 — neutral "ok" */
-  --mt-warn: #a1a1aa; /* zinc-400 */
-  --mt-bad: #f87171; /* destructive red (shadcn keeps a red) */
+  --mt-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mt-mono: "Geist Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  /* Geist neutral scale (dark) */
+  --mt-bg: #0a0a0a; /* background */
+  --mt-surface: #111111; /* card / panel */
+  --mt-surface-2: #1a1a1a; /* raised control */
+  --mt-border: #2a2a2a; /* hairline border */
+  --mt-border-strong: #3a3a3a;
+  --mt-text: #ededed; /* foreground */
+  --mt-text-dim: #a1a1a1; /* secondary */
+  --mt-text-faint: #6e6e6e; /* tertiary */
+  --mt-good: #2dd4a7; /* Geist green/teal — success */
+  --mt-warn: #f5a623; /* Geist amber — warning */
+  --mt-bad: #ff5c5c; /* Geist red — error */
   --mt-radius: 12px;
   --mt-radius-sm: 8px;
-  /* Zinc tones reused by components that still reference the old accent vars. */
-  --sky: #d4d4d8;
-  --teal: #e4e4e7;
-  --cyan: #a1a1aa;
-  --lime: #71717a;
-  --coral: #f87171;
-  --amber: #a1a1aa;
-  --grad: linear-gradient(115deg, #e4e4e7, #a1a1aa 50%, #52525b);
+  /* Vibrant Geist accent palette — used for charts, per-domain coding, badges. */
+  --sky: #3291ff; /* Geist blue */
+  --teal: #2dd4bf;
+  --cyan: #45d4ee;
+  --lime: #69d05a; /* Geist green */
+  --coral: #ff5c5c; /* Geist red */
+  --amber: #f5a623; /* Geist amber */
+  --pink: #ff4d8d;
+  --violet: #9d7bff; /* Geist purple */
+  /* Per-page accent — overridden inline on .main[data-view]; default Geist blue. */
+  --page-accent: #3291ff;
+  --page-accent-2: #2dd4bf;
+  --mt-accent: var(--page-accent);
+  --grad: linear-gradient(115deg, var(--page-accent), var(--page-accent-2) 90%);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --glass: rgba(24, 24, 27, 0.55); /* zinc-900 glass */
+  --glass: rgba(17, 17, 17, 0.72);
 }
 
 html,
@@ -51,46 +63,45 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Ambient page backdrop: two soft signal glows + a faint grid, fixed behind all. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(
-      58% 42% at 12% -6%,
-      color-mix(in srgb, var(--teal) 16%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      50% 40% at 100% 0%,
-      color-mix(in srgb, var(--sky) 13%, transparent),
-      transparent 68%
-    ),
-    radial-gradient(
-      60% 50% at 84% 108%,
-      color-mix(in srgb, var(--lime) 8%, transparent),
-      transparent 70%
-    );
-  pointer-events: none;
-}
+/* Clean near-black base with a whisper-faint neutral grid (Vercel-style). */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -2;
   background-image:
-    linear-gradient(color-mix(in srgb, var(--mt-border) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--mt-border) 55%, transparent) 1px, transparent 1px),
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--mt-border) 70%, transparent) 1px,
+      color-mix(in srgb, var(--mt-border) 55%, transparent) 1px,
       transparent 1px
     );
-  background-size: 46px 46px;
-  -webkit-mask-image: radial-gradient(circle at 50% 0%, #000, transparent 75%);
-  mask-image: radial-gradient(circle at 50% 0%, #000, transparent 75%);
-  opacity: 0.5;
+  background-size: 52px 52px;
+  -webkit-mask-image: radial-gradient(circle at 50% 0%, #000, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 0%, #000, transparent 72%);
+  opacity: 0.32;
+  pointer-events: none;
+}
+/* Per-page accent glow — lives on .main so it follows --page-accent and fades
+   smoothly as you switch pages. Subtle: colour without clutter. */
+.main::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(
+      52% 38% at 18% -8%,
+      color-mix(in srgb, var(--page-accent) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      46% 36% at 100% 4%,
+      color-mix(in srgb, var(--page-accent-2) 11%, transparent),
+      transparent 68%
+    );
+  opacity: 0.9;
+  transition: background 0.5s var(--ease);
   pointer-events: none;
 }
 
@@ -127,8 +138,11 @@ body::after {
   display: grid;
   place-items: center;
   background: var(--grad);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--teal) 38%, transparent);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--page-accent) 34%, transparent);
   flex: none;
+  transition:
+    background 0.4s var(--ease),
+    box-shadow 0.4s var(--ease);
 }
 .nav__mark svg {
   width: 22px;
@@ -188,20 +202,35 @@ body::after {
 }
 .nav__item:hover {
   color: var(--mt-text);
-  background: color-mix(in srgb, var(--teal) 9%, transparent);
+  background: color-mix(in srgb, var(--mt-text) 7%, transparent);
 }
 .nav__item.is-active {
   color: var(--mt-text);
-  border-color: color-mix(in srgb, var(--teal) 32%, var(--mt-border));
+  border-color: color-mix(in srgb, var(--page-accent) 36%, var(--mt-border));
   background: linear-gradient(
     100deg,
-    color-mix(in srgb, var(--teal) 18%, transparent),
-    color-mix(in srgb, var(--sky) 7%, transparent)
+    color-mix(in srgb, var(--page-accent) 16%, transparent),
+    color-mix(in srgb, var(--page-accent-2) 7%, transparent)
   );
 }
 .nav__item.is-active svg {
   opacity: 1;
-  color: var(--teal);
+  color: var(--page-accent);
+}
+/* Active-page accent bar on the left edge of the item. */
+.nav__item.is-active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--page-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--page-accent) 70%, transparent);
+}
+.nav__item {
+  position: relative;
 }
 .nav__badge {
   margin-left: auto;
@@ -209,7 +238,7 @@ body::after {
   font-size: 10px;
   padding: 1px 7px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--teal) 22%, transparent);
+  background: color-mix(in srgb, var(--page-accent) 24%, transparent);
   color: var(--mt-text);
 }
 .nav__foot {
@@ -237,17 +266,18 @@ body::after {
 }
 .topline__txt h1 {
   margin: 0;
-  font-size: clamp(19px, 2.4vw, 26px);
-  font-weight: 700;
-  letter-spacing: -0.025em;
+  font-size: clamp(20px, 2.4vw, 27px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
   background: linear-gradient(
     100deg,
-    var(--mt-text),
-    color-mix(in srgb, var(--teal) 65%, var(--mt-text))
+    var(--mt-text) 30%,
+    color-mix(in srgb, var(--page-accent) 78%, var(--mt-text))
   );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  transition: background 0.4s var(--ease);
 }
 .topline__txt small {
   display: block;
@@ -259,6 +289,97 @@ body::after {
 .topline__spacer {
   flex: 1;
   min-width: 8px;
+}
+
+/* ── Per-page Help: header toggle + "About this page" panel ───────────────── */
+.help-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+  background: var(--mt-surface);
+  color: var(--mt-text-dim);
+  font-family: var(--mt-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 0.18s,
+    border-color 0.18s,
+    background 0.18s,
+    transform 0.12s var(--ease);
+}
+.help-toggle:hover {
+  color: var(--mt-text);
+  border-color: var(--mt-border-strong);
+  transform: translateY(-1px);
+}
+.help-toggle.is-on {
+  color: var(--page-accent);
+  border-color: color-mix(in srgb, var(--page-accent) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--page-accent) 12%, var(--mt-surface));
+}
+.help-toggle__q {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--page-accent) 22%, transparent);
+  color: var(--page-accent);
+}
+.pagehelp {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--mt-radius);
+  border: 1px solid color-mix(in srgb, var(--page-accent) 28%, var(--mt-border));
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--page-accent) 9%, var(--mt-surface)),
+      var(--mt-surface) 60%
+    );
+}
+.pagehelp__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0a0a0a;
+  background: var(--grad);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--page-accent) 35%, transparent);
+}
+.pagehelp__body {
+  min-width: 0;
+}
+.pagehelp__what {
+  margin: 2px 0 8px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--mt-text);
+}
+.pagehelp__tips {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+.pagehelp__tips li {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mt-text-dim);
+}
+.pagehelp__tips li::marker {
+  color: var(--page-accent);
 }
 
 /* A view's stacked sections. */
@@ -466,7 +587,7 @@ body::after {
 }
 .stat:hover {
   transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--teal) 38%, var(--mt-border));
+  border-color: color-mix(in srgb, var(--page-accent) 42%, var(--mt-border));
 }
 .stat:hover::before {
   opacity: 1;
@@ -503,12 +624,17 @@ body::after {
 /* ── Panels / charts ─────────────────────────────────────────────────────── */
 .panel {
   position: relative;
-  background: var(--glass);
-  backdrop-filter: blur(10px);
+  background: var(--mt-surface);
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius);
   padding: 18px;
-  box-shadow: 0 1px 0 color-mix(in srgb, #fff 4%, transparent) inset;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 1px 0 color-mix(in srgb, #fff 3%, transparent) inset;
+  transition: border-color 0.25s var(--ease);
+}
+.panel:hover {
+  border-color: color-mix(in srgb, var(--mt-text) 13%, var(--mt-border));
 }
 .panel > h2 {
   margin: 0 0 14px;
@@ -1113,14 +1239,22 @@ pre.body.json .j-null {
   border-color: var(--mt-bad);
 }
 
-/* Buttons get the brand accent on hover/focus (overrides base.css blue accent). */
+/* Buttons get the page accent on hover/focus (overrides base.css blue accent). */
 .btn:hover {
-  border-color: color-mix(in srgb, var(--teal) 55%, var(--mt-border));
-  background: color-mix(in srgb, var(--teal) 10%, var(--mt-surface-2));
+  border-color: color-mix(in srgb, var(--page-accent) 55%, var(--mt-border));
+  background: color-mix(in srgb, var(--page-accent) 10%, var(--mt-surface-2));
 }
 .btn.is-active {
-  border-color: var(--teal);
-  color: var(--teal);
+  border-color: color-mix(in srgb, var(--page-accent) 70%, var(--mt-border));
+  color: var(--page-accent);
+  background: color-mix(in srgb, var(--page-accent) 12%, var(--mt-surface-2));
+}
+
+/* Crisp accessible focus rings everywhere (Geist/Vercel signature). */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--page-accent) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: var(--mt-radius-sm);
 }
 
 /* ── Connectivity: direction legend + chevrons + clickable error rows ──────── */
@@ -1798,4 +1932,224 @@ pre.body.json .j-null {
   border: 1px solid color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
   border-radius: 999px;
   padding: 1px 7px;
+}
+
+/* ── Config: version-history timeline ─────────────────────────────────────── */
+.cfgver-cp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cfgver {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 4px;
+  display: grid;
+  gap: 2px;
+}
+.cfgver__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 11px 6px;
+  border-radius: var(--mt-radius-sm);
+  transition: background 0.18s var(--ease);
+}
+.cfgver__row:hover {
+  background: color-mix(in srgb, var(--mt-text) 4%, transparent);
+}
+/* vertical rail connecting the dots */
+.cfgver__row::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 22px;
+  bottom: -2px;
+  width: 1.5px;
+  background: var(--mt-border);
+}
+.cfgver__row:last-child::before {
+  display: none;
+}
+.cfgver__dot {
+  margin-top: 5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 2px solid var(--mt-border-strong);
+  background: var(--mt-surface);
+  z-index: 1;
+}
+.cfgver__row.is-head .cfgver__dot {
+  border-color: var(--page-accent);
+  background: var(--page-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--page-accent) 22%, transparent);
+}
+.cfgver__main {
+  min-width: 0;
+}
+.cfgver__line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+.cfgver__kind {
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+  color: var(--mt-text-dim);
+}
+.cfgver__kind--checkpoint {
+  color: var(--amber);
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+}
+.cfgver__label {
+  font-weight: 600;
+  color: var(--mt-text);
+}
+.cfgver__time {
+  font-family: var(--mt-mono);
+  color: var(--mt-text-dim);
+  font-size: 11.5px;
+}
+.cfgver__cur {
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--page-accent);
+}
+.cfgver__same {
+  font-size: 11.5px;
+  color: var(--mt-text-faint);
+}
+.cfgver__drift {
+  font-family: var(--mt-mono);
+  font-size: 11.5px;
+  display: inline-flex;
+  gap: 7px;
+  align-items: baseline;
+}
+.cfgver__drift .add {
+  color: var(--mt-good);
+}
+.cfgver__drift .rem {
+  color: var(--mt-bad);
+}
+.cfgver__diff {
+  margin-top: 9px;
+}
+.cfgver__diff pre.body {
+  max-height: 280px;
+  overflow: auto;
+  margin: 0;
+}
+.cfgver__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.cfgver__del {
+  color: var(--mt-text-faint);
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.cfgver__del:hover {
+  color: var(--mt-bad);
+  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+}
+
+/* ── Config: schema Field Guide ───────────────────────────────────────────── */
+.fguide {
+  display: grid;
+  gap: 18px;
+}
+.fguide__sechd {
+  margin: 0 0 9px;
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--page-accent);
+}
+.fguide__list {
+  display: grid;
+  gap: 9px;
+}
+.fguide__item {
+  padding: 11px 13px;
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  background: color-mix(in srgb, var(--mt-surface-2) 45%, transparent);
+  transition:
+    border-color 0.18s,
+    transform 0.12s var(--ease);
+}
+.fguide__item:hover {
+  border-color: color-mix(in srgb, var(--page-accent) 40%, var(--mt-border));
+  transform: translateX(2px);
+}
+.fguide__top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.fguide__path {
+  font-family: var(--mt-mono);
+  font-size: 12.5px;
+  color: var(--mt-text);
+  font-weight: 500;
+}
+.fguide__type {
+  font-family: var(--mt-mono);
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: var(--page-accent);
+  background: color-mix(in srgb, var(--page-accent) 13%, transparent);
+}
+.fguide__req {
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mt-bad);
+}
+.fguide__def {
+  font-size: 11px;
+  color: var(--mt-text-faint);
+}
+.fguide__def code {
+  color: var(--mt-text-dim);
+}
+.fguide__desc {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mt-text-dim);
+}
+.fguide__enum {
+  margin-top: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fguide__enum code {
+  font-family: var(--mt-mono);
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--mt-border);
+  color: var(--mt-text-dim);
 }

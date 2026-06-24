@@ -34,6 +34,13 @@ export const DEFAULT_SNAPSHOT_DB = join(homedir(), ".mikrotik-mcp", "snapshots.d
 export const DEFAULT_BACKUP_DIR = join(homedir(), ".mikrotik-mcp", "backups");
 
 /**
+ * Default config version-history store: `~/.mikrotik-mcp/config-history/`. Holds
+ * point-in-time snapshots of the dashboard's own configuration (one JSON file
+ * per version) so a change can be reviewed and rolled back from the Config page.
+ */
+export const DEFAULT_CONFIG_HISTORY_DIR = join(homedir(), ".mikrotik-mcp", "config-history");
+
+/**
  * Where the dashboard's Config Studio writes when config did NOT come from a
  * `--config` file (e.g. it was assembled from env/flags). Sits beside the other
  * per-user state so a hand-started server can still be made file-editable.

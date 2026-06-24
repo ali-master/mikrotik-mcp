@@ -10,7 +10,12 @@
  * is forwarded to every API call and the live stream when the server requires it.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
+  RefObject,
+} from "react";
 import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -2949,6 +2954,479 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
 
+/**
+ * Per-domain accent for each page. Drives the page's title gradient, the active
+ * nav item, the help button, and assorted accents via the `--page-accent` /
+ * `--page-accent-2` CSS variables set on `.main[data-view]`. Colour-coding the
+ * pages makes the dashboard feel alive and helps orientation at a glance.
+ */
+const VIEW_ACCENT: Record<ViewId, [string, string]> = {
+  overview: ["#38bdf8", "#2dd4bf"], // sky → teal
+  devices: ["#2dd4bf", "#a3e635"], // teal → lime
+  topology: ["#818cf8", "#22d3ee"], // indigo → cyan
+  packets: ["#a3e635", "#fbbf24"], // lime → amber
+  snapshots: ["#22d3ee", "#818cf8"], // cyan → indigo
+  plan: ["#fbbf24", "#fb7185"], // amber → coral
+  s3: ["#f472b6", "#818cf8"], // pink → indigo
+  backups: ["#34d399", "#22d3ee"], // emerald → cyan
+  config: ["#fb7185", "#fbbf24"], // coral → amber
+  feed: ["#38bdf8", "#a3e635"], // sky → lime
+};
+
+/**
+ * Per-page help content. Every page exposes a collapsible "About this page"
+ * guide (toggled from the header) explaining what it does plus a few concrete
+ * tips — so a newcomer is never lost. Kept terse and action-oriented.
+ */
+const HELP: Record<ViewId, { what: string; tips: string[] }> = {
+  overview: {
+    what: "A live pulse of all MCP tool activity: total calls, error rate, p50/p95 latency, the busiest tools, and a risk breakdown — over a time window you choose.",
+    tips: [
+      "Change the time window (top-right) to zoom from the last 5 minutes out to 24 hours.",
+      "The risk donut splits calls by annotation: read · write · destructive · dangerous.",
+      "A rising error line usually points at one device or one tool — jump to Live Feed to see which.",
+    ],
+  },
+  devices: {
+    what: "Every configured router with its live reachability (SSH or MAC-Telnet), latency, identity, and system health — CPU, memory and disk — refreshed continuously.",
+    tips: [
+      "Each device gets a stable colour so you can track it across the connectivity radar.",
+      "Health (CPU/Mem/Disk) is probed periodically; MAC-Telnet devices are probed on a slower cadence.",
+      "Latency tiers are colour-coded green → amber → red; a grey node is currently unreachable.",
+    ],
+  },
+  topology: {
+    what: "A Layer-2 map of neighbours each router discovers via MNDP / CDP / LLDP — the physical adjacency of your network, drawn live.",
+    tips: [
+      "Solid nodes are configured devices; faint nodes are discovered-but-unmanaged neighbours.",
+      "Use “Add to config →” on an unmanaged neighbour to pre-fill it in the Config editor.",
+      "Drag to pan; the layout settles automatically as new neighbours arrive.",
+    ],
+  },
+  packets: {
+    what: "Live packet capture streamed from a router over TZSP — decode headers in real time without leaving the dashboard.",
+    tips: [
+      "Pick a device and start the capture; packets decode as they arrive.",
+      "Stop the capture when done — it frees the router-side sniffer.",
+      "Great for debugging a protocol issue alongside the Live Feed of tool calls.",
+    ],
+  },
+  snapshots: {
+    what: "Point-in-time captures of a device’s full configuration (/export), stored locally so you can diff any two and see exactly what changed.",
+    tips: [
+      "Capture a snapshot before a risky change, then diff after to audit the delta.",
+      "The diff is line-level: green added, red removed.",
+      "Snapshots are device config exports — for the dashboard’s OWN config history see the Config page.",
+    ],
+  },
+  plan: {
+    what: "Dry-run the exact RouterOS commands a change would run before it touches a device — a change plan you can review and trust.",
+    tips: [
+      "Paste or build intended commands to see them validated and ordered.",
+      "Nothing is sent to the device from here — it’s a preview.",
+      "Pair with Safe Mode (auto-revert) when you do apply for real.",
+    ],
+  },
+  s3: {
+    what: "Browse, download, and delete backup objects in your configured S3-compatible bucket — your off-box archive of device backups and exports.",
+    tips: [
+      "Filter by key prefix to find a device’s backups quickly.",
+      "Download fetches the object through a presigned URL; delete is permanent.",
+      "For host-side .rsc backups instead, use the Backups page.",
+    ],
+  },
+  backups: {
+    what: "A local config vault on the MCP server: capture a device’s /export as a timestamped .rsc file, then download, upload, rename, restore (via Safe Mode), or delete it.",
+    tips: [
+      "Restore offers a dry-run (applies then rolls back) before you commit for real.",
+      "Edit the vault path inline in the header — it’s saved to your config.",
+      "Filenames are stamped in the device’s local 24-hour clock.",
+    ],
+  },
+  config: {
+    what: "View the effective configuration, edit it safely with schema-aware validation and auto-rollback, browse a full field guide, and travel through config version history.",
+    tips: [
+      "Every successful apply is auto-saved to the version timeline — restore any point in time.",
+      "Save a named checkpoint before a big change for an easy, labelled rollback.",
+      "The Field Guide documents every config option, its type, and default — straight from the schema.",
+    ],
+  },
+  feed: {
+    what: "Every tool call as it happens — tool, device, risk, duration, and success/error — with full request/response detail on click.",
+    tips: [
+      "Filter by status to isolate failures, or by tool/device to follow one thread.",
+      "Click any row to open the full (secret-redacted) request and response.",
+      "Pause the stream when you want to inspect without rows shifting under you.",
+    ],
+  },
+};
+
+/** Collapsible "About this page" guide shown under each page header. */
+function HelpPanel({ view }: { view: ViewId }): ReactNode {
+  const h = HELP[view];
+  return (
+    <div className="pagehelp reveal" role="region" aria-label="Page help">
+      <div className="pagehelp__icon" aria-hidden="true">
+        ?
+      </div>
+      <div className="pagehelp__body">
+        <p className="pagehelp__what">{h.what}</p>
+        <ul className="pagehelp__tips">
+          {h.tips.map((t, i) => (
+            <li key={i}>{t}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ── Config: version history (point-in-time) ─────────────────────────────────
+interface CfgVersion {
+  id: string;
+  ts: number;
+  kind: "auto" | "checkpoint";
+  label?: string;
+  bytes: number;
+  drift: { added: number; removed: number };
+}
+interface HistoryResp {
+  versions: CfgVersion[];
+  bytes: number;
+  retention: number;
+}
+
+function fmtBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+function fmtWhen(ts: number): string {
+  const d = new Date(ts);
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Point-in-time config history: timeline, drift vs current, diff, restore, checkpoint. */
+function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): ReactNode {
+  const [data, setData] = useState<HistoryResp | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [diffFor, setDiffFor] = useState<string | null>(null);
+  const [diff, setDiff] = useState<{ summary: { added: number; removed: number }; unified: string } | null>(
+    null,
+  );
+  const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
+  const [labelDraft, setLabelDraft] = useState<string | null>(null); // null = checkpoint editor closed
+
+  const load = useCallback(() => {
+    void api<HistoryResp>("/api/config/history")
+      .then(setData)
+      .catch(() => setData({ versions: [], bytes: 0, retention: 50 }));
+  }, []);
+  useEffect(() => load(), [load]);
+
+  type Simple = { ok?: boolean; error?: string; persisted?: boolean };
+  const post = (path: string, b: unknown): Promise<Simple> =>
+    postJson<Simple>(path, b).catch((): Simple => ({ error: "request failed" }));
+
+  const saveCheckpoint = async (): Promise<void> => {
+    const label = (labelDraft ?? "").trim();
+    setLabelDraft(null);
+    const r = await post("/api/config/history/checkpoint", { label: label || undefined });
+    setMsg(r.ok ? `Checkpoint saved${label ? ` · “${label}”` : ""}` : `Failed: ${r.error}`);
+    if (r.ok) load();
+  };
+  const showDiff = async (id: string): Promise<void> => {
+    if (diffFor === id) {
+      setDiffFor(null);
+      setDiff(null);
+      return;
+    }
+    setDiffFor(id);
+    setDiff(null);
+    const d = await api<{ summary: { added: number; removed: number }; unified: string }>(
+      `/api/config/history/diff?id=${encodeURIComponent(id)}`,
+    ).catch(() => null);
+    setDiff(d);
+  };
+  const restore = async (id: string): Promise<void> => {
+    setConfirmRestore(null);
+    setBusy(true);
+    const r = await post("/api/config/history/restore", { id });
+    setBusy(false);
+    setMsg(
+      r.ok
+        ? `Restored ${id}${r.persisted === false ? " (applied live, not persisted)" : ""}`
+        : `Restore failed: ${r.error}`,
+    );
+    if (r.ok) {
+      load();
+      onRestored();
+    }
+  };
+  const del = async (id: string): Promise<void> => {
+    const r = await post("/api/config/history/delete", { id });
+    setMsg(r.ok ? "Version deleted" : `Failed: ${r.error}`);
+    if (r.ok) load();
+  };
+
+  if (!data) return <div className="muted">loading history…</div>;
+
+  return (
+    <>
+      {msg && <div className="cfg-msg">{msg}</div>}
+      <div className="toolbar" style={{ marginBottom: 14 }}>
+        {labelDraft === null ? (
+          <button className="btn is-active" onClick={() => setLabelDraft("")}>
+            ★ Save checkpoint
+          </button>
+        ) : (
+          <span className="cfgver-cp">
+            <input
+              className="backup-path-input"
+              autoFocus
+              placeholder="checkpoint name (e.g. pre-upgrade)"
+              value={labelDraft}
+              onChange={(e) => setLabelDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void saveCheckpoint();
+                if (e.key === "Escape") setLabelDraft(null);
+              }}
+            />
+            <button className="topo-btn cfg-save" onClick={() => void saveCheckpoint()}>
+              Save
+            </button>
+            <button className="topo-btn" onClick={() => setLabelDraft(null)}>
+              Cancel
+            </button>
+          </span>
+        )}
+        <span style={{ flex: 1 }} />
+        <span className="muted">
+          {data.versions.length} versions · {fmtBytes(data.bytes)} · auto-keep {data.retention}
+        </span>
+      </div>
+
+      {data.versions.length === 0 ? (
+        <div className="muted">No versions yet — they appear here after each config change.</div>
+      ) : (
+        <ol className="cfgver">
+          {data.versions.map((v, i) => {
+            const changed = v.drift.added + v.drift.removed;
+            return (
+              <li key={v.id} className={`cfgver__row${i === 0 ? " is-head" : ""}`}>
+                <span className="cfgver__dot" aria-hidden="true" />
+                <div className="cfgver__main">
+                  <div className="cfgver__line">
+                    <span className={`cfgver__kind cfgver__kind--${v.kind}`}>
+                      {v.kind === "checkpoint" ? "★ checkpoint" : "auto"}
+                    </span>
+                    {v.label && <span className="cfgver__label">{v.label}</span>}
+                    <span className="cfgver__time">{fmtWhen(v.ts)}</span>
+                    {i === 0 ? (
+                      <span className="cfgver__cur">latest</span>
+                    ) : changed === 0 ? (
+                      <span className="cfgver__same">identical to current</span>
+                    ) : (
+                      <span className="cfgver__drift">
+                        <span className="add">+{v.drift.added}</span>
+                        <span className="rem">−{v.drift.removed}</span>
+                        <span className="muted"> vs current</span>
+                      </span>
+                    )}
+                  </div>
+                  {diffFor === v.id && (
+                    <div className="cfgver__diff">
+                      {diff ? (
+                        diff.unified.trim() ? (
+                          <pre className="body diff">{diff.unified}</pre>
+                        ) : (
+                          <span className="muted">No differences from the current config.</span>
+                        )
+                      ) : (
+                        <span className="muted">computing diff…</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="cfgver__actions">
+                  <button className="topo-btn" onClick={() => void showDiff(v.id)}>
+                    {diffFor === v.id ? "Hide" : "Diff"}
+                  </button>
+                  {confirmRestore === v.id ? (
+                    <>
+                      <button
+                        className="topo-btn cfg-save"
+                        disabled={busy}
+                        onClick={() => void restore(v.id)}
+                      >
+                        Confirm restore
+                      </button>
+                      <button className="topo-btn" onClick={() => setConfirmRestore(null)}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="topo-btn"
+                      disabled={i === 0}
+                      title={i === 0 ? "This is the current config" : "Restore this version"}
+                      onClick={() => setConfirmRestore(v.id)}
+                    >
+                      Restore
+                    </button>
+                  )}
+                  {v.kind === "checkpoint" && (
+                    <button className="topo-btn cfgver__del" title="Delete" onClick={() => void del(v.id)}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </>
+  );
+}
+
+// ── Config: schema-driven Field Guide ────────────────────────────────────────
+interface GuideField {
+  path: string;
+  section: string;
+  type: string;
+  def?: string;
+  desc?: string;
+  enumv?: string[];
+  required: boolean;
+}
+/** Flatten a JSON Schema into a documented, grouped field list. */
+function flattenSchema(schema: Record<string, unknown> | null): GuideField[] {
+  if (!schema) return [];
+  const out: GuideField[] = [];
+  const typeOf = (n: Record<string, unknown> | undefined): string => {
+    if (!n) return "any";
+    if (Array.isArray(n.enum)) return "enum";
+    if (n.type === "array") return `array<${typeOf(n.items as Record<string, unknown>)}>`;
+    if (Array.isArray(n.type)) return (n.type as string[]).join(" | ");
+    return (n.type as string) ?? (n.properties ? "object" : "any");
+  };
+  const walk = (
+    node: Record<string, unknown>,
+    prefix: string,
+    section: string,
+    required: Set<string>,
+  ): void => {
+    const props = (node.properties as Record<string, Record<string, unknown>>) ?? {};
+    for (const [k, v] of Object.entries(props)) {
+      const path = prefix ? `${prefix}.${k}` : k;
+      const sec = section || k;
+      out.push({
+        path,
+        section: sec,
+        type: typeOf(v),
+        def: v.default !== undefined ? JSON.stringify(v.default) : undefined,
+        desc: v.description as string | undefined,
+        enumv: Array.isArray(v.enum) ? (v.enum as string[]) : undefined,
+        required: required.has(k),
+      });
+      if (v.properties) walk(v, path, sec, new Set((v.required as string[]) ?? []));
+      const ap = v.additionalProperties as Record<string, unknown> | undefined;
+      if (ap?.properties) walk(ap, `${path}.<name>`, sec, new Set((ap.required as string[]) ?? []));
+      const items = v.items as Record<string, unknown> | undefined;
+      if (items?.properties) walk(items, `${path}[]`, sec, new Set((items.required as string[]) ?? []));
+    }
+  };
+  walk(schema, "", "", new Set((schema.required as string[]) ?? []));
+  return out;
+}
+
+/** A searchable, grouped guide to every config option — straight from the schema. */
+function FieldGuidePanel(): ReactNode {
+  const [schema, setSchema] = useState<Record<string, unknown> | null>(null);
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    void api<Record<string, unknown>>("/api/config-schema")
+      .then(setSchema)
+      .catch(() => {});
+  }, []);
+  const fields = useMemo(() => flattenSchema(schema), [schema]);
+  const needle = q.trim().toLowerCase();
+  const filtered = needle
+    ? fields.filter(
+        (f) => f.path.toLowerCase().includes(needle) || (f.desc ?? "").toLowerCase().includes(needle),
+      )
+    : fields;
+  const sections = useMemo(() => {
+    const m = new Map<string, GuideField[]>();
+    for (const f of filtered) {
+      const arr = m.get(f.section) ?? [];
+      arr.push(f);
+      m.set(f.section, arr);
+    }
+    return [...m.entries()];
+  }, [filtered]);
+
+  if (!schema) return <div className="muted">loading schema…</div>;
+
+  return (
+    <>
+      <div className="toolbar" style={{ marginBottom: 12 }}>
+        <input
+          className="backup-path-input"
+          style={{ width: "min(360px, 60vw)" }}
+          placeholder="Search fields & descriptions…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <span style={{ flex: 1 }} />
+        <span className="muted">{filtered.length} options</span>
+      </div>
+      {sections.length === 0 ? (
+        <div className="muted">No fields match “{q}”.</div>
+      ) : (
+        <div className="fguide">
+          {sections.map(([sec, fs]) => (
+            <div key={sec} className="fguide__sec">
+              <h4 className="fguide__sechd">{sec}</h4>
+              <div className="fguide__list">
+                {fs.map((f) => (
+                  <div key={f.path} className="fguide__item">
+                    <div className="fguide__top">
+                      <code className="fguide__path">{f.path}</code>
+                      <span className="fguide__type">{f.type}</span>
+                      {f.required && <span className="fguide__req">required</span>}
+                      {f.def !== undefined && (
+                        <span className="fguide__def">
+                          default <code>{f.def}</code>
+                        </span>
+                      )}
+                    </div>
+                    {f.desc && <p className="fguide__desc">{f.desc}</p>}
+                    {f.enumv && (
+                      <div className="fguide__enum">
+                        {f.enumv.map((e) => (
+                          <code key={e}>{e}</code>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 /** Inline stroke icons for the sidebar — no icon-font dependency. */
 function NavIcon({ name }: { name: ViewId }): ReactNode {
   const paths: Record<ViewId, ReactNode> = {
@@ -3060,6 +3538,27 @@ function App(): ReactNode {
   const rootRef = useRef<HTMLDivElement | null>(null);
   useReveals(rootRef);
   const [view, setView] = useState<ViewId>("overview");
+  // Per-page "About this page" help, remembered per view across reloads.
+  const [helpOpen, setHelpOpen] = useState<Set<ViewId>>(() => {
+    try {
+      const raw = localStorage.getItem("mt-help-open");
+      return new Set(raw ? (JSON.parse(raw) as ViewId[]) : []);
+    } catch {
+      return new Set();
+    }
+  });
+  const toggleHelp = (v: ViewId): void =>
+    setHelpOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      try {
+        localStorage.setItem("mt-help-open", JSON.stringify([...next]));
+      } catch {
+        /* storage unavailable — help just won't persist */
+      }
+      return next;
+    });
   // Devices page: search + status filter so a large fleet stays navigable.
   const [deviceQuery, setDeviceQuery] = useState("");
   const [deviceFilter, setDeviceFilter] = useState<"all" | "online" | "offline">("all");
@@ -3288,7 +3787,17 @@ function App(): ReactNode {
   const cur = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
 
   return (
-    <div className="shell" ref={rootRef}>
+    <div
+      className="shell"
+      ref={rootRef}
+      data-view={view}
+      style={
+        {
+          "--page-accent": VIEW_ACCENT[view][0],
+          "--page-accent-2": VIEW_ACCENT[view][1],
+        } as CSSProperties
+      }
+    >
       {/* sidebar nav */}
       <aside className="nav">
         <div className="nav__brand">
@@ -3338,7 +3847,7 @@ function App(): ReactNode {
       </aside>
 
       {/* main content */}
-      <main className="main">
+      <main className="main" data-view={view}>
         <header className="topline reveal">
           <div className="topline__txt">
             <h1>{cur.label}</h1>
@@ -3359,7 +3868,20 @@ function App(): ReactNode {
               ))}
             </select>
           )}
+          <button
+            className={`help-toggle${helpOpen.has(view) ? " is-on" : ""}`}
+            onClick={() => toggleHelp(view)}
+            aria-expanded={helpOpen.has(view)}
+            title="About this page"
+          >
+            <span className="help-toggle__q" aria-hidden="true">
+              ?
+            </span>
+            Help
+          </button>
         </header>
+
+        {helpOpen.has(view) && <HelpPanel view={view} />}
 
         {/* ── Overview ── */}
         {view === "overview" && (
@@ -3686,6 +4208,32 @@ function App(): ReactNode {
                   </>
                 )}
               </Panel>
+
+              {!editingConfig && (
+                <>
+                  <Panel
+                    title="Version history"
+                    className="reveal"
+                    extra={<span className="muted">point-in-time snapshots · diff &amp; restore</span>}
+                  >
+                    <ConfigHistoryPanel
+                      onRestored={() =>
+                        void api<Record<string, unknown>>("/api/config")
+                          .then(setConfig)
+                          .catch(() => {})
+                      }
+                    />
+                  </Panel>
+
+                  <Panel
+                    title="Field guide"
+                    className="reveal"
+                    extra={<span className="muted">every config option, documented from the schema</span>}
+                  >
+                    <FieldGuidePanel />
+                  </Panel>
+                </>
+              )}
             </section>
           ) : (
             <div className="feed-empty">
