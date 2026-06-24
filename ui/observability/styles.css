@@ -1,69 +1,430 @@
-/* MikroTik MCP Observability dashboard — shared tokens + dashboard-specific UI. */
+/*
+ * MikroTik MCP — Observability dashboard styles.
+ *
+ * The dashboard is a STANDALONE localhost page (not an in-chat MCP App view), so
+ * here we override the shared `--mt-*` tokens with the marketing site's identity:
+ * the deep-teal "signal" palette (sky → teal → lime), Space Grotesk for display
+ * and DM Mono for data, glass panels, and GSAP-driven scroll reveals (`.reveal`).
+ * The in-chat views keep base.css's host-adaptive defaults untouched.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
 @import "../shared/base.css";
+
+/* ── Token override (scoped to this page) ─────────────────────────────────── */
+:root {
+  /* Brand fonts */
+  --mt-sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mt-mono: "DM Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  /* Deep teal-tinted surfaces */
+  --mt-bg: #04080d;
+  --mt-surface: #0a121b;
+  --mt-surface-2: #0f1a26;
+  --mt-border: rgba(120, 200, 205, 0.13);
+  --mt-text: #eaf6f3;
+  --mt-text-dim: #8fa0ad;
+  --mt-text-faint: #566679;
+  --mt-accent: #2dd4bf;
+  --mt-good: #34d399;
+  --mt-warn: #fbbf24;
+  --mt-bad: #fb7185;
+  --mt-radius: 16px;
+  --mt-radius-sm: 10px;
+  /* Signal palette */
+  --sky: #38bdf8;
+  --teal: #2dd4bf;
+  --cyan: #22d3ee;
+  --lime: #bef264;
+  --coral: #fb7185;
+  --amber: #fbbf24;
+  --grad: linear-gradient(115deg, var(--sky), var(--teal) 45%, var(--lime));
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --glass: rgba(10, 20, 28, 0.62);
+}
 
 html,
 body {
   margin: 0;
   padding: 0;
   background: var(--mt-bg);
+  color: var(--mt-text);
+  font-family: var(--mt-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* The dashboard root container — owns centering and the page's outer margins.
- * (Uses its own class, not the shared `.app`, so the cascade is unambiguous.) */
-.obs {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 24px 20px 40px;
+/* Ambient page backdrop: two soft signal glows + a faint grid, fixed behind all. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(
+      58% 42% at 12% -6%,
+      color-mix(in srgb, var(--teal) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 40% at 100% 0%,
+      color-mix(in srgb, var(--sky) 13%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      60% 50% at 84% 108%,
+      color-mix(in srgb, var(--lime) 8%, transparent),
+      transparent 70%
+    );
+  pointer-events: none;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--mt-border) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--mt-border) 70%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(circle at 50% 0%, #000, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 0%, #000, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── App shell: fixed sidebar + scrolling main ───────────────────────────── */
+.shell {
   display: grid;
-  gap: 16px;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-height: 100vh;
+  align-items: start;
 }
 
-/* ── Top bar ─────────────────────────────────────────────────────────────── */
-.topbar {
+.nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 14px;
+  border-right: 1px solid var(--mt-border);
+  background: color-mix(in srgb, var(--mt-surface) 55%, transparent);
+  backdrop-filter: blur(12px);
+}
+.nav__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
+  padding: 6px 8px 14px;
+}
+.nav__mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--grad);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--teal) 38%, transparent);
+  flex: none;
+}
+.nav__mark svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.nav__brandtext {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+.nav__brandtext b {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.nav__brandtext small {
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mt-text-dim);
+  margin-top: 3px;
+}
+.nav__items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+.nav__item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--mt-text-dim);
+  font-family: var(--mt-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.18s var(--ease),
+    color 0.18s,
+    border-color 0.18s,
+    transform 0.18s var(--ease);
+}
+.nav__item svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  opacity: 0.85;
+}
+.nav__item:hover {
+  color: var(--mt-text);
+  background: color-mix(in srgb, var(--teal) 9%, transparent);
+}
+.nav__item.is-active {
+  color: var(--mt-text);
+  border-color: color-mix(in srgb, var(--teal) 32%, var(--mt-border));
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--teal) 18%, transparent),
+    color-mix(in srgb, var(--sky) 7%, transparent)
+  );
+}
+.nav__item.is-active svg {
+  opacity: 1;
+  color: var(--teal);
+}
+.nav__badge {
+  margin-left: auto;
+  font-family: var(--mt-mono);
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--teal) 22%, transparent);
+  color: var(--mt-text);
+}
+.nav__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 8px 2px;
+  border-top: 1px solid var(--mt-border);
+}
+
+.main {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: 22px clamp(16px, 3vw, 44px) 64px;
+}
+
+/* Per-view header (title + contextual controls). */
+.topline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.brand h1 {
+.topline__txt h1 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: clamp(19px, 2.4vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(
+    100deg,
+    var(--mt-text),
+    color-mix(in srgb, var(--teal) 65%, var(--mt-text))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-.brand small {
+.topline__txt small {
+  display: block;
+  margin-top: 3px;
   color: var(--mt-text-dim);
   font-family: var(--mt-mono);
-  font-size: 11px;
+  font-size: 12px;
 }
-.live {
+.topline__spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+/* A view's stacked sections. */
+.view {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+/* Asymmetric bento grid for the Overview. */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 18px;
+}
+.bento .panel {
+  margin: 0;
+}
+.b-series {
+  grid-column: span 4;
+}
+.b-risk {
+  grid-column: span 2;
+}
+.b-tools {
+  grid-column: span 3;
+}
+.b-status {
+  grid-column: span 3;
+}
+.b-device {
+  grid-column: span 3;
+}
+.b-errors {
+  grid-column: span 3;
+}
+.b-risk,
+.b-status {
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 1040px) {
+  .bento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .b-series,
+  .b-risk,
+  .b-tools,
+  .b-status,
+  .b-device,
+  .b-errors {
+    grid-column: span 2;
+  }
+}
+
+/* Sidebar collapses into a horizontal icon rail on narrow screens. */
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .nav {
+    position: sticky;
+    top: 0;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--mt-border);
+    padding: 10px 12px;
+    z-index: 5;
+  }
+  .nav__brand {
+    padding: 0 6px 0 2px;
+  }
+  .nav__brandtext {
+    display: none;
+  }
+  .nav__items {
+    flex-direction: row;
+    flex: 1;
+    gap: 4px;
+  }
+  .nav__item span {
+    display: none;
+  }
+  .nav__item {
+    padding: 9px 11px;
+  }
+  .nav__foot {
+    flex-direction: row;
+    align-items: center;
+    border-top: 0;
+    padding: 0;
+  }
+  .nav__foot .muted {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .nav__brand {
+    display: none;
+  }
+}
+
+/* GSAP scroll-reveal hook: panels start hidden, the reveal hook animates them in.
+   Reduced-motion users (and the no-JS fallback) get full opacity immediately. */
+@media (prefers-reduced-motion: no-preference) {
+  .js-motion .reveal {
+    opacity: 0;
+  }
+}
+
+/* ── Live status pill (reused in the sidebar foot) ───────────────────────── */
+.hero__live {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--mt-border);
+  background: var(--glass);
+  backdrop-filter: blur(8px);
   font-family: var(--mt-mono);
   font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--mt-text-dim);
 }
-.live .dot {
+.hero__live .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--mt-bad);
+  transition: background 0.3s;
 }
-.live.is-on .dot {
+.hero__live.is-on {
+  color: var(--mt-text);
+  border-color: color-mix(in srgb, var(--mt-good) 40%, var(--mt-border));
+}
+.hero__live.is-on .dot {
   background: var(--mt-good);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-good) 22%, transparent);
+  animation: hero-pulse 1.8s ease-out infinite;
+}
+@keyframes hero-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--mt-good) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 0%, transparent);
+  }
+}
+
+/* Section heading shared by panels. */
+.panel > h2,
+.sheet__hd h2 {
+  font-family: var(--mt-sans);
 }
 
 /* ── Stat cards ──────────────────────────────────────────────────────────── */
-/* Fixed column counts that divide the 8 cards evenly (2 / 4 / 8) at each
- * breakpoint, so no card is ever stranded alone on a ragged trailing row (which
- * `auto-fit` causes when the card count isn't a multiple of the fitted columns). */
 .cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -80,23 +441,50 @@ body {
   }
 }
 .stat {
-  background: linear-gradient(180deg, var(--mt-surface), var(--mt-surface-2));
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    var(--mt-surface),
+    color-mix(in srgb, var(--mt-surface-2) 80%, transparent)
+  );
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius);
-  padding: 12px 14px;
+  padding: 14px 15px;
+  overflow: hidden;
+  transition:
+    transform 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+/* top hairline that lights up on hover */
+.stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--grad);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.stat:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--teal) 38%, var(--mt-border));
+}
+.stat:hover::before {
+  opacity: 1;
 }
 .stat .k {
   color: var(--mt-text-dim);
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 6px;
+  letter-spacing: 0.08em;
+  margin: 0 0 7px;
 }
 .stat .v {
   font-family: var(--mt-mono);
-  font-size: 22px;
-  font-weight: 650;
+  font-size: 23px;
+  font-weight: 500;
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .stat .v small {
   font-size: 12px;
@@ -115,23 +503,39 @@ body {
 
 /* ── Panels / charts ─────────────────────────────────────────────────────── */
 .panel {
-  background: var(--mt-surface);
+  position: relative;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius);
-  padding: 14px;
+  padding: 18px;
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 4%, transparent) inset;
 }
 .panel > h2 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-size: 12px;
   font-weight: 600;
   color: var(--mt-text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+/* small gradient tick before each panel title */
+.panel > h2::before,
+.sheet__hd h2:first-child::before {
+  content: "";
+  width: 3px;
+  height: 13px;
+  border-radius: 2px;
+  background: var(--grad);
+  flex: none;
 }
 .cols {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 @media (max-width: 820px) {
   .cols {
@@ -141,10 +545,8 @@ body {
 .cols-3 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
-/* Breakdown cards stack their heading above the chart so a chart given
- * `flex: 1` (e.g. the donut) fills the card and centers vertically. */
 .cols-3 .panel {
   display: flex;
   flex-direction: column;
@@ -153,7 +555,7 @@ body {
 /* Horizontal bar list. */
 .hbar {
   display: grid;
-  gap: 8px;
+  gap: 9px;
 }
 .hbar__row {
   display: grid;
@@ -171,25 +573,27 @@ body {
 .hbar__track {
   height: 8px;
   border-radius: 999px;
-  background: var(--mt-surface-2);
+  background: color-mix(in srgb, var(--mt-surface-2) 90%, transparent);
   overflow: hidden;
 }
 .hbar__fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--mt-accent);
+  background: var(--grad);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--teal) 45%, transparent);
 }
 .hbar__val {
   font-family: var(--mt-mono);
   color: var(--mt-text-dim);
   font-size: 11px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .legend {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 12px;
   font-family: var(--mt-mono);
   font-size: 11px;
   color: var(--mt-text-dim);
@@ -209,27 +613,30 @@ body {
 /* ── Risk badges ─────────────────────────────────────────────────────────── */
 .risk {
   display: inline-block;
-  padding: 1px 7px;
+  padding: 1px 8px;
   border-radius: 999px;
   font-family: var(--mt-mono);
   font-size: 10px;
   border: 1px solid var(--mt-border);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 .risk-READ {
   color: var(--mt-good);
   border-color: color-mix(in srgb, var(--mt-good) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-good) 10%, transparent);
 }
 .risk-WRITE,
 .risk-WRITE_IDEMPOTENT {
   color: var(--mt-warn);
   border-color: color-mix(in srgb, var(--mt-warn) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-warn) 10%, transparent);
 }
 .risk-DESTRUCTIVE,
 .risk-DANGEROUS {
   color: var(--mt-bad);
   border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-bad) 10%, transparent);
 }
 
 /* ── Feed table ──────────────────────────────────────────────────────────── */
@@ -241,7 +648,7 @@ body {
 .feed th,
 .feed td {
   text-align: left;
-  padding: 6px 10px;
+  padding: 7px 11px;
   border-bottom: 1px solid color-mix(in srgb, var(--mt-border) 55%, transparent);
   white-space: nowrap;
   font-family: var(--mt-mono);
@@ -249,16 +656,21 @@ body {
 .feed thead th {
   position: sticky;
   top: 0;
-  background: var(--mt-surface-2);
+  background: color-mix(in srgb, var(--mt-surface-2) 96%, transparent);
+  backdrop-filter: blur(6px);
   color: var(--mt-text-dim);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
   z-index: 1;
 }
 .feed tbody tr {
   cursor: pointer;
+  transition: background 0.12s;
 }
 .feed tbody tr:hover {
-  background: color-mix(in srgb, var(--mt-accent) 8%, transparent);
+  background: color-mix(in srgb, var(--mt-accent) 9%, transparent);
 }
 .feed tbody tr.is-err {
   background: color-mix(in srgb, var(--mt-bad) 9%, transparent);
@@ -276,6 +688,7 @@ body {
 .feed td.num {
   text-align: right;
   color: var(--mt-text-dim);
+  font-variant-numeric: tabular-nums;
 }
 .status-ok {
   color: var(--mt-good);
@@ -295,7 +708,7 @@ body {
   display: grid;
   justify-items: center;
   gap: 8px;
-  padding: 48px 16px;
+  padding: 54px 16px;
   border: 1px dashed var(--mt-border);
   border-radius: var(--mt-radius);
   text-align: center;
@@ -318,7 +731,6 @@ body {
 .feed-empty .btn {
   margin-top: 6px;
 }
-/* Pulsing dot for the "listening…" state. */
 .feed-empty__pulse {
   width: 12px;
   height: 12px;
@@ -349,10 +761,9 @@ body {
 .conn-grid {
   fill: none;
   stroke: var(--mt-border);
-  stroke-opacity: 0.55;
+  stroke-opacity: 0.7;
   stroke-dasharray: 2 7;
 }
-/* Sonar rings expanding out of the core. */
 .conn-sonar {
   fill: none;
   stroke: var(--mt-accent);
@@ -370,7 +781,6 @@ body {
     opacity: 0;
   }
 }
-/* Base link + the glowing dashed "flow" overlay on live links. */
 .conn-link {
   fill: none;
   stroke-width: 1.6;
@@ -391,9 +801,8 @@ body {
   }
 }
 .conn-packet {
-  filter: drop-shadow(0 0 6px #34d399);
+  filter: drop-shadow(0 0 6px var(--teal));
 }
-/* Core hub: soft glow + a slowly rotating dashed ring. */
 .conn-hub-glow {
   fill: var(--mt-accent);
   opacity: 0.22;
@@ -414,7 +823,6 @@ body {
     transform: rotate(360deg);
   }
 }
-/* Pulsing halo around online device orbs. */
 .conn-node-halo {
   fill: none;
   stroke-width: 2;
@@ -477,7 +885,14 @@ body {
 .dev-card {
   display: grid;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 14px 15px;
+  transition:
+    transform 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+.dev-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--mt-border));
 }
 .dev-card__top {
   display: flex;
@@ -486,7 +901,7 @@ body {
 }
 .dev-card__name {
   font-family: var(--mt-mono);
-  font-weight: 650;
+  font-weight: 500;
   font-size: 13px;
 }
 .dev-card .dot {
@@ -518,22 +933,37 @@ details.cfg > summary {
   padding: 4px 0;
 }
 
+/* ── Badge ────────────────────────────────────────────────────────────────── */
+.badge {
+  font-family: var(--mt-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: var(--mt-bg);
+  background: var(--grad);
+  font-weight: 600;
+}
+
 /* ── Drawer ──────────────────────────────────────────────────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, #000 55%, transparent);
+  background: color-mix(in srgb, #000 62%, transparent);
+  backdrop-filter: blur(3px);
   display: flex;
   justify-content: flex-end;
   z-index: 10;
 }
 .sheet {
-  width: min(560px, 100%);
+  width: min(580px, 100%);
   height: 100%;
-  background: var(--mt-bg);
-  border-left: 1px solid var(--mt-border);
+  background: color-mix(in srgb, var(--mt-surface) 96%, var(--mt-bg));
+  border-left: 1px solid color-mix(in srgb, var(--teal) 28%, var(--mt-border));
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
   overflow: auto;
-  padding: 16px;
+  padding: 18px;
   display: grid;
   gap: 12px;
   align-content: start;
@@ -551,7 +981,7 @@ details.cfg > summary {
 pre.body {
   margin: 0;
   padding: 12px;
-  background: var(--mt-surface);
+  background: var(--mt-bg);
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius-sm);
   font-family: var(--mt-mono);
@@ -564,19 +994,19 @@ pre.body {
 
 /* JSON syntax highlighting (JsonView tokens). */
 pre.body.json {
-  color: var(--mt-text-dim); /* punctuation: braces, brackets, commas, colons */
+  color: var(--mt-text-dim);
 }
 pre.body.json .j-key {
   color: var(--mt-accent);
 }
 pre.body.json .j-str {
-  color: var(--mt-good);
+  color: var(--lime);
 }
 pre.body.json .j-num {
-  color: #fbbf24;
+  color: var(--amber);
 }
 pre.body.json .j-bool {
-  color: #c792ea;
+  color: var(--cyan);
 }
 pre.body.json .j-null {
   color: var(--mt-text-faint);
@@ -587,14 +1017,25 @@ pre.body.json .j-null {
   font-size: 11px;
 }
 
-/* Danger button (delete-confirm) — layers on .btn with the bad-state color. */
+/* Danger button (delete-confirm). */
 .btn-danger {
   color: var(--mt-bad);
   border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
   background: color-mix(in srgb, var(--mt-bad) 12%, transparent);
 }
 .btn-danger:hover {
-  background: color-mix(in srgb, var(--mt-bad) 20%, transparent);
+  background: color-mix(in srgb, var(--mt-bad) 22%, transparent);
+  border-color: var(--mt-bad);
+}
+
+/* Buttons get the brand accent on hover/focus (overrides base.css blue accent). */
+.btn:hover {
+  border-color: color-mix(in srgb, var(--teal) 55%, var(--mt-border));
+  background: color-mix(in srgb, var(--teal) 10%, var(--mt-surface-2));
+}
+.btn.is-active {
+  border-color: var(--teal);
+  color: var(--teal);
 }
 
 /* ── Connectivity: direction legend + chevrons + clickable error rows ──────── */
@@ -649,7 +1090,7 @@ pre.body.json .j-null {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px;
+  padding: 16px;
 }
 .health-card--na {
   justify-content: center;
@@ -726,7 +1167,7 @@ pre.body.json .j-null {
   width: 100%;
   background: radial-gradient(
     circle at 50% 45%,
-    color-mix(in srgb, var(--mt-accent) 7%, transparent),
+    color-mix(in srgb, var(--mt-accent) 8%, transparent),
     transparent 60%
   );
   border-radius: var(--mt-radius-sm);
@@ -789,7 +1230,7 @@ pre.body.json .j-null {
   background: var(--mt-surface);
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius-sm);
-  padding: 10px 12px;
+  padding: 12px;
 }
 .topo-pop__hd {
   display: flex;
@@ -817,8 +1258,11 @@ pre.body.json .j-null {
   background: var(--mt-surface-2);
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius-sm);
-  padding: 4px 9px;
+  padding: 5px 10px;
   cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 .topo-btn:hover {
   border-color: var(--mt-accent);
@@ -839,17 +1283,19 @@ pre.body.json .j-null {
 }
 .cfg-status {
   font: 11px var(--mt-mono);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--mt-border);
 }
 .cfg-status.is-ok {
   color: var(--mt-good);
   border-color: color-mix(in srgb, var(--mt-good) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-good) 10%, transparent);
 }
 .cfg-status.is-bad {
   color: var(--mt-bad);
   border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-bad) 10%, transparent);
 }
 .cfg-select {
   font: 11px var(--mt-mono);
@@ -857,7 +1303,7 @@ pre.body.json .j-null {
   background: var(--mt-surface-2);
   border: 1px solid var(--mt-border);
   border-radius: var(--mt-radius-sm);
-  padding: 4px 8px;
+  padding: 5px 9px;
 }
 .cfg-save {
   border-color: color-mix(in srgb, var(--mt-accent) 55%, var(--mt-border));
@@ -872,7 +1318,7 @@ pre.body.json .j-null {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 9px 12px;
+  padding: 10px 13px;
   border-radius: var(--mt-radius-sm);
   background: color-mix(in srgb, var(--mt-warn) 12%, var(--mt-surface));
   border: 1px solid color-mix(in srgb, var(--mt-warn) 45%, var(--mt-border));
@@ -910,9 +1356,6 @@ pre.body.json .j-null {
   position: relative;
   flex: 1;
 }
-/* The highlight overlay and the textarea MUST share identical box geometry
-   (font, line-height, padding, tab-size, box model) so coloured spans sit
-   exactly under the real characters. */
 .cfg-hl,
 .cfg-ta {
   box-sizing: border-box;
@@ -930,7 +1373,7 @@ pre.body.json .j-null {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  color: var(--mt-text-dim); /* base colour for punctuation/whitespace */
+  color: var(--mt-text-dim);
 }
 .cfg-ta {
   position: relative;
@@ -940,10 +1383,8 @@ pre.body.json .j-null {
   resize: vertical;
   outline: none;
   background: transparent;
-  /* Text is invisible — the overlay paints the colours — but the caret and
-     selection stay visible so editing feels normal. */
   color: transparent;
-  caret-color: var(--mt-text);
+  caret-color: var(--mt-accent);
 }
 .cfg-ta::selection {
   background: color-mix(in srgb, var(--mt-accent) 35%, transparent);
@@ -952,13 +1393,13 @@ pre.body.json .j-null {
   color: var(--mt-accent);
 }
 .cfg-hl .j-str {
-  color: var(--mt-good);
+  color: var(--lime);
 }
 .cfg-hl .j-num {
-  color: #fbbf24;
+  color: var(--amber);
 }
 .cfg-hl .j-bool {
-  color: #c792ea;
+  color: var(--cyan);
 }
 .cfg-hl .j-null {
   color: var(--mt-text-faint);
@@ -976,7 +1417,7 @@ pre.body.json .j-null {
   overflow: hidden;
 }
 .cfg-ac-item {
-  padding: 4px 10px;
+  padding: 5px 11px;
   font: 12px var(--mt-mono);
   color: var(--mt-text-dim);
   cursor: pointer;
@@ -992,7 +1433,7 @@ pre.body.json .j-null {
 }
 .cfg-chip {
   font: 11px var(--mt-mono);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--mt-border);
 }
@@ -1025,7 +1466,7 @@ pre.body.json .j-null {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 9px 13px;
   background: var(--mt-surface-2);
   font-size: 12px;
 }
@@ -1077,6 +1518,7 @@ pre.body.json .j-null {
 .cap-dot.is-on {
   background: var(--mt-good);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-good) 22%, transparent);
+  animation: feed-pulse 1.6s ease-out infinite;
 }
 .cap-cols {
   display: grid;

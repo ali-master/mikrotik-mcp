@@ -9,10 +9,14 @@
  * makes. Charts are hand-rolled SVG (no chart library). A `?token=` in the URL
  * is forwarded to every API call and the live stream when the server requires it.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject } from "react";
 import { createRoot } from "react-dom/client";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./styles.css";
+
+gsap.registerPlugin(ScrollTrigger);
 
 // ── API types (mirror src/observability) ────────────────────────────────────
 type Risk = "READ" | "WRITE" | "WRITE_IDEMPOTENT" | "DESTRUCTIVE" | "DANGEROUS";
@@ -204,7 +208,7 @@ const sval = (v: unknown): string => {
 const RISK_COLOR: Record<Risk, string> = {
   READ: "#34d399",
   WRITE: "#fbbf24",
-  WRITE_IDEMPOTENT: "#6ea8fe",
+  WRITE_IDEMPOTENT: "#38bdf8",
   DESTRUCTIVE: "#f87171",
   DANGEROUS: "#ef4444",
 };
@@ -267,13 +271,15 @@ function Panel({
   title,
   extra,
   children,
+  className,
 }: {
   title?: string;
   extra?: ReactNode;
   children: ReactNode;
+  className?: string;
 }): ReactNode {
   return (
-    <div className="panel">
+    <div className={`panel${className ? ` ${className}` : ""}`}>
       {title != null && (
         <div className="sheet__hd" style={{ marginBottom: 12 }}>
           <h2 style={{ margin: 0 }}>{title}</h2>
@@ -495,7 +501,7 @@ function qAngle(
   return (Math.atan2(dy, dx) * 180) / Math.PI;
 }
 
-const FLOW_CMD = "#818cf8"; // command: LLM → device
+const FLOW_CMD = "#38bdf8"; // command: LLM → device
 const FLOW_RES = "#34d399"; // response: device → LLM
 
 /**
@@ -542,9 +548,9 @@ function ConnectivityGraph({
       >
         <defs>
           <radialGradient id="conn-hub" cx="0.5" cy="0.38" r="0.72">
-            <stop offset="0" stopColor="#c7d2fe" />
-            <stop offset="0.55" stopColor="#6366f1" />
-            <stop offset="1" stopColor="#312e81" />
+            <stop offset="0" stopColor="#a7f3eb" />
+            <stop offset="0.55" stopColor="#2dd4bf" />
+            <stop offset="1" stopColor="#0c5a52" />
           </radialGradient>
           <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
             <stop offset="0" stopColor="#232a3b" />
@@ -693,14 +699,14 @@ function ConnectivityGraph({
         {/* core hub */}
         <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
         <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
-        <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#a5b4fc" strokeWidth={1.5} />
+        <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#5eead4" strokeWidth={1.5} />
         <text x={cx} y={cy - 4} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={700}>
           LLM
         </text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#c7d2fe" fontSize={8}>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#99f6e4" fontSize={8}>
           ⇄ MCP
         </text>
-        <text x={cx} y={cy + 18} textAnchor="middle" fill="#c7d2fe" fontSize={7.5}>
+        <text x={cx} y={cy + 18} textAnchor="middle" fill="#99f6e4" fontSize={7.5}>
           server
         </text>
 
@@ -954,14 +960,14 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         {s.uptime ? ` · up ${s.uptime}` : ""}
       </div>
       <div className="health-card__gauges">
-        <Gauge value={s.cpuLoad} label="CPU" color="#6ea8fe" />
+        <Gauge value={s.cpuLoad} label="CPU" color="#38bdf8" />
         <Gauge value={s.memUsedPct} label="MEM" color="#34d399" />
         <Gauge value={s.hddUsedPct} label="DISK" color="#fbbf24" />
       </div>
       <div className="health-card__charts">
         <div className="health-chart">
           <span className="health-chart__k">CPU load</span>
-          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#6ea8fe" maxValue={100} unit="%" />
+          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#38bdf8" maxValue={100} unit="%" />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Memory used</span>
@@ -974,7 +980,7 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Probe latency</span>
-          <Sparkline values={hist.map((h) => h.latencyMs)} color="#c084fc" unit="ms" />
+          <Sparkline values={hist.map((h) => h.latencyMs)} color="#22d3ee" unit="ms" />
         </div>
       </div>
       <div className="health-card__foot muted">
@@ -1046,6 +1052,65 @@ function useLiveStream(onEvent: (e: ToolEvent) => void, onMode: (m: LiveMode) =>
       es?.close();
     };
   }, []);
+}
+
+// ── GSAP scroll reveals ──────────────────────────────────────────────────────
+/**
+ * Fades + lifts every `.reveal` element into view on scroll. Panels render
+ * asynchronously as data lands (devices, topology, capture…), so a
+ * MutationObserver arms newcomers too — not just the elements present on mount.
+ * Honours `prefers-reduced-motion`: when set, we never hide content (the CSS
+ * `.js-motion` gate is also keyed off the class we add here).
+ */
+function useReveals(rootRef: RefObject<HTMLElement | null>): void {
+  // Layout effect (pre-paint) so reveals are hidden before the first frame — no
+  // flash-of-visible-then-animate. If the bundle never runs, nothing is hidden.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.documentElement.classList.add("js-motion");
+
+    const seen = new WeakSet<Element>();
+    const arm = (el: Element): void => {
+      if (seen.has(el)) return;
+      seen.add(el);
+      gsap.set(el, { opacity: 0, y: 26 });
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 90%",
+        once: true,
+        onEnter: () => gsap.to(el, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }),
+      });
+    };
+    const scan = (node: ParentNode): void => {
+      for (const el of node.querySelectorAll(".reveal")) arm(el);
+    };
+    scan(root);
+
+    const mo = new MutationObserver((muts) => {
+      for (const m of muts)
+        for (const n of m.addedNodes) {
+          if (!(n instanceof Element)) continue;
+          if (n.matches(".reveal")) arm(n);
+          scan(n);
+        }
+    });
+    mo.observe(root, { childList: true, subtree: true });
+
+    // The page keeps growing as polled data arrives; recompute trigger offsets
+    // for a few seconds so late panels land at the right scroll positions.
+    const refresh = setInterval(() => ScrollTrigger.refresh(), 1200);
+    const stop = setTimeout(() => clearInterval(refresh), 7000);
+
+    return () => {
+      mo.disconnect();
+      clearInterval(refresh);
+      clearTimeout(stop);
+      for (const t of ScrollTrigger.getAll()) t.kill();
+      document.documentElement.classList.remove("js-motion");
+    };
+  }, [rootRef]);
 }
 
 // ── JSON syntax highlighter ──────────────────────────────────────────────────
@@ -1622,7 +1687,7 @@ function TopologyMap({
                 ? "#f87171"
                 : isDev
                   ? "#6b7280"
-                  : "#7c9cff";
+                  : "#38bdf8";
           const isPicked = picked === n.id;
           return (
             <g
@@ -1679,7 +1744,7 @@ function TopologyMap({
             <i className="dot" style={{ background: "#f87171" }} /> offline
           </span>
           <span>
-            <i className="dot" style={{ background: "#7c9cff" }} /> neighbour
+            <i className="dot" style={{ background: "#38bdf8" }} /> neighbour
           </span>
           <span className="muted">
             {topo.stats.devices} devices · {topo.stats.neighbors} discovered ·{" "}
@@ -1796,11 +1861,11 @@ function highlightJson(json: string): ReactNode[] {
 
 // ── Packet Capture Studio ────────────────────────────────────────────────────
 const PROTO_COLOR: Record<string, string> = {
-  TCP: "#6ea8fe",
+  TCP: "#38bdf8",
   UDP: "#34d399",
   ICMP: "#fbbf24",
   ICMPv6: "#fbbf24",
-  ARP: "#c792ea",
+  ARP: "#2dd4bf",
   IPv6: "#9aa3af",
 };
 const protoColor = (p: string | undefined): string => (p && PROTO_COLOR[p]) || "#6b7280";
@@ -2002,6 +2067,68 @@ function download(name: string, text: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
+// ── view navigation ─────────────────────────────────────────────────────────
+type ViewId = "overview" | "devices" | "topology" | "packets" | "config" | "feed";
+const VIEWS: { id: ViewId; label: string; sub: string }[] = [
+  { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
+  { id: "devices", label: "Devices", sub: "Connectivity radar & system health" },
+  { id: "topology", label: "Topology", sub: "Layer-2 neighbours via MNDP / CDP / LLDP" },
+  { id: "packets", label: "Packets", sub: "Live TZSP capture & decode" },
+  { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
+  { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
+];
+
+/** Inline stroke icons for the sidebar — no icon-font dependency. */
+function NavIcon({ name }: { name: ViewId }): ReactNode {
+  const paths: Record<ViewId, ReactNode> = {
+    overview: (
+      <>
+        <rect x="3" y="3" width="8" height="8" rx="1.6" />
+        <rect x="13" y="3" width="8" height="5" rx="1.6" />
+        <rect x="13" y="10" width="8" height="11" rx="1.6" />
+        <rect x="3" y="13" width="8" height="8" rx="1.6" />
+      </>
+    ),
+    devices: (
+      <>
+        <rect x="3" y="4" width="18" height="7" rx="2" />
+        <rect x="3" y="13" width="18" height="7" rx="2" />
+        <path d="M7 7.5h.01M7 16.5h.01" />
+      </>
+    ),
+    topology: (
+      <>
+        <circle cx="12" cy="5" r="2.4" />
+        <circle cx="5" cy="19" r="2.4" />
+        <circle cx="19" cy="19" r="2.4" />
+        <path d="M12 7.4 6.4 16.6M12 7.4 17.6 16.6" />
+      </>
+    ),
+    packets: <path d="M3 12h4l2-7 4 14 2-7h6" />,
+    config: (
+      <>
+        <path d="M4 7h8M16 7h4M4 17h4M12 17h8" />
+        <circle cx="14" cy="7" r="2.2" />
+        <circle cx="10" cy="17" r="2.2" />
+      </>
+    ),
+    feed: <path d="M4 6h16M4 12h16M4 18h10" />,
+  };
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
 // ── app ──────────────────────────────────────────────────────────────────────
 function App(): ReactNode {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -2030,6 +2157,9 @@ function App(): ReactNode {
   });
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useReveals(rootRef);
+  const [view, setView] = useState<ViewId>("overview");
 
   // Live stream → prepend to feed (unless paused) and pulse the device's link.
   useLiveStream(
@@ -2229,453 +2359,530 @@ function App(): ReactNode {
     </select>
   );
 
+  const cur = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
+
   return (
-    <div className="obs">
-      {/* top bar */}
-      <div className="topbar">
-        <div className="brand">
-          <span className="hd__dot" />
-          <div>
-            <h1>MikroTik MCP · Observability</h1>
-            <small>
-              {meta
-                ? `${num(meta.total)} events stored · transport ${meta.transport}`
-                : "connecting…"}
-            </small>
+    <div className="shell" ref={rootRef}>
+      {/* sidebar nav */}
+      <aside className="nav">
+        <div className="nav__brand">
+          <div className="nav__mark">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <g stroke="#053b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 12 L4 5 M12 12 L20 5 M12 12 L12 20" />
+                <circle cx="12" cy="12" r="3" fill="#053b35" stroke="none" />
+                <circle cx="4" cy="5" r="1.9" fill="#053b35" stroke="none" />
+                <circle cx="20" cy="5" r="1.9" fill="#053b35" stroke="none" />
+                <circle cx="12" cy="20" r="1.9" fill="#053b35" stroke="none" />
+              </g>
+            </svg>
+          </div>
+          <div className="nav__brandtext">
+            <b>MikroTik MCP</b>
+            <small>Observability</small>
           </div>
         </div>
-        <span style={{ flex: 1 }} />
-        <span
-          className={`live${liveMode !== "off" ? " is-on" : ""}`}
-          title="Live transport: WebSocket (preferred) or SSE fallback"
-        >
-          <span className="dot" />
-          {liveMode === "off" ? "offline" : `live · ${liveMode}`}
-        </span>
-      </div>
+        <nav className="nav__items">
+          {VIEWS.map((v) => (
+            <button
+              key={v.id}
+              className={`nav__item${view === v.id ? " is-active" : ""}`}
+              onClick={() => setView(v.id)}
+            >
+              <NavIcon name={v.id} />
+              <span>{v.label}</span>
+              {v.id === "feed" && feed.length > 0 && (
+                <span className="nav__badge">{feed.length > 999 ? "999+" : feed.length}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+        <div className="nav__foot">
+          <span
+            className={`hero__live${liveMode !== "off" ? " is-on" : ""}`}
+            title="Live transport: WebSocket (preferred) or SSE fallback"
+          >
+            <span className="dot" />
+            {liveMode === "off" ? "offline" : `live · ${liveMode}`}
+          </span>
+          <small className="muted">
+            {meta ? `${num(meta.total)} events · ${meta.transport}` : "connecting…"}
+          </small>
+        </div>
+      </aside>
 
-      {/* stat cards */}
-      <section className="cards">
-        {stats ? (
-          <>
-            <StatCard k="Calls (window)" v={num(stats.total)} />
-            <StatCard k="Calls / min" v={stats.callsPerMin.toFixed(1)} />
-            <StatCard
-              k="Error rate"
-              v={`${(stats.errorRate * 100).toFixed(1)}%`}
-              sub={`${stats.errors} err`}
-              cls={errCls}
-            />
-            <StatCard k="Avg latency" v={ms(stats.latency.avg)} />
-            <StatCard k="p95 latency" v={ms(stats.latency.p95)} />
-            <StatCard k="p99 latency" v={ms(stats.latency.p99)} />
-            <StatCard k="Distinct tools" v={num(stats.distinctTools)} />
-            <StatCard k="Output volume" v={bytes(stats.outputBytes)} />
-          </>
-        ) : (
-          <div className="stat">
-            <p className="k">Loading…</p>
-            <div className="v">—</div>
+      {/* main content */}
+      <main className="main">
+        <header className="topline reveal">
+          <div className="topline__txt">
+            <h1>{cur.label}</h1>
+            <small>{cur.sub}</small>
           </div>
+          <span className="topline__spacer" />
+          {view === "overview" && (
+            <select
+              className="btn"
+              value={windowMs}
+              onChange={(e) => setWindowMs(Number(e.target.value))}
+              title="Stats time window"
+            >
+              {WINDOWS.map(([label, val]) => (
+                <option key={val} value={val}>
+                  window: {label}
+                </option>
+              ))}
+            </select>
+          )}
+        </header>
+
+        {/* ── Overview ── */}
+        {view === "overview" && (
+          <section className="view">
+            <div className="cards reveal">
+              {stats ? (
+                <>
+                  <StatCard k="Calls (window)" v={num(stats.total)} />
+                  <StatCard k="Calls / min" v={stats.callsPerMin.toFixed(1)} />
+                  <StatCard
+                    k="Error rate"
+                    v={`${(stats.errorRate * 100).toFixed(1)}%`}
+                    sub={`${stats.errors} err`}
+                    cls={errCls}
+                  />
+                  <StatCard k="Avg latency" v={ms(stats.latency.avg)} />
+                  <StatCard k="p95 latency" v={ms(stats.latency.p95)} />
+                  <StatCard k="p99 latency" v={ms(stats.latency.p99)} />
+                  <StatCard k="Distinct tools" v={num(stats.distinctTools)} />
+                  <StatCard k="Output volume" v={bytes(stats.outputBytes)} />
+                </>
+              ) : (
+                <div className="stat">
+                  <p className="k">Loading…</p>
+                  <div className="v">—</div>
+                </div>
+              )}
+            </div>
+
+            <div className="bento reveal">
+              <Panel title="Calls over time" className="b-series">
+                {stats ? (
+                  <TimeSeries series={stats.series} />
+                ) : (
+                  <div className="muted">no data</div>
+                )}
+                <div className="legend">
+                  <span>
+                    <i style={{ background: "#34d399" }} />
+                    ok
+                  </span>
+                  <span>
+                    <i style={{ background: "#f87171" }} />
+                    error
+                  </span>
+                </div>
+              </Panel>
+              {stats && (
+                <>
+                  <Panel title="By risk" className="b-risk">
+                    <Donut
+                      segments={(Object.keys(stats.byRisk) as Risk[]).map((r) => ({
+                        label: r,
+                        value: stats.byRisk[r],
+                        color: RISK_COLOR[r],
+                      }))}
+                    />
+                  </Panel>
+                  <Panel title="Top tools" className="b-tools">
+                    <HBars
+                      rows={stats.byTool.map((t) => ({
+                        label: t.tool,
+                        value: t.count,
+                        sub: `${t.count}× · ${ms(t.p95Ms)} p95${t.errors ? ` · ${t.errors} err` : ""}`,
+                        color: t.errors ? "#f87171" : undefined,
+                      }))}
+                    />
+                  </Panel>
+                  <Panel title="Status" className="b-status">
+                    <Donut
+                      segments={[
+                        { label: "ok", value: feedStatus.ok, color: "#34d399" },
+                        { label: "error", value: feedStatus.error, color: "#f87171" },
+                      ]}
+                    />
+                  </Panel>
+                  <Panel title="By device" className="b-device">
+                    {stats.byDevice.length ? (
+                      <HBars
+                        rows={stats.byDevice.map((d) => ({ label: d.device, value: d.count }))}
+                      />
+                    ) : (
+                      <div className="muted">single device</div>
+                    )}
+                  </Panel>
+                  <Panel title="Recent errors" className="b-errors">
+                    {feedErrors.length ? (
+                      <div className="hbar">
+                        {feedErrors.slice(0, 8).map((e) => (
+                          <div
+                            className="hbar__row conn-errrow"
+                            style={{ gridTemplateColumns: "auto 1fr" }}
+                            key={e.id}
+                            onClick={() => void openDetail(e)}
+                          >
+                            <span className="muted">{clock(e.ts)}</span>
+                            <span
+                              style={{
+                                color: "var(--mt-bad)",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                minWidth: 0,
+                              }}
+                              title={e.error ?? e.output}
+                            >
+                              {e.tool}: {e.error ?? e.output ?? "error"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="muted">no errors 🎉</div>
+                    )}
+                  </Panel>
+                </>
+              )}
+            </div>
+          </section>
         )}
-      </section>
 
-      {/* time series */}
-      <Panel title="Calls over time">
-        {stats ? <TimeSeries series={stats.series} /> : <div className="muted">no data</div>}
-        <div className="legend">
-          <span>
-            <i style={{ background: "#34d399" }} />
-            ok
-          </span>
-          <span>
-            <i style={{ background: "#f87171" }} />
-            error
-          </span>
-        </div>
-      </Panel>
-
-      {/* breakdowns */}
-      {stats && (
-        <section className="cols-3">
-          <Panel title="Top tools">
-            <HBars
-              rows={stats.byTool.map((t) => ({
-                label: t.tool,
-                value: t.count,
-                sub: `${t.count}× · ${ms(t.p95Ms)} p95${t.errors ? ` · ${t.errors} err` : ""}`,
-                color: t.errors ? "#f87171" : undefined,
-              }))}
-            />
-          </Panel>
-          <Panel title="By risk">
-            <Donut
-              segments={(Object.keys(stats.byRisk) as Risk[]).map((r) => ({
-                label: r,
-                value: stats.byRisk[r],
-                color: RISK_COLOR[r],
-              }))}
-            />
-          </Panel>
-          <Panel title="Status">
-            <Donut
-              segments={[
-                { label: "ok", value: feedStatus.ok, color: "#34d399" },
-                {
-                  label: "error",
-                  value: feedStatus.error,
-                  color: "#f87171",
-                },
-              ]}
-            />
-          </Panel>
-          <Panel title="By device">
-            {stats.byDevice.length ? (
-              <HBars
-                rows={stats.byDevice.map((d) => ({
-                  label: d.device,
-                  value: d.count,
-                }))}
-              />
-            ) : (
-              <div className="muted">single device</div>
-            )}
-          </Panel>
-          <Panel title="Recent errors">
-            {feedErrors.length ? (
-              <div className="hbar">
-                {feedErrors.slice(0, 8).map((e) => (
-                  <div
-                    className="hbar__row conn-errrow"
-                    style={{ gridTemplateColumns: "auto 1fr" }}
-                    key={e.id}
-                    onClick={() => void openDetail(e)}
-                  >
-                    <span className="muted">{clock(e.ts)}</span>
-                    <span
-                      style={{
-                        color: "var(--mt-bad)",
-                        // Clamp to one line: a long connection error (e.g. a
-                        // MAC-Telnet failure) must ellipsize, not balloon the row.
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        minWidth: 0,
-                      }}
-                      title={e.error ?? e.output}
-                    >
-                      {e.tool}: {e.error ?? e.output ?? "error"}
+        {/* ── Devices ── */}
+        {view === "devices" &&
+          (devices && devices.devices.length > 0 ? (
+            <section className="view">
+              <section className="cols reveal">
+                <Panel
+                  title="Connectivity"
+                  extra={
+                    <span className="muted">
+                      {devices.devices.filter((d) => d.status.reachable === true).length} online ·{" "}
+                      {devices.devices.filter((d) => d.status.reachable === false).length} offline ·{" "}
+                      {devices.devices.length} total
                     </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="muted">no errors 🎉</div>
-            )}
-          </Panel>
-        </section>
-      )}
-
-      {/* devices & connectivity */}
-      {devices && devices.devices.length > 0 && (
-        <section className="cols">
-          <Panel
-            title="Connectivity"
-            extra={
-              <span className="muted">
-                {devices.devices.filter((d) => d.status.reachable === true).length} online ·{" "}
-                {devices.devices.filter((d) => d.status.reachable === false).length} offline ·{" "}
-                {devices.devices.length} total
-              </span>
-            }
-          >
-            <ConnectivityGraph payload={devices} pulses={pulses} />
-          </Panel>
-          <div className="dev-grid">
-            {devices.devices.map((d) => (
-              <DeviceCard key={d.name} d={d} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* live Layer-2 topology map (MNDP/CDP/LLDP discovery) */}
-      {topology && topology.nodes.length > 0 && (
-        <Panel
-          title="Network topology"
-          extra={
-            <span className="muted">
-              Layer-2 neighbours via MNDP/CDP/LLDP · click a neighbour to onboard it
-            </span>
-          }
-        >
-          <TopologyMap
-            topo={topology}
-            onOnboard={(name, body) => {
-              setSeed({ name, body });
-              setEditingConfig(true);
-              document.querySelector(".cfgstudio")?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
-        </Panel>
-      )}
-
-      {/* live packet capture (TZSP) */}
-      <Panel
-        title="Packet capture"
-        extra={<span className="muted">live TZSP decode · /tool sniffer streaming</span>}
-      >
-        <PacketCapture />
-      </Panel>
-
-      {/* device system health — realtime gauges + per-metric charts */}
-      {devices && devices.devices.length > 0 && (
-        <Panel
-          title="Device system health"
-          extra={<span className="muted">CPU · memory · disk · latency — sampled every 30s</span>}
-        >
-          <div className="health-grid">
-            {devices.devices.map((d) => (
-              <DeviceHealthCard key={d.name} d={d} />
-            ))}
-          </div>
-        </Panel>
-      )}
-
-      {/* config */}
-      {config && (
-        <Panel
-          title="Configuration"
-          extra={
-            <button
-              className="btn"
-              onClick={() => setEditingConfig((v) => !v)}
-              title="Edit the config JSON with autocomplete, validation and safe-apply"
-            >
-              {editingConfig ? "View" : "✎ Edit config"}
-            </button>
-          }
-        >
-          {editingConfig ? (
-            <ConfigStudio
-              key={seed ? `seed-${seed.name}` : "config"}
-              initial={
-                seed
-                  ? {
-                      ...config,
-                      devices: {
-                        ...((config.devices as Record<string, unknown>) ?? {}),
-                        [seed.name]: seed.body,
-                      },
-                    }
-                  : config
-              }
-              onClose={() => {
-                setEditingConfig(false);
-                setSeed(null);
-              }}
-              onReload={() => {
-                setSeed(null);
-                void api<Record<string, unknown>>("/api/config")
-                  .then(setConfig)
-                  .catch(() => {});
-              }}
-            />
+                  }
+                >
+                  <ConnectivityGraph payload={devices} pulses={pulses} />
+                </Panel>
+                <div className="dev-grid">
+                  {devices.devices.map((d) => (
+                    <DeviceCard key={d.name} d={d} />
+                  ))}
+                </div>
+              </section>
+              <Panel
+                title="Device system health"
+                className="reveal"
+                extra={
+                  <span className="muted">CPU · memory · disk · latency — sampled every 30s</span>
+                }
+              >
+                <div className="health-grid">
+                  {devices.devices.map((d) => (
+                    <DeviceHealthCard key={d.name} d={d} />
+                  ))}
+                </div>
+              </Panel>
+            </section>
           ) : (
-            <>
-              <div className="legend" style={{ margin: "0 0 10px" }}>
-                <span>transport: {sval(mcp.transport)}</span>
-                <span>read-only: {config.readOnly ? "yes" : "no"}</span>
-                <span>
-                  dashboard: {sval(dash.host)}:{sval(dash.port)}
-                </span>
-                <span>capture: {dash.captureBody ? "on" : "off"}</span>
-                <span>s3: {config.s3 ? "configured" : "off"}</span>
-              </div>
-              <details className="cfg">
-                <summary>Full effective configuration (secrets redacted)</summary>
-                <JsonView value={config} maxHeight={340} />
-              </details>
-            </>
-          )}
-        </Panel>
-      )}
-
-      {/* live feed */}
-      <div className="panel">
-        <div className="sheet__hd" style={{ marginBottom: 12 }}>
-          <h2 style={{ margin: 0 }}>Live tool calls</h2>
-          <span style={{ flex: 1 }} />
-          <span className="muted">
-            {visible.length} shown · {feed.length} buffered
-          </span>
-        </div>
-        <div className="toolbar" style={{ marginBottom: 12 }}>
-          <div className="grow" style={{ flex: 1, minWidth: 180 }}>
-            <input
-              className="search"
-              type="search"
-              placeholder="Search tool / input / output / error…"
-              value={filter.q}
-              onChange={(e) => setFilter((f) => ({ ...f, q: e.target.value }))}
-            />
-          </div>
-          {sel("tool", "all tools", meta?.tools ?? [])}
-          {sel("risk", "all risk", [
-            "READ",
-            "WRITE",
-            "WRITE_IDEMPOTENT",
-            "DESTRUCTIVE",
-            "DANGEROUS",
-          ])}
-          {sel("device", "all devices", meta?.devices ?? [])}
-          {sel("status", "all status", ["ok", "error"])}
-          <select
-            className="btn"
-            value={windowMs}
-            onChange={(e) => setWindowMs(Number(e.target.value))}
-            title="Time window"
-          >
-            {WINDOWS.map(([label, val]) => (
-              <option key={val} value={val}>
-                window: {label}
-              </option>
-            ))}
-          </select>
-          <button
-            className={`btn${paused ? " is-active" : ""}`}
-            onClick={() => setPaused((p) => !p)}
-          >
-            {paused ? "▶ Resume" : "⏸ Pause"}
-          </button>
-          <button className="btn" onClick={() => exportRows("csv")}>
-            CSV
-          </button>
-          <button className="btn" onClick={() => exportRows("json")}>
-            JSON
-          </button>
-          <button
-            className="btn"
-            onClick={() => setFilter({ tool: "", risk: "", device: "", status: "", q: "" })}
-          >
-            Clear
-          </button>
-          {confirmingDelete && selectedIds.size > 0 ? (
-            <>
-              <button className="btn btn-danger" onClick={() => void deleteSelected()}>
-                ✓ Confirm delete ({selectedIds.size})
-              </button>
-              <button className="btn" onClick={() => setConfirmingDelete(false)}>
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              className="btn"
-              disabled={selectedIds.size === 0}
-              onClick={() => setConfirmingDelete(true)}
-              title="Delete the selected rows"
-            >
-              🗑 Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
-            </button>
-          )}
-        </div>
-        {visible.length === 0 ? (
-          hasFilters ? (
             <div className="feed-empty">
-              <div className="feed-empty__icon">🔍</div>
-              <p className="feed-empty__title">No calls match your filters</p>
+              <div className="feed-empty__icon">🖧</div>
+              <p className="feed-empty__title">No devices configured</p>
               <p className="feed-empty__sub">
-                {feed.length} call{feed.length === 1 ? "" : "s"} buffered — try widening the search
-                or the risk / device / status filters.
+                Add a device to your config to see connectivity and system health here.
               </p>
+            </div>
+          ))}
+
+        {/* ── Topology ── */}
+        {view === "topology" &&
+          (topology && topology.nodes.length > 0 ? (
+            <section className="view">
+              <Panel
+                title="Network topology"
+                className="reveal"
+                extra={
+                  <span className="muted">
+                    Layer-2 neighbours via MNDP/CDP/LLDP · click a neighbour to onboard it
+                  </span>
+                }
+              >
+                <TopologyMap
+                  topo={topology}
+                  onOnboard={(name, body) => {
+                    setSeed({ name, body });
+                    setEditingConfig(true);
+                    setView("config");
+                  }}
+                />
+              </Panel>
+            </section>
+          ) : (
+            <div className="feed-empty">
+              <div className="feed-empty__icon">🛰️</div>
+              <p className="feed-empty__title">No neighbours discovered yet</p>
+              <p className="feed-empty__sub">
+                Layer-2 neighbours (MNDP / CDP / LLDP) appear here as the device reports them.
+              </p>
+            </div>
+          ))}
+
+        {/* ── Packets ── */}
+        {view === "packets" && (
+          <section className="view">
+            <Panel
+              title="Packet capture"
+              className="reveal"
+              extra={<span className="muted">live TZSP decode · /tool sniffer streaming</span>}
+            >
+              <PacketCapture />
+            </Panel>
+          </section>
+        )}
+
+        {/* ── Config ── */}
+        {view === "config" &&
+          (config ? (
+            <section className="view">
+              <Panel
+                title="Configuration"
+                className="reveal"
+                extra={
+                  <button
+                    className="btn"
+                    onClick={() => setEditingConfig((v) => !v)}
+                    title="Edit the config JSON with autocomplete, validation and safe-apply"
+                  >
+                    {editingConfig ? "View" : "✎ Edit config"}
+                  </button>
+                }
+              >
+                {editingConfig ? (
+                  <ConfigStudio
+                    key={seed ? `seed-${seed.name}` : "config"}
+                    initial={
+                      seed
+                        ? {
+                            ...config,
+                            devices: {
+                              ...(config.devices as Record<string, unknown>),
+                              [seed.name]: seed.body,
+                            },
+                          }
+                        : config
+                    }
+                    onClose={() => {
+                      setEditingConfig(false);
+                      setSeed(null);
+                    }}
+                    onReload={() => {
+                      setSeed(null);
+                      void api<Record<string, unknown>>("/api/config")
+                        .then(setConfig)
+                        .catch(() => {});
+                    }}
+                  />
+                ) : (
+                  <>
+                    <div className="legend" style={{ margin: "0 0 10px" }}>
+                      <span>transport: {sval(mcp.transport)}</span>
+                      <span>read-only: {config.readOnly ? "yes" : "no"}</span>
+                      <span>
+                        dashboard: {sval(dash.host)}:{sval(dash.port)}
+                      </span>
+                      <span>capture: {dash.captureBody ? "on" : "off"}</span>
+                      <span>s3: {config.s3 ? "configured" : "off"}</span>
+                    </div>
+                    <details className="cfg">
+                      <summary>Full effective configuration (secrets redacted)</summary>
+                      <JsonView value={config} maxHeight={340} />
+                    </details>
+                  </>
+                )}
+              </Panel>
+            </section>
+          ) : (
+            <div className="feed-empty">
+              <div className="feed-empty__icon">⚙️</div>
+              <p className="feed-empty__title">Loading configuration…</p>
+            </div>
+          ))}
+
+        {/* ── Live Feed ── */}
+        {view === "feed" && (
+          <div className="panel reveal">
+            <div className="sheet__hd" style={{ marginBottom: 12 }}>
+              <h2 style={{ margin: 0 }}>Live tool calls</h2>
+              <span style={{ flex: 1 }} />
+              <span className="muted">
+                {visible.length} shown · {feed.length} buffered
+              </span>
+            </div>
+            <div className="toolbar" style={{ marginBottom: 12 }}>
+              <div className="grow" style={{ flex: 1, minWidth: 180 }}>
+                <input
+                  className="search"
+                  type="search"
+                  placeholder="Search tool / input / output / error…"
+                  value={filter.q}
+                  onChange={(e) => setFilter((f) => ({ ...f, q: e.target.value }))}
+                />
+              </div>
+              {sel("tool", "all tools", meta?.tools ?? [])}
+              {sel("risk", "all risk", [
+                "READ",
+                "WRITE",
+                "WRITE_IDEMPOTENT",
+                "DESTRUCTIVE",
+                "DANGEROUS",
+              ])}
+              {sel("device", "all devices", meta?.devices ?? [])}
+              {sel("status", "all status", ["ok", "error"])}
+              {/* time window selector lives in the Overview header */}
+              <button
+                className={`btn${paused ? " is-active" : ""}`}
+                onClick={() => setPaused((p) => !p)}
+              >
+                {paused ? "▶ Resume" : "⏸ Pause"}
+              </button>
+              <button className="btn" onClick={() => exportRows("csv")}>
+                CSV
+              </button>
+              <button className="btn" onClick={() => exportRows("json")}>
+                JSON
+              </button>
               <button
                 className="btn"
                 onClick={() => setFilter({ tool: "", risk: "", device: "", status: "", q: "" })}
               >
-                Clear filters
+                Clear
               </button>
+              {confirmingDelete && selectedIds.size > 0 ? (
+                <>
+                  <button className="btn btn-danger" onClick={() => void deleteSelected()}>
+                    ✓ Confirm delete ({selectedIds.size})
+                  </button>
+                  <button className="btn" onClick={() => setConfirmingDelete(false)}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="btn"
+                  disabled={selectedIds.size === 0}
+                  onClick={() => setConfirmingDelete(true)}
+                  title="Delete the selected rows"
+                >
+                  🗑 Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="feed-empty">
-              <div className={`feed-empty__pulse${liveMode !== "off" ? " is-on" : ""}`} />
-              <p className="feed-empty__title">
-                {liveMode === "off" ? "Not connected" : "Listening for tool calls…"}
-              </p>
-              <p className="feed-empty__sub">
-                {liveMode === "off"
-                  ? "The live stream is offline — it will reconnect automatically."
-                  : "Tool calls the LLM makes against this server stream in here in real time."}
-              </p>
-            </div>
-          )
-        ) : (
-          <div className="feedwrap">
-            <table className="feed">
-              <thead>
-                <tr>
-                  <th style={{ width: 28 }}>
-                    <input
-                      type="checkbox"
-                      aria-label="Select all shown rows"
-                      checked={allShownSelected}
-                      ref={(el) => {
-                        if (el) el.indeterminate = someShownSelected;
-                      }}
-                      onChange={toggleSelectAll}
-                    />
-                  </th>
-                  <th>time</th>
-                  <th>tool</th>
-                  <th>risk</th>
-                  <th>device</th>
-                  <th className="num">dur</th>
-                  <th>status</th>
-                  <th>output</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shownRows.map((e) => (
-                  <tr
-                    key={e.id}
-                    className={
-                      `${e.isError ? "is-err" : ""}${selectedIds.has(e.id) ? " is-selected" : ""}`.trim() ||
-                      undefined
-                    }
-                    onClick={() => void openDetail(e)}
+            {visible.length === 0 ? (
+              hasFilters ? (
+                <div className="feed-empty">
+                  <div className="feed-empty__icon">🔍</div>
+                  <p className="feed-empty__title">No calls match your filters</p>
+                  <p className="feed-empty__sub">
+                    {feed.length} call{feed.length === 1 ? "" : "s"} buffered — try widening the
+                    search or the risk / device / status filters.
+                  </p>
+                  <button
+                    className="btn"
+                    onClick={() => setFilter({ tool: "", risk: "", device: "", status: "", q: "" })}
                   >
-                    <td onClick={(ev) => ev.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label="Select row"
-                        checked={selectedIds.has(e.id)}
-                        onChange={() => toggleSelect(e.id)}
-                      />
-                    </td>
-                    <td>{clock(e.ts)}</td>
-                    <td>{e.tool}</td>
-                    <td>
-                      <span className={`risk risk-${e.risk}`}>
-                        {e.risk.replace("WRITE_IDEMPOTENT", "WRITE·I")}
-                      </span>
-                    </td>
-                    <td>{e.device ?? "—"}</td>
-                    <td className="num">{ms(e.durationMs)}</td>
-                    <td>
-                      <span className={e.isError ? "status-err" : "status-ok"}>
-                        {e.isError ? "error" : "ok"}
-                      </span>
-                    </td>
-                    <td className="preview">
-                      {e.isError ? (e.error ?? "error") : e.output || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div className="feed-empty">
+                  <div className={`feed-empty__pulse${liveMode !== "off" ? " is-on" : ""}`} />
+                  <p className="feed-empty__title">
+                    {liveMode === "off" ? "Not connected" : "Listening for tool calls…"}
+                  </p>
+                  <p className="feed-empty__sub">
+                    {liveMode === "off"
+                      ? "The live stream is offline — it will reconnect automatically."
+                      : "Tool calls the LLM makes against this server stream in here in real time."}
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="feedwrap">
+                <table className="feed">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 28 }}>
+                        <input
+                          type="checkbox"
+                          aria-label="Select all shown rows"
+                          checked={allShownSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someShownSelected;
+                          }}
+                          onChange={toggleSelectAll}
+                        />
+                      </th>
+                      <th>time</th>
+                      <th>tool</th>
+                      <th>risk</th>
+                      <th>device</th>
+                      <th className="num">dur</th>
+                      <th>status</th>
+                      <th>output</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shownRows.map((e) => (
+                      <tr
+                        key={e.id}
+                        className={
+                          `${e.isError ? "is-err" : ""}${selectedIds.has(e.id) ? " is-selected" : ""}`.trim() ||
+                          undefined
+                        }
+                        onClick={() => void openDetail(e)}
+                      >
+                        <td onClick={(ev) => ev.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            aria-label="Select row"
+                            checked={selectedIds.has(e.id)}
+                            onChange={() => toggleSelect(e.id)}
+                          />
+                        </td>
+                        <td>{clock(e.ts)}</td>
+                        <td>{e.tool}</td>
+                        <td>
+                          <span className={`risk risk-${e.risk}`}>
+                            {e.risk.replace("WRITE_IDEMPOTENT", "WRITE·I")}
+                          </span>
+                        </td>
+                        <td>{e.device ?? "—"}</td>
+                        <td className="num">{ms(e.durationMs)}</td>
+                        <td>
+                          <span className={e.isError ? "status-err" : "status-ok"}>
+                            {e.isError ? "error" : "ok"}
+                          </span>
+                        </td>
+                        <td className="preview">
+                          {e.isError ? (e.error ?? "error") : e.output || "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </main>
 
       {selected && <DetailDrawer event={selected} onClose={() => setSelected(null)} />}
     </div>
