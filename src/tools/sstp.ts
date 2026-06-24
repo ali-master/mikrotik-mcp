@@ -3,7 +3,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { whereClause, looksLikeError, isEmpty, splitHostPort, Cmd } from "../core/routeros";
 import { redactSecrets } from "../utils";
 
 export const sstpTools: ToolModule = [
@@ -73,13 +73,18 @@ export const sstpTools: ToolModule = [
     description:
       "Create an outbound SSTP client tunnel interface (`/interface sstp-client add`) so this router dials out to a remote SSTP server over TLS. " +
       "Use when this device must act as a VPN client, not the VPN server — for server-side settings use `set_sstp_server`. " +
-      "`connect_to` is the remote host:port or IP address. " +
+      "`connect_to` is the remote server address (IP or DNS name); the TCP port is separate. " +
+      "You may pass the port in `port` or inline as `host:port` in `connect_to` (it is split out " +
+      "automatically — RouterOS rejects a port embedded in connect-to). SSTP defaults to 443. " +
       "For L2TP outbound tunnels use `create_l2tp_client`, for OpenVPN use `create_ovpn_client`, for PPTP use `create_pptp_client`. " +
       "Credentials are accepted but redacted from return values. " +
       "Returns the created interface detail (name, status, remote address); use the interface `name` with `get_sstp_client` or `remove_sstp_client`.",
     inputSchema: {
       name: z.string().describe("Name for the new SSTP client interface"),
-      connect_to: z.string().describe("Remote SSTP server address (host:port or IP)"),
+      connect_to: z
+        .string()
+        .describe("Remote SSTP server address (IP or DNS name; host:port also accepted)"),
+      port: z.number().int().optional().describe("TCP port (default 443 if omitted)"),
       user: z.string(),
       password: z.string(),
       profile: z.string().optional(),
@@ -92,9 +97,14 @@ export const sstpTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Creating SSTP client: name=${a.name}, connect_to=${a.connect_to}`);
+      // RouterOS sstp-client takes the address and port as separate parameters;
+      // an inline `host:port` in connect-to is rejected, so split it out. An
+      // explicit `port` argument takes precedence over an inline one.
+      const { host, port } = splitHostPort(a.connect_to);
       const cmd = new Cmd("/interface sstp-client add")
         .set("name", a.name)
-        .set("connect-to", a.connect_to)
+        .set("connect-to", host)
+        .opt("port", a.port ?? port)
         .set("user", a.user)
         .set("password", a.password)
         .opt("profile", a.profile)

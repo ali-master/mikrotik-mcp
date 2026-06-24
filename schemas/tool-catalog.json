@@ -12845,7 +12845,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Create an outbound SSTP client tunnel interface (`/interface sstp-client add`) so this router dials out to a remote SSTP server over TLS. Use when this device must act as a VPN client, not the VPN server — for server-side settings use `set_sstp_server`. `connect_to` is the remote host:port or IP address. For L2TP outbound tunnels use `create_l2tp_client`, for OpenVPN use `create_ovpn_client`, for PPTP use `create_pptp_client`. Credentials are accepted but redacted from return values. Returns the created interface detail (name, status, remote address); use the interface `name` with `get_sstp_client` or `remove_sstp_client`.",
+      "description": "Create an outbound SSTP client tunnel interface (`/interface sstp-client add`) so this router dials out to a remote SSTP server over TLS. Use when this device must act as a VPN client, not the VPN server — for server-side settings use `set_sstp_server`. `connect_to` is the remote server address (IP or DNS name); the TCP port is separate. You may pass the port in `port` or inline as `host:port` in `connect_to` (it is split out automatically — RouterOS rejects a port embedded in connect-to). SSTP defaults to 443. For L2TP outbound tunnels use `create_l2tp_client`, for OpenVPN use `create_ovpn_client`, for PPTP use `create_pptp_client`. Credentials are accepted but redacted from return values. Returns the created interface detail (name, status, remote address); use the interface `name` with `get_sstp_client` or `remove_sstp_client`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -12856,7 +12856,13 @@
           },
           "connect_to": {
             "type": "string",
-            "description": "Remote SSTP server address (host:port or IP)"
+            "description": "Remote SSTP server address (IP or DNS name; host:port also accepted)"
+          },
+          "port": {
+            "description": "TCP port (default 443 if omitted)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "user": {
             "type": "string"

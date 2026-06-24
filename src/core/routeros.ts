@@ -38,6 +38,31 @@ export function yesno(value: boolean): "yes" | "no" {
 }
 
 /**
+ * Split a `host:port` string into its host and numeric port. Several RouterOS
+ * menus (e.g. `/interface sstp-client`) take the server address and the port as
+ * SEPARATE parameters and reject a `connect-to` that embeds `:port` with "bad
+ * address or dns name" — so a caller-supplied `host:port` must be split.
+ *
+ * IPv6-aware: a bare IPv6 literal (`2001:db8::1`) has no port and is returned
+ * as-is; a bracketed `[2001:db8::1]:443` yields the inner address and the port.
+ * When there is no port, `port` is undefined and `host` is the input unchanged.
+ */
+export function splitHostPort(value: string): { host: string; port?: number } {
+  const v = value.trim();
+  // Bracketed IPv6 with optional port: [::1] or [::1]:443
+  const bracket = v.match(/^\[(.+)\](?::(\d+))?$/);
+  if (bracket) {
+    return { host: bracket[1], port: bracket[2] ? Number(bracket[2]) : undefined };
+  }
+  // A bare IPv6 literal (two or more colons, no brackets) has no port to split.
+  if ((v.match(/:/g)?.length ?? 0) > 1) return { host: v };
+  // host:port — host is an IPv4 or hostname (no colons of its own).
+  const hostPort = v.match(/^([^:]+):(\d+)$/);
+  if (hostPort) return { host: hostPort[1], port: Number(hostPort[2]) };
+  return { host: v };
+}
+
+/**
  * Fluent builder for RouterOS `add` / `set` style commands.
  *
  * ```ts

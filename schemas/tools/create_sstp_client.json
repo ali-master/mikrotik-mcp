@@ -9,7 +9,13 @@
     },
     "connect_to": {
       "type": "string",
-      "description": "Remote SSTP server address (host:port or IP)"
+      "description": "Remote SSTP server address (IP or DNS name; host:port also accepted)"
+    },
+    "port": {
+      "description": "TCP port (default 443 if omitted)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     },
     "user": {
       "type": "string"
