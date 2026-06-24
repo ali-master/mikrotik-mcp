@@ -2351,6 +2351,143 @@ function ChangePlanView(): ReactNode {
   );
 }
 
+// ── S3 backup management view ────────────────────────────────────────────────
+interface S3Object {
+  key: string;
+  size: number;
+  lastModified: string | null;
+}
+interface S3List {
+  configured: boolean;
+  target?: string;
+  objects: S3Object[];
+  truncated?: boolean;
+}
+
+/** List, download (presigned) and delete objects in the configured S3 bucket. */
+function S3Manage(): ReactNode {
+  const [data, setData] = useState<S3List | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    void api<S3List>("/api/s3/list")
+      .then(setData)
+      .catch(() => setData({ configured: false, objects: [] }));
+  }, []);
+  useEffect(() => load(), [load]);
+
+  const download = (key: string): void => {
+    void api<{ url?: string }>(`/api/s3/presign?key=${encodeURIComponent(key)}`)
+      .then((r) => {
+        if (r.url) window.open(r.url, "_blank", "noopener");
+        else setMsg("could not generate download link");
+      })
+      .catch(() => setMsg("could not generate download link"));
+  };
+  const del = async (key: string): Promise<void> => {
+    setBusy(key);
+    const r = await postJson<{ ok?: boolean; error?: string }>("/api/s3/delete", { key }).catch(
+      (): { ok?: boolean; error?: string } => ({ error: "request failed" }),
+    );
+    setBusy(null);
+    setConfirm(null);
+    if (r.ok) {
+      setMsg(`Deleted ${key}`);
+      load();
+    } else {
+      setMsg(r.error ?? "delete failed");
+    }
+  };
+
+  if (!data) return <div className="muted">loading S3 objects…</div>;
+  if (!data.configured) {
+    return (
+      <div className="feed-empty">
+        <div className="feed-empty__icon">☁️</div>
+        <p className="feed-empty__title">S3 is not configured</p>
+        <p className="feed-empty__sub">
+          Add an <code>s3</code> block (bucket + credentials) to your config to manage backup
+          objects here.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="view">
+      <Panel
+        title="S3 backups"
+        className="reveal"
+        extra={
+          <>
+            <span className="muted">
+              {data.target} · {data.objects.length} object{data.objects.length === 1 ? "" : "s"}
+              {data.truncated ? " (truncated)" : ""}
+            </span>
+            <button className="btn" onClick={load} style={{ marginLeft: 10 }}>
+              ↻ Refresh
+            </button>
+          </>
+        }
+      >
+        {msg && <div className="cfg-msg">{msg}</div>}
+        {data.objects.length === 0 ? (
+          <div className="muted" style={{ padding: 12 }}>
+            No objects in the bucket. Upload one with the <code>upload_backup_to_s3</code> tool.
+          </div>
+        ) : (
+          <div className="feedwrap">
+            <table className="feed">
+              <thead>
+                <tr>
+                  <th>key</th>
+                  <th className="num">size</th>
+                  <th>modified</th>
+                  <th style={{ width: 200 }}>actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.objects.map((o) => (
+                  <tr key={o.key}>
+                    <td>{o.key}</td>
+                    <td className="num">{bytes(o.size)}</td>
+                    <td>{o.lastModified ? new Date(o.lastModified).toLocaleString() : "—"}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button className="btn" onClick={() => download(o.key)}>
+                        ⤓ Download
+                      </button>{" "}
+                      {confirm === o.key ? (
+                        <>
+                          <button
+                            className="btn btn-danger"
+                            disabled={busy === o.key}
+                            onClick={() => void del(o.key)}
+                          >
+                            ✓ Confirm
+                          </button>{" "}
+                          <button className="btn" onClick={() => setConfirm(null)}>
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button className="btn" onClick={() => setConfirm(o.key)}>
+                          🗑 Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+    </section>
+  );
+}
+
 // ── detail drawer ────────────────────────────────────────────────────────────
 function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => void }): ReactNode {
   const copy = (text: string): void => void navigator.clipboard?.writeText(text).catch(() => {});
@@ -2445,6 +2582,7 @@ type ViewId =
   | "packets"
   | "snapshots"
   | "plan"
+  | "s3"
   | "config"
   | "feed";
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
@@ -2454,6 +2592,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "packets", label: "Packets", sub: "Live TZSP capture & decode" },
   { id: "snapshots", label: "Snapshots", sub: "Config history & time-travel diff" },
   { id: "plan", label: "Change Plan", sub: "Dry-run intended RouterOS commands" },
+  { id: "s3", label: "S3 Backups", sub: "List, download & delete S3 backup objects" },
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
@@ -2498,6 +2637,13 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <circle cx="6" cy="18" r="2.3" />
         <circle cx="18" cy="8" r="2.3" />
         <path d="M6 8.3v7.4M8.3 6H13a3 3 0 0 1 3 3v0" />
+      </>
+    ),
+    s3: (
+      <>
+        <ellipse cx="12" cy="6" rx="7" ry="2.6" />
+        <path d="M5 6v12c0 1.5 3.1 2.6 7 2.6s7-1.1 7-2.6V6" />
+        <path d="M5 12c0 1.5 3.1 2.6 7 2.6s7-1.1 7-2.6" />
       </>
     ),
     config: (
@@ -3114,6 +3260,9 @@ function App(): ReactNode {
 
         {/* ── Change Plan ── */}
         {view === "plan" && <ChangePlanView />}
+
+        {/* ── S3 Backups ── */}
+        {view === "s3" && <S3Manage />}
 
         {/* ── Config ── */}
         {view === "config" &&

@@ -34,6 +34,7 @@ import type { DashboardConfig } from "../config";
 import { atomicWrite, mergeSecrets } from "../config-write";
 import { buildChangePlan, renderPlan, splitCommands } from "../core/change-plan";
 import { diffLines } from "../core/diff";
+import { getS3Client, isS3Configured, presignExpiresIn, s3Target } from "../core/s3";
 import { normalizeExport } from "../snapshots/format";
 import { openSnapshotStore } from "../snapshots/store";
 import type { SnapshotStore } from "../snapshots/store";
@@ -452,6 +453,51 @@ async function featureRoutes(req: Request, url: URL): Promise<Response | null> {
     if (commands.length === 0) return json({ error: "no commands provided" }, 400);
     const plan = buildChangePlan(commands);
     return json({ plan, text: renderPlan(plan) });
+  }
+
+  // ── S3 backup management (list / read / delete) ───────────────────────────
+  if (p === "/api/s3" && req.method === "GET") {
+    return json({ configured: isS3Configured(), target: isS3Configured() ? s3Target() : null });
+  }
+  if (p === "/api/s3/list" && req.method === "GET") {
+    if (!isS3Configured()) return json({ configured: false, objects: [] });
+    const prefix = url.searchParams.get("prefix") ?? "";
+    try {
+      const res = await getS3Client().list({ prefix: prefix || undefined, maxKeys: 1000 });
+      const objects = (res.contents ?? []).map((o) => ({
+        key: o.key,
+        size: o.size ?? 0,
+        lastModified: o.lastModified ?? null,
+      }));
+      return json({ configured: true, target: s3Target(), objects, truncated: !!res.isTruncated });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : String(e) }, 502);
+    }
+  }
+  if (p === "/api/s3/presign" && req.method === "GET") {
+    if (!isS3Configured()) return json({ error: "S3 not configured" }, 400);
+    const key = url.searchParams.get("key");
+    if (!key) return json({ error: "key required" }, 400);
+    try {
+      // A short-lived GET URL the browser can open to download/read the object.
+      const link = getS3Client().presign(key, { expiresIn: presignExpiresIn(), method: "GET" });
+      return json({ url: link });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : String(e) }, 502);
+    }
+  }
+  if (p === "/api/s3/delete" && req.method === "POST") {
+    if (!isS3Configured()) return json({ error: "S3 not configured" }, 400);
+    const b = (await readJson(req)) as { key?: string };
+    if (!b?.key) return json({ error: "key required" }, 400);
+    try {
+      const client = getS3Client();
+      if (!(await client.exists(b.key))) return json({ error: "not found" }, 404);
+      await client.delete(b.key);
+      return json({ ok: true, key: b.key });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : String(e) }, 502);
+    }
   }
 
   return null;
