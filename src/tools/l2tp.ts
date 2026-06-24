@@ -13,9 +13,13 @@ export const l2tpTools: ToolModule = [
   // ── SERVER `/interface l2tp-server server` ────────────────────────────────
   defineTool({
     name: "get_l2tp_server",
-    title: "Get L2TP Server",
+    title: "Get L2TP Server Configuration",
     annotations: READ,
-    description: "Gets the L2TP server configuration on the MikroTik device.",
+    description:
+      "Reads the global L2TP server settings (`/interface l2tp-server server`). " +
+      "Use to inspect whether the server is enabled, which authentication methods are accepted, and whether IPsec is required. " +
+      "For outbound dial-out tunnels use `list_l2tp_clients`; for PPP user credentials use `list_ppp_secrets`. " +
+      "Returns the current server-wide settings: enabled flag, authentication, use-ipsec, ipsec-secret, MTU/MRU, and default-profile.",
     async handler(_a, ctx) {
       ctx.info("Getting L2TP server configuration");
       const result = await executeMikrotikCommand("/interface l2tp-server server print", ctx);
@@ -27,10 +31,15 @@ export const l2tpTools: ToolModule = [
 
   defineTool({
     name: "set_l2tp_server",
-    title: "Set L2TP Server",
+    title: "Configure L2TP Server Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Configures the L2TP server. For L2TP/IPsec road-warrior setups, set use_ipsec='required' and supply ipsec_secret.",
+      "Applies global L2TP server settings (`/interface l2tp-server server set`). " +
+      "Use to enable or disable the inbound L2TP server, change accepted authentication methods " +
+      "(comma-separated, e.g. `mschap2,mschap1`), or configure L2TP/IPsec road-warrior mode " +
+      "by setting `use_ipsec='required'` and supplying `ipsec_secret`. " +
+      "For creating outbound dial-out tunnels use `create_l2tp_client`; for managing PPP user accounts use `create_ppp_secret`. " +
+      "Returns the updated server configuration after applying changes.",
     inputSchema: {
       enabled: z.boolean().optional().describe("Enable or disable the L2TP server"),
       default_profile: z.string().optional(),
@@ -65,9 +74,14 @@ export const l2tpTools: ToolModule = [
   // ── CLIENT `/interface l2tp-client` ───────────────────────────────────────
   defineTool({
     name: "create_l2tp_client",
-    title: "Create L2TP Client",
+    title: "Create L2TP Client Interface",
     annotations: WRITE,
-    description: "Creates an L2TP client interface that dials out to a remote L2TP server.",
+    description:
+      "Creates an L2TP dial-out client interface (`/interface l2tp-client add`) that connects this router to a remote L2TP server. " +
+      "Use when this router is the tunnel initiator (client side). " +
+      "For PPTP tunnels use `create_pptp_client`, for SSTP use `create_sstp_client`, for OpenVPN use `create_ovpn_client`. " +
+      "`connect_to` takes the remote server address; set `use_ipsec='yes'` and `ipsec_secret` to layer IPsec on top. " +
+      "Returns the created interface details with passwords redacted.",
     inputSchema: {
       name: z.string().describe("Name for the new L2TP client interface"),
       connect_to: z.string().describe("Remote L2TP server address"),
@@ -110,9 +124,14 @@ export const l2tpTools: ToolModule = [
 
   defineTool({
     name: "list_l2tp_clients",
-    title: "List L2TP Clients",
+    title: "List L2TP Client Interfaces",
     annotations: READ,
-    description: "Lists L2TP client interfaces on the MikroTik device.",
+    description:
+      "Lists all L2TP dial-out client interfaces (`/interface l2tp-client print`) configured on this router. " +
+      "Use to discover existing L2TP tunnels and their connection state. " +
+      "For PPTP tunnels use `list_pptp_clients`, for SSTP use `list_sstp_clients`, for OpenVPN use `list_ovpn_clients`. " +
+      "Supports optional `name_filter` for partial name matching. " +
+      "Returns interface names, connection status, and remote addresses — passwords are redacted.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -133,10 +152,13 @@ export const l2tpTools: ToolModule = [
 
   defineTool({
     name: "get_l2tp_client",
-    title: "Get L2TP Client",
+    title: "Get L2TP Client Interface Detail",
     annotations: READ,
     description:
-      "Gets detailed information about a specific L2TP client. The password is redacted.",
+      "Retrieves full detail of a single named L2TP client interface (`/interface l2tp-client print detail where name=...`). " +
+      "Use to inspect the full configuration of a specific tunnel after finding its name with `list_l2tp_clients`. " +
+      "For PPTP tunnel detail use `get_pptp_client`, for SSTP use `get_sstp_client`. " +
+      "Returns all interface properties; the password field is redacted.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting L2TP client details: name=${a.name}`);
@@ -152,9 +174,13 @@ export const l2tpTools: ToolModule = [
 
   defineTool({
     name: "remove_l2tp_client",
-    title: "Remove L2TP Client",
+    title: "Remove L2TP Client Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes an L2TP client interface from the MikroTik device.",
+    description:
+      "Permanently deletes a named L2TP client interface (`/interface l2tp-client remove [find name=...]`). " +
+      "First verifies the interface exists via `count-only` and returns an error if not found. " +
+      "For PPTP tunnel removal use `remove_pptp_client`, for SSTP use `remove_sstp_client`. " +
+      "This is destructive and cannot be undone — use `disable_l2tp_client` to deactivate without deleting.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing L2TP client: name=${a.name}`);
@@ -175,9 +201,14 @@ export const l2tpTools: ToolModule = [
 
   defineTool({
     name: "enable_l2tp_client",
-    title: "Enable L2TP Client",
+    title: "Enable L2TP Client Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an L2TP client interface.",
+    description:
+      "Enables a disabled L2TP client interface (`/interface l2tp-client enable [find name=...]`), " +
+      "causing the router to attempt connection to the remote server. " +
+      "Use to reactivate a tunnel previously stopped with `disable_l2tp_client`. " +
+      "For OpenVPN tunnel enable/disable use `enable_ovpn_client`. " +
+      "Identifies the interface by name — use `create_l2tp_client` to create a new one.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling L2TP client: name=${a.name}`);
@@ -192,9 +223,14 @@ export const l2tpTools: ToolModule = [
 
   defineTool({
     name: "disable_l2tp_client",
-    title: "Disable L2TP Client",
+    title: "Disable L2TP Client Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an L2TP client interface.",
+    description:
+      "Disables an active L2TP client interface (`/interface l2tp-client disable [find name=...]`), " +
+      "tearing down the tunnel without removing its configuration. " +
+      "Use to temporarily stop a tunnel while preserving its settings for later reuse. " +
+      "To re-enable use `enable_l2tp_client`; to permanently remove use `remove_l2tp_client`. " +
+      "For OpenVPN tunnel enable/disable use `disable_ovpn_client`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling L2TP client: name=${a.name}`);

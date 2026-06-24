@@ -15,9 +15,15 @@ export const ipsecTools: ToolModule = [
   // ── Profile (phase 1) — /ip ipsec profile ─────────────────────────────────
   defineTool({
     name: "create_ipsec_profile",
-    title: "Create IPsec Profile",
+    title: "Create IPsec Phase-1 Profile",
     annotations: WRITE,
-    description: "Creates an IPsec phase-1 profile (IKE proposal) on the MikroTik device.",
+    description:
+      "Creates an IPsec phase-1 profile (`/ip ipsec profile add`) — the IKE algorithm set" +
+      " (DH group, encryption, hash, lifetime, NAT-T, DPD) shared by one or more peers." +
+      " A profile governs IKE negotiation only; for the ESP/AH parameters negotiated inside" +
+      " the tunnel use create_ipsec_proposal, for the remote endpoint use create_ipsec_peer," +
+      " and for the authentication credentials use create_ipsec_identity." +
+      " Returns the newly created profile's detail print including its name.",
     inputSchema: {
       name: z.string().describe("Name for the new IPsec profile"),
       dh_group: z.string().default("modp2048").describe("Diffie-Hellman group, e.g. 'modp2048'"),
@@ -56,9 +62,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "list_ipsec_profiles",
-    title: "List IPsec Profiles",
+    title: "List IPsec Phase-1 Profiles",
     annotations: READ,
-    description: "Lists IPsec phase-1 profiles on the MikroTik device.",
+    description:
+      "Lists IPsec phase-1 profiles (`/ip ipsec profile print`) — the named IKE algorithm" +
+      " sets configured on the device. Use to discover profile names before referencing one in" +
+      " create_ipsec_peer or update_ipsec_peer. For phase-2 algorithm sets use list_ipsec_proposals;" +
+      " for remote endpoints use list_ipsec_peers; for auth credentials use list_ipsec_identities;" +
+      " for traffic selectors use list_ipsec_policies." +
+      " Returns a table of all matching profiles or 'No IPsec profiles found.' if none exist." +
+      " Optionally filter by partial name match via name_filter.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -77,9 +90,13 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "get_ipsec_profile",
-    title: "Get IPsec Profile",
+    title: "Get IPsec Phase-1 Profile Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IPsec profile.",
+    description:
+      "Fetches full detail for a single IPsec phase-1 profile (`/ip ipsec profile print detail`)" +
+      " by exact name — use when you need the full algorithm and DPD configuration of one entry." +
+      " For all profiles use list_ipsec_profiles; for phase-2 details use get_ipsec_proposal." +
+      " Returns the full detail block or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting IPsec profile details: name=${a.name}`);
@@ -95,9 +112,14 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "update_ipsec_profile",
-    title: "Update IPsec Profile",
+    title: "Update IPsec Phase-1 Profile",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing IPsec phase-1 profile's settings.",
+    description:
+      "Updates an existing IPsec phase-1 profile (`/ip ipsec profile set`) by name —" +
+      " changes IKE algorithm, lifetime, NAT-T, or DPD settings without recreating the profile." +
+      " For phase-2 algorithm changes use update_ipsec_proposal; for peer endpoint changes use" +
+      " update_ipsec_peer. Supply only the fields to change; unchanged fields are left as-is." +
+      " Returns the updated profile detail on success.",
     inputSchema: {
       name: z.string().describe("Current name of the IPsec profile to update"),
       new_name: z.string().optional(),
@@ -139,9 +161,14 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "remove_ipsec_profile",
-    title: "Remove IPsec Profile",
+    title: "Remove IPsec Phase-1 Profile",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPsec profile from the MikroTik device.",
+    description:
+      "Removes an IPsec phase-1 profile (`/ip ipsec profile remove`) by exact name." +
+      " Existence-checked before deletion — returns a not-found message if the profile" +
+      " does not exist rather than erroring. Removing a profile that is still referenced by" +
+      " active peers will cause those peers to lose their IKE algorithm configuration." +
+      " For peers use remove_ipsec_peer; for proposals use remove_ipsec_proposal.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPsec profile: name=${a.name}`);
@@ -163,9 +190,18 @@ export const ipsecTools: ToolModule = [
   // ── Peer (phase 1 endpoint) — /ip ipsec peer ──────────────────────────────
   defineTool({
     name: "create_ipsec_peer",
-    title: "Create IPsec Peer",
+    title: "Create IPsec Peer Endpoint",
     annotations: WRITE,
-    description: "Creates an IPsec peer (remote endpoint) on the MikroTik device.",
+    description:
+      "Creates an IPsec peer (`/ip ipsec peer add`) — the named remote-gateway entry" +
+      " that controls IKE exchange mode, remote address, and local source address." +
+      " Use to define the far-end of a site-to-site VPN or a road-warrior responder" +
+      " (set address='0.0.0.0/0' and passive=true for responder-only)." +
+      " A peer defines WHO and HOW to reach; for the authentication credentials use" +
+      " create_ipsec_identity, for the IKE algorithm set use create_ipsec_profile, and for" +
+      " the traffic selector use create_ipsec_policy." +
+      " exchange_mode accepts 'main', 'aggressive', or 'ike2' (default 'ike2')." +
+      " Returns the newly created peer's full detail.",
     inputSchema: {
       name: z.string().describe("Name for the new IPsec peer"),
       address: z
@@ -212,9 +248,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "list_ipsec_peers",
-    title: "List IPsec Peers",
+    title: "List IPsec Peer Endpoints",
     annotations: READ,
-    description: "Lists IPsec peers on the MikroTik device.",
+    description:
+      "Lists configured IPsec peer entries (`/ip ipsec peer print`) — the static remote-gateway" +
+      " definitions, not live sessions. Use to find peer names before passing them to" +
+      " create_ipsec_identity, update_ipsec_peer, or remove_ipsec_peer." +
+      " For live established IKE sessions use get_ipsec_active_peers instead." +
+      " For phase-1 algorithm sets use list_ipsec_profiles; for auth bindings use" +
+      " list_ipsec_identities. Optionally filter by partial name via name_filter." +
+      " Returns a table of matching peers or 'No IPsec peers found.' if none exist.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -233,9 +276,13 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "get_ipsec_peer",
-    title: "Get IPsec Peer",
+    title: "Get IPsec Peer Endpoint Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IPsec peer.",
+    description:
+      "Fetches full detail for a single configured IPsec peer (`/ip ipsec peer print detail`)" +
+      " by exact name. Use to inspect exchange mode, address, profile binding, and flags for" +
+      " one peer entry. For all peers use list_ipsec_peers; for live session status use" +
+      " get_ipsec_active_peers. Returns the full detail block or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting IPsec peer details: name=${a.name}`);
@@ -251,9 +298,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "update_ipsec_peer",
-    title: "Update IPsec Peer",
+    title: "Update IPsec Peer Endpoint",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing IPsec peer's settings.",
+    description:
+      "Updates an existing IPsec peer entry (`/ip ipsec peer set`) by name — changes" +
+      " remote address, exchange mode, profile, local address, or passive flag without" +
+      " removing and recreating the peer." +
+      " For IKE algorithm changes use update_ipsec_profile; for auth credential changes" +
+      " use create_ipsec_identity or remove_ipsec_identity (identities have no update tool)." +
+      " Supply only the fields to change; unchanged fields are left as-is." +
+      " Returns the updated peer detail on success.",
     inputSchema: {
       name: z.string().describe("Current name of the IPsec peer to update"),
       new_name: z.string().optional(),
@@ -295,9 +349,14 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "remove_ipsec_peer",
-    title: "Remove IPsec Peer",
+    title: "Remove IPsec Peer Endpoint",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPsec peer from the MikroTik device.",
+    description:
+      "Removes an IPsec peer entry (`/ip ipsec peer remove`) by exact name." +
+      " Existence-checked before deletion — returns a not-found message if the peer" +
+      " does not exist rather than erroring. Removing a peer tears down any active IKE" +
+      " session associated with it; associated identities and policies remain and should" +
+      " be cleaned up separately via remove_ipsec_identity and remove_ipsec_policy.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPsec peer: name=${a.name}`);
@@ -319,9 +378,20 @@ export const ipsecTools: ToolModule = [
   // ── Identity (auth) — /ip ipsec identity ──────────────────────────────────
   defineTool({
     name: "create_ipsec_identity",
-    title: "Create IPsec Identity",
+    title: "Create IPsec Identity (Auth Binding)",
     annotations: WRITE,
-    description: "Creates an IPsec identity (authentication binding) for a peer.",
+    description:
+      "Creates an IPsec identity (`/ip ipsec identity add`) — the authentication binding" +
+      " that ties a peer to its credentials (pre-shared key, RSA certificate, or EAP)." +
+      " An identity is mandatory alongside every peer before IKE negotiation can succeed." +
+      " The peer field must match an existing peer name from list_ipsec_peers." +
+      " auth_method accepts 'pre-shared-key' (default), 'rsa-signature'," +
+      " 'digital-signature', 'eap', or 'eap-radius'; supply secret for PSK," +
+      " certificate for RSA/digital-signature." +
+      " generate_policy ('port-override'/'port-strict') and mode_config enable dynamic" +
+      " policy creation for road-warrior/IKEv2 EAP clients." +
+      " For the remote endpoint use create_ipsec_peer; for traffic selectors use" +
+      " create_ipsec_policy. Returns the identity detail for the peer on success.",
     inputSchema: {
       peer: z.string().describe("Peer name this identity authenticates"),
       auth_method: z
@@ -367,9 +437,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "list_ipsec_identities",
-    title: "List IPsec Identities",
+    title: "List IPsec Identity (Auth) Bindings",
     annotations: READ,
-    description: "Lists IPsec identities on the MikroTik device.",
+    description:
+      "Lists IPsec identity entries (`/ip ipsec identity print`) — the authentication" +
+      " bindings that map peers to their credentials (PSK, certificate, EAP)." +
+      " Use to find the internal `.id` needed by remove_ipsec_identity, or to audit which" +
+      " auth method and secret each peer uses." +
+      " For peer endpoint configuration use list_ipsec_peers; for phase-1 algorithm sets" +
+      " use list_ipsec_profiles. Optionally filter by partial peer name via peer_filter." +
+      " Returns a table of matching identities or 'No IPsec identities found.' if none exist.",
     inputSchema: {
       peer_filter: z.string().optional().describe("Partial peer name match"),
     },
@@ -388,9 +465,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "remove_ipsec_identity",
-    title: "Remove IPsec Identity",
+    title: "Remove IPsec Identity (Auth Binding)",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPsec identity by its internal ID (e.g. '*1').",
+    description:
+      "Removes an IPsec identity entry (`/ip ipsec identity remove`) by its internal `.id`" +
+      " (e.g. '*1') obtained from list_ipsec_identities." +
+      " Existence-checked before deletion — returns a not-found message if the ID is absent." +
+      " Removing an identity leaves the peer entry intact but IKE negotiation will fail" +
+      " without credentials; remove the peer afterwards with remove_ipsec_peer if needed." +
+      " Identities have no update tool — to change credentials, remove and recreate via" +
+      " create_ipsec_identity.",
     inputSchema: {
       identity_id: z.string().describe("Internal .id from list output, e.g. '*1'"),
     },
@@ -414,9 +498,17 @@ export const ipsecTools: ToolModule = [
   // ── Proposal (phase 2) — /ip ipsec proposal ───────────────────────────────
   defineTool({
     name: "create_ipsec_proposal",
-    title: "Create IPsec Proposal",
+    title: "Create IPsec Phase-2 Proposal",
     annotations: WRITE,
-    description: "Creates an IPsec phase-2 proposal (IPsec SA parameters).",
+    description:
+      "Creates an IPsec phase-2 proposal (`/ip ipsec proposal add`) — the named ESP/AH" +
+      " algorithm set (auth, encryption, PFS group, SA lifetime) used by IPsec policies." +
+      " A proposal defines WHAT transforms protect the data inside the tunnel; for IKE" +
+      " algorithm settings (phase-1) use create_ipsec_profile instead." +
+      " auth_algorithms e.g. 'sha256'; enc_algorithms e.g. 'aes-256-cbc'; pfs_group e.g." +
+      " 'modp2048'; lifetime e.g. '30m'." +
+      " Reference the proposal name in create_ipsec_policy via the proposal field." +
+      " Returns the newly created proposal's detail on success.",
     inputSchema: {
       name: z.string().describe("Name for the new IPsec proposal"),
       auth_algorithms: z
@@ -455,9 +547,15 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "list_ipsec_proposals",
-    title: "List IPsec Proposals",
+    title: "List IPsec Phase-2 Proposals",
     annotations: READ,
-    description: "Lists IPsec phase-2 proposals on the MikroTik device.",
+    description:
+      "Lists IPsec phase-2 proposal entries (`/ip ipsec proposal print`) — the named ESP/AH" +
+      " algorithm sets available for use by policies." +
+      " Use to discover proposal names before referencing one in create_ipsec_policy." +
+      " For IKE/phase-1 algorithm sets use list_ipsec_profiles; for traffic selectors" +
+      " use list_ipsec_policies. Optionally filter by partial name via name_filter." +
+      " Returns a table of matching proposals or 'No IPsec proposals found.' if none exist.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -476,9 +574,13 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "get_ipsec_proposal",
-    title: "Get IPsec Proposal",
+    title: "Get IPsec Phase-2 Proposal Details",
     annotations: READ,
-    description: "Gets detailed information about a specific IPsec proposal.",
+    description:
+      "Fetches full detail for a single IPsec phase-2 proposal (`/ip ipsec proposal print detail`)" +
+      " by exact name. Use when you need the complete algorithm configuration of one proposal." +
+      " For all proposals use list_ipsec_proposals; for phase-1 IKE profile detail use" +
+      " get_ipsec_profile. Returns the full detail block or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting IPsec proposal details: name=${a.name}`);
@@ -494,9 +596,15 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "update_ipsec_proposal",
-    title: "Update IPsec Proposal",
+    title: "Update IPsec Phase-2 Proposal",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing IPsec phase-2 proposal's settings.",
+    description:
+      "Updates an existing IPsec phase-2 proposal (`/ip ipsec proposal set`) by name —" +
+      " changes ESP/AH auth algorithms, encryption algorithms, PFS group, or SA lifetime" +
+      " without recreating the proposal." +
+      " For IKE/phase-1 algorithm changes use update_ipsec_profile." +
+      " Supply only the fields to change; unchanged fields are left as-is." +
+      " Returns the updated proposal detail on success.",
     inputSchema: {
       name: z.string().describe("Current name of the IPsec proposal to update"),
       new_name: z.string().optional(),
@@ -532,9 +640,14 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "remove_ipsec_proposal",
-    title: "Remove IPsec Proposal",
+    title: "Remove IPsec Phase-2 Proposal",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPsec proposal from the MikroTik device.",
+    description:
+      "Removes an IPsec phase-2 proposal (`/ip ipsec proposal remove`) by exact name." +
+      " Existence-checked before deletion — returns a not-found message if the proposal" +
+      " does not exist rather than erroring. Removing a proposal referenced by active" +
+      " policies will cause those policies to lose their SA parameters." +
+      " For phase-1 profiles use remove_ipsec_profile; for peers use remove_ipsec_peer.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPsec proposal: name=${a.name}`);
@@ -556,9 +669,19 @@ export const ipsecTools: ToolModule = [
   // ── Policy — /ip ipsec policy ─────────────────────────────────────────────
   defineTool({
     name: "create_ipsec_policy",
-    title: "Create IPsec Policy",
+    title: "Create IPsec Traffic Policy",
     annotations: WRITE,
-    description: "Creates an IPsec policy defining which traffic is secured and how.",
+    description:
+      "Creates an IPsec policy (`/ip ipsec policy add`) — the traffic selector that decides" +
+      " which source/destination subnet pairs are encrypted, discarded, or passed through," +
+      " and how (tunnel vs transport mode, which peer and proposal to use)." +
+      " A policy is the glue between traffic and a configured peer+proposal; for the peer" +
+      " endpoint use create_ipsec_peer, for ESP/AH algorithms use create_ipsec_proposal." +
+      " action accepts 'encrypt' (default), 'discard', or 'none'; tunnel=true enables tunnel" +
+      " mode (site-to-site VPN); set template=true for a policy template used with" +
+      " generate_policy on the identity (road-warrior / dynamic-IP clients)." +
+      " src_address and dst_address are CIDR subnets, e.g. '10.0.0.0/24'." +
+      " Returns the full policy table detail after creation.",
     inputSchema: {
       peer: z.string().optional().describe("Peer name this policy applies to"),
       src_address: z.string().optional().describe("Source subnet, e.g. '10.0.0.0/24'"),
@@ -602,9 +725,15 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "list_ipsec_policies",
-    title: "List IPsec Policies",
+    title: "List IPsec Traffic Policies",
     annotations: READ,
-    description: "Lists IPsec policies on the MikroTik device.",
+    description:
+      "Lists all IPsec traffic policies (`/ip ipsec policy print`) — the traffic selectors" +
+      " that control which subnet pairs are encrypted or discarded and via which peer/proposal." +
+      " Use to find the internal `.id` needed by remove_ipsec_policy, or to audit which" +
+      " traffic is encrypted. For peer endpoint entries use list_ipsec_peers; for phase-2" +
+      " algorithm sets use list_ipsec_proposals; for live SA state use get_ipsec_installed_sa." +
+      " Returns a table of all policies or 'No IPsec policies found.' if none exist.",
     async handler(_a, ctx) {
       ctx.info("Listing IPsec policies");
       const result = await executeMikrotikCommand("/ip ipsec policy print", ctx);
@@ -614,9 +743,15 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "remove_ipsec_policy",
-    title: "Remove IPsec Policy",
+    title: "Remove IPsec Traffic Policy",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPsec policy by its internal ID (e.g. '*1').",
+    description:
+      "Removes an IPsec traffic policy (`/ip ipsec policy remove`) by its internal `.id`" +
+      " (e.g. '*1') obtained from list_ipsec_policies." +
+      " Existence-checked before deletion — returns a not-found message if the ID is absent." +
+      " Removing a policy stops encrypting or discarding the matched traffic immediately;" +
+      " the corresponding peer and proposal entries remain and can be removed separately" +
+      " via remove_ipsec_peer and remove_ipsec_proposal.",
     inputSchema: {
       policy_id: z.string().describe("Internal .id from list output, e.g. '*1'"),
     },
@@ -640,9 +775,15 @@ export const ipsecTools: ToolModule = [
   // ── Monitoring ────────────────────────────────────────────────────────────
   defineTool({
     name: "get_ipsec_active_peers",
-    title: "Get IPsec Active Peers",
+    title: "Get IPsec Active Peers (Live Sessions)",
     annotations: READ,
-    description: "Shows currently established IPsec peers (active IKE sessions).",
+    description:
+      "Returns the live runtime table of established IKE sessions (`/ip ipsec active-peers print`)" +
+      " — which peers are currently up, their uptime, local/remote addresses, and SA counts." +
+      " Use to diagnose tunnel health or confirm a peer came up after configuration changes." +
+      " This is read-only runtime state; for the static peer configuration use list_ipsec_peers." +
+      " For the installed ESP/AH SAs (data-plane) use get_ipsec_installed_sa." +
+      " Returns the active-peers table or 'No active IPsec peers.' if no tunnels are up.",
     async handler(_a, ctx) {
       ctx.info("Getting IPsec active peers");
       const result = await executeMikrotikCommand("/ip ipsec active-peers print", ctx);
@@ -652,9 +793,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "get_ipsec_installed_sa",
-    title: "Get IPsec Installed SAs",
+    title: "Get IPsec Installed Security Associations",
     annotations: READ,
-    description: "Shows installed IPsec security associations (SAs).",
+    description:
+      "Returns the live table of installed IPsec SAs (`/ip ipsec installed-sa print`) —" +
+      " the kernel-level ESP/AH entries currently protecting data-plane traffic, including" +
+      " SPI, cipher, lifetime remaining, and byte/packet counters." +
+      " Use to confirm tunnel data-plane is active or to see which SAs will expire soon." +
+      " For IKE control-plane sessions use get_ipsec_active_peers; for aggregate counters" +
+      " use get_ipsec_statistics. To force renegotiation use flush_ipsec_installed_sa." +
+      " Returns the installed-SA table or 'No installed IPsec SAs.' if none are present.",
     async handler(_a, ctx) {
       ctx.info("Getting IPsec installed SAs");
       const result = await executeMikrotikCommand("/ip ipsec installed-sa print", ctx);
@@ -664,9 +812,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "flush_ipsec_installed_sa",
-    title: "Flush IPsec Installed SAs",
+    title: "Flush All IPsec Installed SAs (Force Rekey)",
     annotations: DESTRUCTIVE,
-    description: "Flushes all installed IPsec security associations, forcing tunnels to rekey.",
+    description:
+      "Flushes all installed IPsec SAs (`/ip ipsec installed-sa flush`) — removes every" +
+      " kernel-level ESP/AH entry, forcing all active tunnels to immediately renegotiate" +
+      " via IKE. Use to recover from stale or mismatched SAs after a proposal change, or" +
+      " to trigger fresh key material without rebooting." +
+      " This is disruptive — all tunnels drop momentarily until IKE re-establishes them." +
+      " To inspect SAs before flushing use get_ipsec_installed_sa. To see if peers come" +
+      " back up afterwards use get_ipsec_active_peers.",
     async handler(_a, ctx) {
       ctx.info("Flushing IPsec installed SAs");
       const result = await executeMikrotikCommand("/ip ipsec installed-sa flush", ctx);
@@ -677,9 +832,16 @@ export const ipsecTools: ToolModule = [
 
   defineTool({
     name: "get_ipsec_statistics",
-    title: "Get IPsec Statistics",
+    title: "Get IPsec Subsystem Statistics",
     annotations: READ,
-    description: "Shows IPsec subsystem statistics and counters.",
+    description:
+      "Returns aggregate IPsec subsystem counters (`/ip ipsec statistics print`) —" +
+      " encrypted/decrypted packet and byte totals, error counts, and policy-match statistics." +
+      " Use to spot packet-loss, replay errors, or policy mismatches at a global level." +
+      " For per-SA byte/packet counters use get_ipsec_installed_sa; for live session" +
+      " state use get_ipsec_active_peers." +
+      " Returns the statistics block or 'No IPsec statistics available.' if the router" +
+      " reports none.",
     async handler(_a, ctx) {
       ctx.info("Getting IPsec statistics");
       const result = await executeMikrotikCommand("/ip ipsec statistics print", ctx);

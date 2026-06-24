@@ -9,9 +9,15 @@ import { redactSecrets } from "../utils";
 export const openvpnTools: ToolModule = [
   defineTool({
     name: "get_ovpn_server",
-    title: "Get OpenVPN Server",
+    title: "Get OpenVPN Server Configuration",
     annotations: READ,
-    description: "Gets the OpenVPN (OVPN) server configuration on the MikroTik device.",
+    description:
+      "Read the OpenVPN server settings (`/interface ovpn-server server print`) — the singleton" +
+      " inbound-server instance (enabled state, certificate, auth/cipher algorithms, port, protocol," +
+      " netmask, mode, max_mtu, default_profile, require_client_certificate). Use set_ovpn_server to" +
+      " modify these settings. For outbound OVPN tunnels to a remote server use list_ovpn_clients or" +
+      " get_ovpn_client. For other VPN tunnel types use create_l2tp_client, create_pptp_client, or" +
+      " create_sstp_client. Returns the full server parameter block or a not-found message.",
     async handler(_a, ctx) {
       ctx.info("Getting OpenVPN server configuration");
       const result = await executeMikrotikCommand("/interface ovpn-server server print", ctx);
@@ -23,9 +29,16 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "set_ovpn_server",
-    title: "Set OpenVPN Server",
+    title: "Configure OpenVPN Server",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures the OpenVPN (OVPN) server. RouterOS 7 supports both UDP and TCP.",
+    description:
+      "Apply settings to the OpenVPN server singleton (`/interface ovpn-server server set`) —" +
+      " enables or disables the inbound server, sets the TLS certificate, auth algorithms" +
+      " (comma-separated, e.g. 'sha256,sha1'), cipher suites (e.g. 'aes256-cbc,aes256-gcm')," +
+      " TCP/UDP port, protocol (RouterOS 7 supports both tcp and udp), ip or ethernet mode," +
+      " netmask, max_mtu, default_profile, and client certificate requirements. To read current" +
+      " settings use get_ovpn_server. For managing outbound OVPN client tunnels use" +
+      " create_ovpn_client. Returns the updated server parameter block on success.",
     inputSchema: {
       enabled: z.boolean().optional(),
       certificate: z.string().optional(),
@@ -67,10 +80,17 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "create_ovpn_client",
-    title: "Create OpenVPN Client",
+    title: "Create OpenVPN Client Interface",
     annotations: WRITE,
     description:
-      "Creates an OpenVPN (OVPN) client interface connecting to a remote OpenVPN server.",
+      "Create an outbound OpenVPN client tunnel (`/interface ovpn-client add`) that connects this" +
+      " router to a remote OpenVPN server — use this to bring up a VPN uplink on a new interface." +
+      " Provide a unique interface name and the remote server address (connect_to); port defaults to" +
+      " 1194. Supports username/password and/or certificate auth, cipher/auth algorithm overrides," +
+      " ip or ethernet mode, tcp or udp protocol, and optional add_default_route. For other outbound" +
+      " VPN tunnel types use create_l2tp_client, create_pptp_client, or create_sstp_client. For" +
+      " inbound OVPN server configuration use set_ovpn_server. Returns the created interface detail" +
+      " including its name.",
     inputSchema: {
       name: z.string().describe("Name for the new OpenVPN client interface"),
       connect_to: z.string().describe("Remote OpenVPN server address"),
@@ -124,9 +144,15 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "list_ovpn_clients",
-    title: "List OpenVPN Clients",
+    title: "List OpenVPN Client Interfaces",
     annotations: READ,
-    description: "Lists OpenVPN (OVPN) client interfaces on the MikroTik device.",
+    description:
+      "List all OpenVPN client interfaces (`/interface ovpn-client print`) configured on this" +
+      " router, optionally filtered by partial interface name (name_filter). Use this to enumerate" +
+      " existing OVPN uplinks and their connection status before calling get_ovpn_client," +
+      " enable_ovpn_client, disable_ovpn_client, or remove_ovpn_client. For inbound server" +
+      " settings use get_ovpn_server. For L2TP, PPTP, or SSTP tunnels use the respective tools." +
+      " Returns a redacted table of all matching OVPN client interfaces.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -147,9 +173,14 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "get_ovpn_client",
-    title: "Get OpenVPN Client",
+    title: "Get OpenVPN Client Interface Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific OpenVPN client interface.",
+    description:
+      "Fetch detailed settings for a specific OpenVPN client interface by name" +
+      " (`/interface ovpn-client print detail where name=...`). Use list_ovpn_clients first to" +
+      " enumerate available interface names. For the inbound OVPN server settings use" +
+      " get_ovpn_server. Returns the full interface detail with secrets redacted, or a not-found" +
+      " message if the name does not exist.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting OpenVPN client details: name=${a.name}`);
@@ -165,9 +196,14 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "remove_ovpn_client",
-    title: "Remove OpenVPN Client",
+    title: "Remove OpenVPN Client Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes an OpenVPN client interface from the MikroTik device.",
+    description:
+      "Permanently delete a named OpenVPN client interface (`/interface ovpn-client remove" +
+      " [find name=...]`) — verifies existence with a count-only check before deleting. Use" +
+      " list_ovpn_clients to confirm the interface name. To temporarily stop the tunnel without" +
+      " deleting its config use disable_ovpn_client. Does not affect the inbound OVPN server —" +
+      " use set_ovpn_server with enabled=false to stop that. Returns a success or not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing OpenVPN client: name=${a.name}`);
@@ -188,9 +224,14 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "enable_ovpn_client",
-    title: "Enable OpenVPN Client",
+    title: "Enable OpenVPN Client Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an OpenVPN client interface.",
+    description:
+      "Enable a previously disabled OpenVPN client interface by name (`/interface ovpn-client" +
+      " enable [find name=...]`), causing it to initiate its tunnel connection. Use list_ovpn_clients" +
+      " to confirm the interface name. To deactivate without removing use disable_ovpn_client; to" +
+      " permanently delete use remove_ovpn_client. Does not affect the inbound OVPN server — use" +
+      " set_ovpn_server with enabled=true for that. Returns a success or error message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling OpenVPN client: name=${a.name}`);
@@ -205,9 +246,14 @@ export const openvpnTools: ToolModule = [
 
   defineTool({
     name: "disable_ovpn_client",
-    title: "Disable OpenVPN Client",
+    title: "Disable OpenVPN Client Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an OpenVPN client interface.",
+    description:
+      "Disable an active OpenVPN client interface by name (`/interface ovpn-client disable" +
+      " [find name=...]`), dropping the tunnel without deleting its configuration. Use" +
+      " list_ovpn_clients to confirm the interface name. To re-activate use enable_ovpn_client; to" +
+      " permanently delete use remove_ovpn_client. Does not affect the inbound OVPN server — use" +
+      " set_ovpn_server with enabled=false for that. Returns a success or error message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling OpenVPN client: name=${a.name}`);

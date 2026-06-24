@@ -9,9 +9,14 @@ import { redactSecrets } from "../utils";
 export const sstpTools: ToolModule = [
   defineTool({
     name: "get_sstp_server",
-    title: "Get SSTP Server",
+    title: "Get SSTP Server Configuration",
     annotations: READ,
-    description: "Gets the SSTP server (TLS) configuration on the MikroTik device.",
+    description:
+      "Read the global SSTP server listener settings (`/interface sstp-server server print`) — enabled state, TLS certificate, TCP port, authentication methods, default PPP profile, TLS version, and client-certificate verification flag. " +
+      "Use this to inspect the server-side VPN endpoint before making changes. " +
+      "To modify these settings use `set_sstp_server`. " +
+      "For outbound SSTP client tunnel interfaces use `list_sstp_clients`. " +
+      "Returns the full singleton server block.",
     async handler(_a, ctx) {
       ctx.info("Getting SSTP server configuration");
       const result = await executeMikrotikCommand("/interface sstp-server server print", ctx);
@@ -21,9 +26,15 @@ export const sstpTools: ToolModule = [
 
   defineTool({
     name: "set_sstp_server",
-    title: "Set SSTP Server",
+    title: "Set SSTP Server Configuration",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures the SSTP server (TLS-based VPN). Requires a TLS certificate.",
+    description:
+      "Configure the global SSTP server listener (`/interface sstp-server server set`) — accepts/rejects incoming TLS VPN connections on this router. " +
+      "Use to enable the server, bind a TLS certificate, change the TCP port, restrict authentication methods (comma-separated, e.g. `'mschap2,mschap1'`), set the default PPP profile, pin TLS version (`any` or `only-1.2`), or enforce client certificate verification. " +
+      "This is a singleton write that modifies the server block, not a client interface. " +
+      "To read the current server config use `get_sstp_server`. " +
+      "To create outbound SSTP tunnels (this router dials out) use `create_sstp_client`; for L2TP outbound use `create_l2tp_client`, for OpenVPN use `create_ovpn_client`, for PPTP use `create_pptp_client`. " +
+      "Returns the updated server block on success.",
     inputSchema: {
       enabled: z.boolean().optional(),
       default_profile: z.string().optional(),
@@ -57,9 +68,15 @@ export const sstpTools: ToolModule = [
 
   defineTool({
     name: "create_sstp_client",
-    title: "Create SSTP Client",
+    title: "Create SSTP Client Interface",
     annotations: WRITE,
-    description: "Creates an SSTP client interface connecting to a remote SSTP server over TLS.",
+    description:
+      "Create an outbound SSTP client tunnel interface (`/interface sstp-client add`) so this router dials out to a remote SSTP server over TLS. " +
+      "Use when this device must act as a VPN client, not the VPN server — for server-side settings use `set_sstp_server`. " +
+      "`connect_to` is the remote host:port or IP address. " +
+      "For L2TP outbound tunnels use `create_l2tp_client`, for OpenVPN use `create_ovpn_client`, for PPTP use `create_pptp_client`. " +
+      "Credentials are accepted but redacted from return values. " +
+      "Returns the created interface detail (name, status, remote address); use the interface `name` with `get_sstp_client` or `remove_sstp_client`.",
     inputSchema: {
       name: z.string().describe("Name for the new SSTP client interface"),
       connect_to: z.string().describe("Remote SSTP server address (host:port or IP)"),
@@ -104,9 +121,15 @@ export const sstpTools: ToolModule = [
 
   defineTool({
     name: "list_sstp_clients",
-    title: "List SSTP Clients",
+    title: "List SSTP Client Interfaces",
     annotations: READ,
-    description: "Lists SSTP client interfaces on the MikroTik device.",
+    description:
+      "List all outbound SSTP client tunnel interfaces (`/interface sstp-client print`), optionally narrowed by partial name match via `name_filter`. " +
+      "Use to discover existing SSTP tunnels and their connection status before creating or removing one. " +
+      "Passwords are redacted in the output. " +
+      "For full detail on a single client use `get_sstp_client` with the interface name. " +
+      "To inspect the inbound SSTP server config use `get_sstp_server`. " +
+      "Returns a summary list of all matching SSTP client entries.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -127,9 +150,14 @@ export const sstpTools: ToolModule = [
 
   defineTool({
     name: "get_sstp_client",
-    title: "Get SSTP Client",
+    title: "Get SSTP Client Interface Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific SSTP client interface.",
+    description:
+      "Return full detail for one SSTP client interface (`/interface sstp-client print detail where name=...`) by interface name — includes status, remote server address, TLS certificate, PPP profile, and connection options; passwords are redacted. " +
+      "Use when you need the complete property set for a single tunnel rather than the summary list. " +
+      "Use `list_sstp_clients` first to discover valid interface names. " +
+      "For the inbound server configuration use `get_sstp_server`. " +
+      "Returns the full detail block for the named interface, or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting SSTP client details: name=${a.name}`);
@@ -145,9 +173,15 @@ export const sstpTools: ToolModule = [
 
   defineTool({
     name: "remove_sstp_client",
-    title: "Remove SSTP Client",
+    title: "Remove SSTP Client Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes an SSTP client interface from the MikroTik device.",
+    description:
+      "Permanently delete an SSTP client tunnel interface (`/interface sstp-client remove [find name=...]`) by interface name. " +
+      "First verifies the interface exists (count-only check), then removes it; the tunnel is torn down immediately and the action is irreversible. " +
+      "Use `list_sstp_clients` to confirm the interface name before calling this tool. " +
+      "For L2TP, OpenVPN, or PPTP client interfaces see their respective tool scopes (`create_l2tp_client`, `create_ovpn_client`, `create_pptp_client`). " +
+      "To disable the interface without deleting it, no dedicated enable/disable tool exists in this scope — set `disabled=yes` via RouterOS directly. " +
+      "Returns a confirmation message on success or a not-found message if the name does not exist.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing SSTP client: name=${a.name}`);

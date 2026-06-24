@@ -17,10 +17,16 @@ export const tunnelTools: ToolModule = [
   // ── GRE — `/interface gre` ────────────────────────────────────────────────
   defineTool({
     name: "create_gre_tunnel",
-    title: "Create GRE Tunnel",
+    title: "Create GRE Tunnel Interface",
     annotations: WRITE,
     description:
-      "Creates a GRE (Generic Routing Encapsulation) L3 tunnel interface on the MikroTik device.",
+      "Creates an IPv4 GRE (Generic Routing Encapsulation) L3 tunnel interface (`/interface gre`)." +
+      " Use to encapsulate routed traffic between two endpoints for site-to-site connectivity when IPsec encryption is not needed." +
+      " GRE is L3-only and not bridgeable; for bridgeable L2 Ethernet-over-IP tunnels use create_eoip_tunnel;" +
+      " for raw IP-in-IP with less overhead use create_ipip_tunnel; for L2 VXLAN overlays use create_vxlan_tunnel;" +
+      " for VPN client interfaces use create_l2tp_client, create_pptp_client, create_sstp_client, or create_ovpn_client." +
+      " Keepalive format: '<interval>,<retries>', e.g. '10s,3'." +
+      " Returns the created interface detail including name, remote-address, and run-time status.",
     inputSchema: {
       name: z.string().describe("Name for the new GRE tunnel interface, e.g. 'gre-to-hq'"),
       remote_address: z.string().describe("Remote endpoint IP address"),
@@ -61,9 +67,15 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "list_gre_tunnels",
-    title: "List GRE Tunnels",
+    title: "List GRE Tunnel Interfaces",
     annotations: READ,
-    description: "Lists GRE tunnel interfaces on the MikroTik device.",
+    description:
+      "Lists all GRE tunnel interfaces (`/interface gre print`)." +
+      " Use to inventory or audit existing GRE tunnels and their remote endpoints." +
+      " Supports optional partial name filter via name_filter." +
+      " For full detail on one tunnel use get_gre_tunnel; for IPIP tunnels use list_ipip_tunnels;" +
+      " for EoIP tunnels use list_eoip_tunnels; for VXLAN use list_vxlan_tunnels." +
+      " Returns name, remote-address, local-address, MTU, and run-time status for each interface.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -84,9 +96,14 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "get_gre_tunnel",
-    title: "Get GRE Tunnel",
+    title: "Get GRE Tunnel Interface Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific GRE tunnel interface.",
+    description:
+      "Fetches full detail for a single GRE tunnel interface by name (`/interface gre print detail where name=...`)." +
+      " Use to inspect all parameters of one tunnel — remote-address, local-address, keepalive, MTU, dont-fragment, and status." +
+      " For a summary list of all GRE tunnels use list_gre_tunnels." +
+      " For IPIP detail use get_ipip_tunnel; for EoIP detail use get_eoip_tunnel; for VXLAN detail use get_vxlan_tunnel." +
+      " Returns the complete property set for the named interface, or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting GRE tunnel details: name=${a.name}`);
@@ -102,9 +119,13 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "remove_gre_tunnel",
-    title: "Remove GRE Tunnel",
+    title: "Remove GRE Tunnel Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes a GRE tunnel interface from the MikroTik device.",
+    description:
+      "Permanently deletes a GRE tunnel interface by name (`/interface gre remove [find name=...]`)." +
+      " Verifies existence via count-only before removal and returns a not-found message if the interface does not exist." +
+      " This is destructive and immediately disconnects any traffic using the tunnel." +
+      " For IPIP removal use remove_ipip_tunnel; for EoIP use remove_eoip_tunnel; for VXLAN use remove_vxlan_tunnel.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing GRE tunnel: name=${a.name}`);
@@ -126,9 +147,15 @@ export const tunnelTools: ToolModule = [
   // ── IPIP — `/interface ipip` ──────────────────────────────────────────────
   defineTool({
     name: "create_ipip_tunnel",
-    title: "Create IPIP Tunnel",
+    title: "Create IPIP Tunnel Interface",
     annotations: WRITE,
-    description: "Creates an IPIP (IP-in-IP) L3 tunnel interface on the MikroTik device.",
+    description:
+      "Creates an IPv4 IPIP (IP-in-IP) L3 tunnel interface (`/interface ipip`)." +
+      " Use for lightweight point-to-point IP encapsulation with minimal overhead when GRE's extra header byte is undesirable." +
+      " IPIP is L3-only and not bridgeable; for GRE encapsulation (with dont-fragment support) use create_gre_tunnel;" +
+      " for L2 Ethernet-over-IP tunnels use create_eoip_tunnel; for VXLAN L2 overlays use create_vxlan_tunnel." +
+      " Keepalive format: '<interval>,<retries>', e.g. '10s,3'." +
+      " Returns the created interface detail including name, remote-address, and run-time status.",
     inputSchema: {
       name: z.string().describe("Name for the new IPIP tunnel interface, e.g. 'ipip-to-hq'"),
       remote_address: z.string().describe("Remote endpoint IP address"),
@@ -165,9 +192,15 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "list_ipip_tunnels",
-    title: "List IPIP Tunnels",
+    title: "List IPIP Tunnel Interfaces",
     annotations: READ,
-    description: "Lists IPIP tunnel interfaces on the MikroTik device.",
+    description:
+      "Lists all IPIP tunnel interfaces (`/interface ipip print`)." +
+      " Use to inventory existing IPIP tunnels and their remote endpoints." +
+      " Supports optional partial name filter via name_filter." +
+      " For full detail on one tunnel use get_ipip_tunnel; for GRE tunnels use list_gre_tunnels;" +
+      " for EoIP tunnels use list_eoip_tunnels; for VXLAN use list_vxlan_tunnels." +
+      " Returns name, remote-address, local-address, MTU, and run-time status for each interface.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -188,9 +221,14 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "get_ipip_tunnel",
-    title: "Get IPIP Tunnel",
+    title: "Get IPIP Tunnel Interface Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific IPIP tunnel interface.",
+    description:
+      "Fetches full detail for a single IPIP tunnel interface by name (`/interface ipip print detail where name=...`)." +
+      " Use to inspect all parameters of one tunnel — remote-address, local-address, keepalive, MTU, and status." +
+      " For a summary list of all IPIP tunnels use list_ipip_tunnels." +
+      " For GRE detail use get_gre_tunnel; for EoIP detail use get_eoip_tunnel; for VXLAN detail use get_vxlan_tunnel." +
+      " Returns the complete property set for the named interface, or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting IPIP tunnel details: name=${a.name}`);
@@ -206,9 +244,13 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "remove_ipip_tunnel",
-    title: "Remove IPIP Tunnel",
+    title: "Remove IPIP Tunnel Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes an IPIP tunnel interface from the MikroTik device.",
+    description:
+      "Permanently deletes an IPIP tunnel interface by name (`/interface ipip remove [find name=...]`)." +
+      " Verifies existence via count-only before removal and returns a not-found message if the interface does not exist." +
+      " This is destructive and immediately disconnects any traffic using the tunnel." +
+      " For GRE removal use remove_gre_tunnel; for EoIP use remove_eoip_tunnel; for VXLAN use remove_vxlan_tunnel.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPIP tunnel: name=${a.name}`);
@@ -230,10 +272,16 @@ export const tunnelTools: ToolModule = [
   // ── EoIP — `/interface eoip` (Ethernet over IP, L2) ───────────────────────
   defineTool({
     name: "create_eoip_tunnel",
-    title: "Create EoIP Tunnel",
+    title: "Create EoIP Tunnel Interface",
     annotations: WRITE,
     description:
-      "Creates an EoIP (Ethernet over IP) L2 tunnel interface on the MikroTik device. Bridgeable; each tunnel needs a unique tunnel-id matching the remote peer.",
+      "Creates an EoIP (Ethernet over IP) L2 tunnel interface (`/interface eoip`)." +
+      " Use when you need a bridgeable L2 link between two MikroTik devices — traffic appears as raw Ethernet frames over IP." +
+      " Each tunnel requires a unique tunnel_id (0-65535) that must match identically on both peers; mismatched IDs are the most common misconfiguration." +
+      " EoIP is MikroTik-proprietary — both endpoints must run RouterOS." +
+      " For L3-only encapsulation use create_gre_tunnel or create_ipip_tunnel; for open-standard L2 overlays use create_vxlan_tunnel." +
+      " Keepalive format: '<interval>,<retries>', e.g. '10s,3'." +
+      " Returns the created interface detail including name, remote-address, tunnel-id, and run-time status.",
     inputSchema: {
       name: z.string().describe("Name for the new EoIP tunnel interface, e.g. 'eoip-to-hq'"),
       remote_address: z.string().describe("Remote endpoint IP address"),
@@ -274,9 +322,15 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "list_eoip_tunnels",
-    title: "List EoIP Tunnels",
+    title: "List EoIP Tunnel Interfaces",
     annotations: READ,
-    description: "Lists EoIP tunnel interfaces on the MikroTik device.",
+    description:
+      "Lists all EoIP tunnel interfaces (`/interface eoip print`)." +
+      " Use to inventory existing EoIP tunnels and check their tunnel-id assignments to detect duplicates or mismatches." +
+      " Supports optional partial name filter via name_filter." +
+      " For full detail on one tunnel use get_eoip_tunnel; for GRE tunnels use list_gre_tunnels;" +
+      " for IPIP tunnels use list_ipip_tunnels; for VXLAN use list_vxlan_tunnels." +
+      " Returns name, remote-address, tunnel-id, MTU, and run-time status for each interface.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -297,9 +351,14 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "get_eoip_tunnel",
-    title: "Get EoIP Tunnel",
+    title: "Get EoIP Tunnel Interface Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific EoIP tunnel interface.",
+    description:
+      "Fetches full detail for a single EoIP tunnel interface by name (`/interface eoip print detail where name=...`)." +
+      " Use to inspect the tunnel-id, remote-address, local-address, keepalive, MTU, and status of one tunnel." +
+      " For a summary list of all EoIP tunnels use list_eoip_tunnels." +
+      " For GRE detail use get_gre_tunnel; for IPIP detail use get_ipip_tunnel; for VXLAN detail use get_vxlan_tunnel." +
+      " Returns the complete property set for the named interface, or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting EoIP tunnel details: name=${a.name}`);
@@ -315,9 +374,13 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "remove_eoip_tunnel",
-    title: "Remove EoIP Tunnel",
+    title: "Remove EoIP Tunnel Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes an EoIP tunnel interface from the MikroTik device.",
+    description:
+      "Permanently deletes an EoIP tunnel interface by name (`/interface eoip remove [find name=...]`)." +
+      " Verifies existence via count-only before removal and returns a not-found message if the interface does not exist." +
+      " This is destructive and immediately severs the L2 bridge link using this tunnel." +
+      " For GRE removal use remove_gre_tunnel; for IPIP use remove_ipip_tunnel; for VXLAN use remove_vxlan_tunnel.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing EoIP tunnel: name=${a.name}`);
@@ -339,10 +402,15 @@ export const tunnelTools: ToolModule = [
   // ── VXLAN — `/interface vxlan` ────────────────────────────────────────────
   defineTool({
     name: "create_vxlan_tunnel",
-    title: "Create VXLAN Tunnel",
+    title: "Create VXLAN Tunnel Interface",
     annotations: WRITE,
     description:
-      "Creates a VXLAN (Virtual Extensible LAN) L2 overlay interface on the MikroTik device.",
+      "Creates a VXLAN (Virtual Extensible LAN) L2 overlay interface (`/interface vxlan`)." +
+      " Use to build scalable L2 overlays across L3 networks — the VNI (VXLAN Network Identifier) scopes the broadcast domain, suited for multi-tenant or data-centre scenarios." +
+      " VXLAN is an open standard and works with non-MikroTik peers; for MikroTik-proprietary L2 tunnels use create_eoip_tunnel;" +
+      " for L3-only encapsulation use create_gre_tunnel or create_ipip_tunnel." +
+      " UDP port defaults to 8472; VNI must match on all participating VTEPs." +
+      " Returns the created interface detail including name, VNI, port, and run-time status.",
     inputSchema: {
       name: z.string().describe("Name for the new VXLAN interface, e.g. 'vxlan1'"),
       vni: z.number().int().describe("VXLAN Network Identifier (VNI)"),
@@ -381,9 +449,15 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "list_vxlan_tunnels",
-    title: "List VXLAN Tunnels",
+    title: "List VXLAN Tunnel Interfaces",
     annotations: READ,
-    description: "Lists VXLAN interfaces on the MikroTik device.",
+    description:
+      "Lists all VXLAN interfaces (`/interface vxlan print`)." +
+      " Use to inventory existing VXLAN overlays and check their VNI and UDP port assignments." +
+      " Supports optional partial name filter via name_filter." +
+      " For full detail on one interface use get_vxlan_tunnel; for EoIP tunnels use list_eoip_tunnels;" +
+      " for GRE tunnels use list_gre_tunnels; for IPIP tunnels use list_ipip_tunnels." +
+      " Returns name, VNI, port, local-address, MTU, and run-time status for each interface.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -404,9 +478,14 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "get_vxlan_tunnel",
-    title: "Get VXLAN Tunnel",
+    title: "Get VXLAN Tunnel Interface Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific VXLAN interface.",
+    description:
+      "Fetches full detail for a single VXLAN interface by name (`/interface vxlan print detail where name=...`)." +
+      " Use to inspect the VNI, UDP port, local-address, source interface, MTU, and status of one VXLAN interface." +
+      " For a summary list of all VXLAN interfaces use list_vxlan_tunnels." +
+      " For EoIP detail use get_eoip_tunnel; for GRE detail use get_gre_tunnel; for IPIP detail use get_ipip_tunnel." +
+      " Returns the complete property set for the named interface, or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting VXLAN tunnel details: name=${a.name}`);
@@ -422,9 +501,13 @@ export const tunnelTools: ToolModule = [
 
   defineTool({
     name: "remove_vxlan_tunnel",
-    title: "Remove VXLAN Tunnel",
+    title: "Remove VXLAN Tunnel Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes a VXLAN interface from the MikroTik device.",
+    description:
+      "Permanently deletes a VXLAN interface by name (`/interface vxlan remove [find name=...]`)." +
+      " Verifies existence via count-only before removal and returns a not-found message if the interface does not exist." +
+      " This is destructive and immediately severs all L2 overlay traffic using this VNI endpoint." +
+      " For EoIP removal use remove_eoip_tunnel; for GRE use remove_gre_tunnel; for IPIP use remove_ipip_tunnel.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing VXLAN tunnel: name=${a.name}`);

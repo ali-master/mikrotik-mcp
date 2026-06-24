@@ -17,7 +17,13 @@ export const wireguardTools: ToolModule = [
     name: "create_wireguard_interface",
     title: "Create WireGuard Interface",
     annotations: WRITE,
-    description: "Creates a WireGuard interface on the MikroTik device.",
+    description:
+      "Creates a WireGuard tunnel interface (`/interface wireguard`) — the local VPN endpoint" +
+      " with a UDP listen port and private key. Use this to establish the server-side or site-to-site" +
+      " WireGuard interface before adding remote peers with add_wireguard_peer." +
+      " For IPsec tunnels use create_ipsec_peer; for L2TP use create_l2tp_client;" +
+      " for OpenVPN use create_ovpn_client. Returns the created interface's detail including" +
+      " its name and RouterOS-generated public key.",
     inputSchema: {
       name: z.string(),
       listen_port: z.number().int().optional(),
@@ -54,7 +60,12 @@ export const wireguardTools: ToolModule = [
     name: "list_wireguard_interfaces",
     title: "List WireGuard Interfaces",
     annotations: READ,
-    description: "Lists WireGuard interfaces on the MikroTik device.",
+    description:
+      "Lists WireGuard tunnel interfaces (`/interface wireguard print`). Returns each interface's" +
+      " name, listen-port, public-key, MTU, and running/disabled status." +
+      " Supports filtering by name substring (name_filter), disabled-only, or running-only." +
+      " For the peer table use list_wireguard_peers." +
+      " Use the name from this output with get_wireguard_interface or update_wireguard_interface.",
     inputSchema: {
       name_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -79,9 +90,13 @@ export const wireguardTools: ToolModule = [
 
   defineTool({
     name: "get_wireguard_interface",
-    title: "Get WireGuard Interface",
+    title: "Get WireGuard Interface Details",
     annotations: READ,
-    description: "Gets detailed information about a specific WireGuard interface.",
+    description:
+      "Retrieves full detail of a single WireGuard tunnel interface (`/interface wireguard print detail`)" +
+      " looked up by name. Returns listen-port, private-key, public-key, MTU, running state, and comment." +
+      " For the peer table use get_wireguard_peer." +
+      " Use list_wireguard_interfaces to discover available interface names.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting WireGuard interface details: name=${a.name}`);
@@ -99,7 +114,12 @@ export const wireguardTools: ToolModule = [
     name: "update_wireguard_interface",
     title: "Update WireGuard Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing WireGuard interface's settings on the MikroTik device.",
+    description:
+      "Modifies settings on an existing WireGuard tunnel interface (`/interface wireguard set [find name=]`)" +
+      " — rename (new_name), change listen-port, rotate private-key, adjust MTU, or toggle disabled state." +
+      " Only supplied fields are changed; omitted fields are left as-is." +
+      " For updating remote peers use update_wireguard_peer." +
+      " Returns the updated interface's detail.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -139,7 +159,10 @@ export const wireguardTools: ToolModule = [
     name: "remove_wireguard_interface",
     title: "Remove WireGuard Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes a WireGuard interface from the MikroTik device.",
+    description:
+      "Permanently deletes a WireGuard tunnel interface (`/interface wireguard remove`) by name." +
+      " Verifies existence first with count-only; removing the interface also removes all its associated peers." +
+      " For removing only a specific peer without touching the interface use remove_wireguard_peer.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing WireGuard interface: name=${a.name}`);
@@ -162,7 +185,11 @@ export const wireguardTools: ToolModule = [
     name: "enable_wireguard_interface",
     title: "Enable WireGuard Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a WireGuard interface.",
+    description:
+      "Enables a disabled WireGuard tunnel interface (`/interface wireguard enable`) by name," +
+      " allowing it to accept and establish tunnel connections." +
+      " For enabling a specific peer without affecting the interface use enable_wireguard_peer." +
+      " To undo, use disable_wireguard_interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling WireGuard interface: name=${a.name}`);
@@ -179,7 +206,11 @@ export const wireguardTools: ToolModule = [
     name: "disable_wireguard_interface",
     title: "Disable WireGuard Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a WireGuard interface.",
+    description:
+      "Disables a WireGuard tunnel interface (`/interface wireguard disable`) by name," +
+      " stopping all tunnel traffic through it without removing the interface or its peers." +
+      " For disabling only a specific peer use disable_wireguard_peer." +
+      " To re-enable use enable_wireguard_interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling WireGuard interface: name=${a.name}`);
@@ -198,10 +229,14 @@ export const wireguardTools: ToolModule = [
     title: "Add WireGuard Peer",
     annotations: WRITE,
     description:
-      "Adds a WireGuard peer (with public key and allowed addresses) to an interface on the MikroTik device.\n\n" +
+      "Adds a remote peer entry (`/interface wireguard peers add`) to an existing WireGuard interface" +
+      " — associates a public key with allowed source/destination CIDRs and an optional remote endpoint." +
+      " Use this for each client or remote site connecting to a WireGuard interface created with create_wireguard_interface." +
+      " For IPsec peers use create_ipsec_peer." +
+      " Returns the created peer's detail including its .id.\n\n" +
       "Notes:\n" +
       '  allowed_address: CIDR, comma-separated for multiple e.g. "10.0.0.2/32" or "10.0.0.0/24,192.168.0.0/24"\n' +
-      '  endpoint_address: remote host IP or hostname e.g. "203.0.113.1"\n' +
+      '  endpoint_address: remote host IP or hostname e.g. "203.0.113.1" (omit for road-warrior clients that dial in)\n' +
       '  persistent_keepalive: seconds as string e.g. "25"',
     inputSchema: {
       interface: z.string(),
@@ -254,7 +289,13 @@ export const wireguardTools: ToolModule = [
     name: "list_wireguard_peers",
     title: "List WireGuard Peers",
     annotations: READ,
-    description: "Lists WireGuard peers on the MikroTik device.",
+    description:
+      "Lists all WireGuard peer entries (`/interface wireguard peers print`)." +
+      " Returns each peer's .id, interface, public-key, allowed-address, endpoint, last-handshake time, and rx/tx byte counters." +
+      " Filter by interface name (interface_filter) or disabled-only." +
+      " For the interface table use list_wireguard_interfaces." +
+      " Use the .id from this output with get_wireguard_peer, update_wireguard_peer, remove_wireguard_peer," +
+      " enable_wireguard_peer, or disable_wireguard_peer.",
     inputSchema: {
       interface_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -275,12 +316,15 @@ export const wireguardTools: ToolModule = [
 
   defineTool({
     name: "get_wireguard_peer",
-    title: "Get WireGuard Peer",
+    title: "Get WireGuard Peer Details",
     annotations: READ,
     description:
-      "Gets detailed information about a specific WireGuard peer by ID.\n\n" +
+      "Retrieves full detail of a single WireGuard peer (`/interface wireguard peers print detail`) by its .id." +
+      " Returns public-key, allowed-address, endpoint, preshared-key presence, last-handshake time, and rx/tx bytes." +
+      " For the interface table use get_wireguard_interface." +
+      " Use list_wireguard_peers to obtain peer .id values.\n\n" +
       "Notes:\n" +
-      '  peer_id: "*N" or "N" from list output e.g. "*2"',
+      '  peer_id: the .id from list_wireguard_peers, format "*N" or "N" e.g. "*2"',
     inputSchema: {
       peer_id: z.string().describe('"*N" or "N" from list output e.g. "*2"'),
     },
@@ -301,9 +345,13 @@ export const wireguardTools: ToolModule = [
     title: "Update WireGuard Peer",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing WireGuard peer's allowed addresses, endpoint, keepalive, or enabled state.\n\n" +
+      "Modifies an existing WireGuard peer (`/interface wireguard peers set`) by its .id" +
+      " — change allowed addresses, endpoint address/port, preshared key, keepalive interval, or disabled state." +
+      " Only supplied fields are changed; omitted fields are left as-is." +
+      " For updating the parent interface use update_wireguard_interface." +
+      " Returns the updated peer's detail.\n\n" +
       "Notes:\n" +
-      '  peer_id: "*N" or "N" from list output e.g. "*2"\n' +
+      '  peer_id: the .id from list_wireguard_peers, format "*N" or "N" e.g. "*2"\n' +
       '  allowed_address: CIDR, comma-separated e.g. "10.0.0.2/32" or "10.0.0.0/24,192.168.0.0/24"\n' +
       '  persistent_keepalive: seconds as string e.g. "25"\n' +
       '  Pass "" for endpoint_address or preshared_key to clear them.',
@@ -368,9 +416,11 @@ export const wireguardTools: ToolModule = [
     title: "Remove WireGuard Peer",
     annotations: DESTRUCTIVE,
     description:
-      "Removes a WireGuard peer from the MikroTik device.\n\n" +
+      "Permanently removes a single WireGuard peer entry (`/interface wireguard peers remove`) by its .id." +
+      " Verifies existence first with count-only. Leaves the parent WireGuard interface untouched." +
+      " To remove the entire interface and all its peers use remove_wireguard_interface.\n\n" +
       "Notes:\n" +
-      '  peer_id: "*N" or "N" from list output e.g. "*2"',
+      '  peer_id: the .id from list_wireguard_peers, format "*N" or "N" e.g. "*2"',
     inputSchema: {
       peer_id: z.string().describe('"*N" or "N" from list output e.g. "*2"'),
     },
@@ -396,9 +446,12 @@ export const wireguardTools: ToolModule = [
     title: "Enable WireGuard Peer",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Enables a WireGuard peer.\n\n" +
+      "Enables a disabled WireGuard peer (`/interface wireguard peers enable`) by its .id," +
+      " allowing traffic through that peer's tunnel without affecting the parent interface." +
+      " For enabling the parent interface use enable_wireguard_interface." +
+      " To undo, use disable_wireguard_peer.\n\n" +
       "Notes:\n" +
-      '  peer_id: "*N" or "N" from list output e.g. "*2"',
+      '  peer_id: the .id from list_wireguard_peers, format "*N" or "N" e.g. "*2"',
     inputSchema: {
       peer_id: z.string().describe('"*N" or "N" from list output e.g. "*2"'),
     },
@@ -418,9 +471,12 @@ export const wireguardTools: ToolModule = [
     title: "Disable WireGuard Peer",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Disables a WireGuard peer.\n\n" +
+      "Disables a WireGuard peer (`/interface wireguard peers disable`) by its .id," +
+      " blocking tunnel traffic for that peer without removing it or affecting the parent interface." +
+      " For disabling the parent interface use disable_wireguard_interface." +
+      " To re-enable use enable_wireguard_peer.\n\n" +
       "Notes:\n" +
-      '  peer_id: "*N" or "N" from list output e.g. "*2"',
+      '  peer_id: the .id from list_wireguard_peers, format "*N" or "N" e.g. "*2"',
     inputSchema: {
       peer_id: z.string().describe('"*N" or "N" from list output e.g. "*2"'),
     },
@@ -437,10 +493,18 @@ export const wireguardTools: ToolModule = [
 
   defineTool({
     name: "generate_wireguard_client_config",
-    title: "Generate WireGuard Client Config",
+    title: "Generate WireGuard Client Config File",
     annotations: READ,
     description:
-      "Generates a wg0.conf client config string from the given keys and server endpoint. Does not communicate with the router.",
+      "Generates a standard wg0.conf client configuration file (`[Interface] + [Peer]` sections)" +
+      " entirely from the provided keys and server endpoint — runs locally, never contacts the router." +
+      " Use this after registering a client's public key with add_wireguard_peer to produce the config text" +
+      " to distribute to that client." +
+      " Returns the config text ready to save as /etc/wireguard/wg0.conf (Linux) or import into" +
+      " the WireGuard app, with instructions for generating client keys and bringing the tunnel up.\n\n" +
+      "Notes:\n" +
+      '  allowed_ips: CIDRs routed through the tunnel by the client, default "0.0.0.0/0" (all IPv4 traffic; add ::/0 to also route IPv6)\n' +
+      "  persistent_keepalive: seconds integer, default 25",
     inputSchema: {
       client_private_key: z.string(),
       client_address: z.string(),

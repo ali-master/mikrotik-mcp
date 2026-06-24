@@ -15,10 +15,15 @@ export const pptpTools: ToolModule = [
   // ── SERVER `/interface pptp-server server` ────────────────────────────────
   defineTool({
     name: "get_pptp_server",
-    title: "Get PPTP Server",
+    title: "Get PPTP Server Configuration",
     annotations: READ,
     description:
-      "Gets the PPTP server configuration. NOTE: PPTP is legacy/weak — prefer L2TP/IPsec, SSTP, or WireGuard.",
+      "Reads the PPTP server singleton configuration (`/interface pptp-server server print`) — shows enabled state, " +
+      "default PPP profile, allowed authentication methods (mschap2/mschap1/pap/chap), max-mtu, and max-mru. " +
+      "Use this to inspect current server state before calling set_pptp_server to change it. " +
+      "For dial-out client interfaces use list_pptp_clients. " +
+      "NOTE: PPTP is cryptographically weak (MS-CHAPv2/MPPE); prefer L2TP/IPsec, SSTP, or WireGuard for new deployments. " +
+      "Returns the raw server property block.",
     async handler(_a, ctx) {
       ctx.info("Getting PPTP server configuration");
       const result = await executeMikrotikCommand("/interface pptp-server server print", ctx);
@@ -30,10 +35,15 @@ export const pptpTools: ToolModule = [
 
   defineTool({
     name: "set_pptp_server",
-    title: "Set PPTP Server",
+    title: "Configure PPTP Server",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Configures the PPTP server. NOTE: PPTP is legacy/weak — prefer L2TP/IPsec, SSTP, or WireGuard for new deployments.",
+      "Configures the PPTP server singleton (`/interface pptp-server server set`) — toggle the server on/off, " +
+      "change the default PPP profile, allowed authentication methods, and MTU/MRU limits. " +
+      "Use get_pptp_server first to inspect current values. For managing dial-out tunnels use create_pptp_client. " +
+      "`authentication` accepts a comma-separated list, e.g. 'mschap2,mschap1'. " +
+      "NOTE: PPTP is cryptographically weak (MS-CHAPv2/MPPE); prefer L2TP/IPsec, SSTP, or WireGuard for new deployments. " +
+      "Returns the updated server configuration.",
     inputSchema: {
       enabled: z.boolean().optional().describe("Enable or disable the PPTP server"),
       default_profile: z.string().optional(),
@@ -64,10 +74,16 @@ export const pptpTools: ToolModule = [
   // ── CLIENT `/interface pptp-client` ───────────────────────────────────────
   defineTool({
     name: "create_pptp_client",
-    title: "Create PPTP Client",
+    title: "Create PPTP Client Interface",
     annotations: WRITE,
     description:
-      "Creates a PPTP client interface that dials out to a remote PPTP server. NOTE: PPTP is legacy/weak — prefer L2TP/IPsec, SSTP, or WireGuard.",
+      "Creates a PPTP dial-out client interface (`/interface pptp-client add`) — adds a new named tunnel that " +
+      "connects outward to a remote PPTP server. For L2TP dial-out use create_l2tp_client; for SSTP dial-out use " +
+      "create_sstp_client; for OpenVPN dial-out use create_ovpn_client. " +
+      "`name` sets the interface name; `connect_to` is the remote server address; `password` is redacted in returned output. " +
+      "`add_default_route` installs a default route via this tunnel when set to true. " +
+      "NOTE: PPTP is cryptographically weak (MS-CHAPv2/MPPE); prefer L2TP/IPsec, SSTP, or WireGuard for new deployments. " +
+      "Returns the created client's detail including its `.id`.",
     inputSchema: {
       name: z.string().describe("Name for the new PPTP client interface"),
       connect_to: z.string().describe("Remote PPTP server address"),
@@ -106,9 +122,15 @@ export const pptpTools: ToolModule = [
 
   defineTool({
     name: "list_pptp_clients",
-    title: "List PPTP Clients",
+    title: "List PPTP Client Interfaces",
     annotations: READ,
-    description: "Lists PPTP client interfaces on the MikroTik device.",
+    description:
+      "Lists all PPTP dial-out client interfaces (`/interface pptp-client print`) — shows name, connect-to address, " +
+      "enabled/disabled state, and profile for each tunnel; passwords are redacted. " +
+      "Optionally filters by partial name match via `name_filter`. " +
+      "Use get_pptp_client for full detail on a single entry. " +
+      "For L2TP, SSTP, or OpenVPN clients use the corresponding list_* tool for that VPN type. " +
+      "Returns the filtered client list or an empty notice if none match.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -129,10 +151,14 @@ export const pptpTools: ToolModule = [
 
   defineTool({
     name: "get_pptp_client",
-    title: "Get PPTP Client",
+    title: "Get PPTP Client Interface Detail",
     annotations: READ,
     description:
-      "Gets detailed information about a specific PPTP client. The password is redacted.",
+      "Fetches detailed properties of a single PPTP client interface (`/interface pptp-client print detail`) by " +
+      "exact name — shows all parameters including connect-to address, profile, enabled state, and run-time statistics; " +
+      "the password is redacted. Use list_pptp_clients to find the exact interface name first. " +
+      "For L2TP, SSTP, or OpenVPN client detail use the corresponding get_* tool for that VPN type. " +
+      "Returns the full detail block or a not-found message if the name does not match.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting PPTP client details: name=${a.name}`);
@@ -148,9 +174,15 @@ export const pptpTools: ToolModule = [
 
   defineTool({
     name: "remove_pptp_client",
-    title: "Remove PPTP Client",
+    title: "Remove PPTP Client Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes a PPTP client interface from the MikroTik device.",
+    description:
+      "Permanently removes a PPTP dial-out client interface (`/interface pptp-client remove`) by exact name — " +
+      "first verifies the interface exists with a count-only check, then deletes it. " +
+      "Use list_pptp_clients to find the exact name before calling this. " +
+      "This is destructive and not reversible without recreating the interface with create_pptp_client. " +
+      "For L2TP, SSTP, or OpenVPN client removal use the corresponding remove_* tool for that VPN type. " +
+      "Returns a success confirmation or a not-found message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing PPTP client: name=${a.name}`);

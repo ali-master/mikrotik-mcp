@@ -18,7 +18,10 @@ export const pppTools: ToolModule = [
     title: "Create PPP Profile",
     annotations: WRITE,
     description:
-      "Creates a PPP profile on the MikroTik device. Profiles define address assignment, DNS, encryption, and rate limits shared by L2TP/PPTP/SSTP/OpenVPN sessions.",
+      "Creates a reusable PPP profile (`/ppp profile add`) — a named template that defines local/remote address assignment, DNS push, TCP-MSS clamping, encryption policy, rate-limit, bridge, and single-session enforcement shared across L2TP, PPTP, SSTP, OpenVPN, and PPPoE sessions. " +
+      "Use this to standardise connection parameters without repeating them per-user; the profile name is then referenced in create_ppp_secret (`profile` field) and in tunnel client tools (create_l2tp_client, create_pptp_client, create_sstp_client, create_ovpn_client). " +
+      "For managing VPN user credentials themselves use create_ppp_secret. " +
+      "Returns the created profile's full detail including all fields. Rate-limit format example: '10M/10M'.",
     inputSchema: {
       name: z.string().describe("Name for the new PPP profile"),
       local_address: z.string().optional().describe("Server-side tunnel IP or pool name"),
@@ -63,7 +66,11 @@ export const pppTools: ToolModule = [
     name: "list_ppp_profiles",
     title: "List PPP Profiles",
     annotations: READ,
-    description: "Lists PPP profiles on the MikroTik device.",
+    description:
+      "Lists all PPP profiles (`/ppp profile print`) — reusable connection templates shared by L2TP, PPTP, SSTP, OpenVPN, and PPPoE sessions. " +
+      "Use this to discover available profile names before referencing them in create_ppp_secret or tunnel client tools. " +
+      "For full detail on a single profile use get_ppp_profile. For VPN user accounts use list_ppp_secrets. " +
+      "Supports optional partial-name filter. Returns a table of profiles with their address, DNS, rate-limit, and encryption settings.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -81,9 +88,13 @@ export const pppTools: ToolModule = [
 
   defineTool({
     name: "get_ppp_profile",
-    title: "Get PPP Profile",
+    title: "Get PPP Profile Details",
     annotations: READ,
-    description: "Gets detailed information about a specific PPP profile.",
+    description:
+      "Fetches full detail for a single named PPP profile (`/ppp profile print detail where name=...`). " +
+      "Use list_ppp_profiles to enumerate available profile names first. " +
+      "For VPN user accounts (secrets) use get_ppp_secret instead. " +
+      "Returns all profile fields: local/remote address, DNS, rate-limit, encryption, TCP-MSS, bridge, only-one, and comment.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting PPP profile details: name=${a.name}`);
@@ -101,7 +112,11 @@ export const pppTools: ToolModule = [
     name: "update_ppp_profile",
     title: "Update PPP Profile",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing PPP profile's settings.",
+    description:
+      "Modifies an existing PPP profile's settings (`/ppp profile set [find name=...]`). " +
+      "Targets the profile by its current name; supply `new_name` to rename it. Any combination of fields can be updated — local/remote address, DNS, rate-limit (e.g. '10M/10M'), encryption, TCP-MSS, bridge, only-one. " +
+      "For updating VPN user credentials use update_ppp_secret instead. " +
+      "Returns the profile's updated detail after the change.",
     inputSchema: {
       name: z.string().describe("Current name of the PPP profile to update"),
       new_name: z.string().optional(),
@@ -148,7 +163,11 @@ export const pppTools: ToolModule = [
     name: "remove_ppp_profile",
     title: "Remove PPP Profile",
     annotations: DESTRUCTIVE,
-    description: "Removes a PPP profile from the MikroTik device.",
+    description:
+      "Deletes a named PPP profile (`/ppp profile remove [find name=...]`) — the connection template shared by L2TP/PPTP/SSTP/OpenVPN/PPPoE sessions. " +
+      "Performs a count-only existence check first; returns not-found if the profile does not exist. " +
+      "Does NOT delete VPN user accounts — for that use remove_ppp_secret. " +
+      "Any secret or tunnel client that references this profile will fall back to the router default profile after removal.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing PPP profile: name=${a.name}`);
@@ -170,10 +189,14 @@ export const pppTools: ToolModule = [
   // ── SECRET `/ppp secret` ──────────────────────────────────────────────────
   defineTool({
     name: "create_ppp_secret",
-    title: "Create PPP Secret",
+    title: "Create PPP Secret (VPN User Account)",
     annotations: WRITE,
     description:
-      "Creates a PPP secret (VPN user account) on the MikroTik device. Used by L2TP/PPTP/SSTP/OpenVPN/PPPoE servers for client authentication.",
+      "Creates a PPP secret — a VPN user credential (`/ppp secret add`) — used by the router's L2TP, PPTP, SSTP, OpenVPN, and PPPoE servers to authenticate incoming clients. " +
+      "A secret stores username, password, the service it applies to (any/l2tp/pptp/sstp/ovpn/pppoe), an optional profile reference (create_ppp_profile), and per-user address overrides. " +
+      "This creates the server-side user account; for creating the tunnel client interface itself use create_l2tp_client, create_pptp_client, create_sstp_client, or create_ovpn_client. " +
+      "For connection template settings shared across users use create_ppp_profile. " +
+      "Returns the created secret's detail (password redacted in output).",
     inputSchema: {
       name: z.string().describe("Username for the secret"),
       password: z.string().describe("Password for the secret"),
@@ -214,10 +237,13 @@ export const pppTools: ToolModule = [
 
   defineTool({
     name: "list_ppp_secrets",
-    title: "List PPP Secrets",
+    title: "List PPP Secrets (VPN User Accounts)",
     annotations: READ,
     description:
-      "Lists PPP secrets (VPN user accounts) on the MikroTik device. Passwords are redacted.",
+      "Lists PPP secrets — VPN user credentials (`/ppp secret print`) — configured on the router's L2TP/PPTP/SSTP/OpenVPN/PPPoE servers. " +
+      "Passwords are redacted in all output. Supports optional partial-name filter and exact service filter (any/l2tp/pptp/sstp/ovpn/pppoe). " +
+      "For full detail on a single user account use get_ppp_secret. For connection templates use list_ppp_profiles. " +
+      "Returns a table of secrets with username, service, profile, and address assignments.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
       service_filter: Service.optional().describe("Exact service match"),
@@ -237,9 +263,14 @@ export const pppTools: ToolModule = [
 
   defineTool({
     name: "get_ppp_secret",
-    title: "Get PPP Secret",
+    title: "Get PPP Secret Details",
     annotations: READ,
-    description: "Gets detailed information about a specific PPP secret. The password is redacted.",
+    description:
+      "Fetches full detail for a single named PPP secret — a VPN user credential (`/ppp secret print detail where name=...`). " +
+      "Password is redacted in the returned output. " +
+      "Use list_ppp_secrets to enumerate available usernames first. " +
+      "For PPP connection templates use get_ppp_profile instead. " +
+      "Returns all secret fields: service, profile, local/remote address, caller-id, disabled state, and comment.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting PPP secret details: name=${a.name}`);
@@ -255,9 +286,13 @@ export const pppTools: ToolModule = [
 
   defineTool({
     name: "update_ppp_secret",
-    title: "Update PPP Secret",
+    title: "Update PPP Secret (VPN User Account)",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing PPP secret's settings. The password is redacted in output.",
+    description:
+      "Modifies an existing PPP secret — a VPN user credential (`/ppp secret set [find name=...]`). " +
+      "Targets the account by its current username; supply `new_name` to rename it. Any combination of fields can be changed — password, service restriction (any/l2tp/pptp/sstp/ovpn/pppoe), profile, local/remote address, caller-id, comment, or disabled state. " +
+      "For updating connection templates (rate-limit, encryption, DNS) use update_ppp_profile instead. " +
+      "Password is redacted in the returned output. Returns the account's updated detail after the change.",
     inputSchema: {
       name: z.string().describe("Current username of the secret to update"),
       new_name: z.string().optional(),
@@ -300,9 +335,13 @@ export const pppTools: ToolModule = [
 
   defineTool({
     name: "remove_ppp_secret",
-    title: "Remove PPP Secret",
+    title: "Remove PPP Secret (VPN User Account)",
     annotations: DESTRUCTIVE,
-    description: "Removes a PPP secret (VPN user account) from the MikroTik device.",
+    description:
+      "Deletes a named PPP secret — a VPN user credential (`/ppp secret remove [find name=...]`). " +
+      "Performs a count-only existence check first; returns not-found if the username does not exist. " +
+      "This removes only the user account — it does NOT disconnect any currently active session for that user; use disconnect_ppp_active for that. " +
+      "For removing the connection template use remove_ppp_profile instead.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing PPP secret: name=${a.name}`);
@@ -324,9 +363,13 @@ export const pppTools: ToolModule = [
   // ── ACTIVE `/ppp active` ──────────────────────────────────────────────────
   defineTool({
     name: "get_ppp_active",
-    title: "Active PPP Sessions",
+    title: "List Active PPP Sessions",
     annotations: READ,
-    description: "Lists currently active PPP sessions (connected VPN clients).",
+    description:
+      "Lists currently connected PPP sessions (`/ppp active print`) — L2TP, PPTP, SSTP, OpenVPN, and PPPoE clients that are live on the router right now. " +
+      "Use this to monitor active VPN connections; supports optional partial-username filter. " +
+      "Active sessions are read-only runtime state — to force-disconnect one use disconnect_ppp_active; to manage the underlying user account use list_ppp_secrets. " +
+      "Returns session entries showing username, service type, assigned IP, uptime, and encoding.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial username match"),
     },
@@ -344,9 +387,13 @@ export const pppTools: ToolModule = [
 
   defineTool({
     name: "disconnect_ppp_active",
-    title: "Disconnect PPP Session",
+    title: "Disconnect Active PPP Session",
     annotations: DESTRUCTIVE,
-    description: "Disconnects an active PPP session by username.",
+    description:
+      "Force-disconnects a currently active PPP session by username (`/ppp active remove [find name=...]`). " +
+      "Use get_ppp_active to find the exact username of a live session before calling this. " +
+      "This terminates the live connection only — it does NOT delete the underlying user account; use remove_ppp_secret for that. " +
+      "The client may immediately reconnect if its credentials remain valid in /ppp secret.",
     inputSchema: {
       name: z.string().describe("Username of the active session to disconnect"),
     },
