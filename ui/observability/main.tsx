@@ -474,6 +474,17 @@ function statusInfo(s: DeviceStatus): { label: string; color: string } {
   return { label: "checking…", color: "#71717a" };
 }
 
+/**
+ * A stable, vivid colour per device, derived deterministically from its name —
+ * so each device keeps the same colour across reloads with no storage, and a new
+ * device gets a distinct hue. Used to tint its connectivity orb and device card.
+ */
+function deviceColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (Math.imul(h, 31) + name.charCodeAt(i)) >>> 0;
+  return `hsl(${h % 360} 70% 62%)`;
+}
+
 /** A point on a quadratic Bézier (core → control → device) at parameter `t`. */
 function qPoint(
   p0: { x: number; y: number },
@@ -738,25 +749,24 @@ function ConnectivityGraph({
           const info = statusInfo(d.status);
           const online = d.status.reachable === true;
           const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
+          // Each device's orb carries its own persistent colour; the small corner
+          // dot still shows live online/offline status.
+          const col = deviceColor(d.name);
           return (
             <g key={`n-${d.name}`} className="conn-node">
-              {online && (
-                <circle className="conn-node-halo" cx={x} cy={y} r={r + 1} stroke={info.color} />
-              )}
-              <circle
-                cx={x}
-                cy={y}
-                r={r}
-                fill="url(#conn-orb)"
-                stroke={info.color}
-                strokeWidth={2}
-              />
+              {online && <circle className="conn-node-halo" cx={x} cy={y} r={r + 1} stroke={col} />}
+              {/* subtle fill tint in the device's colour, over the dark orb */}
+              <circle cx={x} cy={y} r={r} fill="url(#conn-orb)" />
+              <circle cx={x} cy={y} r={r} fill={col} opacity={0.16} />
+              <circle cx={x} cy={y} r={r} fill="none" stroke={col} strokeWidth={2.5} />
               <circle
                 className={online ? "conn-blink" : undefined}
                 cx={x + r * 0.7}
                 cy={y - r * 0.7}
                 r={4.5}
                 fill={info.color}
+                stroke="#0a121b"
+                strokeWidth={1.5}
               />
               <text
                 x={x}
@@ -808,12 +818,14 @@ function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
       : d.status.reachable === false
         ? `${info.label}${d.status.error ? ` · ${d.status.error}` : ""}`
         : info.label;
+  const col = deviceColor(d.name);
   return (
-    <div className="card dev-card">
+    <div className="card dev-card" style={{ borderLeft: `3px solid ${col}` }}>
       <div className="dev-card__top">
-        <span className="dot" style={{ background: info.color }} />
+        <span className="dot" style={{ background: col }} title="device colour" />
         <span className="dev-card__name">{d.name}</span>
         {d.isDefault && <span className="badge">default</span>}
+        <span className="dot dot--status" style={{ background: info.color }} title={info.label} />
         <span style={{ flex: 1 }} />
         <span className="chip">{d.authMode}</span>
       </div>
@@ -963,17 +975,20 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
   const s = d.status;
   const hist = d.history ?? [];
   const probed = s.reachable === true || hist.length > 0;
-  if (d.mac || !probed) {
+  if (!probed) {
     return (
       <div className="card health-card health-card--na">
         <div className="health-card__hd">
+          <span className="dot" style={{ background: statusInfo(s).color }} />
           <span className="dev-card__name">{d.name}</span>
           {d.isDefault && <span className="badge">default</span>}
         </div>
         <p className="muted" style={{ margin: 0 }}>
-          {d.mac
-            ? "System metrics are not collected for MAC-Telnet devices (no background probe)."
-            : "Waiting for the first health probe…"}
+          {s.reachable === false
+            ? `Offline — ${s.error ?? "unreachable"}`
+            : d.mac
+              ? "Waiting for the first MAC-Telnet probe (these run every few minutes to avoid contending with tool calls)…"
+              : "Waiting for the first health probe…"}
         </p>
       </div>
     );
@@ -994,27 +1009,27 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         {s.uptime ? ` · up ${s.uptime}` : ""}
       </div>
       <div className="health-card__gauges">
-        <Gauge value={s.cpuLoad} label="CPU" color="#e4e4e7" />
-        <Gauge value={s.memUsedPct} label="MEM" color="#d4d4d8" />
-        <Gauge value={s.hddUsedPct} label="DISK" color="#a1a1aa" />
+        <Gauge value={s.cpuLoad} label="CPU" color="#38bdf8" />
+        <Gauge value={s.memUsedPct} label="MEM" color="#34d399" />
+        <Gauge value={s.hddUsedPct} label="DISK" color="#fbbf24" />
       </div>
       <div className="health-card__charts">
         <div className="health-chart">
           <span className="health-chart__k">CPU load</span>
-          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#e4e4e7" maxValue={100} unit="%" />
+          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#38bdf8" maxValue={100} unit="%" />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Memory used</span>
           <Sparkline
             values={hist.map((h) => h.memUsedPct)}
-            color="#d4d4d8"
+            color="#34d399"
             maxValue={100}
             unit="%"
           />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Probe latency</span>
-          <Sparkline values={hist.map((h) => h.latencyMs)} color="#a1a1aa" unit="ms" />
+          <Sparkline values={hist.map((h) => h.latencyMs)} color="#22d3ee" unit="ms" />
         </div>
       </div>
       <div className="health-card__foot muted">
@@ -2217,6 +2232,32 @@ function App(): ReactNode {
   const rootRef = useRef<HTMLDivElement | null>(null);
   useReveals(rootRef);
   const [view, setView] = useState<ViewId>("overview");
+  // Devices page: search + status filter so a large fleet stays navigable.
+  const [deviceQuery, setDeviceQuery] = useState("");
+  const [deviceFilter, setDeviceFilter] = useState<"all" | "online" | "offline">("all");
+  const deviceCounts = useMemo(() => {
+    const list = devices?.devices ?? [];
+    return {
+      online: list.filter((d) => d.status.reachable === true).length,
+      offline: list.filter((d) => d.status.reachable === false).length,
+      total: list.length,
+    };
+  }, [devices]);
+  const shownDevices = useMemo(() => {
+    const list = devices?.devices ?? [];
+    const q = deviceQuery.trim().toLowerCase();
+    return list.filter((d) => {
+      if (deviceFilter === "online" && d.status.reachable !== true) return false;
+      if (deviceFilter === "offline" && d.status.reachable !== false) return false;
+      if (
+        q &&
+        !d.name.toLowerCase().includes(q) &&
+        !(d.address ?? d.host ?? "").toLowerCase().includes(q)
+      )
+        return false;
+      return true;
+    });
+  }, [devices, deviceQuery, deviceFilter]);
 
   // Live stream → prepend to feed (unless paused) and pulse the device's link.
   useLiveStream(
@@ -2616,38 +2657,78 @@ function App(): ReactNode {
         {view === "devices" &&
           (devices && devices.devices.length > 0 ? (
             <section className="view">
-              <section className="cols reveal">
-                <Panel
-                  title="Connectivity"
-                  extra={
-                    <span className="muted">
-                      {devices.devices.filter((d) => d.status.reachable === true).length} online ·{" "}
-                      {devices.devices.filter((d) => d.status.reachable === false).length} offline ·{" "}
-                      {devices.devices.length} total
-                    </span>
-                  }
-                >
-                  <ConnectivityGraph payload={devices} pulses={pulses} />
-                </Panel>
-                <div className="dev-grid">
-                  {devices.devices.map((d) => (
+              {/* search + status filter — keeps a large fleet navigable */}
+              <div className="dev-toolbar reveal">
+                <input
+                  className="search"
+                  type="search"
+                  placeholder="Search devices by name or address…"
+                  value={deviceQuery}
+                  onChange={(e) => setDeviceQuery(e.target.value)}
+                  style={{ flex: 1, minWidth: 180 }}
+                />
+                <div className="dev-filters">
+                  {(["all", "online", "offline"] as const).map((f) => (
+                    <button
+                      key={f}
+                      className={`dev-fbtn${deviceFilter === f ? " is-active" : ""}`}
+                      onClick={() => setDeviceFilter(f)}
+                    >
+                      {f === "all"
+                        ? `All ${deviceCounts.total}`
+                        : f === "online"
+                          ? `Online ${deviceCounts.online}`
+                          : `Offline ${deviceCounts.offline}`}
+                    </button>
+                  ))}
+                </div>
+                <span className="muted">
+                  {shownDevices.length}/{deviceCounts.total} shown
+                </span>
+              </div>
+
+              {/* connectivity radar — collapsible so it doesn't dominate a big fleet */}
+              <details className="dev-collapse reveal" open={deviceCounts.total <= 8}>
+                <summary>
+                  Connectivity radar
+                  <span className="muted">
+                    {" "}
+                    · {deviceCounts.online} online · {deviceCounts.offline} offline ·{" "}
+                    {deviceCounts.total} total
+                  </span>
+                </summary>
+                <ConnectivityGraph payload={devices} pulses={pulses} />
+              </details>
+
+              {/* responsive device grid (filtered) */}
+              {shownDevices.length === 0 ? (
+                <div className="feed-empty reveal">
+                  <div className="feed-empty__icon">🔍</div>
+                  <p className="feed-empty__title">No devices match</p>
+                  <p className="feed-empty__sub">Try a different search or status filter.</p>
+                </div>
+              ) : (
+                <div className="dev-grid-wide reveal">
+                  {shownDevices.map((d) => (
                     <DeviceCard key={d.name} d={d} />
                   ))}
                 </div>
-              </section>
-              <Panel
-                title="Device system health"
-                className="reveal"
-                extra={
-                  <span className="muted">CPU · memory · disk · latency — sampled every 30s</span>
-                }
-              >
-                <div className="health-grid">
-                  {devices.devices.map((d) => (
-                    <DeviceHealthCard key={d.name} d={d} />
-                  ))}
-                </div>
-              </Panel>
+              )}
+
+              {/* system health (filtered) */}
+              {shownDevices.length > 0 && (
+                <Panel
+                  title="Device system health"
+                  className="reveal"
+                  extra={<span className="muted">CPU · memory · disk · latency · live probe</span>}
+                >
+                  <div className="health-grid">
+                    {shownDevices.map((d) => (
+                      <DeviceHealthCard key={d.name} d={d} />
+                    ))}
+                  </div>
+                </Panel>
+              )}
             </section>
           ) : (
             <div className="feed-empty">

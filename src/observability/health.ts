@@ -131,21 +131,11 @@ function usedPct(total?: number, free?: number): number | undefined {
 
 /** Probe one device once and cache the result. */
 export async function probeDevice(name: string, dc: DeviceConfig): Promise<DeviceStatus> {
-  // MAC-Telnet devices are NOT background-probed. A mac-telnet login is a full
-  // ~30s+ console negotiation (RouterOS's stall), and the device serves one such
-  // session at a time — a 30s-interval probe would be almost always in flight and
-  // would contend with (and starve) real tool calls. We surface a neutral status
-  // and let actual tool use prove reachability instead.
-  if (dc.mac) {
-    const status: DeviceStatus = {
-      reachable: null,
-      checkedAt: Date.now(),
-      latencyMs: null,
-      error: "MAC-Telnet device — reachability is verified on tool use, not background-probed.",
-    };
-    statuses.set(name, status);
-    return status;
-  }
+  // MAC-Telnet devices ARE probed (so CPU/memory/disk health is collected for
+  // them too), but a MAC-Telnet login is a slow ~30s console negotiation and the
+  // device serves one session at a time — so `probeAll` throttles them to a long
+  // interval (MAC_PROBE_INTERVAL_MS) to avoid contending with real tool calls.
+  // SSH devices are cheap and probed every cycle.
   // Pick the transport by config (SSH or MAC-Telnet). The 8s probe clamp keeps
   // the SSH path snappy; a MAC-Telnet client floors its own prime budget higher
   // (RouterOS's ~10s console stall), so the clamp simply doesn't shorten it.
@@ -229,18 +219,30 @@ export async function probeDevice(name: string, dc: DeviceConfig): Promise<Devic
   return status;
 }
 
+/** How often MAC-Telnet devices are background-probed (vs every cycle for SSH).
+ * A MAC-Telnet login is slow and serializes with tool calls, so we keep it rare. */
+const MAC_PROBE_INTERVAL_MS = 5 * 60_000;
+const lastMacProbe = new Map<string, number>();
+
 /** Probe every configured device concurrently (reentrancy-guarded). */
 export async function probeAll(): Promise<void> {
   if (inFlight) return;
   inFlight = true;
   try {
     const cfg = getConfig();
+    const now = Date.now();
     await Promise.all(
-      Object.entries(cfg.devices).map(([name, dc]) =>
-        probeDevice(name, dc).catch(() => {
+      Object.entries(cfg.devices).map(([name, dc]) => {
+        // Throttle the expensive MAC-Telnet probe so it can't monopolise the
+        // device's single session and starve real tool calls.
+        if (dc.mac) {
+          if (now - (lastMacProbe.get(name) ?? 0) < MAC_PROBE_INTERVAL_MS) return Promise.resolve();
+          lastMacProbe.set(name, now);
+        }
+        return probeDevice(name, dc).catch(() => {
           /* probeDevice never throws, but stay defensive */
-        }),
-      ),
+        });
+      }),
     );
   } finally {
     inFlight = false;

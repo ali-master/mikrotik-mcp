@@ -881,6 +881,92 @@ body::after {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Devices page — search/filter toolbar, responsive grid, collapsible radar. */
+.dev-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dev-filters {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--mt-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mt-surface-2) 70%, transparent);
+}
+.dev-fbtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--mt-text-dim);
+  font: 11px var(--mt-mono);
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+.dev-fbtn:hover {
+  color: var(--mt-text);
+}
+.dev-fbtn.is-active {
+  background: var(--grad);
+  color: var(--mt-bg);
+  font-weight: 600;
+}
+
+/* Responsive auto-fill grid — wraps into columns for a large fleet. */
+.dev-grid-wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+/* Collapsible connectivity panel. */
+.dev-collapse {
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius);
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  padding: 6px 18px 18px;
+}
+.dev-collapse > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--mt-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dev-collapse > summary::-webkit-details-marker {
+  display: none;
+}
+.dev-collapse > summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.2s var(--ease);
+  color: var(--teal);
+}
+.dev-collapse[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* Second dot on a device card row: live status, next to the device-colour dot. */
+.dev-card .dot--status {
+  width: 7px;
+  height: 7px;
+}
 .dev-card {
   display: grid;
   gap: 8px;
