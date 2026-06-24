@@ -30,11 +30,11 @@ are serialized onto the channel so their I/O never interleaves.
 
 ## The tools
 
-| Tool | Risk | What it does |
-|------|------|--------------|
-| `safe_mode_status` | read | Reports whether Safe Mode is currently active. |
-| `enable_safe_mode` | write | Opens the persistent shell and activates Safe Mode (Ctrl+X). |
-| `commit_safe_mode` | write | Sends Ctrl+X again to persist all pending changes, then closes the session. |
+| Tool                 | Risk  | What it does                                                                       |
+| -------------------- | ----- | ---------------------------------------------------------------------------------- |
+| `safe_mode_status`   | read  | Reports whether Safe Mode is currently active.                                     |
+| `enable_safe_mode`   | write | Opens the persistent shell and activates Safe Mode (Ctrl+X).                       |
+| `commit_safe_mode`   | write | Sends Ctrl+X again to persist all pending changes, then closes the session.        |
 | `rollback_safe_mode` | write | Closes the session **without** committing, triggering RouterOS's automatic revert. |
 
 ## Typical workflow

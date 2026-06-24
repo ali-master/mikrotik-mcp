@@ -5,16 +5,10 @@
   "properties": {
     "kind": {
       "type": "string",
-      "enum": [
-        "interface",
-        "queue",
-        "resource"
-      ],
+      "enum": ["interface", "queue", "resource"],
       "description": "Which graphing table to list"
     }
   },
-  "required": [
-    "kind"
-  ],
+  "required": ["kind"],
   "additionalProperties": false
 }

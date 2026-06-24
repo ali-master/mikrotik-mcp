@@ -1,21 +1,9 @@
 /** Switch port isolation — `/interface ethernet switch port-isolation`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 /** Build the RouterOS `[find ...]` selector for a port (by name) or `.id`. */
 function selectorFor(id: string): string {
@@ -37,9 +25,7 @@ export const switchPortIsolationTools: ToolModule = [
       "        this port may forward to (others are blocked in hardware).",
     inputSchema: {
       port: z.string().describe("Source port to isolate, e.g. 'ether1'"),
-      forwarding_override_ports: z
-        .string()
-        .describe("Comma-separated allowed destination ports"),
+      forwarding_override_ports: z.string().describe("Comma-separated allowed destination ports"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -51,8 +37,7 @@ export const switchPortIsolationTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add switch port-isolation: ${result}`;
+      if (looksLikeError(result)) return `Failed to add switch port-isolation: ${result}`;
       const details = await executeMikrotikCommand(
         `/interface ethernet switch port-isolation print detail where port="${a.port}"`,
         ctx,
@@ -67,8 +52,7 @@ export const switchPortIsolationTools: ToolModule = [
     name: "list_switch_port_isolation",
     title: "List Switch Port Isolation",
     annotations: READ,
-    description:
-      "Lists switch port-isolation entries on the MikroTik device.",
+    description: "Lists switch port-isolation entries on the MikroTik device.",
     inputSchema: {
       port_filter: z.string().optional().describe("Partial source-port match"),
     },
@@ -91,12 +75,9 @@ export const switchPortIsolationTools: ToolModule = [
     name: "get_switch_port_isolation",
     title: "Get Switch Port Isolation",
     annotations: READ,
-    description:
-      "Gets a specific switch port-isolation entry by source port or '.id'.",
+    description: "Gets a specific switch port-isolation entry by source port or '.id'.",
     inputSchema: {
-      isolation_id: z
-        .string()
-        .describe("Source port name (e.g. 'ether1') or RouterOS '.id'"),
+      isolation_id: z.string().describe("Source port name (e.g. 'ether1') or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting switch port-isolation: isolation_id=${a.isolation_id}`);
@@ -118,9 +99,7 @@ export const switchPortIsolationTools: ToolModule = [
       "Updates a switch port-isolation entry (by source port or '.id'). " +
       'Pass comment="" to clear the comment.',
     inputSchema: {
-      isolation_id: z
-        .string()
-        .describe("Source port name or RouterOS '.id'"),
+      isolation_id: z.string().describe("Source port name or RouterOS '.id'"),
       forwarding_override_ports: z
         .string()
         .optional()
@@ -131,18 +110,14 @@ export const switchPortIsolationTools: ToolModule = [
       ctx.info(`Updating switch port-isolation: isolation_id=${a.isolation_id}`);
       const selector = selectorFor(a.isolation_id);
       const base = `/interface ethernet switch port-isolation set [find ${selector}]`;
-      const cmd = new Cmd(base).opt(
-        "forwarding-override-ports",
-        a.forwarding_override_ports,
-      );
+      const cmd = new Cmd(base).opt("forwarding-override-ports", a.forwarding_override_ports);
       if (a.comment !== undefined) cmd.raw(`comment=${quoteValue(a.comment)}`);
 
       const built = cmd.build();
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update switch port-isolation: ${result}`;
+      if (looksLikeError(result)) return `Failed to update switch port-isolation: ${result}`;
       const details = await executeMikrotikCommand(
         `/interface ethernet switch port-isolation print detail where ${selector}`,
         ctx,
@@ -158,9 +133,7 @@ export const switchPortIsolationTools: ToolModule = [
     description:
       "Removes a switch port-isolation entry by source port or '.id' from the MikroTik device.",
     inputSchema: {
-      isolation_id: z
-        .string()
-        .describe("Source port name or RouterOS '.id'"),
+      isolation_id: z.string().describe("Source port name or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Removing switch port-isolation: isolation_id=${a.isolation_id}`);
@@ -169,15 +142,13 @@ export const switchPortIsolationTools: ToolModule = [
         `/interface ethernet switch port-isolation print count-only where ${selector}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Switch port-isolation '${a.isolation_id}' not found.`;
+      if (count.trim() === "0") return `Switch port-isolation '${a.isolation_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/interface ethernet switch port-isolation remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove switch port-isolation: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove switch port-isolation: ${result}`;
       return `Switch port-isolation '${a.isolation_id}' removed successfully.`;
     },
   }),

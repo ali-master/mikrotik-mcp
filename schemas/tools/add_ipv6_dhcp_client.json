@@ -9,11 +9,7 @@
     "request": {
       "default": "prefix",
       "type": "string",
-      "enum": [
-        "address",
-        "prefix",
-        "address,prefix"
-      ]
+      "enum": ["address", "prefix", "address,prefix"]
     },
     "pool_name": {
       "description": "Name of the IPv6 pool to expose the delegated prefix as",
@@ -31,11 +27,7 @@
     },
     "add_default_route": {
       "type": "string",
-      "enum": [
-        "yes",
-        "no",
-        "special-classless"
-      ]
+      "enum": ["yes", "no", "special-classless"]
     },
     "default_route_distance": {
       "type": "integer",
@@ -60,10 +52,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "interface",
-    "request",
-    "disabled"
-  ],
+  "required": ["interface", "request", "disabled"],
   "additionalProperties": false
 }

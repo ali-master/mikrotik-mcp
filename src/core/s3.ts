@@ -54,9 +54,7 @@ function trimSlashes(s: string): string {
  * "folder" in the bucket. Returns "" only when neither prefix nor device apply.
  */
 export function s3DevicePrefix(device?: string): string {
-  const segments = [getS3Config()?.prefix ?? "", device ?? ""]
-    .map(trimSlashes)
-    .filter(Boolean);
+  const segments = [getS3Config()?.prefix ?? "", device ?? ""].map(trimSlashes).filter(Boolean);
   return segments.length ? `${segments.join("/")}/` : "";
 }
 

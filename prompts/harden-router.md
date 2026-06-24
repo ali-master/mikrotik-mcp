@@ -7,6 +7,7 @@ arguments:
     description: The WAN-facing interface name (e.g. ether1, pppoe-out1). If unknown, discover it first.
     required: false
 ---
+
 You are securing a MikroTik RouterOS device exposed through this MCP server. Work
 **safely and incrementally**: inspect first, propose a plan, and prefer Safe Mode
 for risky firewall changes so a mistake auto-reverts instead of locking us out.

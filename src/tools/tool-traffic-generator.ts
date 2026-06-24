@@ -8,12 +8,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -39,8 +34,7 @@ export const trafficGeneratorTools: ToolModule = [
         .flag("disabled", a.disabled)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add traffic-generator port: ${result}`;
+      if (looksLikeError(result)) return `Failed to add traffic-generator port: ${result}`;
       const details = await executeMikrotikCommand(
         `/tool traffic-generator port print detail where name="${a.name}"`,
         ctx,
@@ -77,28 +71,23 @@ export const trafficGeneratorTools: ToolModule = [
     name: "remove_traffic_generator_port",
     title: "Remove Traffic Generator Port",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a traffic-generator port by name or '.id' from the MikroTik device.",
+    description: "Removes a traffic-generator port by name or '.id' from the MikroTik device.",
     inputSchema: {
       port_id: z.string().describe("Port name or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Removing traffic-generator port: port_id=${a.port_id}`);
-      const selector = a.port_id.startsWith("*")
-        ? `.id="${a.port_id}"`
-        : `name="${a.port_id}"`;
+      const selector = a.port_id.startsWith("*") ? `.id="${a.port_id}"` : `name="${a.port_id}"`;
       const count = await executeMikrotikCommand(
         `/tool traffic-generator port print count-only where ${selector}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Traffic-generator port '${a.port_id}' not found.`;
+      if (count.trim() === "0") return `Traffic-generator port '${a.port_id}' not found.`;
       const result = await executeMikrotikCommand(
         `/tool traffic-generator port remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove traffic-generator port: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove traffic-generator port: ${result}`;
       return `Traffic-generator port '${a.port_id}' removed successfully.`;
     },
   }),
@@ -117,10 +106,7 @@ export const trafficGeneratorTools: ToolModule = [
     inputSchema: {
       name: z.string(),
       port: z.string().describe("Traffic-generator port name"),
-      tx_template: z
-        .string()
-        .optional()
-        .describe("Packet-template name to transmit"),
+      tx_template: z.string().optional().describe("Packet-template name to transmit"),
       packet_size: z.string().optional().describe("Packet size or range"),
       tx_rate: z.string().optional().describe("Transmit rate in bits/second"),
       comment: z.string().optional(),
@@ -138,8 +124,7 @@ export const trafficGeneratorTools: ToolModule = [
         .flag("disabled", a.disabled)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add traffic-generator stream: ${result}`;
+      if (looksLikeError(result)) return `Failed to add traffic-generator stream: ${result}`;
       const details = await executeMikrotikCommand(
         `/tool traffic-generator stream print detail where name="${a.name}"`,
         ctx,
@@ -154,8 +139,7 @@ export const trafficGeneratorTools: ToolModule = [
     name: "list_traffic_generator_streams",
     title: "List Traffic Generator Streams",
     annotations: READ,
-    description:
-      "Lists traffic-generator streams (`/tool traffic-generator stream`).",
+    description: "Lists traffic-generator streams (`/tool traffic-generator stream`).",
     inputSchema: {
       name_filter: z.string().optional(),
       port_filter: z.string().optional(),
@@ -179,8 +163,7 @@ export const trafficGeneratorTools: ToolModule = [
     name: "remove_traffic_generator_stream",
     title: "Remove Traffic Generator Stream",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a traffic-generator stream by name or '.id' from the MikroTik device.",
+    description: "Removes a traffic-generator stream by name or '.id' from the MikroTik device.",
     inputSchema: {
       stream_id: z.string().describe("Stream name or RouterOS '.id'"),
     },
@@ -193,14 +176,12 @@ export const trafficGeneratorTools: ToolModule = [
         `/tool traffic-generator stream print count-only where ${selector}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Traffic-generator stream '${a.stream_id}' not found.`;
+      if (count.trim() === "0") return `Traffic-generator stream '${a.stream_id}' not found.`;
       const result = await executeMikrotikCommand(
         `/tool traffic-generator stream remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove traffic-generator stream: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove traffic-generator stream: ${result}`;
       return `Traffic-generator stream '${a.stream_id}' removed successfully.`;
     },
   }),
@@ -227,8 +208,7 @@ export const trafficGeneratorTools: ToolModule = [
         .opt("duration", a.duration ? `${a.duration}s` : undefined)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to start traffic generator: ${result}`;
+      if (looksLikeError(result)) return `Failed to start traffic generator: ${result}`;
       return "Traffic generator started.";
     },
   }),
@@ -237,16 +217,11 @@ export const trafficGeneratorTools: ToolModule = [
     name: "stop_traffic_generator",
     title: "Stop Traffic Generator",
     annotations: WRITE,
-    description:
-      "Stops the traffic generator (`/tool traffic-generator stop`).",
+    description: "Stops the traffic generator (`/tool traffic-generator stop`).",
     async handler(_a, ctx) {
       ctx.info("Stopping traffic generator");
-      const result = await executeMikrotikCommand(
-        "/tool traffic-generator stop",
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to stop traffic generator: ${result}`;
+      const result = await executeMikrotikCommand("/tool traffic-generator stop", ctx);
+      if (looksLikeError(result)) return `Failed to stop traffic generator: ${result}`;
       return "Traffic generator stopped.";
     },
   }),

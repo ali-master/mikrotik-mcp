@@ -1,22 +1,9 @@
 /** IPv6 Neighbor Discovery / Router Advertisements — `/ipv6 nd` and `/ipv6 nd prefix`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  yesno,
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const RaPreference = z.enum(["low", "medium", "high"]);
 
@@ -37,17 +24,11 @@ export const ipv6NdTools: ToolModule = [
       "    ra_interval: min-max range, e.g. '3m20s-10m'.",
     inputSchema: {
       interface: z.string(),
-      ra_interval: z
-        .string()
-        .optional()
-        .describe("RA min-max interval range, e.g. '3m20s-10m'"),
+      ra_interval: z.string().optional().describe("RA min-max interval range, e.g. '3m20s-10m'"),
       ra_delay: z.string().optional(),
       ra_lifetime: z.string().optional().describe("e.g. '30m' or 'none'"),
       ra_preference: RaPreference.optional(),
-      hop_limit: z
-        .string()
-        .optional()
-        .describe("Advertised hop limit (0-255 or 'unspecified')"),
+      hop_limit: z.string().optional().describe("Advertised hop limit (0-255 or 'unspecified')"),
       mtu: z.number().int().optional(),
       reachable_time: z.string().optional(),
       retransmit_interval: z.string().optional(),
@@ -79,8 +60,7 @@ export const ipv6NdTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add IPv6 ND config: ${result}`;
+      if (looksLikeError(result)) return `Failed to add IPv6 ND config: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 nd print detail where interface="${a.interface}"`,
         ctx,
@@ -95,8 +75,7 @@ export const ipv6NdTools: ToolModule = [
     name: "list_ipv6_nd",
     title: "List IPv6 ND Configs",
     annotations: READ,
-    description:
-      "Lists IPv6 Neighbor Discovery interface configurations on the MikroTik device.",
+    description: "Lists IPv6 Neighbor Discovery interface configurations on the MikroTik device.",
     inputSchema: {
       interface_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -107,10 +86,7 @@ export const ipv6NdTools: ToolModule = [
       if (a.interface_filter) filters.push(`interface="${a.interface_filter}"`);
       if (a.disabled_only) filters.push("disabled=yes");
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 nd print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/ipv6 nd print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No IPv6 ND configs found matching the criteria."
         : `IPV6 ND CONFIGS:\n\n${result}`;
@@ -121,12 +97,9 @@ export const ipv6NdTools: ToolModule = [
     name: "get_ipv6_nd",
     title: "Get IPv6 ND Config",
     annotations: READ,
-    description:
-      "Gets detailed IPv6 ND configuration for an interface (or '.id').",
+    description: "Gets detailed IPv6 ND configuration for an interface (or '.id').",
     inputSchema: {
-      nd_id: z
-        .string()
-        .describe("RouterOS .id (e.g. '*1') or the interface name"),
+      nd_id: z.string().describe("RouterOS .id (e.g. '*1') or the interface name"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting IPv6 ND config: nd_id=${a.nd_id}`);
@@ -154,9 +127,7 @@ export const ipv6NdTools: ToolModule = [
       "Updates an existing IPv6 ND interface configuration (by interface name " +
       "or '.id'). Also use this to configure the built-in 'all' entry.",
     inputSchema: {
-      nd_id: z
-        .string()
-        .describe("Interface name (e.g. 'all', 'ether1') or '.id'"),
+      nd_id: z.string().describe("Interface name (e.g. 'all', 'ether1') or '.id'"),
       ra_interval: z.string().optional(),
       ra_delay: z.string().optional(),
       ra_lifetime: z.string().optional(),
@@ -174,9 +145,7 @@ export const ipv6NdTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Updating IPv6 ND config: nd_id=${a.nd_id}`);
-      const selector = a.nd_id.startsWith("*")
-        ? `.id="${a.nd_id}"`
-        : `interface="${a.nd_id}"`;
+      const selector = a.nd_id.startsWith("*") ? `.id="${a.nd_id}"` : `interface="${a.nd_id}"`;
       const base = `/ipv6 nd set [find ${selector}]`;
       const cmd = new Cmd(base)
         .opt("ra-interval", a.ra_interval)
@@ -198,12 +167,8 @@ export const ipv6NdTools: ToolModule = [
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update IPv6 ND config: ${result}`;
-      const details = await executeMikrotikCommand(
-        `/ipv6 nd print detail where ${selector}`,
-        ctx,
-      );
+      if (looksLikeError(result)) return `Failed to update IPv6 ND config: ${result}`;
+      const details = await executeMikrotikCommand(`/ipv6 nd print detail where ${selector}`, ctx);
       return `IPv6 ND config updated successfully:\n\n${details}`;
     },
   }),
@@ -220,21 +185,15 @@ export const ipv6NdTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 ND config: nd_id=${a.nd_id}`);
-      const selector = a.nd_id.startsWith("*")
-        ? `.id="${a.nd_id}"`
-        : `interface="${a.nd_id}"`;
+      const selector = a.nd_id.startsWith("*") ? `.id="${a.nd_id}"` : `interface="${a.nd_id}"`;
       const count = await executeMikrotikCommand(
         `/ipv6 nd print count-only where ${selector}`,
         ctx,
       );
       if (count.trim() === "0") return `IPv6 ND config '${a.nd_id}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 nd remove [find ${selector}]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 ND config: ${result}`;
+      const result = await executeMikrotikCommand(`/ipv6 nd remove [find ${selector}]`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 ND config: ${result}`;
       return `IPv6 ND config '${a.nd_id}' removed successfully.`;
     },
   }),
@@ -250,9 +209,7 @@ export const ipv6NdTools: ToolModule = [
       "    autonomous: allow hosts to auto-configure addresses from this prefix\n" +
       "        (SLAAC, the A flag).",
     inputSchema: {
-      prefix: z
-        .string()
-        .describe("Prefix to advertise, e.g. '2001:db8:1::/64'"),
+      prefix: z.string().describe("Prefix to advertise, e.g. '2001:db8:1::/64'"),
       interface: z.string().optional(),
       valid_lifetime: z.string().optional(),
       preferred_lifetime: z.string().optional(),
@@ -273,8 +230,7 @@ export const ipv6NdTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add IPv6 ND prefix: ${result}`;
+      if (looksLikeError(result)) return `Failed to add IPv6 ND prefix: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 nd prefix print detail where prefix="${a.prefix}"`,
         ctx,
@@ -334,18 +290,11 @@ export const ipv6NdTools: ToolModule = [
           `/ipv6 nd prefix print count-only where prefix="${a.prefix_id}"`,
           ctx,
         );
-        if (count.trim() === "0")
-          return `IPv6 ND prefix '${a.prefix_id}' not found.`;
+        if (count.trim() === "0") return `IPv6 ND prefix '${a.prefix_id}' not found.`;
       }
-      const selector = byId
-        ? `.id="${a.prefix_id}"`
-        : `prefix="${a.prefix_id}"`;
-      const result = await executeMikrotikCommand(
-        `/ipv6 nd prefix remove [find ${selector}]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 ND prefix: ${result}`;
+      const selector = byId ? `.id="${a.prefix_id}"` : `prefix="${a.prefix_id}"`;
+      const result = await executeMikrotikCommand(`/ipv6 nd prefix remove [find ${selector}]`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 ND prefix: ${result}`;
       return `IPv6 ND prefix '${a.prefix_id}' removed successfully.`;
     },
   }),

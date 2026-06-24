@@ -17,10 +17,7 @@ export const switchPortTools: ToolModule = [
       "Lists switch chip ports on the MikroTik device (`/interface ethernet switch port`).",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial port-name match"),
-      switch_filter: z
-        .string()
-        .optional()
-        .describe("Filter by owning switch, e.g. 'switch1'"),
+      switch_filter: z.string().optional().describe("Filter by owning switch, e.g. 'switch1'"),
     },
     async handler(a, ctx) {
       ctx.info("Listing switch ports");
@@ -42,12 +39,9 @@ export const switchPortTools: ToolModule = [
     name: "get_switch_port",
     title: "Get Switch Port",
     annotations: READ,
-    description:
-      "Gets detailed settings for a specific switch port by name or '.id'.",
+    description: "Gets detailed settings for a specific switch port by name or '.id'.",
     inputSchema: {
-      port_id: z
-        .string()
-        .describe("Port name (e.g. 'ether1') or RouterOS '.id'"),
+      port_id: z.string().describe("Port name (e.g. 'ether1') or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting switch port details: port_id=${a.port_id}`);
@@ -80,22 +74,15 @@ export const switchPortTools: ToolModule = [
       "        'always-strip', or 'add-if-missing'.\n" +
       "    default_vlan_id: PVID for untagged ingress ('auto', 'none', or a number).",
     inputSchema: {
-      port_id: z
-        .string()
-        .describe("Port name (e.g. 'ether1') or RouterOS '.id'"),
-      default_vlan_id: z
-        .string()
-        .optional()
-        .describe("PVID: 'auto', 'none', or a VLAN id number"),
+      port_id: z.string().describe("Port name (e.g. 'ether1') or RouterOS '.id'"),
+      default_vlan_id: z.string().optional().describe("PVID: 'auto', 'none', or a VLAN id number"),
       vlan_mode: VlanMode.optional(),
       vlan_header: VlanHeader.optional(),
       force_vlan_id: z.boolean().optional(),
     },
     async handler(a, ctx) {
       ctx.info(`Updating switch port: port_id=${a.port_id}`);
-      const selector = a.port_id.startsWith("*")
-        ? `.id="${a.port_id}"`
-        : `name="${a.port_id}"`;
+      const selector = a.port_id.startsWith("*") ? `.id="${a.port_id}"` : `name="${a.port_id}"`;
       const base = `/interface ethernet switch port set [find ${selector}]`;
       const cmd = new Cmd(base)
         .opt("default-vlan-id", a.default_vlan_id)
@@ -107,8 +94,7 @@ export const switchPortTools: ToolModule = [
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update switch port: ${result}`;
+      if (looksLikeError(result)) return `Failed to update switch port: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/interface ethernet switch port print detail where ${selector}`,

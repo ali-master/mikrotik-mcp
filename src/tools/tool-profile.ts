@@ -21,10 +21,7 @@ export const profileTools: ToolModule = [
         .min(1)
         .default(5)
         .describe("Sampling duration in seconds (bounds the run)"),
-      cpu: z
-        .string()
-        .optional()
-        .describe("Limit to a specific CPU core (e.g. '0'), or 'all'"),
+      cpu: z.string().optional().describe("Limit to a specific CPU core (e.g. '0'), or 'all'"),
     },
     async handler(a, ctx) {
       ctx.info(`Profiling CPU (duration=${a.duration}s)`);

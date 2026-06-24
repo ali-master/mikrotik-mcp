@@ -33,10 +33,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "interface",
-    "eap_methods",
-    "disabled"
-  ],
+  "required": ["interface", "eap_methods", "disabled"],
   "additionalProperties": false
 }

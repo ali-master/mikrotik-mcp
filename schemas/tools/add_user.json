@@ -24,11 +24,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "password",
-    "group",
-    "disabled"
-  ],
+  "required": ["name", "password", "group", "disabled"],
   "additionalProperties": false
 }

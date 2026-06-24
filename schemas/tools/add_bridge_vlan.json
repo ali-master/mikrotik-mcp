@@ -20,9 +20,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "bridge",
-    "vlan_ids"
-  ],
+  "required": ["bridge", "vlan_ids"],
   "additionalProperties": false
 }

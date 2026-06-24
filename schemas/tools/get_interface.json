@@ -8,8 +8,6 @@
       "description": "Exact interface name, e.g. 'ether1', 'wg0'"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

@@ -1,34 +1,21 @@
 /** SSTP VPN (TLS) — `/interface sstp-server` + `/interface sstp-client`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import { redactSecrets } from "../utils";
-
 
 export const sstpTools: ToolModule = [
   defineTool({
     name: "get_sstp_server",
     title: "Get SSTP Server",
     annotations: READ,
-    description:
-      "Gets the SSTP server (TLS) configuration on the MikroTik device.",
+    description: "Gets the SSTP server (TLS) configuration on the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Getting SSTP server configuration");
-      const result = await executeMikrotikCommand(
-        "/interface sstp-server server print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No SSTP server configuration found."
-        : `SSTP SERVER:\n\n${result}`;
+      const result = await executeMikrotikCommand("/interface sstp-server server print", ctx);
+      return isEmpty(result) ? "No SSTP server configuration found." : `SSTP SERVER:\n\n${result}`;
     },
   }),
 
@@ -36,15 +23,11 @@ export const sstpTools: ToolModule = [
     name: "set_sstp_server",
     title: "Set SSTP Server",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Configures the SSTP server (TLS-based VPN). Requires a TLS certificate.",
+    description: "Configures the SSTP server (TLS-based VPN). Requires a TLS certificate.",
     inputSchema: {
       enabled: z.boolean().optional(),
       default_profile: z.string().optional(),
-      authentication: z
-        .string()
-        .optional()
-        .describe("Comma-separated, e.g. 'mschap2,mschap1'"),
+      authentication: z.string().optional().describe("Comma-separated, e.g. 'mschap2,mschap1'"),
       certificate: z.string().optional().describe("TLS certificate name"),
       port: z.number().int().optional(),
       tls_version: z.enum(["any", "only-1.2"]).optional(),
@@ -62,17 +45,12 @@ export const sstpTools: ToolModule = [
         .bool("verify-client-certificate", a.verify_client_certificate)
         .build();
 
-      if (cmd === "/interface sstp-server server set")
-        return "No updates specified.";
+      if (cmd === "/interface sstp-server server set") return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to configure SSTP server: ${result}`;
+      if (looksLikeError(result)) return `Failed to configure SSTP server: ${result}`;
 
-      const details = await executeMikrotikCommand(
-        "/interface sstp-server server print",
-        ctx,
-      );
+      const details = await executeMikrotikCommand("/interface sstp-server server print", ctx);
       return `SSTP server configured successfully:\n\n${details}`;
     },
   }),
@@ -81,20 +59,14 @@ export const sstpTools: ToolModule = [
     name: "create_sstp_client",
     title: "Create SSTP Client",
     annotations: WRITE,
-    description:
-      "Creates an SSTP client interface connecting to a remote SSTP server over TLS.",
+    description: "Creates an SSTP client interface connecting to a remote SSTP server over TLS.",
     inputSchema: {
       name: z.string().describe("Name for the new SSTP client interface"),
-      connect_to: z
-        .string()
-        .describe("Remote SSTP server address (host:port or IP)"),
+      connect_to: z.string().describe("Remote SSTP server address (host:port or IP)"),
       user: z.string(),
       password: z.string(),
       profile: z.string().optional(),
-      certificate: z
-        .string()
-        .optional()
-        .describe("Client TLS certificate name"),
+      certificate: z.string().optional().describe("Client TLS certificate name"),
       verify_server_certificate: z.boolean().optional(),
       add_default_route: z.boolean().optional(),
       http_proxy: z.string().optional(),
@@ -102,9 +74,7 @@ export const sstpTools: ToolModule = [
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating SSTP client: name=${a.name}, connect_to=${a.connect_to}`,
-      );
+      ctx.info(`Creating SSTP client: name=${a.name}, connect_to=${a.connect_to}`);
       const cmd = new Cmd("/interface sstp-client add")
         .set("name", a.name)
         .set("connect-to", a.connect_to)
@@ -120,8 +90,7 @@ export const sstpTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create SSTP client: ${redactSecrets(result)}`;
+      if (looksLikeError(result)) return `Failed to create SSTP client: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/interface sstp-client print detail where name="${a.name}"`,
@@ -160,8 +129,7 @@ export const sstpTools: ToolModule = [
     name: "get_sstp_client",
     title: "Get SSTP Client",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific SSTP client interface.",
+    description: "Gets detailed information about a specific SSTP client interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting SSTP client details: name=${a.name}`);
@@ -193,8 +161,7 @@ export const sstpTools: ToolModule = [
         `/interface sstp-client remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove SSTP client: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove SSTP client: ${result}`;
       return `SSTP client '${a.name}' removed successfully.`;
     },
   }),

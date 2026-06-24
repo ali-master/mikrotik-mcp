@@ -8,8 +8,6 @@
       "description": "S3 object key"
     }
   },
-  "required": [
-    "key"
-  ],
+  "required": ["key"],
   "additionalProperties": false
 }

@@ -8,8 +8,6 @@
       "description": "IGMP-proxy interface name to remove"
     }
   },
-  "required": [
-    "interface"
-  ],
+  "required": ["interface"],
   "additionalProperties": false
 }

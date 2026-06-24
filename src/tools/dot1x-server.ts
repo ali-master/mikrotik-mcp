@@ -1,28 +1,12 @@
 /** 802.1X authenticator — `/interface dot1x server`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  yesno,
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const AuthTypes = z.enum(["dot1x", "mac-auth", "dot1x,mac-auth"]);
-const MacAuthMode = z.enum([
-  "mac-as-username",
-  "mac-as-username-and-password",
-]);
+const MacAuthMode = z.enum(["mac-as-username", "mac-as-username-and-password"]);
 
 export const dot1xServerTools: ToolModule = [
   defineTool({
@@ -69,8 +53,7 @@ export const dot1xServerTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add dot1x server: ${result}`;
+      if (looksLikeError(result)) return `Failed to add dot1x server: ${result}`;
       const details = await executeMikrotikCommand(
         `/interface dot1x server print detail where interface="${a.interface}"`,
         ctx,
@@ -110,12 +93,9 @@ export const dot1xServerTools: ToolModule = [
     name: "get_dot1x_server",
     title: "Get Dot1x Server",
     annotations: READ,
-    description:
-      "Gets a specific 802.1X authenticator by interface or '.id'.",
+    description: "Gets a specific 802.1X authenticator by interface or '.id'.",
     inputSchema: {
-      server_id: z
-        .string()
-        .describe("Interface name (e.g. 'ether2') or RouterOS '.id'"),
+      server_id: z.string().describe("Interface name (e.g. 'ether2') or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting dot1x server: server_id=${a.server_id}`);
@@ -177,8 +157,7 @@ export const dot1xServerTools: ToolModule = [
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update dot1x server: ${result}`;
+      if (looksLikeError(result)) return `Failed to update dot1x server: ${result}`;
       const details = await executeMikrotikCommand(
         `/interface dot1x server print detail where ${selector}`,
         ctx,
@@ -191,8 +170,7 @@ export const dot1xServerTools: ToolModule = [
     name: "remove_dot1x_server",
     title: "Remove Dot1x Server",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes an 802.1X authenticator by interface or '.id' from the MikroTik device.",
+    description: "Removes an 802.1X authenticator by interface or '.id' from the MikroTik device.",
     inputSchema: {
       server_id: z.string().describe("Interface name or RouterOS '.id'"),
     },
@@ -211,8 +189,7 @@ export const dot1xServerTools: ToolModule = [
         `/interface dot1x server remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove dot1x server: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove dot1x server: ${result}`;
       return `Dot1x server '${a.server_id}' removed successfully.`;
     },
   }),

@@ -1,13 +1,7 @@
 /** Bidirectional Forwarding Detection — `/routing bfd` (RouterOS v7). */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import {
   yesno,
@@ -33,14 +27,9 @@ export const routingBfdTools: ToolModule = [
       "hold timers. Each entry binds timers to a set of interfaces in a VRF.",
     async handler(_a, ctx) {
       ctx.info("Listing BFD configurations");
-      const result = await executeMikrotikCommand(
-        "/routing bfd configuration print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing bfd configuration print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No BFD configurations found."
-        : `BFD CONFIGURATIONS:\n\n${result}`;
+      return isEmpty(result) ? "No BFD configurations found." : `BFD CONFIGURATIONS:\n\n${result}`;
     },
   }),
 
@@ -53,23 +42,11 @@ export const routingBfdTools: ToolModule = [
       "`min_rx`/`min_tx` are the desired minimum receive/transmit intervals and `multiplier` is how many " +
       "missed packets declare the session down (detection time ≈ interval × multiplier).",
     inputSchema: {
-      interfaces: z
-        .string()
-        .describe("Interface or interface-list name BFD runs on"),
+      interfaces: z.string().describe("Interface or interface-list name BFD runs on"),
       vrf: z.string().optional().describe("VRF (default 'main')"),
-      min_rx: z
-        .string()
-        .optional()
-        .describe('Desired min RX interval, e.g. "200ms"'),
-      min_tx: z
-        .string()
-        .optional()
-        .describe('Desired min TX interval, e.g. "200ms"'),
-      multiplier: z
-        .number()
-        .int()
-        .optional()
-        .describe("Detection multiplier, e.g. 5"),
+      min_rx: z.string().optional().describe('Desired min RX interval, e.g. "200ms"'),
+      min_tx: z.string().optional().describe('Desired min TX interval, e.g. "200ms"'),
+      multiplier: z.number().int().optional().describe("Detection multiplier, e.g. 5"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -87,12 +64,9 @@ export const routingBfdTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add BFD configuration: ${result}`;
+      if (looksLikeError(result)) return `Failed to add BFD configuration: ${result}`;
       const t = result.trim();
-      return t
-        ? `BFD configuration added (id ${t}).`
-        : "BFD configuration added successfully.";
+      return t ? `BFD configuration added (id ${t}).` : "BFD configuration added successfully.";
     },
   }),
 
@@ -128,8 +102,7 @@ export const routingBfdTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update BFD configuration: ${result}`;
+      if (looksLikeError(result)) return `Failed to update BFD configuration: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing bfd configuration print detail where .id=${a.config_id}`,
         ctx,
@@ -153,8 +126,7 @@ export const routingBfdTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove BFD configuration: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove BFD configuration: ${result}`;
       return `BFD configuration '${a.config_id}' removed successfully.`;
     },
   }),
@@ -175,8 +147,7 @@ export const routingBfdTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update BFD configuration: ${result}`;
+      if (looksLikeError(result)) return `Failed to update BFD configuration: ${result}`;
       return `BFD configuration '${a.config_id}' ${a.enabled ? "enabled" : "disabled"}.`;
     },
   }),
@@ -190,10 +161,7 @@ export const routingBfdTools: ToolModule = [
       "Lists live BFD sessions (`/routing bfd session`): each neighbor's state (up/down), local/remote discriminators " +
       "and negotiated timers. Read-only — use it to confirm BFD is actually up before relying on it for fast failover.",
     inputSchema: {
-      up_only: z
-        .boolean()
-        .default(false)
-        .describe("Show only sessions currently up"),
+      up_only: z.boolean().default(false).describe("Show only sessions currently up"),
     },
     async handler(a, ctx) {
       ctx.info("Listing BFD sessions");
@@ -204,9 +172,7 @@ export const routingBfdTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No BFD sessions found."
-        : `BFD SESSIONS:\n\n${result}`;
+      return isEmpty(result) ? "No BFD sessions found." : `BFD SESSIONS:\n\n${result}`;
     },
   }),
 ];

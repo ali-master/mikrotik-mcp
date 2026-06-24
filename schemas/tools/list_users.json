@@ -18,9 +18,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "disabled_only",
-    "active_only"
-  ],
+  "required": ["disabled_only", "active_only"],
   "additionalProperties": false
 }

@@ -4,6 +4,7 @@ title: Back up and document the configuration
 description: Create a safe restore point and produce a human-readable inventory of the router's configuration.
 arguments: []
 ---
+
 Create a restore point for this MikroTik device and then write up a clear,
 human-readable summary of how it's configured. This is read-mostly: the only
 change is creating a backup/export.

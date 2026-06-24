@@ -369,7 +369,10 @@ export default defineConfig({
       "unicorn/no-instanceof-builtins": "error",
       "unicorn/no-new-array": "error",
       "unicorn/no-new-buffer": "error",
-      "unicorn/number-literal-case": "error",
+      // Off: conflicts with the formatter. `vp fmt` (Prettier) lowercases hex
+      // digits, while this rule demands uppercase — auto-fixing one re-breaks the
+      // other. The formatter owns numeric-literal casing.
+      "unicorn/number-literal-case": "off",
       "unicorn/prefer-dom-node-text-content": "error",
       "unicorn/prefer-includes": "error",
       "unicorn/prefer-node-protocol": "error",

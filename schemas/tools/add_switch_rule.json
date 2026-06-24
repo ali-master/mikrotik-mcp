@@ -87,10 +87,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "switch",
-    "ports",
-    "disabled"
-  ],
+  "required": ["switch", "ports", "disabled"],
   "additionalProperties": false
 }

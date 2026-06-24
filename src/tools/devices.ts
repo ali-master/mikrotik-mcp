@@ -26,12 +26,7 @@ export const deviceTools: ToolModule = [
       const lines = names.map((name) => {
         const d = devices[name];
         const tag = name === def ? " (default)" : "";
-        const auth =
-          d.keyFilename || d.privateKey
-            ? "key"
-            : d.password
-              ? "password"
-              : "none";
+        const auth = d.keyFilename || d.privateKey ? "key" : d.password ? "password" : "none";
         const desc = d.description ? ` — ${d.description}` : "";
         return `• ${name}${tag}: ${d.username}@${d.host}:${d.port} [auth: ${auth}]${desc}`;
       });

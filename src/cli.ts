@@ -62,7 +62,7 @@ TRANSPORT OPTIONS
 
 OBSERVABILITY DASHBOARD  (optional; real-time feed + analytics of every tool call)
   --dashboard               Enable the dashboard     (MIKROTIK_DASHBOARD__ENABLED)
-  --dashboard-host          Bind host (default 127.0.0.1)  (MIKROTIK_DASHBOARD__HOST)
+  --dashboard-host          Bind host (default 0.0.0.0=LAN) (MIKROTIK_DASHBOARD__HOST)
   --dashboard-port          Bind port (default 9090)       (MIKROTIK_DASHBOARD__PORT)
   --dashboard-db            SQLite path (bun:sqlite; ":memory:" for ephemeral)
                                                            (MIKROTIK_DASHBOARD__DB_PATH)

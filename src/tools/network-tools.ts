@@ -28,10 +28,7 @@ export const networkToolTools: ToolModule = [
         .default(4)
         .describe("Number of echo requests (1-100)"),
       interface: z.string().optional().describe("Outgoing interface"),
-      src_address: z
-        .string()
-        .optional()
-        .describe("Source address to ping from"),
+      src_address: z.string().optional().describe("Source address to ping from"),
       size: z.number().int().optional().describe("Packet size in bytes"),
     },
     async handler(a, ctx) {
@@ -43,11 +40,8 @@ export const networkToolTools: ToolModule = [
         .opt("size", a.size)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to ping ${a.address}: ${result}`;
-      return isEmpty(result)
-        ? `No response from ${a.address}.`
-        : `PING ${a.address}:\n\n${result}`;
+      if (looksLikeError(result)) return `Failed to ping ${a.address}: ${result}`;
+      return isEmpty(result) ? `No response from ${a.address}.` : `PING ${a.address}:\n\n${result}`;
     },
   }),
 
@@ -64,10 +58,7 @@ export const networkToolTools: ToolModule = [
         .int()
         .default(3)
         .describe("Number of probes per hop (keep small to bound the run)"),
-      use_dns: z
-        .boolean()
-        .optional()
-        .describe("Resolve hop addresses to names"),
+      use_dns: z.boolean().optional().describe("Resolve hop addresses to names"),
     },
     async handler(a, ctx) {
       ctx.info(`Tracerouting ${a.address} (count=${a.count})`);
@@ -76,8 +67,7 @@ export const networkToolTools: ToolModule = [
         .flag("use-dns", a.use_dns)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to traceroute ${a.address}: ${result}`;
+      if (looksLikeError(result)) return `Failed to traceroute ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No route information for ${a.address}.`
         : `TRACEROUTE ${a.address}:\n\n${result}`;
@@ -92,20 +82,10 @@ export const networkToolTools: ToolModule = [
       "Runs a throughput test against a target that must be running a bandwidth-test server. Output reflects a bounded run of `duration` seconds; it does not run indefinitely.",
     inputSchema: {
       address: z.string().describe("Target running a bandwidth-test server"),
-      duration: z
-        .number()
-        .int()
-        .default(5)
-        .describe("Test duration in seconds"),
+      duration: z.number().int().default(5).describe("Test duration in seconds"),
       direction: z.enum(["receive", "transmit", "both"]).default("receive"),
-      user: z
-        .string()
-        .optional()
-        .describe("Username for the bandwidth-test server"),
-      password: z
-        .string()
-        .optional()
-        .describe("Password for the bandwidth-test server"),
+      user: z.string().optional().describe("Username for the bandwidth-test server"),
+      password: z.string().optional().describe("Password for the bandwidth-test server"),
       protocol: z.enum(["tcp", "udp"]).default("tcp"),
     },
     async handler(a, ctx) {
@@ -120,8 +100,7 @@ export const networkToolTools: ToolModule = [
         .opt("password", a.password)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to run bandwidth test to ${a.address}: ${result}`;
+      if (looksLikeError(result)) return `Failed to run bandwidth test to ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No bandwidth test results for ${a.address}.`
         : `BANDWIDTH TEST:\n\n${result}`;
@@ -132,8 +111,7 @@ export const networkToolTools: ToolModule = [
     name: "resolve_dns",
     title: "Resolve DNS",
     annotations: READ,
-    description:
-      "Resolves a DNS name to an address using the device's configured resolver.",
+    description: "Resolves a DNS name to an address using the device's configured resolver.",
     inputSchema: {
       name: z.string().describe("DNS name to resolve, e.g. 'example.com'"),
       server: z
@@ -145,12 +123,8 @@ export const networkToolTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Resolving DNS name ${a.name}`);
-      const result = await executeMikrotikCommand(
-        `:put [:resolve "${a.name}"]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to resolve ${a.name}: ${result}`;
+      const result = await executeMikrotikCommand(`:put [:resolve "${a.name}"]`, ctx);
+      if (looksLikeError(result)) return `Failed to resolve ${a.name}: ${result}`;
       return isEmpty(result)
         ? `Could not resolve ${a.name}.`
         : `DNS RESOLVE ${a.name}:\n\n${result}`;
@@ -165,19 +139,10 @@ export const networkToolTools: ToolModule = [
       "Adds a netwatch entry that monitors a host and optionally runs scripts on up/down transitions.",
     inputSchema: {
       host: z.string().describe("Host to monitor"),
-      interval: z
-        .string()
-        .optional()
-        .describe("Probe interval, e.g. '00:00:10'"),
+      interval: z.string().optional().describe("Probe interval, e.g. '00:00:10'"),
       timeout: z.string().optional().describe("Probe timeout, e.g. '00:00:01'"),
-      up_script: z
-        .string()
-        .optional()
-        .describe("Script to run when the host comes up"),
-      down_script: z
-        .string()
-        .optional()
-        .describe("Script to run when the host goes down"),
+      up_script: z.string().optional().describe("Script to run when the host comes up"),
+      down_script: z.string().optional().describe("Script to run when the host goes down"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -257,8 +222,7 @@ export const networkToolTools: ToolModule = [
         `/tool netwatch print count-only where host="${a.host}"`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Netwatch entry for '${a.host}' not found.`;
+      if (count.trim() === "0") return `Netwatch entry for '${a.host}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/tool netwatch remove [find host="${a.host}"]`,

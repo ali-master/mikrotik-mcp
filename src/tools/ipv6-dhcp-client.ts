@@ -1,13 +1,7 @@
 /** DHCPv6 client — `/ipv6 dhcp-client`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -49,10 +43,7 @@ export const ipv6DhcpClientTools: ToolModule = [
       default_route_distance: z.number().int().optional(),
       use_peer_dns: z.boolean().optional(),
       rapid_commit: z.boolean().optional(),
-      dhcp_options: z
-        .string()
-        .optional()
-        .describe("Comma-separated custom DHCP option names"),
+      dhcp_options: z.string().optional().describe("Comma-separated custom DHCP option names"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -74,8 +65,7 @@ export const ipv6DhcpClientTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add DHCPv6 client: ${result}`;
+      if (looksLikeError(result)) return `Failed to add DHCPv6 client: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 dhcp-client print detail where interface="${a.interface}"`,
         ctx,
@@ -122,12 +112,9 @@ export const ipv6DhcpClientTools: ToolModule = [
     name: "get_ipv6_dhcp_client",
     title: "Get DHCPv6 Client",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific DHCPv6 client by ID or interface.",
+    description: "Gets detailed information about a specific DHCPv6 client by ID or interface.",
     inputSchema: {
-      client_id: z
-        .string()
-        .describe("RouterOS .id (e.g. '*1') or the interface name"),
+      client_id: z.string().describe("RouterOS .id (e.g. '*1') or the interface name"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting DHCPv6 client details: client_id=${a.client_id}`);
@@ -151,8 +138,7 @@ export const ipv6DhcpClientTools: ToolModule = [
     name: "release_ipv6_dhcp_client",
     title: "Release DHCPv6 Client",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Releases the current DHCPv6 lease/prefix for a client (by ID or interface).",
+    description: "Releases the current DHCPv6 lease/prefix for a client (by ID or interface).",
     inputSchema: { client_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Releasing DHCPv6 client: client_id=${a.client_id}`);
@@ -160,8 +146,7 @@ export const ipv6DhcpClientTools: ToolModule = [
         `/ipv6 dhcp-client release [find interface="${a.client_id}" or .id="${a.client_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to release DHCPv6 client: ${result}`;
+      if (looksLikeError(result)) return `Failed to release DHCPv6 client: ${result}`;
       return `DHCPv6 client '${a.client_id}' released.`;
     },
   }),
@@ -170,8 +155,7 @@ export const ipv6DhcpClientTools: ToolModule = [
     name: "renew_ipv6_dhcp_client",
     title: "Renew DHCPv6 Client",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Renews the DHCPv6 lease/prefix for a client (by ID or interface).",
+    description: "Renews the DHCPv6 lease/prefix for a client (by ID or interface).",
     inputSchema: { client_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Renewing DHCPv6 client: client_id=${a.client_id}`);
@@ -179,8 +163,7 @@ export const ipv6DhcpClientTools: ToolModule = [
         `/ipv6 dhcp-client renew [find interface="${a.client_id}" or .id="${a.client_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to renew DHCPv6 client: ${result}`;
+      if (looksLikeError(result)) return `Failed to renew DHCPv6 client: ${result}`;
       return `DHCPv6 client '${a.client_id}' renew requested.`;
     },
   }),
@@ -189,8 +172,7 @@ export const ipv6DhcpClientTools: ToolModule = [
     name: "remove_ipv6_dhcp_client",
     title: "Remove DHCPv6 Client",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a DHCPv6 client from the MikroTik device by ID or interface.",
+    description: "Removes a DHCPv6 client from the MikroTik device by ID or interface.",
     inputSchema: { client_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCPv6 client: client_id=${a.client_id}`);
@@ -205,18 +187,14 @@ export const ipv6DhcpClientTools: ToolModule = [
           `/ipv6 dhcp-client print count-only where interface="${a.client_id}"`,
           ctx,
         );
-        if (count.trim() === "0")
-          return `DHCPv6 client '${a.client_id}' not found.`;
+        if (count.trim() === "0") return `DHCPv6 client '${a.client_id}' not found.`;
       }
-      const selector = byId
-        ? `.id="${a.client_id}"`
-        : `interface="${a.client_id}"`;
+      const selector = byId ? `.id="${a.client_id}"` : `interface="${a.client_id}"`;
       const result = await executeMikrotikCommand(
         `/ipv6 dhcp-client remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove DHCPv6 client: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove DHCPv6 client: ${result}`;
       return `DHCPv6 client '${a.client_id}' removed successfully.`;
     },
   }),

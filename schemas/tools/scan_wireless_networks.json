@@ -13,9 +13,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "interface",
-    "duration"
-  ],
+  "required": ["interface", "duration"],
   "additionalProperties": false
 }

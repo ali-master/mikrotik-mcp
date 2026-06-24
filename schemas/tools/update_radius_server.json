@@ -48,8 +48,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "radius_id"
-  ],
+  "required": ["radius_id"],
   "additionalProperties": false
 }

@@ -6,12 +6,7 @@
     "action": {
       "default": "lookup",
       "type": "string",
-      "enum": [
-        "lookup",
-        "lookup-only-in-table",
-        "drop",
-        "unreachable"
-      ]
+      "enum": ["lookup", "lookup-only-in-table", "drop", "unreachable"]
     },
     "table": {
       "description": "Target routing table for lookup actions",
@@ -55,9 +50,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "action",
-    "disabled"
-  ],
+  "required": ["action", "disabled"],
   "additionalProperties": false
 }

@@ -15,10 +15,7 @@
  */
 const SENSITIVE_KEYS = ["password", "shared-secret", "secret"] as const;
 
-const REDACT_RE = new RegExp(
-  `(?<![\\w-])(${SENSITIVE_KEYS.join("|")})="[^"]*"`,
-  "g",
-);
+const REDACT_RE = new RegExp(`(?<![\\w-])(${SENSITIVE_KEYS.join("|")})="[^"]*"`, "g");
 
 export function redactSecrets(text: string): string {
   return text.replace(REDACT_RE, '$1="***"');

@@ -1,21 +1,9 @@
 /** IPv6 firewall filter rules — `/ipv6 firewall filter`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -75,20 +63,17 @@ async function updateFilterRule(
   put("limit", a.limit);
   put("tcp-flags", a.tcp_flags);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
-  if (a.disabled !== undefined)
-    updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
+  if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
     updates.push(`log=${a.log ? "yes" : "no"}`);
-    if (a.log && a.log_prefix)
-      updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
+    if (a.log && a.log_prefix) updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
   }
 
   if (updates.length === 0) return "No updates specified.";
 
   const cmd = `/ipv6 firewall filter set ${a.rule_id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
-  if (looksLikeError(result))
-    return `Failed to update IPv6 firewall filter rule: ${result}`;
+  if (looksLikeError(result)) return `Failed to update IPv6 firewall filter rule: ${result}`;
 
   const details = await executeMikrotikCommand(
     `/ipv6 firewall filter print detail where .id=${a.rule_id}`,
@@ -137,18 +122,9 @@ export const ipv6FirewallFilterTools: ToolModule = [
         .describe('Comma-separated e.g. "established,related,new,invalid"'),
       src_address_list: z.string().optional(),
       dst_address_list: z.string().optional(),
-      hop_limit: z
-        .string()
-        .optional()
-        .describe('Hop-limit expression e.g. "equal:1" or "less:64"'),
-      limit: z
-        .string()
-        .optional()
-        .describe('RouterOS rate/burst string e.g. "10,5:packet"'),
-      tcp_flags: z
-        .string()
-        .optional()
-        .describe('RouterOS flag expression e.g. "syn,!ack"'),
+      hop_limit: z.string().optional().describe('Hop-limit expression e.g. "equal:1" or "less:64"'),
+      limit: z.string().optional().describe('RouterOS rate/burst string e.g. "10,5:packet"'),
+      tcp_flags: z.string().optional().describe('RouterOS flag expression e.g. "syn,!ack"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
@@ -159,9 +135,7 @@ export const ipv6FirewallFilterTools: ToolModule = [
         .describe('Rule number or ID (*N) to insert before e.g. "0" or "*3"'),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating IPv6 firewall filter rule: chain=${a.chain}, action=${a.action}`,
-      );
+      ctx.info(`Creating IPv6 firewall filter rule: chain=${a.chain}, action=${a.action}`);
 
       const cmd = new Cmd("/ipv6 firewall filter add")
         .set("chain", a.chain)
@@ -242,10 +216,8 @@ export const ipv6FirewallFilterTools: ToolModule = [
       const filters: string[] = [];
       if (a.chain_filter) filters.push(`chain=${a.chain_filter}`);
       if (a.action_filter) filters.push(`action=${a.action_filter}`);
-      if (a.src_address_filter)
-        filters.push(`src-address~"${a.src_address_filter}"`);
-      if (a.dst_address_filter)
-        filters.push(`dst-address~"${a.dst_address_filter}"`);
+      if (a.src_address_filter) filters.push(`src-address~"${a.src_address_filter}"`);
+      if (a.dst_address_filter) filters.push(`dst-address~"${a.dst_address_filter}"`);
       if (a.protocol_filter) filters.push(`protocol=${a.protocol_filter}`);
       if (a.interface_filter) {
         filters.push(
@@ -277,9 +249,7 @@ export const ipv6FirewallFilterTools: ToolModule = [
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Getting IPv6 firewall filter rule details: rule_id=${a.rule_id}`,
-      );
+      ctx.info(`Getting IPv6 firewall filter rule details: rule_id=${a.rule_id}`);
       const result = await executeMikrotikCommand(
         `/ipv6 firewall filter print detail where .id=${a.rule_id}`,
         ctx,
@@ -345,12 +315,8 @@ export const ipv6FirewallFilterTools: ToolModule = [
       if (count.trim() === "0")
         return `IPv6 firewall filter rule with ID '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 firewall filter remove ${a.rule_id}`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 firewall filter rule: ${result}`;
+      const result = await executeMikrotikCommand(`/ipv6 firewall filter remove ${a.rule_id}`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 firewall filter rule: ${result}`;
       return `IPv6 firewall filter rule with ID '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -382,8 +348,7 @@ export const ipv6FirewallFilterTools: ToolModule = [
         `/ipv6 firewall filter move ${a.rule_id} destination=${a.destination}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to move IPv6 firewall filter rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to move IPv6 firewall filter rule: ${result}`;
       return `IPv6 firewall filter rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
     },
   }),

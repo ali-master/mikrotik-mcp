@@ -1,31 +1,20 @@
 /** OpenVPN (OVPN) — `/interface ovpn-server` + `/interface ovpn-client`. RouterOS 7 supports UDP + TCP. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import { redactSecrets } from "../utils";
-
 
 export const openvpnTools: ToolModule = [
   defineTool({
     name: "get_ovpn_server",
     title: "Get OpenVPN Server",
     annotations: READ,
-    description:
-      "Gets the OpenVPN (OVPN) server configuration on the MikroTik device.",
+    description: "Gets the OpenVPN (OVPN) server configuration on the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Getting OpenVPN server configuration");
-      const result = await executeMikrotikCommand(
-        "/interface ovpn-server server print",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/interface ovpn-server server print", ctx);
       return isEmpty(result)
         ? "No OpenVPN server configuration found."
         : `OPENVPN SERVER:\n\n${result}`;
@@ -36,19 +25,12 @@ export const openvpnTools: ToolModule = [
     name: "set_ovpn_server",
     title: "Set OpenVPN Server",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Configures the OpenVPN (OVPN) server. RouterOS 7 supports both UDP and TCP.",
+    description: "Configures the OpenVPN (OVPN) server. RouterOS 7 supports both UDP and TCP.",
     inputSchema: {
       enabled: z.boolean().optional(),
       certificate: z.string().optional(),
-      auth: z
-        .string()
-        .optional()
-        .describe("Comma-separated, e.g. 'sha256,sha1'"),
-      cipher: z
-        .string()
-        .optional()
-        .describe("Comma-separated, e.g. 'aes256-cbc,aes256-gcm'"),
+      auth: z.string().optional().describe("Comma-separated, e.g. 'sha256,sha1'"),
+      cipher: z.string().optional().describe("Comma-separated, e.g. 'aes256-cbc,aes256-gcm'"),
       netmask: z.number().int().optional(),
       mode: z.enum(["ip", "ethernet"]).optional(),
       port: z.number().int().optional(),
@@ -73,17 +55,12 @@ export const openvpnTools: ToolModule = [
         .opt("max-mtu", a.max_mtu)
         .build();
 
-      if (cmd === "/interface ovpn-server server set")
-        return "No updates specified.";
+      if (cmd === "/interface ovpn-server server set") return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to configure OpenVPN server: ${result}`;
+      if (looksLikeError(result)) return `Failed to configure OpenVPN server: ${result}`;
 
-      const details = await executeMikrotikCommand(
-        "/interface ovpn-server server print",
-        ctx,
-      );
+      const details = await executeMikrotikCommand("/interface ovpn-server server print", ctx);
       return `OpenVPN server configured successfully:\n\n${details}`;
     },
   }),
@@ -112,9 +89,7 @@ export const openvpnTools: ToolModule = [
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating OpenVPN client: name=${a.name}, connect_to=${a.connect_to}`,
-      );
+      ctx.info(`Creating OpenVPN client: name=${a.name}, connect_to=${a.connect_to}`);
       const cmd = new Cmd("/interface ovpn-client add")
         .set("name", a.name)
         .set("connect-to", a.connect_to)
@@ -151,8 +126,7 @@ export const openvpnTools: ToolModule = [
     name: "list_ovpn_clients",
     title: "List OpenVPN Clients",
     annotations: READ,
-    description:
-      "Lists OpenVPN (OVPN) client interfaces on the MikroTik device.",
+    description: "Lists OpenVPN (OVPN) client interfaces on the MikroTik device.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -175,8 +149,7 @@ export const openvpnTools: ToolModule = [
     name: "get_ovpn_client",
     title: "Get OpenVPN Client",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific OpenVPN client interface.",
+    description: "Gets detailed information about a specific OpenVPN client interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting OpenVPN client details: name=${a.name}`);
@@ -194,8 +167,7 @@ export const openvpnTools: ToolModule = [
     name: "remove_ovpn_client",
     title: "Remove OpenVPN Client",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes an OpenVPN client interface from the MikroTik device.",
+    description: "Removes an OpenVPN client interface from the MikroTik device.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing OpenVPN client: name=${a.name}`);
@@ -209,8 +181,7 @@ export const openvpnTools: ToolModule = [
         `/interface ovpn-client remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove OpenVPN client: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove OpenVPN client: ${result}`;
       return `OpenVPN client '${a.name}' removed successfully.`;
     },
   }),
@@ -227,8 +198,7 @@ export const openvpnTools: ToolModule = [
         `/interface ovpn-client enable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable OpenVPN client: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable OpenVPN client: ${result}`;
       return `OpenVPN client '${a.name}' enabled successfully.`;
     },
   }),
@@ -245,8 +215,7 @@ export const openvpnTools: ToolModule = [
         `/interface ovpn-client disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable OpenVPN client: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable OpenVPN client: ${result}`;
       return `OpenVPN client '${a.name}' disabled successfully.`;
     },
   }),

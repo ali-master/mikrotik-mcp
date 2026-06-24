@@ -34,19 +34,12 @@
     },
     "arp": {
       "type": "string",
-      "enum": [
-        "enabled",
-        "disabled",
-        "proxy-arp",
-        "reply-only"
-      ]
+      "enum": ["enabled", "disabled", "proxy-arp", "reply-only"]
     },
     "arp_timeout": {
       "type": "string"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

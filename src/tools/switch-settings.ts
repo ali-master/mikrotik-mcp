@@ -36,12 +36,9 @@ export const switchSettingsTools: ToolModule = [
     name: "get_switch",
     title: "Get Switch",
     annotations: READ,
-    description:
-      "Gets detailed settings for a specific switch chip by name or '.id'.",
+    description: "Gets detailed settings for a specific switch chip by name or '.id'.",
     inputSchema: {
-      switch_id: z
-        .string()
-        .describe("Switch name (e.g. 'switch1') or RouterOS '.id'"),
+      switch_id: z.string().describe("Switch name (e.g. 'switch1') or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting switch details: switch_id=${a.switch_id}`);
@@ -74,19 +71,11 @@ export const switchSettingsTools: ToolModule = [
       "        monitor port (or 'cpu'). Availability is chip-dependent.\n" +
       "    Pass mirror_source/mirror_target='none' to disable mirroring.",
     inputSchema: {
-      switch_id: z
-        .string()
-        .describe("Switch name (e.g. 'switch1') or RouterOS '.id'"),
+      switch_id: z.string().describe("Switch name (e.g. 'switch1') or RouterOS '.id'"),
       name: z.string().optional().describe("Rename the switch"),
       cpu_flow_control: z.boolean().optional(),
-      mirror_source: z
-        .string()
-        .optional()
-        .describe("Source port to mirror, or 'none'"),
-      mirror_target: z
-        .string()
-        .optional()
-        .describe("Monitor port, 'cpu', or 'none'"),
+      mirror_source: z.string().optional().describe("Source port to mirror, or 'none'"),
+      mirror_target: z.string().optional().describe("Monitor port, 'cpu', or 'none'"),
       mirror_egress: z
         .string()
         .optional()
@@ -111,9 +100,7 @@ export const switchSettingsTools: ToolModule = [
       const result = await executeMikrotikCommand(built, ctx);
       if (looksLikeError(result)) return `Failed to update switch: ${result}`;
 
-      const detailSelector = a.name
-        ? `name="${a.name}"`
-        : selector;
+      const detailSelector = a.name ? `name="${a.name}"` : selector;
       const details = await executeMikrotikCommand(
         `/interface ethernet switch print detail where ${detailSelector}`,
         ctx,

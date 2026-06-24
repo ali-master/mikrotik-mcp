@@ -27,11 +27,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "name",
-    "auth_algorithms",
-    "enc_algorithms",
-    "pfs_group"
-  ],
+  "required": ["name", "auth_algorithms", "enc_algorithms", "pfs_group"],
   "additionalProperties": false
 }

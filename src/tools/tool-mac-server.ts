@@ -11,17 +11,11 @@ export const macServerTools: ToolModule = [
     name: "get_mac_server",
     title: "Get MAC Server",
     annotations: READ,
-    description:
-      "Gets the MAC-Telnet server settings (`/tool mac-server`).",
+    description: "Gets the MAC-Telnet server settings (`/tool mac-server`).",
     async handler(_a, ctx) {
       ctx.info("Getting mac-server settings");
-      const result = await executeMikrotikCommand(
-        "/tool mac-server print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "Unable to read mac-server settings."
-        : `MAC SERVER:\n\n${result}`;
+      const result = await executeMikrotikCommand("/tool mac-server print", ctx);
+      return isEmpty(result) ? "Unable to read mac-server settings." : `MAC SERVER:\n\n${result}`;
     },
   }),
 
@@ -35,9 +29,7 @@ export const macServerTools: ToolModule = [
       "    allowed_interface_list: which interfaces accept MAC-Telnet — an\n" +
       "        interface-list name, or 'all' / 'none'.",
     inputSchema: {
-      allowed_interface_list: z
-        .string()
-        .describe("Interface-list name, or 'all' / 'none'"),
+      allowed_interface_list: z.string().describe("Interface-list name, or 'all' / 'none'"),
     },
     async handler(a, ctx) {
       ctx.info("Updating mac-server settings");
@@ -45,12 +37,8 @@ export const macServerTools: ToolModule = [
         .set("allowed-interface-list", a.allowed_interface_list)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update mac-server: ${result}`;
-      const details = await executeMikrotikCommand(
-        "/tool mac-server print",
-        ctx,
-      );
+      if (looksLikeError(result)) return `Failed to update mac-server: ${result}`;
+      const details = await executeMikrotikCommand("/tool mac-server print", ctx);
       return `MAC server updated successfully:\n\n${details}`;
     },
   }),
@@ -60,14 +48,10 @@ export const macServerTools: ToolModule = [
     name: "get_mac_winbox",
     title: "Get MAC Winbox Server",
     annotations: READ,
-    description:
-      "Gets the MAC-Winbox server settings (`/tool mac-server mac-winbox`).",
+    description: "Gets the MAC-Winbox server settings (`/tool mac-server mac-winbox`).",
     async handler(_a, ctx) {
       ctx.info("Getting mac-winbox settings");
-      const result = await executeMikrotikCommand(
-        "/tool mac-server mac-winbox print",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/tool mac-server mac-winbox print", ctx);
       return isEmpty(result)
         ? "Unable to read mac-winbox settings."
         : `MAC WINBOX SERVER:\n\n${result}`;
@@ -82,9 +66,7 @@ export const macServerTools: ToolModule = [
       "Updates the MAC-Winbox server settings of the MikroTik device " +
       "(which interfaces accept Winbox over MAC).",
     inputSchema: {
-      allowed_interface_list: z
-        .string()
-        .describe("Interface-list name, or 'all' / 'none'"),
+      allowed_interface_list: z.string().describe("Interface-list name, or 'all' / 'none'"),
     },
     async handler(a, ctx) {
       ctx.info("Updating mac-winbox settings");
@@ -92,12 +74,8 @@ export const macServerTools: ToolModule = [
         .set("allowed-interface-list", a.allowed_interface_list)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update mac-winbox: ${result}`;
-      const details = await executeMikrotikCommand(
-        "/tool mac-server mac-winbox print",
-        ctx,
-      );
+      if (looksLikeError(result)) return `Failed to update mac-winbox: ${result}`;
+      const details = await executeMikrotikCommand("/tool mac-server mac-winbox print", ctx);
       return `MAC Winbox server updated successfully:\n\n${details}`;
     },
   }),
@@ -107,17 +85,11 @@ export const macServerTools: ToolModule = [
     name: "get_mac_ping",
     title: "Get MAC Ping",
     annotations: READ,
-    description:
-      "Gets the MAC-ping server setting (`/tool mac-server ping`).",
+    description: "Gets the MAC-ping server setting (`/tool mac-server ping`).",
     async handler(_a, ctx) {
       ctx.info("Getting mac-ping settings");
-      const result = await executeMikrotikCommand(
-        "/tool mac-server ping print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "Unable to read mac-ping settings."
-        : `MAC PING:\n\n${result}`;
+      const result = await executeMikrotikCommand("/tool mac-server ping print", ctx);
+      return isEmpty(result) ? "Unable to read mac-ping settings." : `MAC PING:\n\n${result}`;
     },
   }),
 
@@ -125,23 +97,16 @@ export const macServerTools: ToolModule = [
     name: "update_mac_ping",
     title: "Update MAC Ping",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Enables or disables the MAC-ping server (`/tool mac-server ping`).",
+    description: "Enables or disables the MAC-ping server (`/tool mac-server ping`).",
     inputSchema: {
       enabled: z.boolean().describe("Whether MAC-ping is enabled"),
     },
     async handler(a, ctx) {
       ctx.info(`Updating mac-ping: enabled=${a.enabled}`);
-      const cmd = new Cmd("/tool mac-server ping set")
-        .bool("enabled", a.enabled)
-        .build();
+      const cmd = new Cmd("/tool mac-server ping set").bool("enabled", a.enabled).build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update mac-ping: ${result}`;
-      const details = await executeMikrotikCommand(
-        "/tool mac-server ping print",
-        ctx,
-      );
+      if (looksLikeError(result)) return `Failed to update mac-ping: ${result}`;
+      const details = await executeMikrotikCommand("/tool mac-server ping print", ctx);
       return `MAC ping updated successfully:\n\n${details}`;
     },
   }),
@@ -151,8 +116,7 @@ export const macServerTools: ToolModule = [
     name: "list_mac_server_sessions",
     title: "List MAC Server Sessions",
     annotations: READ,
-    description:
-      "Lists active MAC-Telnet sessions (`/tool mac-server session`).",
+    description: "Lists active MAC-Telnet sessions (`/tool mac-server session`).",
     inputSchema: {
       interface_filter: z.string().optional(),
     },

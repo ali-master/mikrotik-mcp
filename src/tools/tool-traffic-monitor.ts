@@ -1,22 +1,9 @@
 /** Traffic monitor — `/tool traffic-monitor` (threshold-triggered scripts). */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  yesno,
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const Traffic = z.enum(["received", "transmitted"]);
 const Trigger = z.enum(["above", "below", "always"]);
@@ -40,10 +27,7 @@ export const trafficMonitorTools: ToolModule = [
       traffic: Traffic,
       trigger: Trigger,
       threshold: z.number().int().describe("Rate threshold in bits/second"),
-      on_event: z
-        .string()
-        .optional()
-        .describe("Script source/name to run on trigger"),
+      on_event: z.string().optional().describe("Script source/name to run on trigger"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -60,8 +44,7 @@ export const trafficMonitorTools: ToolModule = [
         .flag("disabled", a.disabled)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add traffic-monitor: ${result}`;
+      if (looksLikeError(result)) return `Failed to add traffic-monitor: ${result}`;
       const details = await executeMikrotikCommand(
         `/tool traffic-monitor print detail where name="${a.name}"`,
         ctx,
@@ -121,8 +104,7 @@ export const trafficMonitorTools: ToolModule = [
     title: "Update Traffic Monitor",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates a traffic-monitor entry by name. " +
-      'Pass comment="" to clear the comment.',
+      "Updates a traffic-monitor entry by name. " + 'Pass comment="" to clear the comment.',
     inputSchema: {
       name: z.string(),
       interface: z.string().optional(),
@@ -149,8 +131,7 @@ export const trafficMonitorTools: ToolModule = [
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update traffic-monitor: ${result}`;
+      if (looksLikeError(result)) return `Failed to update traffic-monitor: ${result}`;
       const details = await executeMikrotikCommand(
         `/tool traffic-monitor print detail where name="${a.name}"`,
         ctx,
@@ -176,8 +157,7 @@ export const trafficMonitorTools: ToolModule = [
         `/tool traffic-monitor remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove traffic-monitor: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove traffic-monitor: ${result}`;
       return `Traffic monitor '${a.name}' removed successfully.`;
     },
   }),
@@ -194,8 +174,7 @@ export const trafficMonitorTools: ToolModule = [
         `/tool traffic-monitor enable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable traffic-monitor: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable traffic-monitor: ${result}`;
       return `Traffic monitor '${a.name}' enabled.`;
     },
   }),
@@ -212,8 +191,7 @@ export const trafficMonitorTools: ToolModule = [
         `/tool traffic-monitor disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable traffic-monitor: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable traffic-monitor: ${result}`;
       return `Traffic monitor '${a.name}' disabled.`;
     },
   }),

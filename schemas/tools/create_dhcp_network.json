@@ -43,9 +43,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "network",
-    "gateway"
-  ],
+  "required": ["network", "gateway"],
   "additionalProperties": false
 }

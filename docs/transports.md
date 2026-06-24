@@ -3,11 +3,11 @@
 The server speaks one of three MCP transports, selected with `--transport`
 (`MIKROTIK_MCP__TRANSPORT`). The default is `stdio`.
 
-| Transport | Value | Best for |
-|-----------|-------|----------|
-| Standard I/O | `stdio` (default) | Local clients like Claude Desktop; one client per process. |
+| Transport       | Value             | Best for                                                   |
+| --------------- | ----------------- | ---------------------------------------------------------- |
+| Standard I/O    | `stdio` (default) | Local clients like Claude Desktop; one client per process. |
 | Streamable HTTP | `streamable-http` | Networked / remote clients; the modern MCP HTTP transport. |
-| HTTP + SSE | `sse` | Legacy HTTP clients that expect Server-Sent Events. |
+| HTTP + SSE      | `sse`             | Legacy HTTP clients that expect Server-Sent Events.        |
 
 Both HTTP variants are served by the same `Bun.serve` listener and share the
 same endpoints and security logic below.
@@ -52,10 +52,10 @@ specifically requires the older SSE-style transport.
 
 Both HTTP transports expose exactly two paths:
 
-| Path | Method | Purpose |
-|------|--------|---------|
+| Path                 | Method  | Purpose                                            |
+| -------------------- | ------- | -------------------------------------------------- |
 | `/mcp` (and `/mcp/`) | per MCP | The MCP JSON-RPC endpoint. Point your client here. |
-| `/health` | `GET` | Liveness probe. Returns `200 OK` with body `OK`. |
+| `/health`            | `GET`   | Liveness probe. Returns `200 OK` with body `OK`.   |
 
 Any other path returns `404 Not Found`. A client connecting over HTTP uses a URL
 like `http://your-host:8000/mcp`.
@@ -71,12 +71,12 @@ aren't on an allow-list, defeating DNS-rebinding attacks from a browser. The
 server reconciles this protection with the **actual bind host** so you don't have
 to hand-tune it for the common cases. The logic:
 
-| Situation | Behavior |
-|-----------|----------|
-| `--mcp-allowed-hosts` contains `*` | Protection **disabled**. A warning is logged. Use only when the listener is already restricted to trusted clients. |
-| An explicit allow-list is set (hosts and/or origins) | Protection **enabled** with exactly your allow-list. |
+| Situation                                                                  | Behavior                                                                                                                                |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--mcp-allowed-hosts` contains `*`                                         | Protection **disabled**. A warning is logged. Use only when the listener is already restricted to trusted clients.                      |
+| An explicit allow-list is set (hosts and/or origins)                       | Protection **enabled** with exactly your allow-list.                                                                                    |
 | Bind host is localhost (`127.0.0.1`, `localhost`, `::1`) and no allow-list | Protection **enabled** with a secure localhost allow-list (`127.0.0.1:*`, `localhost:*`, `[::1]:*` and the matching `http://` origins). |
-| Bind host is a public interface (e.g. `0.0.0.0`) and no allow-list | Protection **disabled**, with a warning. This avoids every request being rejected with HTTP 421 behind a reverse proxy. |
+| Bind host is a public interface (e.g. `0.0.0.0`) and no allow-list         | Protection **disabled**, with a warning. This avoids every request being rejected with HTTP 421 behind a reverse proxy.                 |
 
 Note that `0.0.0.0` is treated as a public bind, not localhost — binding to it
 without an allow-list disables the `Host` check.

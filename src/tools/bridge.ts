@@ -8,13 +8,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -33,16 +27,12 @@ export const bridgeTools: ToolModule = [
         .boolean()
         .default(false)
         .describe("Enable 802.1Q VLAN filtering on the bridge"),
-      protocol_mode: ProtocolMode.optional().describe(
-        "Spanning-tree protocol mode",
-      ),
+      protocol_mode: ProtocolMode.optional().describe("Spanning-tree protocol mode"),
       disabled: z.boolean().default(false),
       mtu: z.number().int().optional(),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating bridge: name=${a.name}, vlan_filtering=${a.vlan_filtering}`,
-      );
+      ctx.info(`Creating bridge: name=${a.name}, vlan_filtering=${a.vlan_filtering}`);
       const cmd = new Cmd("/interface bridge add")
         .set("name", a.name)
         .opt("comment", a.comment)
@@ -82,9 +72,7 @@ export const bridgeTools: ToolModule = [
         `/interface bridge print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No bridges found matching the criteria."
-        : `BRIDGES:\n\n${result}`;
+      return isEmpty(result) ? "No bridges found matching the criteria." : `BRIDGES:\n\n${result}`;
     },
   }),
 
@@ -100,9 +88,7 @@ export const bridgeTools: ToolModule = [
         `/interface bridge print detail where name="${a.name}"`,
         ctx,
       );
-      return isEmpty(result)
-        ? `Bridge '${a.name}' not found.`
-        : `BRIDGE DETAILS:\n\n${result}`;
+      return isEmpty(result) ? `Bridge '${a.name}' not found.` : `BRIDGE DETAILS:\n\n${result}`;
     },
   }),
 
@@ -110,8 +96,7 @@ export const bridgeTools: ToolModule = [
     name: "update_bridge",
     title: "Update Bridge",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Updates an existing bridge's settings on the MikroTik device.",
+    description: "Updates an existing bridge's settings on the MikroTik device.",
     inputSchema: {
       name: z.string().describe("Current name of the bridge to update"),
       new_name: z.string().optional(),
@@ -174,8 +159,7 @@ export const bridgeTools: ToolModule = [
     name: "add_bridge_port",
     title: "Add Bridge Port",
     annotations: WRITE,
-    description:
-      "Adds an interface as a port to a bridge on the MikroTik device.",
+    description: "Adds an interface as a port to a bridge on the MikroTik device.",
     inputSchema: {
       bridge: z.string().describe("Bridge to add the port to"),
       interface: z.string().describe("Interface to enslave to the bridge"),
@@ -190,9 +174,7 @@ export const bridgeTools: ToolModule = [
       hw: z.boolean().optional().describe("Use hardware offload for this port"),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Adding bridge port: bridge=${a.bridge}, interface=${a.interface}`,
-      );
+      ctx.info(`Adding bridge port: bridge=${a.bridge}, interface=${a.interface}`);
       const cmd = new Cmd("/interface bridge port add")
         .set("bridge", a.bridge)
         .set("interface", a.interface)
@@ -243,8 +225,7 @@ export const bridgeTools: ToolModule = [
     name: "remove_bridge_port",
     title: "Remove Bridge Port",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a port (interface) from its bridge on the MikroTik device.",
+    description: "Removes a port (interface) from its bridge on the MikroTik device.",
     inputSchema: {
       interface: z.string().describe("Interface to remove from the bridge"),
     },
@@ -254,15 +235,13 @@ export const bridgeTools: ToolModule = [
         `/interface bridge port print count-only where interface="${a.interface}"`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Bridge port for interface '${a.interface}' not found.`;
+      if (count.trim() === "0") return `Bridge port for interface '${a.interface}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/interface bridge port remove [find interface="${a.interface}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove bridge port: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove bridge port: ${result}`;
       return `Bridge port for interface '${a.interface}' removed successfully.`;
     },
   }),
@@ -271,8 +250,7 @@ export const bridgeTools: ToolModule = [
     name: "list_bridge_hosts",
     title: "List Bridge Hosts",
     annotations: READ,
-    description:
-      "Lists the bridge host (MAC address) table on the MikroTik device.",
+    description: "Lists the bridge host (MAC address) table on the MikroTik device.",
     inputSchema: {
       bridge_filter: z.string().optional().describe("Exact bridge name"),
     },
@@ -300,19 +278,11 @@ export const bridgeTools: ToolModule = [
     inputSchema: {
       bridge: z.string().describe("Bridge to add the VLAN entry to"),
       vlan_ids: z.string().describe("VLAN ID(s), e.g. '100' or '100,200'"),
-      tagged: z
-        .string()
-        .optional()
-        .describe("Comma-separated tagged interfaces"),
-      untagged: z
-        .string()
-        .optional()
-        .describe("Comma-separated untagged interfaces"),
+      tagged: z.string().optional().describe("Comma-separated tagged interfaces"),
+      untagged: z.string().optional().describe("Comma-separated untagged interfaces"),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Adding bridge VLAN: bridge=${a.bridge}, vlan_ids=${a.vlan_ids}`,
-      );
+      ctx.info(`Adding bridge VLAN: bridge=${a.bridge}, vlan_ids=${a.vlan_ids}`);
       const cmd = new Cmd("/interface bridge vlan add")
         .set("bridge", a.bridge)
         .set("vlan-ids", a.vlan_ids)

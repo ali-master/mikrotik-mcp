@@ -34,9 +34,7 @@ export const routingNexthopTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No routing next-hops found."
-        : `ROUTING NEXT-HOPS:\n\n${result}`;
+      return isEmpty(result) ? "No routing next-hops found." : `ROUTING NEXT-HOPS:\n\n${result}`;
     },
   }),
 
@@ -44,14 +42,10 @@ export const routingNexthopTools: ToolModule = [
     name: "get_routing_nexthop_stats",
     title: "Routing Next-hop Statistics",
     annotations: READ,
-    description:
-      "Summarises the routing next-hop table: total vs active next-hop count.",
+    description: "Summarises the routing next-hop table: total vs active next-hop count.",
     async handler(_a, ctx) {
       ctx.info("Getting routing next-hop statistics");
-      const total = await executeMikrotikCommand(
-        "/routing nexthop print count-only",
-        ctx,
-      );
+      const total = await executeMikrotikCommand("/routing nexthop print count-only", ctx);
       if (commandUnsupported(total)) return UNSUPPORTED;
       const active = await executeMikrotikCommand(
         "/routing nexthop print count-only where active=yes",

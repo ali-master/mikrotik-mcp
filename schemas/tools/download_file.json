@@ -9,15 +9,9 @@
     "file_type": {
       "default": "backup",
       "type": "string",
-      "enum": [
-        "backup",
-        "export"
-      ]
+      "enum": ["backup", "export"]
     }
   },
-  "required": [
-    "filename",
-    "file_type"
-  ],
+  "required": ["filename", "file_type"],
   "additionalProperties": false
 }

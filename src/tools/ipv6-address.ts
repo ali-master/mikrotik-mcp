@@ -18,33 +18,20 @@ export const ipv6AddressTools: ToolModule = [
       "    eui_64: derive the host part from the interface MAC (modified EUI-64).\n" +
       "    advertise: include this prefix in Router Advertisements (ND).",
     inputSchema: {
-      address: z
-        .string()
-        .describe("IPv6 address with prefix, e.g. '2001:db8::1/64'"),
+      address: z.string().describe("IPv6 address with prefix, e.g. '2001:db8::1/64'"),
       interface: z.string(),
-      advertise: z
-        .boolean()
-        .optional()
-        .describe("Advertise the prefix via Router Advertisements"),
+      advertise: z.boolean().optional().describe("Advertise the prefix via Router Advertisements"),
       eui_64: z
         .boolean()
         .optional()
         .describe("Derive the host part from the interface MAC (EUI-64)"),
-      from_pool: z
-        .string()
-        .optional()
-        .describe("IPv6 pool name to take the prefix from"),
-      no_dad: z
-        .boolean()
-        .optional()
-        .describe("Skip Duplicate Address Detection for this address"),
+      from_pool: z.string().optional().describe("IPv6 pool name to take the prefix from"),
+      no_dad: z.boolean().optional().describe("Skip Duplicate Address Detection for this address"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Adding IPv6 address: address=${a.address}, interface=${a.interface}`,
-      );
+      ctx.info(`Adding IPv6 address: address=${a.address}, interface=${a.interface}`);
       const cmd = new Cmd("/ipv6 address add")
         .set("address", a.address)
         .set("interface", a.interface)
@@ -57,8 +44,7 @@ export const ipv6AddressTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add IPv6 address: ${result}`;
+      if (looksLikeError(result)) return `Failed to add IPv6 address: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 address print detail where address="${a.address}"`,
         ctx,
@@ -104,12 +90,9 @@ export const ipv6AddressTools: ToolModule = [
     name: "get_ipv6_address",
     title: "Get IPv6 Address",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific IPv6 address by ID or address value.",
+    description: "Gets detailed information about a specific IPv6 address by ID or address value.",
     inputSchema: {
-      address_id: z
-        .string()
-        .describe("RouterOS .id (e.g. '*1') or the address value"),
+      address_id: z.string().describe("RouterOS .id (e.g. '*1') or the address value"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting IPv6 address details: address_id=${a.address_id}`);
@@ -133,8 +116,7 @@ export const ipv6AddressTools: ToolModule = [
     name: "remove_ipv6_address",
     title: "Remove IPv6 Address",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes an IPv6 address from the MikroTik device by ID or address value.",
+    description: "Removes an IPv6 address from the MikroTik device by ID or address value.",
     inputSchema: { address_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 address: address_id=${a.address_id}`);
@@ -149,18 +131,11 @@ export const ipv6AddressTools: ToolModule = [
           `/ipv6 address print count-only where address="${a.address_id}"`,
           ctx,
         );
-        if (count.trim() === "0")
-          return `IPv6 address '${a.address_id}' not found.`;
+        if (count.trim() === "0") return `IPv6 address '${a.address_id}' not found.`;
       }
-      const selector = byId
-        ? `.id="${a.address_id}"`
-        : `address="${a.address_id}"`;
-      const result = await executeMikrotikCommand(
-        `/ipv6 address remove [find ${selector}]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 address: ${result}`;
+      const selector = byId ? `.id="${a.address_id}"` : `address="${a.address_id}"`;
+      const result = await executeMikrotikCommand(`/ipv6 address remove [find ${selector}]`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 address: ${result}`;
       return `IPv6 address '${a.address_id}' removed successfully.`;
     },
   }),

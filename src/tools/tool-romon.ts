@@ -1,13 +1,7 @@
 /** RoMON (Router Management Overlay Network) — `/tool romon`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -16,14 +10,11 @@ export const romonTools: ToolModule = [
     name: "get_romon",
     title: "Get RoMON",
     annotations: READ,
-    description:
-      "Gets the RoMON settings of the MikroTik device (`/tool romon`).",
+    description: "Gets the RoMON settings of the MikroTik device (`/tool romon`).",
     async handler(_a, ctx) {
       ctx.info("Getting romon settings");
       const result = await executeMikrotikCommand("/tool romon print", ctx);
-      return isEmpty(result)
-        ? "Unable to read romon settings."
-        : `ROMON:\n\n${result}`;
+      return isEmpty(result) ? "Unable to read romon settings." : `ROMON:\n\n${result}`;
     },
   }),
 
@@ -68,16 +59,10 @@ export const romonTools: ToolModule = [
       "Adds a RoMON port entry controlling which interfaces participate in the " +
       "overlay (`/tool romon port`).",
     inputSchema: {
-      interface: z
-        .string()
-        .default("all")
-        .describe("Interface, or 'all' for the default entry"),
+      interface: z.string().default("all").describe("Interface, or 'all' for the default entry"),
       cost: z.number().int().optional().describe("Path cost for the overlay"),
       secrets: z.string().optional(),
-      forbid: z
-        .boolean()
-        .optional()
-        .describe("Forbid RoMON on this interface"),
+      forbid: z.boolean().optional().describe("Forbid RoMON on this interface"),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
@@ -90,8 +75,7 @@ export const romonTools: ToolModule = [
         .flag("disabled", a.disabled)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add romon port: ${result}`;
+      if (looksLikeError(result)) return `Failed to add romon port: ${result}`;
       const details = await executeMikrotikCommand(
         `/tool romon port print detail where interface="${a.interface}"`,
         ctx,
@@ -129,8 +113,7 @@ export const romonTools: ToolModule = [
     name: "remove_romon_port",
     title: "Remove RoMON Port",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a RoMON port entry by interface or '.id' from the MikroTik device.",
+    description: "Removes a RoMON port entry by interface or '.id' from the MikroTik device.",
     inputSchema: {
       port_id: z.string().describe("Interface name or RouterOS '.id'"),
     },
@@ -149,8 +132,7 @@ export const romonTools: ToolModule = [
         `/tool romon port remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove romon port: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove romon port: ${result}`;
       return `RoMON port '${a.port_id}' removed successfully.`;
     },
   }),

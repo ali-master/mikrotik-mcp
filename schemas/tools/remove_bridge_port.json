@@ -8,8 +8,6 @@
       "description": "Interface to remove from the bridge"
     }
   },
-  "required": [
-    "interface"
-  ],
+  "required": ["interface"],
   "additionalProperties": false
 }

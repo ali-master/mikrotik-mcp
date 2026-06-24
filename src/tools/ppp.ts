@@ -1,17 +1,10 @@
 /** PPP profiles, secrets, and active sessions — `/ppp`. The shared backend for L2TP/PPTP/SSTP/OpenVPN. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import { redactSecrets } from "../utils";
-
 
 const UseEncryption = z.enum(["default", "yes", "no", "required"]);
 const ChangeTcpMss = z.enum(["default", "yes", "no"]);
@@ -28,14 +21,8 @@ export const pppTools: ToolModule = [
       "Creates a PPP profile on the MikroTik device. Profiles define address assignment, DNS, encryption, and rate limits shared by L2TP/PPTP/SSTP/OpenVPN sessions.",
     inputSchema: {
       name: z.string().describe("Name for the new PPP profile"),
-      local_address: z
-        .string()
-        .optional()
-        .describe("Server-side tunnel IP or pool name"),
-      remote_address: z
-        .string()
-        .optional()
-        .describe("Client IP or address pool name"),
+      local_address: z.string().optional().describe("Server-side tunnel IP or pool name"),
+      remote_address: z.string().optional().describe("Client IP or address pool name"),
       dns_server: z.string().optional(),
       rate_limit: z.string().optional().describe("Rate limit, e.g. '10M/10M'"),
       use_encryption: UseEncryption.optional(),
@@ -60,8 +47,7 @@ export const pppTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create PPP profile: ${result}`;
+      if (looksLikeError(result)) return `Failed to create PPP profile: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ppp profile print detail where name="${a.name}"`,
@@ -86,10 +72,7 @@ export const pppTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(
-        `/ppp profile print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/ppp profile print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No PPP profiles found matching the criteria."
         : `PPP PROFILES:\n\n${result}`;
@@ -150,8 +133,7 @@ export const pppTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update PPP profile: ${result}`;
+      if (looksLikeError(result)) return `Failed to update PPP profile: ${result}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -180,8 +162,7 @@ export const pppTools: ToolModule = [
         `/ppp profile remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove PPP profile: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove PPP profile: ${result}`;
       return `PPP profile '${a.name}' removed successfully.`;
     },
   }),
@@ -196,9 +177,7 @@ export const pppTools: ToolModule = [
     inputSchema: {
       name: z.string().describe("Username for the secret"),
       password: z.string().describe("Password for the secret"),
-      service: Service.default("any").describe(
-        "Service this secret applies to",
-      ),
+      service: Service.default("any").describe("Service this secret applies to"),
       profile: z.string().optional(),
       local_address: z.string().optional(),
       remote_address: z.string().optional(),
@@ -221,8 +200,7 @@ export const pppTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create PPP secret: ${redactSecrets(result)}`;
+      if (looksLikeError(result)) return `Failed to create PPP secret: ${redactSecrets(result)}`;
 
       const details = await executeMikrotikCommand(
         `/ppp secret print detail where name="${a.name}"`,
@@ -250,10 +228,7 @@ export const pppTools: ToolModule = [
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
       if (a.service_filter) filters.push(`service="${a.service_filter}"`);
 
-      const result = await executeMikrotikCommand(
-        `/ppp secret print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/ppp secret print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No PPP secrets found matching the criteria."
         : `PPP SECRETS:\n\n${redactSecrets(result)}`;
@@ -264,8 +239,7 @@ export const pppTools: ToolModule = [
     name: "get_ppp_secret",
     title: "Get PPP Secret",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific PPP secret. The password is redacted.",
+    description: "Gets detailed information about a specific PPP secret. The password is redacted.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting PPP secret details: name=${a.name}`);
@@ -283,8 +257,7 @@ export const pppTools: ToolModule = [
     name: "update_ppp_secret",
     title: "Update PPP Secret",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Updates an existing PPP secret's settings. The password is redacted in output.",
+    description: "Updates an existing PPP secret's settings. The password is redacted in output.",
     inputSchema: {
       name: z.string().describe("Current username of the secret to update"),
       new_name: z.string().optional(),
@@ -314,8 +287,7 @@ export const pppTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update PPP secret: ${redactSecrets(result)}`;
+      if (looksLikeError(result)) return `Failed to update PPP secret: ${redactSecrets(result)}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -330,8 +302,7 @@ export const pppTools: ToolModule = [
     name: "remove_ppp_secret",
     title: "Remove PPP Secret",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a PPP secret (VPN user account) from the MikroTik device.",
+    description: "Removes a PPP secret (VPN user account) from the MikroTik device.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing PPP secret: name=${a.name}`);
@@ -345,8 +316,7 @@ export const pppTools: ToolModule = [
         `/ppp secret remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove PPP secret: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove PPP secret: ${result}`;
       return `PPP secret '${a.name}' removed successfully.`;
     },
   }),
@@ -365,10 +335,7 @@ export const pppTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(
-        `/ppp active print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/ppp active print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No active PPP sessions found."
         : `ACTIVE PPP SESSIONS:\n\n${result}`;
@@ -389,8 +356,7 @@ export const pppTools: ToolModule = [
         `/ppp active remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disconnect PPP session: ${result}`;
+      if (looksLikeError(result)) return `Failed to disconnect PPP session: ${result}`;
       return `PPP session '${a.name}' disconnected.`;
     },
   }),

@@ -27,10 +27,7 @@ export const ipv6NeighborTools: ToolModule = [
         .string()
         .optional()
         .describe("Match status, e.g. 'reachable', 'stale', 'delay', 'probe'"),
-      router_only: z
-        .boolean()
-        .default(false)
-        .describe("Only entries flagged as routers"),
+      router_only: z.boolean().default(false).describe("Only entries flagged as routers"),
     },
     async handler(a, ctx) {
       ctx.info("Listing IPv6 neighbors");
@@ -55,12 +52,9 @@ export const ipv6NeighborTools: ToolModule = [
     name: "get_ipv6_neighbor",
     title: "Get IPv6 Neighbor",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific IPv6 neighbor by ID or address.",
+    description: "Gets detailed information about a specific IPv6 neighbor by ID or address.",
     inputSchema: {
-      neighbor_id: z
-        .string()
-        .describe("RouterOS .id (e.g. '*1') or the IPv6 address"),
+      neighbor_id: z.string().describe("RouterOS .id (e.g. '*1') or the IPv6 address"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting IPv6 neighbor: neighbor_id=${a.neighbor_id}`);
@@ -88,9 +82,7 @@ export const ipv6NeighborTools: ToolModule = [
       "Flushes an IPv6 neighbor cache entry by ID or address. The entry may be " +
       "re-learned automatically via Neighbor Discovery.",
     inputSchema: {
-      neighbor_id: z
-        .string()
-        .describe("RouterOS .id (e.g. '*1') or the IPv6 address"),
+      neighbor_id: z.string().describe("RouterOS .id (e.g. '*1') or the IPv6 address"),
     },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 neighbor: neighbor_id=${a.neighbor_id}`);
@@ -105,18 +97,11 @@ export const ipv6NeighborTools: ToolModule = [
           `/ipv6 neighbor print count-only where address="${a.neighbor_id}"`,
           ctx,
         );
-        if (count.trim() === "0")
-          return `IPv6 neighbor '${a.neighbor_id}' not found.`;
+        if (count.trim() === "0") return `IPv6 neighbor '${a.neighbor_id}' not found.`;
       }
-      const selector = byId
-        ? `.id="${a.neighbor_id}"`
-        : `address="${a.neighbor_id}"`;
-      const result = await executeMikrotikCommand(
-        `/ipv6 neighbor remove [find ${selector}]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 neighbor: ${result}`;
+      const selector = byId ? `.id="${a.neighbor_id}"` : `address="${a.neighbor_id}"`;
+      const result = await executeMikrotikCommand(`/ipv6 neighbor remove [find ${selector}]`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 neighbor: ${result}`;
       return `IPv6 neighbor '${a.neighbor_id}' removed successfully.`;
     },
   }),

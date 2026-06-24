@@ -17,14 +17,8 @@ export const ipScanTools: ToolModule = [
       "Notes:\n" +
       "    Provide address_range, interface, or both. At least one is required.",
     inputSchema: {
-      address_range: z
-        .string()
-        .optional()
-        .describe("Range/CIDR to scan, e.g. '192.168.1.0/24'"),
-      interface: z
-        .string()
-        .optional()
-        .describe("Scan the subnet on this interface, e.g. 'ether1'"),
+      address_range: z.string().optional().describe("Range/CIDR to scan, e.g. '192.168.1.0/24'"),
+      interface: z.string().optional().describe("Scan the subnet on this interface, e.g. 'ether1'"),
       duration: z
         .number()
         .int()
@@ -46,9 +40,7 @@ export const ipScanTools: ToolModule = [
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to run IP scan: ${result}`;
-      return isEmpty(result)
-        ? "IP scan completed; no hosts discovered."
-        : `IP SCAN:\n\n${result}`;
+      return isEmpty(result) ? "IP scan completed; no hosts discovered." : `IP SCAN:\n\n${result}`;
     },
   }),
 ];

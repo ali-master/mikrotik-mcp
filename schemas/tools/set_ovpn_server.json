@@ -24,10 +24,7 @@
     },
     "mode": {
       "type": "string",
-      "enum": [
-        "ip",
-        "ethernet"
-      ]
+      "enum": ["ip", "ethernet"]
     },
     "port": {
       "type": "integer",
@@ -36,10 +33,7 @@
     },
     "protocol": {
       "type": "string",
-      "enum": [
-        "tcp",
-        "udp"
-      ]
+      "enum": ["tcp", "udp"]
     },
     "default_profile": {
       "type": "string"

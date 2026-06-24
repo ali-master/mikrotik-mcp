@@ -1,12 +1,7 @@
 /** Packet sniffer — `/tool sniffer`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -15,8 +10,7 @@ export const snifferTools: ToolModule = [
     name: "get_sniffer_settings",
     title: "Get Sniffer Settings",
     annotations: READ,
-    description:
-      "Gets the packet sniffer configuration and running state (`/tool sniffer`).",
+    description: "Gets the packet sniffer configuration and running state (`/tool sniffer`).",
     async handler(_a, ctx) {
       ctx.info("Getting sniffer settings");
       const result = await executeMikrotikCommand("/tool sniffer print", ctx);
@@ -39,17 +33,11 @@ export const snifferTools: ToolModule = [
       "    only_headers: capture packet headers only (smaller buffer).",
     inputSchema: {
       filter_interface: z.string().optional(),
-      filter_ip_address: z
-        .string()
-        .optional()
-        .describe("Match IP/CIDR, e.g. '10.0.0.0/24'"),
+      filter_ip_address: z.string().optional().describe("Match IP/CIDR, e.g. '10.0.0.0/24'"),
       filter_port: z.string().optional(),
       filter_mac_protocol: z.string().optional(),
       streaming_enabled: z.boolean().optional(),
-      streaming_server: z
-        .string()
-        .optional()
-        .describe("TZSP target, e.g. '192.168.88.2'"),
+      streaming_server: z.string().optional().describe("TZSP target, e.g. '192.168.88.2'"),
       memory_limit: z.string().optional().describe("Buffer size, e.g. '10M'"),
       file_name: z.string().optional().describe("Capture file name (.pcap)"),
       only_headers: z.boolean().optional(),
@@ -71,8 +59,7 @@ export const snifferTools: ToolModule = [
       if (built === "/tool sniffer set") return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update sniffer settings: ${result}`;
+      if (looksLikeError(result)) return `Failed to update sniffer settings: ${result}`;
       const details = await executeMikrotikCommand("/tool sniffer print", ctx);
       return `Sniffer settings updated successfully:\n\n${details}`;
     },
@@ -110,8 +97,7 @@ export const snifferTools: ToolModule = [
     name: "save_sniffer",
     title: "Save Sniffer Capture",
     annotations: WRITE,
-    description:
-      "Saves the current sniffer buffer to a .pcap file on the device.",
+    description: "Saves the current sniffer buffer to a .pcap file on the device.",
     inputSchema: {
       file_name: z.string().describe("Output file name, e.g. 'capture'"),
     },
@@ -121,8 +107,7 @@ export const snifferTools: ToolModule = [
         `/tool sniffer save file-name="${a.file_name}"`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to save sniffer capture: ${result}`;
+      if (looksLikeError(result)) return `Failed to save sniffer capture: ${result}`;
       return `Sniffer capture saved to '${a.file_name}'.`;
     },
   }),
@@ -133,19 +118,14 @@ export const snifferTools: ToolModule = [
     annotations: READ,
     description: "Lists captured packets (`/tool sniffer packet`).",
     inputSchema: {
-      address_filter: z
-        .string()
-        .optional()
-        .describe("Partial src/dst address match"),
+      address_filter: z.string().optional().describe("Partial src/dst address match"),
       protocol_filter: z.string().optional(),
     },
     async handler(a, ctx) {
       ctx.info("Listing sniffer packets");
       const filters: string[] = [];
       if (a.address_filter)
-        filters.push(
-          `(src-address~"${a.address_filter}" or dst-address~"${a.address_filter}")`,
-        );
+        filters.push(`(src-address~"${a.address_filter}" or dst-address~"${a.address_filter}")`);
       if (a.protocol_filter) filters.push(`protocol~"${a.protocol_filter}"`);
 
       const result = await executeMikrotikCommand(
@@ -162,8 +142,7 @@ export const snifferTools: ToolModule = [
     name: "list_sniffer_hosts",
     title: "List Sniffer Hosts",
     annotations: READ,
-    description:
-      "Lists hosts seen by the sniffer with byte/packet counts (`/tool sniffer host`).",
+    description: "Lists hosts seen by the sniffer with byte/packet counts (`/tool sniffer host`).",
     inputSchema: {
       address_filter: z.string().optional(),
     },
@@ -186,14 +165,10 @@ export const snifferTools: ToolModule = [
     name: "list_sniffer_protocols",
     title: "List Sniffer Protocols",
     annotations: READ,
-    description:
-      "Lists the protocol distribution seen by the sniffer (`/tool sniffer protocol`).",
+    description: "Lists the protocol distribution seen by the sniffer (`/tool sniffer protocol`).",
     async handler(_a, ctx) {
       ctx.info("Listing sniffer protocols");
-      const result = await executeMikrotikCommand(
-        "/tool sniffer protocol print",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/tool sniffer protocol print", ctx);
       return isEmpty(result)
         ? "No sniffer protocol data found."
         : `SNIFFER PROTOCOLS:\n\n${result}`;
@@ -204,14 +179,10 @@ export const snifferTools: ToolModule = [
     name: "list_sniffer_connections",
     title: "List Sniffer Connections",
     annotations: READ,
-    description:
-      "Lists connections observed by the sniffer (`/tool sniffer connection`).",
+    description: "Lists connections observed by the sniffer (`/tool sniffer connection`).",
     async handler(_a, ctx) {
       ctx.info("Listing sniffer connections");
-      const result = await executeMikrotikCommand(
-        "/tool sniffer connection print",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/tool sniffer connection print", ctx);
       return isEmpty(result)
         ? "No sniffer connections found."
         : `SNIFFER CONNECTIONS:\n\n${result}`;

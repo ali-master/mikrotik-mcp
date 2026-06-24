@@ -22,8 +22,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "router_only"
-  ],
+  "required": ["router_only"],
   "additionalProperties": false
 }

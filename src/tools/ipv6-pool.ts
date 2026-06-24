@@ -1,21 +1,9 @@
 /** IPv6 address/prefix pools — `/ipv6 pool`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 export const ipv6PoolTools: ToolModule = [
   defineTool({
@@ -49,8 +37,7 @@ export const ipv6PoolTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create IPv6 pool: ${result}`;
+      if (looksLikeError(result)) return `Failed to create IPv6 pool: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 pool print detail where name="${a.name}"`,
         ctx,
@@ -74,10 +61,7 @@ export const ipv6PoolTools: ToolModule = [
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
       if (a.prefix_filter) filters.push(`prefix~"${a.prefix_filter}"`);
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 pool print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/ipv6 pool print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No IPv6 pools found matching the criteria."
         : `IPV6 POOLS:\n\n${result}`;
@@ -146,16 +130,14 @@ export const ipv6PoolTools: ToolModule = [
       const cmd = new Cmd(base);
       if (a.new_name) cmd.set("name", a.new_name);
       if (a.prefix) cmd.set("prefix", a.prefix);
-      if (a.prefix_length !== undefined)
-        cmd.set("prefix-length", a.prefix_length);
+      if (a.prefix_length !== undefined) cmd.set("prefix-length", a.prefix_length);
       if (a.comment !== undefined) cmd.raw(`comment=${quoteValue(a.comment)}`);
 
       const built = cmd.build();
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update IPv6 pool: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IPv6 pool: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 pool print detail where name="${a.new_name || a.name}"`,
         ctx,
@@ -178,12 +160,8 @@ export const ipv6PoolTools: ToolModule = [
       );
       if (count.trim() === "0") return `IPv6 pool '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 pool remove [find name="${a.name}"]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 pool: ${result}`;
+      const result = await executeMikrotikCommand(`/ipv6 pool remove [find name="${a.name}"]`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 pool: ${result}`;
       return `IPv6 pool '${a.name}' removed successfully.`;
     },
   }),

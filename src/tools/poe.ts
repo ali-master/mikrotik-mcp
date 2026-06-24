@@ -23,9 +23,7 @@ export const poeTools: ToolModule = [
     inputSchema: {
       interfaces: z
         .string()
-        .describe(
-          "Comma-separated ethernet interface name(s), e.g. 'ether1' or 'ether9,ether10'",
-        ),
+        .describe("Comma-separated ethernet interface name(s), e.g. 'ether1' or 'ether9,ether10'"),
     },
     async handler(a, ctx) {
       ctx.info(`Reading PoE monitor for: ${a.interfaces}`);
@@ -35,8 +33,7 @@ export const poeTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return NO_POE;
-      if (looksLikeError(result))
-        return `Failed to read PoE monitor: ${result}`;
+      if (looksLikeError(result)) return `Failed to read PoE monitor: ${result}`;
       if (isEmpty(result)) {
         return `No PoE monitor data returned for: ${a.interfaces}. The interface(s) may not exist or may not support PoE-out.`;
       }
@@ -51,10 +48,7 @@ export const poeTools: ToolModule = [
     description:
       "Lists the Power-over-Ethernet (PoE) configuration of PoE-capable ethernet interfaces (PoE-out mode, priority). Runs `/interface ethernet poe print`.",
     inputSchema: {
-      interface_filter: z
-        .string()
-        .optional()
-        .describe("Partial name match, e.g. 'ether'"),
+      interface_filter: z.string().optional().describe("Partial name match, e.g. 'ether'"),
     },
     async handler(a, ctx) {
       ctx.info("Listing PoE configuration");
@@ -62,10 +56,8 @@ export const poeTools: ToolModule = [
       if (a.interface_filter) cmd += ` where name~"${a.interface_filter}"`;
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return NO_POE;
-      if (looksLikeError(result))
-        return `Failed to list PoE configuration: ${result}`;
-      if (isEmpty(result))
-        return "No PoE-capable ethernet interfaces found on this device.";
+      if (looksLikeError(result)) return `Failed to list PoE configuration: ${result}`;
+      if (isEmpty(result)) return "No PoE-capable ethernet interfaces found on this device.";
       return `POE CONFIGURATION:\n\n${result}`;
     },
   }),
@@ -86,10 +78,8 @@ export const poeTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return NO_POE;
-      if (looksLikeError(result))
-        return `Failed to get PoE settings: ${result}`;
-      if (isEmpty(result))
-        return `No PoE settings found for interface '${a.name}'.`;
+      if (looksLikeError(result)) return `Failed to get PoE settings: ${result}`;
+      if (isEmpty(result)) return `No PoE settings found for interface '${a.name}'.`;
       return `POE SETTINGS:\n\n${result}`;
     },
   }),

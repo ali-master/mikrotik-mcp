@@ -7,13 +7,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -22,19 +16,13 @@ export const ipv6FirewallAddressListTools: ToolModule = [
     name: "add_ipv6_address_list_entry",
     title: "Add IPv6 Address-List Entry",
     annotations: WRITE,
-    description:
-      "Adds an IPv6 address/prefix to an IPv6 firewall address-list.",
+    description: "Adds an IPv6 address/prefix to an IPv6 firewall address-list.",
     inputSchema: {
       list: z.string().describe("Address-list name"),
       address: z
         .string()
-        .describe(
-          "IPv6 address or prefix to add, e.g. '2001:db8::1' or '2001:db8::/32'",
-        ),
-      timeout: z
-        .string()
-        .optional()
-        .describe("Auto-remove timeout, e.g. '1d00:00:00'"),
+        .describe("IPv6 address or prefix to add, e.g. '2001:db8::1' or '2001:db8::/32'"),
+      timeout: z.string().optional().describe("Auto-remove timeout, e.g. '1d00:00:00'"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -48,8 +36,7 @@ export const ipv6FirewallAddressListTools: ToolModule = [
         .flag("disabled", a.disabled)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add IPv6 address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to add IPv6 address-list entry: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ipv6 firewall address-list print detail where list="${a.list}" address="${a.address}"`,
@@ -65,15 +52,11 @@ export const ipv6FirewallAddressListTools: ToolModule = [
     name: "list_ipv6_address_lists",
     title: "List IPv6 Address-Lists",
     annotations: READ,
-    description:
-      "Lists IPv6 firewall address-list entries with optional filters.",
+    description: "Lists IPv6 firewall address-list entries with optional filters.",
     inputSchema: {
       list_filter: z.string().optional().describe("Partial list-name match"),
       address_filter: z.string().optional().describe("Partial address match"),
-      dynamic_only: z
-        .boolean()
-        .default(false)
-        .describe("Only show dynamically-added entries"),
+      dynamic_only: z.boolean().default(false).describe("Only show dynamically-added entries"),
     },
     async handler(a, ctx) {
       ctx.info("Listing IPv6 address-list entries");
@@ -126,15 +109,13 @@ export const ipv6FirewallAddressListTools: ToolModule = [
         `/ipv6 firewall address-list print count-only where .id="${a.entry_id}"`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `IPv6 address-list entry '${a.entry_id}' not found.`;
+      if (count.trim() === "0") return `IPv6 address-list entry '${a.entry_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ipv6 firewall address-list remove [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPv6 address-list entry: ${result}`;
       return `IPv6 address-list entry '${a.entry_id}' removed successfully.`;
     },
   }),
@@ -153,8 +134,7 @@ export const ipv6FirewallAddressListTools: ToolModule = [
         `/ipv6 firewall address-list enable [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable IPv6 address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable IPv6 address-list entry: ${result}`;
       return `IPv6 address-list entry '${a.entry_id}' enabled.`;
     },
   }),
@@ -173,8 +153,7 @@ export const ipv6FirewallAddressListTools: ToolModule = [
         `/ipv6 firewall address-list disable [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable IPv6 address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable IPv6 address-list entry: ${result}`;
       return `IPv6 address-list entry '${a.entry_id}' disabled.`;
     },
   }),

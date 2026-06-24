@@ -9,13 +9,7 @@
     },
     "target": {
       "type": "string",
-      "enum": [
-        "memory",
-        "disk",
-        "echo",
-        "remote",
-        "email"
-      ],
+      "enum": ["memory", "disk", "echo", "remote", "email"],
       "description": "Where log messages are written"
     },
     "remote": {
@@ -62,10 +56,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "target",
-    "disabled"
-  ],
+  "required": ["name", "target", "disabled"],
   "additionalProperties": false
 }

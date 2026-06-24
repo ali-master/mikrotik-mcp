@@ -18,22 +18,22 @@ bun install
 
 All scripts are defined in `package.json`.
 
-| Command | What it does |
-|---------|--------------|
-| `bun run start` | Run the server from source (`src/cli.ts serve`, stdio). |
-| `bun run auth-check` | Run the SSH connectivity probe from source. |
-| `bun run inspect` | Open the [MCP Inspector](./inspector.md) UI against the dev server. |
-| `bun run inspect:config` | Inspector UI using `mcp-inspector.config.json`. |
-| `bun run inspect:cli` | Headless `tools/list` via the Inspector (CI smoke test). |
-| `bun test` | Run the test suite with Bun's built-in test runner. |
-| `bun run test:types` | Type-check the whole project (`tsc --noEmit`). |
-| `bun run build` | Bundle to `dist/` with **bunup** and mark the CLI executable. |
-| `bun run dev` | `bunup --watch` — rebuild on change. |
-| `bun run gen:schemas` | Regenerate the JSON Schemas under `schemas/`. |
-| `bun run gen:docs` | Regenerate `docs/tools-reference.md`. |
-| `bun run gen` | Run both generators (`gen:schemas` then `gen:docs`). |
-| `bun run lint` / `lint:fix` | ESLint over `src/**/*.ts`. |
-| `bun run format` | Prettier over all `*.ts`. |
+| Command                     | What it does                                                        |
+| --------------------------- | ------------------------------------------------------------------- |
+| `bun run start`             | Run the server from source (`src/cli.ts serve`, stdio).             |
+| `bun run auth-check`        | Run the SSH connectivity probe from source.                         |
+| `bun run inspect`           | Open the [MCP Inspector](./inspector.md) UI against the dev server. |
+| `bun run inspect:config`    | Inspector UI using `mcp-inspector.config.json`.                     |
+| `bun run inspect:cli`       | Headless `tools/list` via the Inspector (CI smoke test).            |
+| `bun test`                  | Run the test suite with Bun's built-in test runner.                 |
+| `bun run test:types`        | Type-check the whole project (`tsc --noEmit`).                      |
+| `bun run build`             | Bundle to `dist/` with **bunup** and mark the CLI executable.       |
+| `bun run dev`               | `bunup --watch` — rebuild on change.                                |
+| `bun run gen:schemas`       | Regenerate the JSON Schemas under `schemas/`.                       |
+| `bun run gen:docs`          | Regenerate `docs/tools-reference.md`.                               |
+| `bun run gen`               | Run both generators (`gen:schemas` then `gen:docs`).                |
+| `bun run lint` / `lint:fix` | ESLint over `src/**/*.ts`.                                          |
+| `bun run format`            | Prettier over all `*.ts`.                                           |
 
 ## Testing & type-checking
 

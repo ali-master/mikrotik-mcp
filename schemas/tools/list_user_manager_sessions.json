@@ -13,8 +13,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "active_only"
-  ],
+  "required": ["active_only"],
   "additionalProperties": false
 }

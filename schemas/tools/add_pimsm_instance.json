@@ -11,10 +11,7 @@
       "default": "ipv4",
       "description": "Address family",
       "type": "string",
-      "enum": [
-        "ipv4",
-        "ipv6"
-      ]
+      "enum": ["ipv4", "ipv6"]
     },
     "vrf": {
       "type": "string"
@@ -31,10 +28,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "afi",
-    "disabled"
-  ],
+  "required": ["name", "afi", "disabled"],
   "additionalProperties": false
 }

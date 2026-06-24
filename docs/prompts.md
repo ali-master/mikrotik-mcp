@@ -21,6 +21,7 @@ arguments:
     description: The WAN-facing interface.
     required: false
 ---
+
 Body text. Reference arguments with {{wan_interface}}.
 ```
 
@@ -40,17 +41,17 @@ conversation. The model carries it out with the server's tools.
 
 ## The built-in prompts
 
-| Prompt | Purpose |
-|--------|---------|
-| `harden-router` | Audit and tighten a router's security posture. |
-| `diagnose-connectivity` | Systematically troubleshoot an unreachable host/subnet/internet. |
-| `setup-guest-wifi` | Create an isolated guest network with its own DHCP and isolation rules. |
-| `choose-vpn-solution` | Recommend the right MikroTik VPN/tunnel for a use case, then outline the build. |
-| `setup-wireguard-vpn` | Stand up a WireGuard server and produce a client config. |
-| `setup-ipsec-site-to-site` | Build an interoperable IKEv2 site-to-site IPsec tunnel. |
-| `setup-l2tp-ipsec-roadwarrior` | L2TP/IPsec remote access for built-in OS VPN clients. |
-| `setup-tunnel-between-sites` | Configure **both** routers of a site-to-site tunnel and verify it end to end. |
-| `backup-and-document` | Create a restore point and a human-readable config inventory. |
+| Prompt                         | Purpose                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `harden-router`                | Audit and tighten a router's security posture.                                  |
+| `diagnose-connectivity`        | Systematically troubleshoot an unreachable host/subnet/internet.                |
+| `setup-guest-wifi`             | Create an isolated guest network with its own DHCP and isolation rules.         |
+| `choose-vpn-solution`          | Recommend the right MikroTik VPN/tunnel for a use case, then outline the build. |
+| `setup-wireguard-vpn`          | Stand up a WireGuard server and produce a client config.                        |
+| `setup-ipsec-site-to-site`     | Build an interoperable IKEv2 site-to-site IPsec tunnel.                         |
+| `setup-l2tp-ipsec-roadwarrior` | L2TP/IPsec remote access for built-in OS VPN clients.                           |
+| `setup-tunnel-between-sites`   | Configure **both** routers of a site-to-site tunnel and verify it end to end.   |
+| `backup-and-document`          | Create a restore point and a human-readable config inventory.                   |
 
 See the **[VPN guide](./vpn-guide.md)** for how the VPN prompts and tools fit together.
 
@@ -60,9 +61,9 @@ Inspects management services, the firewall input chain, users, and DNS, then
 proposes a prioritized hardening checklist — applying risky firewall edits under
 [Safe Mode](./safe-mode.md).
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `wan_interface` | no | The WAN-facing interface (e.g. `ether1`, `pppoe-out1`). If unknown, it's discovered first. |
+| Argument        | Required | Description                                                                                |
+| --------------- | :------: | ------------------------------------------------------------------------------------------ |
+| `wan_interface` |    no    | The WAN-facing interface (e.g. `ether1`, `pppoe-out1`). If unknown, it's discovered first. |
 
 ### `diagnose-connectivity`
 
@@ -70,10 +71,10 @@ Troubleshoots bottom-up (link → addressing → routing → DNS → reachabilit
 firewall/NAT → logs) using read-only tools, and concludes with the most likely
 root cause and the fix to approve.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `target` | **yes** | What's unreachable — an IP, hostname, or subnet (e.g. `8.8.8.8`, `example.com`, `192.168.50.0/24`). |
-| `source_interface` | no | The interface/segment the affected clients are on (e.g. `bridge`, `vlan50`). |
+| Argument           | Required | Description                                                                                         |
+| ------------------ | :------: | --------------------------------------------------------------------------------------------------- |
+| `target`           | **yes**  | What's unreachable — an IP, hostname, or subnet (e.g. `8.8.8.8`, `example.com`, `192.168.50.0/24`). |
+| `source_interface` |    no    | The interface/segment the affected clients are on (e.g. `bridge`, `vlan50`).                        |
 
 ### `setup-guest-wifi`
 
@@ -81,53 +82,53 @@ Builds a segmented guest network: VLAN/interface, gateway IP, DHCP, masquerade,
 and — the important part — isolation rules that allow internet but drop traffic
 to the LAN and management. Applied under Safe Mode.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `subnet` | **yes** | Guest subnet in CIDR, e.g. `192.168.80.0/24`. |
-| `vlan_id` | no | VLAN ID for the guest segment, e.g. `80`. Optional for a flat interface. |
-| `wan_interface` | **yes** | The interface that reaches the internet (for the masquerade rule). |
+| Argument        | Required | Description                                                              |
+| --------------- | :------: | ------------------------------------------------------------------------ |
+| `subnet`        | **yes**  | Guest subnet in CIDR, e.g. `192.168.80.0/24`.                            |
+| `vlan_id`       |    no    | VLAN ID for the guest segment, e.g. `80`. Optional for a flat interface. |
+| `wan_interface` | **yes**  | The interface that reaches the internet (for the masquerade rule).       |
 
 ### `setup-wireguard-vpn`
 
 Provisions a WireGuard server interface, tunnel address, firewall rules, and a
 first peer, then emits a ready-to-import client config.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `vpn_subnet` | **yes** | VPN tunnel subnet in CIDR, e.g. `10.10.0.0/24`. |
-| `endpoint` | **yes** | Public hostname/IP clients connect to (WAN address or DDNS name). |
-| `listen_port` | no | UDP port for WireGuard (default `13231`). |
+| Argument      | Required | Description                                                       |
+| ------------- | :------: | ----------------------------------------------------------------- |
+| `vpn_subnet`  | **yes**  | VPN tunnel subnet in CIDR, e.g. `10.10.0.0/24`.                   |
+| `endpoint`    | **yes**  | Public hostname/IP clients connect to (WAN address or DDNS name). |
+| `listen_port` |    no    | UDP port for WireGuard (default `13231`).                         |
 
 ### `choose-vpn-solution`
 
 Acts as a VPN architect: weighs WireGuard / IPsec / L2TP-IPsec / SSTP / OpenVPN /
 GRE-EoIP-VXLAN against your use case, recommends one, and outlines the build.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `use_case` | **yes** | What you need (e.g. "connect two offices", "remote access for laptops & phones"). |
-| `clients` | no | What connects (e.g. "iOS/Android built-in clients", "a Fortinet device"). |
+| Argument   | Required | Description                                                                       |
+| ---------- | :------: | --------------------------------------------------------------------------------- |
+| `use_case` | **yes**  | What you need (e.g. "connect two offices", "remote access for laptops & phones"). |
+| `clients`  |    no    | What connects (e.g. "iOS/Android built-in clients", "a Fortinet device").         |
 
 ### `setup-ipsec-site-to-site`
 
 Builds an IKEv2 site-to-site tunnel end to end (profile → proposal → peer →
 identity → policy) and lists the matching parameters for the remote engineer.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `local_subnet` | **yes** | Local network behind this router (CIDR). |
-| `remote_subnet` | **yes** | Remote network behind the peer (CIDR). |
-| `peer_address` | **yes** | Public IP/hostname of the remote peer. |
+| Argument        | Required | Description                              |
+| --------------- | :------: | ---------------------------------------- |
+| `local_subnet`  | **yes**  | Local network behind this router (CIDR). |
+| `remote_subnet` | **yes**  | Remote network behind the peer (CIDR).   |
+| `peer_address`  | **yes**  | Public IP/hostname of the remote peer.   |
 
 ### `setup-l2tp-ipsec-roadwarrior`
 
 Configures L2TP-over-IPsec remote access for built-in OS VPN clients: IP pool,
 PPP profile, per-user secrets, the server, firewall, and a client setup card.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `vpn_pool` | **yes** | Address range handed to VPN clients (e.g. `192.168.89.10-192.168.89.254`). |
-| `local_gateway` | **yes** | Router's VPN/LAN-side address used as gateway/DNS. |
+| Argument        | Required | Description                                                                |
+| --------------- | :------: | -------------------------------------------------------------------------- |
+| `vpn_pool`      | **yes**  | Address range handed to VPN clients (e.g. `192.168.89.10-192.168.89.254`). |
+| `local_gateway` | **yes**  | Router's VPN/LAN-side address used as gateway/DNS.                         |
 
 ### `setup-tunnel-between-sites`
 
@@ -136,11 +137,11 @@ tunnel technology, configures each side with its `device` argument, opens the
 firewall under per-device Safe Mode, and verifies with `ping` from both. Requires
 [multiple devices](./multi-device.md) to be configured.
 
-| Argument | Required | Description |
-|----------|:--:|-------------|
-| `device_a` | **yes** | Name of the first configured device (e.g. `site-a`). |
-| `device_b` | **yes** | Name of the second configured device (e.g. `site-b`). |
-| `technology` | no | `wireguard` / `ipsec` / `gre` / `eoip`, or `recommend`. |
+| Argument     | Required | Description                                             |
+| ------------ | :------: | ------------------------------------------------------- |
+| `device_a`   | **yes**  | Name of the first configured device (e.g. `site-a`).    |
+| `device_b`   | **yes**  | Name of the second configured device (e.g. `site-b`).   |
+| `technology` |    no    | `wireguard` / `ipsec` / `gre` / `eoip`, or `recommend`. |
 
 ### `backup-and-document`
 
@@ -149,8 +150,8 @@ configuration with read tools into a structured Markdown report. Takes no
 arguments.
 
 | Argument | Required | Description |
-|----------|:--:|-------------|
-| _(none)_ | — | — |
+| -------- | :------: | ----------- |
+| _(none)_ |    —     | —           |
 
 ## Adding your own
 

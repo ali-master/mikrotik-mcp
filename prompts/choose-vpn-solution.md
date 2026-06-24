@@ -10,6 +10,7 @@ arguments:
     description: What connects — e.g. "iOS/Android/Windows built-in clients", "other MikroTik routers", "a Cisco/Fortinet device", "our laptops only". Optional.
     required: false
 ---
+
 Act as a MikroTik VPN architect. Recommend the single best tunneling technology
 for the requirement below, justify it against the alternatives, then sketch the
 build using this server's tools. Be decisive.
@@ -23,7 +24,7 @@ Decision guidance — weigh these MikroTik options:
   laptops/phones with the WireGuard app. No built-in OS client on older systems.
   Tools: `create_wireguard_interface`, `add_wireguard_peer`, `generate_wireguard_client_config`.
 - **IPsec (IKEv2)** — the interoperability choice for site-to-site with
-  *other vendors* (Cisco/Fortinet/pfSense) and for native iOS/Windows IKEv2
+  _other vendors_ (Cisco/Fortinet/pfSense) and for native iOS/Windows IKEv2
   road-warrior. Most config surface. Tools: `create_ipsec_*` (profile/peer/
   identity/proposal/policy), `get_ipsec_active_peers`.
 - **L2TP/IPsec** — best when clients must use the **built-in** VPN client on
@@ -34,7 +35,7 @@ Decision guidance — weigh these MikroTik options:
 - **OpenVPN** — cross-platform with the OpenVPN client; RouterOS 7 adds UDP.
   Tools: `set_ovpn_server`, `create_ovpn_client`.
 - **PPTP** — legacy/weak; only if a legacy device demands it. Recommend against.
-- **GRE / IPIP / EoIP / VXLAN** — *unencrypted* transport tunnels for routing or
+- **GRE / IPIP / EoIP / VXLAN** — _unencrypted_ transport tunnels for routing or
   L2 bridging between sites (often run **over** an IPsec policy for encryption).
   EoIP/VXLAN bridge layer-2; GRE/IPIP carry layer-3. Tools: `create_gre_tunnel`,
   `create_eoip_tunnel`, `create_vxlan_tunnel`.

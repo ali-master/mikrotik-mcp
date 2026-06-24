@@ -8,13 +8,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -28,25 +22,13 @@ export const vlanTools: ToolModule = [
     description:
       "Creates a VLAN interface on the MikroTik device with the given VLAN ID and parent interface.",
     inputSchema: {
-      name: z
-        .string()
-        .describe("Name for the new VLAN interface, e.g. 'vlan100'"),
-      vlan_id: z
-        .number()
-        .int()
-        .min(1)
-        .max(4094)
-        .describe("802.1Q VLAN ID (1-4094)"),
-      interface: z
-        .string()
-        .describe("Parent interface, e.g. 'ether1' or 'bridge'"),
+      name: z.string().describe("Name for the new VLAN interface, e.g. 'vlan100'"),
+      vlan_id: z.number().int().min(1).max(4094).describe("802.1Q VLAN ID (1-4094)"),
+      interface: z.string().describe("Parent interface, e.g. 'ether1' or 'bridge'"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       mtu: z.number().int().optional(),
-      use_service_tag: z
-        .boolean()
-        .default(false)
-        .describe("Use 802.1ad service tag (QinQ)"),
+      use_service_tag: z.boolean().default(false).describe("Use 802.1ad service tag (QinQ)"),
       arp: ArpMode.default("enabled"),
       arp_timeout: z.string().optional(),
     },
@@ -67,8 +49,7 @@ export const vlanTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create VLAN interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to create VLAN interface: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/interface vlan print detail where name="${a.name}"`,
@@ -88,18 +69,14 @@ export const vlanTools: ToolModule = [
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
       vlan_id_filter: z.number().int().optional(),
-      interface_filter: z
-        .string()
-        .optional()
-        .describe("Exact parent interface name"),
+      interface_filter: z.string().optional().describe("Exact parent interface name"),
       disabled_only: z.boolean().default(false),
     },
     async handler(a, ctx) {
       ctx.info("Listing VLAN interfaces");
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
-      if (a.vlan_id_filter !== undefined)
-        filters.push(`vlan-id=${a.vlan_id_filter}`);
+      if (a.vlan_id_filter !== undefined) filters.push(`vlan-id=${a.vlan_id_filter}`);
       if (a.interface_filter) filters.push(`interface="${a.interface_filter}"`);
       if (a.disabled_only) filters.push("disabled=yes");
 
@@ -135,8 +112,7 @@ export const vlanTools: ToolModule = [
     name: "update_vlan_interface",
     title: "Update VLAN",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Updates an existing VLAN interface's settings on the MikroTik device.",
+    description: "Updates an existing VLAN interface's settings on the MikroTik device.",
     inputSchema: {
       name: z.string().describe("Current name of the VLAN interface to update"),
       new_name: z.string().optional(),
@@ -167,8 +143,7 @@ export const vlanTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update VLAN interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to update VLAN interface: ${result}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -197,8 +172,7 @@ export const vlanTools: ToolModule = [
         `/interface vlan remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove VLAN interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove VLAN interface: ${result}`;
       return `VLAN interface '${a.name}' removed successfully.`;
     },
   }),

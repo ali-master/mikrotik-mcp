@@ -1,20 +1,9 @@
 /** RIP — `/routing rip` (instance, interface-template, static-neighbor, neighbor) — RouterOS v7. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  looksLikeError,
-  isEmpty,
-  commandUnsupported,
-  Cmd,
-} from "../core/routeros";
+import { looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
 
 const UNSUPPORTED =
   "RIP is not available on this device (requires RouterOS v7 with the routing package).";
@@ -30,14 +19,9 @@ export const routingRipTools: ToolModule = [
       "redistribution and import/export filter chains.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP instances");
-      const result = await executeMikrotikCommand(
-        "/routing rip instance print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing rip instance print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No RIP instances found."
-        : `RIP INSTANCES:\n\n${result}`;
+      return isEmpty(result) ? "No RIP instances found." : `RIP INSTANCES:\n\n${result}`;
     },
   }),
 
@@ -50,21 +34,12 @@ export const routingRipTools: ToolModule = [
       "reference `/routing filter`.",
     inputSchema: {
       name: z.string().describe("Unique instance name"),
-      router_id: z
-        .string()
-        .optional()
-        .describe("IPv4 address, 'main', or a /routing id name"),
+      router_id: z.string().optional().describe("IPv4 address, 'main', or a /routing id name"),
       vrf: z.string().optional(),
-      redistribute: z
-        .string()
-        .optional()
-        .describe('Comma list, e.g. "connected,static"'),
+      redistribute: z.string().optional().describe('Comma list, e.g. "connected,static"'),
       in_filter_chain: z.string().optional(),
       out_filter_chain: z.string().optional(),
-      originate_default: z
-        .string()
-        .optional()
-        .describe("never, if-installed, or always"),
+      originate_default: z.string().optional().describe("never, if-installed, or always"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -84,8 +59,7 @@ export const routingRipTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add RIP instance: ${result}`;
+      if (looksLikeError(result)) return `Failed to add RIP instance: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing rip instance print detail where name="${a.name}"`,
         ctx,
@@ -126,8 +100,7 @@ export const routingRipTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update RIP instance: ${result}`;
+      if (looksLikeError(result)) return `Failed to update RIP instance: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing rip instance print detail where name="${a.name}"`,
         ctx,
@@ -149,8 +122,7 @@ export const routingRipTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove RIP instance: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove RIP instance: ${result}`;
       return `RIP instance '${a.name}' removed successfully.`;
     },
   }),
@@ -187,10 +159,7 @@ export const routingRipTools: ToolModule = [
       instance: z.string().describe("RIP instance name"),
       interfaces: z.string().describe("Interface or interface-list name"),
       passive: z.boolean().optional(),
-      key_chain: z
-        .string()
-        .optional()
-        .describe("Key-chain name for authentication"),
+      key_chain: z.string().optional().describe("Key-chain name for authentication"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -206,8 +175,7 @@ export const routingRipTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd.build(), ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add RIP interface template: ${result}`;
+      if (looksLikeError(result)) return `Failed to add RIP interface template: ${result}`;
       const t = result.trim();
       return t
         ? `RIP interface template added (id ${t}).`
@@ -228,8 +196,7 @@ export const routingRipTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove RIP interface template: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove RIP interface template: ${result}`;
       return `RIP interface template '${a.template_id}' removed successfully.`;
     },
   }),
@@ -244,10 +211,7 @@ export const routingRipTools: ToolModule = [
       "to peers across non-broadcast links.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP static neighbors");
-      const result = await executeMikrotikCommand(
-        "/routing rip static-neighbor print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing rip static-neighbor print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
       return isEmpty(result)
         ? "No RIP static neighbors found."
@@ -277,8 +241,7 @@ export const routingRipTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add RIP static neighbor: ${result}`;
+      if (looksLikeError(result)) return `Failed to add RIP static neighbor: ${result}`;
       return `RIP static neighbor '${a.address}' added successfully.`;
     },
   }),
@@ -298,8 +261,7 @@ export const routingRipTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove RIP static neighbor: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove RIP static neighbor: ${result}`;
       return `RIP static neighbor '${a.neighbor_id}' removed successfully.`;
     },
   }),
@@ -314,14 +276,9 @@ export const routingRipTools: ToolModule = [
       "with last-update timing. Read-only.",
     async handler(_a, ctx) {
       ctx.info("Listing RIP neighbors");
-      const result = await executeMikrotikCommand(
-        "/routing rip neighbor print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing rip neighbor print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No RIP neighbors found."
-        : `RIP NEIGHBORS:\n\n${result}`;
+      return isEmpty(result) ? "No RIP neighbors found." : `RIP NEIGHBORS:\n\n${result}`;
     },
   }),
 ];

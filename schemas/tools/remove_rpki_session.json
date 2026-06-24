@@ -8,8 +8,6 @@
       "description": "Session id, e.g. \"*1\""
     }
   },
-  "required": [
-    "session_id"
-  ],
+  "required": ["session_id"],
   "additionalProperties": false
 }

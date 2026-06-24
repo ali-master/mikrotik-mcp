@@ -15,10 +15,7 @@ export const bandwidthServerTools: ToolModule = [
       "(`/tool bandwidth-server`).",
     async handler(_a, ctx) {
       ctx.info("Getting bandwidth-server settings");
-      const result = await executeMikrotikCommand(
-        "/tool bandwidth-server print",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/tool bandwidth-server print", ctx);
       return isEmpty(result)
         ? "Unable to read bandwidth-server settings."
         : `BANDWIDTH SERVER:\n\n${result}`;
@@ -50,17 +47,12 @@ export const bandwidthServerTools: ToolModule = [
         .opt("allocate-udp-ports-from", a.allocate_udp_ports_from);
 
       const built = cmd.build();
-      if (built === "/tool bandwidth-server set")
-        return "No updates specified.";
+      if (built === "/tool bandwidth-server set") return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update bandwidth-server: ${result}`;
+      if (looksLikeError(result)) return `Failed to update bandwidth-server: ${result}`;
 
-      const details = await executeMikrotikCommand(
-        "/tool bandwidth-server print",
-        ctx,
-      );
+      const details = await executeMikrotikCommand("/tool bandwidth-server print", ctx);
       return `Bandwidth server updated successfully:\n\n${details}`;
     },
   }),
@@ -69,8 +61,7 @@ export const bandwidthServerTools: ToolModule = [
     name: "list_bandwidth_server_sessions",
     title: "List Bandwidth Server Sessions",
     annotations: READ,
-    description:
-      "Lists active bandwidth-test server sessions (`/tool bandwidth-server session`).",
+    description: "Lists active bandwidth-test server sessions (`/tool bandwidth-server session`).",
     inputSchema: {
       user_filter: z.string().optional().describe("Partial user match"),
     },

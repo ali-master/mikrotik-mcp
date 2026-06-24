@@ -19,9 +19,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "address",
-    "count"
-  ],
+  "required": ["address", "count"],
   "additionalProperties": false
 }

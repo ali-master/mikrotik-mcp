@@ -206,9 +206,9 @@ const sval = (v: unknown): string => {
   return JSON.stringify(v);
 };
 const RISK_COLOR: Record<Risk, string> = {
-  READ: "#34d399",
-  WRITE: "#fbbf24",
-  WRITE_IDEMPOTENT: "#38bdf8",
+  READ: "#d4d4d8",
+  WRITE: "#a1a1aa",
+  WRITE_IDEMPOTENT: "#e4e4e7",
   DESTRUCTIVE: "#f87171",
   DANGEROUS: "#ef4444",
 };
@@ -341,7 +341,7 @@ function TimeSeries({ series }: { series: Bucket[] }): ReactNode {
                 y={H - 14 - okH}
                 width={bw - gap * 2}
                 height={okH}
-                fill="#34d399"
+                fill="#d4d4d8"
                 opacity={0.85}
                 rx={1}
               />
@@ -359,13 +359,13 @@ function TimeSeries({ series }: { series: Bucket[] }): ReactNode {
           </g>
         );
       })}
-      <line x1={pad} y1={H - 14} x2={W - pad} y2={H - 14} stroke="#262b33" />
+      <line x1={pad} y1={H - 14} x2={W - pad} y2={H - 14} stroke="#27272a" />
       {series.length > 0 && (
         <>
-          <text x={pad} y={H - 2} fill="#6b7280" fontSize={10}>
+          <text x={pad} y={H - 2} fill="#71717a" fontSize={10}>
             {clock(series[0].t)}
           </text>
-          <text x={W - pad} y={H - 2} fill="#6b7280" fontSize={10} textAnchor="end">
+          <text x={W - pad} y={H - 2} fill="#71717a" fontSize={10} textAnchor="end">
             {clock(series[series.length - 1].t)}
           </text>
         </>
@@ -395,7 +395,7 @@ function Donut({
       }}
     >
       <svg viewBox="0 0 120 120" width={120} height={120}>
-        <circle cx={60} cy={60} r={R} fill="none" stroke="#1b1f26" strokeWidth={16} />
+        <circle cx={60} cy={60} r={R} fill="none" stroke="#27272a" strokeWidth={16} />
         {segments
           .filter((s) => s.value > 0)
           .map((s, i) => {
@@ -417,10 +417,10 @@ function Donut({
             offset += C * frac;
             return el;
           })}
-        <text x={60} y={58} textAnchor="middle" fill="#e8eaed" fontSize={20} fontWeight={650}>
+        <text x={60} y={58} textAnchor="middle" fill="#fafafa" fontSize={20} fontWeight={650}>
           {total}
         </text>
-        <text x={60} y={74} textAnchor="middle" fill="#9aa3af" fontSize={9}>
+        <text x={60} y={74} textAnchor="middle" fill="#a1a1aa" fontSize={9}>
           calls
         </text>
       </svg>
@@ -469,9 +469,9 @@ function HBars({
 
 // ── connectivity graph ───────────────────────────────────────────────────────
 function statusInfo(s: DeviceStatus): { label: string; color: string } {
-  if (s.reachable === true) return { label: "online", color: "#34d399" };
+  if (s.reachable === true) return { label: "online", color: "#d4d4d8" };
   if (s.reachable === false) return { label: "offline", color: "#f87171" };
-  return { label: "checking…", color: "#6b7280" };
+  return { label: "checking…", color: "#71717a" };
 }
 
 /** A point on a quadratic Bézier (core → control → device) at parameter `t`. */
@@ -501,8 +501,8 @@ function qAngle(
   return (Math.atan2(dy, dx) * 180) / Math.PI;
 }
 
-const FLOW_CMD = "#38bdf8"; // command: LLM → device
-const FLOW_RES = "#34d399"; // response: device → LLM
+const FLOW_CMD = "#e4e4e7"; // command: LLM → device
+const FLOW_RES = "#d4d4d8"; // response: device → LLM
 
 /**
  * Animated "radar hub" connectivity map that shows **traffic direction**. Each
@@ -515,6 +515,15 @@ const FLOW_RES = "#34d399"; // response: device → LLM
  * mac-telnet devices the background probe can't poll. All motion is CSS/SMIL
  * (`.conn-*` in styles.css) and respects `prefers-reduced-motion`.
  */
+/** Truncate a node label to what the largest orb can hold (mono ≈ 6.2px/char). */
+const NODE_MAX_R = 70;
+const NODE_MAX_CHARS = Math.floor((2 * NODE_MAX_R - 24) / 6.2);
+const nodeLabel = (raw: string): string =>
+  raw.length > NODE_MAX_CHARS ? `${raw.slice(0, NODE_MAX_CHARS - 1)}…` : raw;
+/** Circle radius that fits `label` across its diameter, clamped to [23, NODE_MAX_R]. */
+const nodeRadius = (label: string): number =>
+  Math.max(23, Math.min(NODE_MAX_R, label.length * 3.1 + 12));
+
 function ConnectivityGraph({
   payload,
   pulses,
@@ -524,17 +533,31 @@ function ConnectivityGraph({
 }): ReactNode {
   const devices = payload.devices;
   const n = Math.max(1, devices.length);
-  const R = Math.min(150, 96 + n * 3);
-  const PAD = 80;
-  const W = 700;
+
+  // Each orb's radius scales with its device name, so the ring must leave room
+  // for the largest orb AND a clear lane between the core and every node, or the
+  // command/response lines, arrows and packets get hidden under the circles.
+  const sized = devices.map((d) => {
+    const label = nodeLabel(d.name);
+    return { d, label, r: nodeRadius(label) };
+  });
+  const maxR = Math.max(23, ...sized.map((s) => s.r));
+  const CORE = 46; // core hub glow radius
+  const LANE = 64; // guaranteed clear gap (core edge → node edge) for the flow
+  // Ring radius: clearance from the core for the lanes, plus enough that adjacent
+  // orbs on the ring don't collide, plus a sensible floor.
+  const spacingR = n > 1 ? (maxR + 18) / Math.sin(Math.PI / n) : 0;
+  const R = Math.max(CORE + LANE + maxR, spacingR, 120);
+  const PAD = maxR + 60; // orb + its two label lines + margin
+  const W = Math.max(700, Math.round((R + maxR + 40) * 2));
   const H = Math.round((R + PAD) * 2);
   const cx = W / 2;
   const cy = H / 2;
   const core = { x: cx, y: cy };
 
-  const nodes = devices.map((d, i) => {
+  const nodes = sized.map((s, i) => {
     const ang = (i / n) * Math.PI * 2 - Math.PI / 2 + (n % 2 === 0 ? Math.PI / n : 0);
-    return { d, i, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
+    return { ...s, i, x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
   });
 
   return (
@@ -547,19 +570,19 @@ function ConnectivityGraph({
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          <radialGradient id="conn-hub" cx="0.5" cy="0.38" r="0.72">
-            <stop offset="0" stopColor="#a7f3eb" />
-            <stop offset="0.55" stopColor="#2dd4bf" />
-            <stop offset="1" stopColor="#0c5a52" />
+          <radialGradient id="conn-hub" cx="0.5" cy="0.34" r="0.75">
+            <stop offset="0" stopColor="#fafafa" />
+            <stop offset="0.6" stopColor="#d4d4d8" />
+            <stop offset="1" stopColor="#a1a1aa" />
           </radialGradient>
           <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
-            <stop offset="0" stopColor="#232a3b" />
-            <stop offset="1" stopColor="#0f131c" />
+            <stop offset="0" stopColor="#27272a" />
+            <stop offset="1" stopColor="#18181b" />
           </radialGradient>
           <radialGradient id="conn-burst" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stopColor="#fffbe6" />
-            <stop offset="0.5" stopColor="#fde68a" />
-            <stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+            <stop offset="0" stopColor="#fafafa" />
+            <stop offset="0.5" stopColor="#e4e4e7" />
+            <stop offset="1" stopColor="#a1a1aa" stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -699,29 +722,22 @@ function ConnectivityGraph({
         {/* core hub */}
         <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
         <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
-        <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#5eead4" strokeWidth={1.5} />
-        <text x={cx} y={cy - 4} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={700}>
+        <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#71717a" strokeWidth={1.5} />
+        <text x={cx} y={cy - 4} textAnchor="middle" fill="#09090b" fontSize={12} fontWeight={700}>
           LLM
         </text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#99f6e4" fontSize={8}>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#3f3f46" fontSize={8} fontWeight={600}>
           ⇄ MCP
         </text>
-        <text x={cx} y={cy + 18} textAnchor="middle" fill="#99f6e4" fontSize={7.5}>
+        <text x={cx} y={cy + 18} textAnchor="middle" fill="#3f3f46" fontSize={7.5} fontWeight={600}>
           server
         </text>
 
         {/* device nodes */}
-        {nodes.map(({ d, x, y }) => {
+        {nodes.map(({ d, x, y, r, label }) => {
           const info = statusInfo(d.status);
           const online = d.status.reachable === true;
           const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
-          // Keep the node a circle, but scale its radius to the device name so the
-          // label always fits inside the diameter (≈6.2px per char in DM Mono at
-          // 10px). Names longer than the max radius can hold are truncated to fit.
-          const maxR = 70;
-          const maxChars = Math.floor((2 * maxR - 24) / 6.2);
-          const name = d.name.length > maxChars ? `${d.name.slice(0, maxChars - 1)}…` : d.name;
-          const r = Math.max(23, Math.min(maxR, name.length * 3.1 + 12));
           return (
             <g key={`n-${d.name}`} className="conn-node">
               {online && (
@@ -746,13 +762,13 @@ function ConnectivityGraph({
                 x={x}
                 y={y + 3.5}
                 textAnchor="middle"
-                fill="#e8eaed"
+                fill="#fafafa"
                 fontSize={10}
                 fontWeight={600}
               >
-                {name}
+                {label}
               </text>
-              <text x={x} y={y + r + 14} textAnchor="middle" fill="#9aa3af" fontSize={9}>
+              <text x={x} y={y + r + 14} textAnchor="middle" fill="#a1a1aa" fontSize={9}>
                 {d.address ?? d.host}
               </text>
               <text
@@ -777,7 +793,7 @@ function ConnectivityGraph({
           <i style={{ background: FLOW_RES }} /> response · device → LLM
         </span>
         <span>
-          <i style={{ background: "#fde68a" }} /> live call (round-trip)
+          <i style={{ background: "#e4e4e7" }} /> live call (round-trip)
         </span>
       </div>
     </>
@@ -901,26 +917,38 @@ function Gauge({
   label: string;
   color: string;
 }): ReactNode {
-  const v = value == null ? 0 : Math.max(0, Math.min(100, value));
+  // Distinguish "no reading" (null → faint "n/a", no arc) from a genuine 0%, so an
+  // un-probed device reads as missing data rather than a broken/empty gauge.
+  const has = value != null;
+  const v = has ? Math.max(0, Math.min(100, value)) : 0;
   const R = 24;
   const C = 2 * Math.PI * R;
   return (
     <div className="gauge">
       <svg viewBox="0 0 64 64" width={64} height={64}>
-        <circle cx={32} cy={32} r={R} fill="none" stroke="#1b1f26" strokeWidth={7} />
-        <circle
-          cx={32}
-          cy={32}
-          r={R}
-          fill="none"
-          stroke={color}
-          strokeWidth={7}
-          strokeLinecap="round"
-          strokeDasharray={`${(C * v) / 100} ${C}`}
-          transform="rotate(-90 32 32)"
-        />
-        <text x={32} y={35} textAnchor="middle" fill="#e8eaed" fontSize={13} fontWeight={700}>
-          {value == null ? "—" : `${Math.round(v)}%`}
+        <circle cx={32} cy={32} r={R} fill="none" stroke="#27272a" strokeWidth={7} />
+        {has && (
+          <circle
+            cx={32}
+            cy={32}
+            r={R}
+            fill="none"
+            stroke={color}
+            strokeWidth={7}
+            strokeLinecap="round"
+            strokeDasharray={`${(C * v) / 100} ${C}`}
+            transform="rotate(-90 32 32)"
+          />
+        )}
+        <text
+          x={32}
+          y={35}
+          textAnchor="middle"
+          fill={has ? "#fafafa" : "#71717a"}
+          fontSize={has ? 13 : 10}
+          fontWeight={700}
+        >
+          {has ? `${Math.round(v)}%` : "n/a"}
         </text>
       </svg>
       <span className="gauge__label">{label}</span>
@@ -966,27 +994,27 @@ function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         {s.uptime ? ` · up ${s.uptime}` : ""}
       </div>
       <div className="health-card__gauges">
-        <Gauge value={s.cpuLoad} label="CPU" color="#38bdf8" />
-        <Gauge value={s.memUsedPct} label="MEM" color="#34d399" />
-        <Gauge value={s.hddUsedPct} label="DISK" color="#fbbf24" />
+        <Gauge value={s.cpuLoad} label="CPU" color="#e4e4e7" />
+        <Gauge value={s.memUsedPct} label="MEM" color="#d4d4d8" />
+        <Gauge value={s.hddUsedPct} label="DISK" color="#a1a1aa" />
       </div>
       <div className="health-card__charts">
         <div className="health-chart">
           <span className="health-chart__k">CPU load</span>
-          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#38bdf8" maxValue={100} unit="%" />
+          <Sparkline values={hist.map((h) => h.cpuLoad)} color="#e4e4e7" maxValue={100} unit="%" />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Memory used</span>
           <Sparkline
             values={hist.map((h) => h.memUsedPct)}
-            color="#34d399"
+            color="#d4d4d8"
             maxValue={100}
             unit="%"
           />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Probe latency</span>
-          <Sparkline values={hist.map((h) => h.latencyMs)} color="#22d3ee" unit="ms" />
+          <Sparkline values={hist.map((h) => h.latencyMs)} color="#a1a1aa" unit="ms" />
         </div>
       </div>
       <div className="health-card__foot muted">
@@ -1161,10 +1189,17 @@ function collectHints(schema: unknown): SchemaHints {
       }
     }
     if (Array.isArray(n.enum)) for (const e of n.enum) if (typeof e === "string") enums.add(e);
-    for (const f of ["items", "additionalProperties", "$defs", "anyOf", "oneOf", "allOf"]) {
+    for (const f of ["items", "additionalProperties", "anyOf", "oneOf", "allOf"]) {
       const v = n[f];
       if (Array.isArray(v)) v.forEach(walk);
       else if (v && typeof v === "object") walk(v);
+    }
+    // `$defs` / `definitions` are maps of (name → schema): walk each *value*, not
+    // the container (whose own keys are def names, not properties), so device-level
+    // fields survive if Zod ever emits a $ref form instead of an inlined schema.
+    for (const f of ["$defs", "definitions", "patternProperties"]) {
+      const v = n[f];
+      if (v && typeof v === "object") for (const sub of Object.values(v)) walk(sub);
     }
   };
   walk(schema);
@@ -1210,7 +1245,13 @@ function ConfigStudio({
   const [hints, setHints] = useState<SchemaHints>({ keys: [], enums: [] });
   const [errors, setErrors] = useState<ConfigIssue[]>([]);
   const [jsonErr, setJsonErr] = useState<string | null>(null);
-  const [ac, setAc] = useState<{ items: string[]; index: number; start: number } | null>(null);
+  const [ac, setAc] = useState<{
+    items: string[];
+    index: number;
+    start: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const [tests, setTests] = useState<Record<string, { ok: boolean; label: string }>>({});
   const [preview, setPreview] = useState<{ summary?: DiffSummary; unified?: string } | null>(null);
   const [pending, setPending] = useState<SaveResp | null>(null);
@@ -1281,7 +1322,17 @@ function ConfigStudio({
     }
     const pool = isValue ? hints.enums : hints.keys;
     const items = pool.filter((k) => k.startsWith(word) && k !== word).slice(0, 8);
-    setAc(items.length ? { items, index: 0, start } : null);
+    if (!items.length) {
+      setAc(null);
+      return;
+    }
+    // The editor font is monospace, so caret pixel position is exact: column ×
+    // char-advance and line × line-height (12px / 1.5 = 18px, 10/12px padding).
+    const before = el.value.slice(0, el.selectionStart).split("\n");
+    const col = before[before.length - 1].length;
+    const x = Math.min(12 + col * 7.22 - el.scrollLeft, el.clientWidth - 160);
+    const y = 10 + before.length * 18 - el.scrollTop + 4;
+    setAc({ items, index: 0, start, x: Math.max(4, x), y });
   };
 
   const accept = (completion: string): void => {
@@ -1486,7 +1537,7 @@ function ConfigStudio({
             }}
           />
           {ac && (
-            <div className="cfg-ac">
+            <div className="cfg-ac" style={{ left: ac.x, top: ac.y }}>
               {ac.items.map((it, i) => (
                 <div
                   key={it}
@@ -1569,10 +1620,10 @@ function ConfigStudio({
 // ── live Layer-2 topology map ────────────────────────────────────────────────
 /** Colour a 0–100 metric: green (ok) → amber (warm) → red (hot). */
 function metricColor(v: number | undefined): string {
-  if (v == null) return "#3a4151";
+  if (v == null) return "#3f3f46";
   if (v >= 85) return "#f87171";
-  if (v >= 60) return "#fbbf24";
-  return "#34d399";
+  if (v >= 60) return "#a1a1aa";
+  return "#d4d4d8";
 }
 
 /**
@@ -1688,12 +1739,12 @@ function TopologyMap({
           const y = p.y - h / 2;
           const border =
             n.reachable === true
-              ? "#34d399"
+              ? "#d4d4d8"
               : n.reachable === false
                 ? "#f87171"
                 : isDev
-                  ? "#6b7280"
-                  : "#38bdf8";
+                  ? "#71717a"
+                  : "#e4e4e7";
           const isPicked = picked === n.id;
           return (
             <g
@@ -1744,13 +1795,13 @@ function TopologyMap({
       <div className="topo-foot">
         <span className="legend">
           <span>
-            <i className="dot" style={{ background: "#34d399" }} /> online
+            <i className="dot" style={{ background: "#d4d4d8" }} /> online
           </span>
           <span>
             <i className="dot" style={{ background: "#f87171" }} /> offline
           </span>
           <span>
-            <i className="dot" style={{ background: "#38bdf8" }} /> neighbour
+            <i className="dot" style={{ background: "#e4e4e7" }} /> neighbour
           </span>
           <span className="muted">
             {topo.stats.devices} devices · {topo.stats.neighbors} discovered ·{" "}
@@ -1867,14 +1918,14 @@ function highlightJson(json: string): ReactNode[] {
 
 // ── Packet Capture Studio ────────────────────────────────────────────────────
 const PROTO_COLOR: Record<string, string> = {
-  TCP: "#38bdf8",
-  UDP: "#34d399",
-  ICMP: "#fbbf24",
-  ICMPv6: "#fbbf24",
-  ARP: "#2dd4bf",
-  IPv6: "#9aa3af",
+  TCP: "#e4e4e7",
+  UDP: "#d4d4d8",
+  ICMP: "#a1a1aa",
+  ICMPv6: "#a1a1aa",
+  ARP: "#e4e4e7",
+  IPv6: "#a1a1aa",
 };
-const protoColor = (p: string | undefined): string => (p && PROTO_COLOR[p]) || "#6b7280";
+const protoColor = (p: string | undefined): string => (p && PROTO_COLOR[p]) || "#71717a";
 
 /** Live packet capture: protocol mix, top talkers, a scrolling packet list, pcap export. */
 function PacketCapture(): ReactNode {
@@ -2374,12 +2425,12 @@ function App(): ReactNode {
         <div className="nav__brand">
           <div className="nav__mark">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <g stroke="#053b35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <g stroke="#18181b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 12 L4 5 M12 12 L20 5 M12 12 L12 20" />
-                <circle cx="12" cy="12" r="3" fill="#053b35" stroke="none" />
-                <circle cx="4" cy="5" r="1.9" fill="#053b35" stroke="none" />
-                <circle cx="20" cy="5" r="1.9" fill="#053b35" stroke="none" />
-                <circle cx="12" cy="20" r="1.9" fill="#053b35" stroke="none" />
+                <circle cx="12" cy="12" r="3" fill="#18181b" stroke="none" />
+                <circle cx="4" cy="5" r="1.9" fill="#18181b" stroke="none" />
+                <circle cx="20" cy="5" r="1.9" fill="#18181b" stroke="none" />
+                <circle cx="12" cy="20" r="1.9" fill="#18181b" stroke="none" />
               </g>
             </svg>
           </div>
@@ -2478,7 +2529,7 @@ function App(): ReactNode {
                 )}
                 <div className="legend">
                   <span>
-                    <i style={{ background: "#34d399" }} />
+                    <i style={{ background: "#d4d4d8" }} />
                     ok
                   </span>
                   <span>
@@ -2511,7 +2562,7 @@ function App(): ReactNode {
                   <Panel title="Status" className="b-status">
                     <Donut
                       segments={[
-                        { label: "ok", value: feedStatus.ok, color: "#34d399" },
+                        { label: "ok", value: feedStatus.ok, color: "#d4d4d8" },
                         { label: "error", value: feedStatus.error, color: "#f87171" },
                       ]}
                     />

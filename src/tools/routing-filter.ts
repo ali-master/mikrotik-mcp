@@ -1,13 +1,7 @@
 /** Routing filters — `/routing filter rule`, `select-rule`, `num-list` (RouterOS v7). */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import {
   yesno,
@@ -32,10 +26,7 @@ export const routingFilterTools: ToolModule = [
       "script-like expression, e.g. `if (dst in 10.0.0.0/8) { set distance 30; accept }`. Chains are referenced " +
       "by BGP/OSPF as input/output filters and by `select-rule` matchers.",
     inputSchema: {
-      chain_filter: z
-        .string()
-        .optional()
-        .describe("Show only rules in this chain"),
+      chain_filter: z.string().optional().describe("Show only rules in this chain"),
     },
     async handler(a, ctx) {
       ctx.info("Listing routing filter rules");
@@ -63,9 +54,7 @@ export const routingFilterTools: ToolModule = [
       chain: z.string().describe("Filter chain name, e.g. 'bgp-in'"),
       rule: z
         .string()
-        .describe(
-          'Match/action expression, e.g. "if (dst-len <= 24) { accept } else { reject }"',
-        ),
+        .describe('Match/action expression, e.g. "if (dst-len <= 24) { accept } else { reject }"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       place_before: z
@@ -85,12 +74,9 @@ export const routingFilterTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add routing filter rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to add routing filter rule: ${result}`;
       const t = result.trim();
-      return t
-        ? `Routing filter rule added (id ${t}).`
-        : "Routing filter rule added successfully.";
+      return t ? `Routing filter rule added (id ${t}).` : "Routing filter rule added successfully.";
     },
   }),
 
@@ -121,8 +107,7 @@ export const routingFilterTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update routing filter rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to update routing filter rule: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing filter rule print detail where .id=${a.rule_id}`,
         ctx,
@@ -139,13 +124,9 @@ export const routingFilterTools: ToolModule = [
     inputSchema: { rule_id: z.string().describe('Rule id, e.g. "*3"') },
     async handler(a, ctx) {
       ctx.info(`Removing routing filter rule ${a.rule_id}`);
-      const result = await executeMikrotikCommand(
-        `/routing filter rule remove ${a.rule_id}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/routing filter rule remove ${a.rule_id}`, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove routing filter rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove routing filter rule: ${result}`;
       return `Routing filter rule '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -166,8 +147,7 @@ export const routingFilterTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update routing filter rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to update routing filter rule: ${result}`;
       return `Routing filter rule '${a.rule_id}' ${a.enabled ? "enabled" : "disabled"}.`;
     },
   }),
@@ -182,10 +162,7 @@ export const routingFilterTools: ToolModule = [
       "`chain` to jump into based on prefix/length conditions — the structured front-end to the script chains.",
     async handler(_a, ctx) {
       ctx.info("Listing routing filter select-rules");
-      const result = await executeMikrotikCommand(
-        "/routing filter select-rule print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing filter select-rule print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
       return isEmpty(result)
         ? "No routing filter select-rules found."
@@ -202,10 +179,7 @@ export const routingFilterTools: ToolModule = [
       "Lists routing filter num-lists (`/routing filter num-list`). A num-list is a named set of numeric ranges " +
       "(AS numbers, communities, prefix lengths) that filter rules can match against by name.",
     inputSchema: {
-      list_filter: z
-        .string()
-        .optional()
-        .describe("Show only entries of this named list"),
+      list_filter: z.string().optional().describe("Show only entries of this named list"),
     },
     async handler(a, ctx) {
       ctx.info("Listing routing filter num-lists");
@@ -229,9 +203,7 @@ export const routingFilterTools: ToolModule = [
     description: "Adds a numeric range entry to a named num-list.",
     inputSchema: {
       list: z.string().describe("Num-list name to add to"),
-      range: z
-        .string()
-        .describe('Numeric range or single value, e.g. "65000-65010" or "100"'),
+      range: z.string().describe('Numeric range or single value, e.g. "65000-65010" or "100"'),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -244,12 +216,9 @@ export const routingFilterTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add num-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to add num-list entry: ${result}`;
       const t = result.trim();
-      return t
-        ? `Num-list entry added (id ${t}).`
-        : "Num-list entry added successfully.";
+      return t ? `Num-list entry added (id ${t}).` : "Num-list entry added successfully.";
     },
   }),
 
@@ -266,8 +235,7 @@ export const routingFilterTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove num-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove num-list entry: ${result}`;
       return `Num-list entry '${a.entry_id}' removed successfully.`;
     },
   }),

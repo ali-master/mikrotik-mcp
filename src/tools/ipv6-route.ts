@@ -1,21 +1,9 @@
 /** IPv6 routing table — `/ipv6 route`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  yesno,
-  whereClause,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { yesno, whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const RouteType = z.enum(["unicast", "blackhole", "unreachable", "prohibit"]);
@@ -36,10 +24,7 @@ interface AddIpv6RouteArgs {
 }
 
 /** Shared `add_ipv6_route` body, reused by `add_ipv6_default_route`. */
-async function addIpv6Route(
-  a: AddIpv6RouteArgs,
-  ctx: ToolContext,
-): Promise<string> {
+async function addIpv6Route(a: AddIpv6RouteArgs, ctx: ToolContext): Promise<string> {
   ctx.info(`Adding IPv6 route: dst=${a.dst_address}, gateway=${a.gateway}`);
   const cmd = new Cmd("/ipv6 route add")
     .set("dst-address", a.dst_address)
@@ -60,10 +45,7 @@ async function addIpv6Route(
   const t = result.trim();
   if (t) {
     if (t.includes("*") || /^\d+$/.test(t)) {
-      const details = await executeMikrotikCommand(
-        `/ipv6 route print detail where .id=${t}`,
-        ctx,
-      );
+      const details = await executeMikrotikCommand(`/ipv6 route print detail where .id=${t}`, ctx);
       return details.trim()
         ? `IPv6 route added successfully:\n\n${details}`
         : `IPv6 route added with ID: ${result}`;
@@ -107,9 +89,7 @@ export const ipv6RouteTools: ToolModule = [
       "        'unreachable' and 'prohibit' discard traffic (no gateway needed).\n" +
       "    routing_table: target a named routing table/FIB.",
     inputSchema: {
-      dst_address: z
-        .string()
-        .describe("Destination prefix, e.g. '2001:db8:1::/64'"),
+      dst_address: z.string().describe("Destination prefix, e.g. '2001:db8:1::/64'"),
       gateway: z
         .string()
         .optional()
@@ -120,10 +100,7 @@ export const ipv6RouteTools: ToolModule = [
       target_scope: z.number().int().min(0).max(255).optional(),
       routing_table: z.string().optional(),
       pref_src: z.string().optional(),
-      check_gateway: z
-        .string()
-        .optional()
-        .describe("'ping', 'arp', 'bfd' or 'none'"),
+      check_gateway: z.string().optional().describe("'ping', 'arp', 'bfd' or 'none'"),
       vrf_interface: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -137,8 +114,7 @@ export const ipv6RouteTools: ToolModule = [
     name: "add_ipv6_default_route",
     title: "Add IPv6 Default Route",
     annotations: WRITE,
-    description:
-      "Adds a default IPv6 route (::/0) via the given gateway on the MikroTik device.",
+    description: "Adds a default IPv6 route (::/0) via the given gateway on the MikroTik device.",
     inputSchema: {
       gateway: z.string().describe("Next-hop IPv6 address or interface"),
       distance: z.number().int().min(1).max(255).optional(),
@@ -170,16 +146,12 @@ export const ipv6RouteTools: ToolModule = [
       const filters: string[] = [];
       if (a.dst_filter) filters.push(`dst-address~"${a.dst_filter}"`);
       if (a.gateway_filter) filters.push(`gateway~"${a.gateway_filter}"`);
-      if (a.routing_table_filter)
-        filters.push(`routing-table="${a.routing_table_filter}"`);
+      if (a.routing_table_filter) filters.push(`routing-table="${a.routing_table_filter}"`);
       if (a.active_only) filters.push("active=yes");
       if (a.disabled_only) filters.push("disabled=yes");
       if (a.dynamic_only) filters.push("dynamic=yes");
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 route print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/ipv6 route print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No IPv6 routes found matching the criteria."
         : `IPV6 ROUTES:\n\n${result}`;
@@ -190,12 +162,9 @@ export const ipv6RouteTools: ToolModule = [
     name: "get_ipv6_route",
     title: "Get IPv6 Route",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific IPv6 route by ID or destination.",
+    description: "Gets detailed information about a specific IPv6 route by ID or destination.",
     inputSchema: {
-      route_id: z
-        .string()
-        .describe("RouterOS .id (e.g. '*1') or the destination prefix"),
+      route_id: z.string().describe("RouterOS .id (e.g. '*1') or the destination prefix"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting IPv6 route details: route_id=${a.route_id}`);
@@ -238,8 +207,7 @@ export const ipv6RouteTools: ToolModule = [
         `/ipv6 route remove [find .id="${a.route_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 route: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPv6 route: ${result}`;
       return `IPv6 route '${a.route_id}' removed successfully.`;
     },
   }),

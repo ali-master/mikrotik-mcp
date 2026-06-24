@@ -12,33 +12,32 @@
 
 /* ── Token override (scoped to this page) ─────────────────────────────────── */
 :root {
-  /* Brand fonts */
   --mt-sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mt-mono: "DM Mono", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
-  /* Deep teal-tinted surfaces */
-  --mt-bg: #04080d;
-  --mt-surface: #0a121b;
-  --mt-surface-2: #0f1a26;
-  --mt-border: rgba(120, 200, 205, 0.13);
-  --mt-text: #eaf6f3;
-  --mt-text-dim: #8fa0ad;
-  --mt-text-faint: #566679;
-  --mt-accent: #2dd4bf;
-  --mt-good: #34d399;
-  --mt-warn: #fbbf24;
-  --mt-bad: #fb7185;
-  --mt-radius: 16px;
-  --mt-radius-sm: 10px;
-  /* Signal palette */
-  --sky: #38bdf8;
-  --teal: #2dd4bf;
-  --cyan: #22d3ee;
-  --lime: #bef264;
-  --coral: #fb7185;
-  --amber: #fbbf24;
-  --grad: linear-gradient(115deg, var(--sky), var(--teal) 45%, var(--lime));
+  /* shadcn "zinc" dark scale */
+  --mt-bg: #09090b; /* zinc-950 */
+  --mt-surface: #18181b; /* zinc-900 */
+  --mt-surface-2: #27272a; /* zinc-800 */
+  --mt-border: #27272a; /* zinc-800 */
+  --mt-text: #fafafa; /* zinc-50 */
+  --mt-text-dim: #a1a1aa; /* zinc-400 */
+  --mt-text-faint: #71717a; /* zinc-500 */
+  --mt-accent: #e4e4e7; /* zinc-200 — primary accent */
+  --mt-good: #d4d4d8; /* zinc-300 — neutral "ok" */
+  --mt-warn: #a1a1aa; /* zinc-400 */
+  --mt-bad: #f87171; /* destructive red (shadcn keeps a red) */
+  --mt-radius: 12px;
+  --mt-radius-sm: 8px;
+  /* Zinc tones reused by components that still reference the old accent vars. */
+  --sky: #d4d4d8;
+  --teal: #e4e4e7;
+  --cyan: #a1a1aa;
+  --lime: #71717a;
+  --coral: #f87171;
+  --amber: #a1a1aa;
+  --grad: linear-gradient(115deg, #e4e4e7, #a1a1aa 50%, #52525b);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --glass: rgba(10, 20, 28, 0.62);
+  --glass: rgba(24, 24, 27, 0.55); /* zinc-900 glass */
 }
 
 html,
@@ -992,24 +991,24 @@ pre.body {
   overflow: auto;
 }
 
-/* JSON syntax highlighting (JsonView tokens). */
+/* JSON syntax highlighting — readable token hues on the zinc-dark editor. */
 pre.body.json {
-  color: var(--mt-text-dim);
+  color: #a1a1aa; /* punctuation: braces, commas, colons */
 }
 pre.body.json .j-key {
-  color: var(--mt-accent);
+  color: #7dd3fc; /* sky-300 — property names */
 }
 pre.body.json .j-str {
-  color: var(--lime);
+  color: #86efac; /* green-300 — strings */
 }
 pre.body.json .j-num {
-  color: var(--amber);
+  color: #fcd34d; /* amber-300 — numbers */
 }
 pre.body.json .j-bool {
-  color: var(--cyan);
+  color: #d8b4fe; /* purple-300 — booleans */
 }
 pre.body.json .j-null {
-  color: var(--mt-text-faint);
+  color: #71717a; /* zinc-500 — null */
 }
 .muted {
   color: var(--mt-text-faint);
@@ -1390,31 +1389,31 @@ pre.body.json .j-null {
   background: color-mix(in srgb, var(--mt-accent) 35%, transparent);
 }
 .cfg-hl .j-key {
-  color: var(--mt-accent);
+  color: #7dd3fc; /* sky-300 — property names */
 }
 .cfg-hl .j-str {
-  color: var(--lime);
+  color: #86efac; /* green-300 — strings */
 }
 .cfg-hl .j-num {
-  color: var(--amber);
+  color: #fcd34d; /* amber-300 — numbers */
 }
 .cfg-hl .j-bool {
-  color: var(--cyan);
+  color: #d8b4fe; /* purple-300 — booleans */
 }
 .cfg-hl .j-null {
-  color: var(--mt-text-faint);
+  color: #71717a; /* zinc-500 — null */
 }
+/* Autocomplete popup — anchored at the caret (left/top set inline). */
 .cfg-ac {
   position: absolute;
-  top: 8px;
-  right: 8px;
   z-index: 5;
   min-width: 150px;
+  max-height: 184px;
+  overflow-y: auto;
   background: var(--mt-surface);
   border: 1px solid var(--mt-accent);
   border-radius: var(--mt-radius-sm);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 .cfg-ac-item {
   padding: 5px 11px;

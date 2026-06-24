@@ -1,21 +1,9 @@
 /** Switch chip ACL/redirect rules — `/interface ethernet switch rule`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -309,8 +297,7 @@ export const switchRuleTools: ToolModule = [
         `/interface ethernet switch rule remove ${a.rule_id}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove switch rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove switch rule: ${result}`;
       return `Switch rule '${a.rule_id}' removed successfully.`;
     },
   }),

@@ -12,11 +12,7 @@
  * `op` is the comparison operator (default `~`, regex match; pass `=` for exact).
  * An empty `values` array returns `""` so callers can omit the clause entirely.
  */
-export function orMatch(
-  field: string,
-  values: string[],
-  op: "~" | "=" = "~",
-): string {
+export function orMatch(field: string, values: string[], op: "~" | "=" = "~"): string {
   if (values.length === 0) return "";
   const terms = values.map((v) => `${field}${op}"${v.replace(/"/g, '\\"')}"`);
   return `(${terms.join(" or ")})`;

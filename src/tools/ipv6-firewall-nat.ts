@@ -1,21 +1,9 @@
 /** IPv6 firewall NAT rules — `/ipv6 firewall nat`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -65,20 +53,17 @@ async function updateNatRule(
   put("src-address-list", a.src_address_list);
   put("dst-address-list", a.dst_address_list);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
-  if (a.disabled !== undefined)
-    updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
+  if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
     updates.push(`log=${a.log ? "yes" : "no"}`);
-    if (a.log && a.log_prefix)
-      updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
+    if (a.log && a.log_prefix) updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
   }
 
   if (updates.length === 0) return "No updates specified.";
 
   const cmd = `/ipv6 firewall nat set ${a.rule_id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
-  if (looksLikeError(result))
-    return `Failed to update IPv6 firewall NAT rule: ${result}`;
+  if (looksLikeError(result)) return `Failed to update IPv6 firewall NAT rule: ${result}`;
 
   const details = await executeMikrotikCommand(
     `/ipv6 firewall nat print detail where .id=${a.rule_id}`,
@@ -128,15 +113,10 @@ export const ipv6FirewallNatTools: ToolModule = [
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
       log_prefix: z.string().optional(),
-      place_before: z
-        .string()
-        .optional()
-        .describe("Rule number or ID (*N) to insert before"),
+      place_before: z.string().optional().describe("Rule number or ID (*N) to insert before"),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating IPv6 firewall NAT rule: chain=${a.chain}, action=${a.action}`,
-      );
+      ctx.info(`Creating IPv6 firewall NAT rule: chain=${a.chain}, action=${a.action}`);
 
       const cmd = new Cmd("/ipv6 firewall nat add")
         .set("chain", a.chain)
@@ -175,10 +155,7 @@ export const ipv6FirewallNatTools: ToolModule = [
         return `Failed to create IPv6 firewall NAT rule: ${result}`;
       }
 
-      const count = await executeMikrotikCommand(
-        "/ipv6 firewall nat print detail count-only",
-        ctx,
-      );
+      const count = await executeMikrotikCommand("/ipv6 firewall nat print detail count-only", ctx);
       const c = count.trim();
       if (isDigits(c) && Number.parseInt(c, 10) > 0) {
         const details = await executeMikrotikCommand(
@@ -211,10 +188,8 @@ export const ipv6FirewallNatTools: ToolModule = [
       const filters: string[] = [];
       if (a.chain_filter) filters.push(`chain=${a.chain_filter}`);
       if (a.action_filter) filters.push(`action=${a.action_filter}`);
-      if (a.src_address_filter)
-        filters.push(`src-address~"${a.src_address_filter}"`);
-      if (a.dst_address_filter)
-        filters.push(`dst-address~"${a.dst_address_filter}"`);
+      if (a.src_address_filter) filters.push(`src-address~"${a.src_address_filter}"`);
+      if (a.dst_address_filter) filters.push(`dst-address~"${a.dst_address_filter}"`);
       if (a.disabled_only) filters.push("disabled=yes");
       if (a.invalid_only) filters.push("invalid=yes");
       if (a.dynamic_only) filters.push("dynamic=yes");
@@ -233,8 +208,7 @@ export const ipv6FirewallNatTools: ToolModule = [
     name: "get_ipv6_nat_rule",
     title: "Get IPv6 Firewall NAT Rule",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific IPv6 firewall NAT rule.",
+    description: "Gets detailed information about a specific IPv6 firewall NAT rule.",
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
@@ -295,15 +269,10 @@ export const ipv6FirewallNatTools: ToolModule = [
         `/ipv6 firewall nat print count-only where .id=${a.rule_id}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `IPv6 firewall NAT rule with ID '${a.rule_id}' not found.`;
+      if (count.trim() === "0") return `IPv6 firewall NAT rule with ID '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 firewall nat remove ${a.rule_id}`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 firewall NAT rule: ${result}`;
+      const result = await executeMikrotikCommand(`/ipv6 firewall nat remove ${a.rule_id}`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 firewall NAT rule: ${result}`;
       return `IPv6 firewall NAT rule with ID '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -312,30 +281,25 @@ export const ipv6FirewallNatTools: ToolModule = [
     name: "move_ipv6_nat_rule",
     title: "Move IPv6 NAT Rule",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Moves an IPv6 firewall NAT rule to a different position in the chain.",
+    description: "Moves an IPv6 firewall NAT rule to a different position in the chain.",
     inputSchema: {
       rule_id: z.string(),
       destination: z.number().int().describe("0-based target position index"),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Moving IPv6 firewall NAT rule: rule_id=${a.rule_id} to position ${a.destination}`,
-      );
+      ctx.info(`Moving IPv6 firewall NAT rule: rule_id=${a.rule_id} to position ${a.destination}`);
 
       const count = await executeMikrotikCommand(
         `/ipv6 firewall nat print count-only where .id=${a.rule_id}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `IPv6 firewall NAT rule with ID '${a.rule_id}' not found.`;
+      if (count.trim() === "0") return `IPv6 firewall NAT rule with ID '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ipv6 firewall nat move ${a.rule_id} destination=${a.destination}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to move IPv6 firewall NAT rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to move IPv6 firewall NAT rule: ${result}`;
       return `IPv6 firewall NAT rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
     },
   }),

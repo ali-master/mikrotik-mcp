@@ -38,11 +38,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "name",
-    "common_name",
-    "key_size",
-    "days_valid"
-  ],
+  "required": ["name", "common_name", "key_size", "days_valid"],
   "additionalProperties": false
 }

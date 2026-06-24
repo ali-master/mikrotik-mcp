@@ -1,13 +1,7 @@
 /** Scheduler & scripts — `/system scheduler` and `/system script`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -22,21 +16,10 @@ export const schedulerTools: ToolModule = [
       name: z.string().describe("Name for the scheduler entry"),
       on_event: z
         .string()
-        .describe(
-          "Script source to run on event (may contain spaces/semicolons)",
-        ),
-      interval: z
-        .string()
-        .optional()
-        .describe("Run interval, e.g. '00:05:00' (0 = run once)"),
-      start_time: z
-        .string()
-        .optional()
-        .describe("Start time, e.g. '12:00:00' or 'startup'"),
-      start_date: z
-        .string()
-        .optional()
-        .describe("Start date, e.g. 'jan/01/2026'"),
+        .describe("Script source to run on event (may contain spaces/semicolons)"),
+      interval: z.string().optional().describe("Run interval, e.g. '00:05:00' (0 = run once)"),
+      start_time: z.string().optional().describe("Start time, e.g. '12:00:00' or 'startup'"),
+      start_date: z.string().optional().describe("Start date, e.g. 'jan/01/2026'"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -53,8 +36,7 @@ export const schedulerTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create scheduler: ${result}`;
+      if (looksLikeError(result)) return `Failed to create scheduler: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/system scheduler print detail where name="${a.name}"`,
@@ -125,8 +107,7 @@ export const schedulerTools: ToolModule = [
         `/system scheduler remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove scheduler: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove scheduler: ${result}`;
       return `Scheduler '${a.name}' removed successfully.`;
     },
   }),
@@ -143,8 +124,7 @@ export const schedulerTools: ToolModule = [
         `/system scheduler enable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable scheduler: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable scheduler: ${result}`;
       return `Scheduler '${a.name}' enabled successfully.`;
     },
   }),
@@ -161,8 +141,7 @@ export const schedulerTools: ToolModule = [
         `/system scheduler disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable scheduler: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable scheduler: ${result}`;
       return `Scheduler '${a.name}' disabled successfully.`;
     },
   }),
@@ -171,13 +150,10 @@ export const schedulerTools: ToolModule = [
     name: "add_script",
     title: "Add Script",
     annotations: WRITE,
-    description:
-      "Adds a named script to the MikroTik device's script repository.",
+    description: "Adds a named script to the MikroTik device's script repository.",
     inputSchema: {
       name: z.string().describe("Name for the script"),
-      source: z
-        .string()
-        .describe("Script source code (may contain spaces/semicolons)"),
+      source: z.string().describe("Script source code (may contain spaces/semicolons)"),
       comment: z.string().optional(),
       dont_require_permissions: z
         .boolean()
@@ -223,9 +199,7 @@ export const schedulerTools: ToolModule = [
         `/system script print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No scripts found matching the criteria."
-        : `SCRIPTS:\n\n${result}`;
+      return isEmpty(result) ? "No scripts found matching the criteria." : `SCRIPTS:\n\n${result}`;
     },
   }),
 
@@ -233,8 +207,7 @@ export const schedulerTools: ToolModule = [
     name: "remove_script",
     title: "Remove Script",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a script from the MikroTik device's script repository.",
+    description: "Removes a script from the MikroTik device's script repository.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing script: name=${a.name}`);
@@ -257,8 +230,7 @@ export const schedulerTools: ToolModule = [
     name: "run_script",
     title: "Run Script",
     annotations: WRITE,
-    description:
-      "Runs a named script from the MikroTik device's script repository.",
+    description: "Runs a named script from the MikroTik device's script repository.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Running script: name=${a.name}`);

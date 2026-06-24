@@ -24,28 +24,15 @@
     },
     "use_encryption": {
       "type": "string",
-      "enum": [
-        "default",
-        "yes",
-        "no",
-        "required"
-      ]
+      "enum": ["default", "yes", "no", "required"]
     },
     "change_tcp_mss": {
       "type": "string",
-      "enum": [
-        "default",
-        "yes",
-        "no"
-      ]
+      "enum": ["default", "yes", "no"]
     },
     "only_one": {
       "type": "string",
-      "enum": [
-        "default",
-        "yes",
-        "no"
-      ]
+      "enum": ["default", "yes", "no"]
     },
     "bridge": {
       "type": "string"
@@ -54,8 +41,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

@@ -57,10 +57,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "target",
-    "disabled"
-  ],
+  "required": ["name", "target", "disabled"],
   "additionalProperties": false
 }

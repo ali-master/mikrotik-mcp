@@ -70,13 +70,13 @@ preset** and wraps the handler so every tool returns the protocol's
 [tool annotations](https://modelcontextprotocol.io/specification) so clients can
 reason about each tool's blast radius:
 
-| Preset | `readOnlyHint` | `destructiveHint` | `idempotentHint` | Meaning |
-|--------|:--:|:--:|:--:|---------|
-| `READ` | ✅ | — | ✅ | Inspection only; side-effect free; repeatable. |
-| `WRITE` | — | ❌ | — | Creates/changes state; not inherently destructive; not idempotent. |
-| `WRITE_IDEMPOTENT` | — | ❌ | ✅ | Changes state but converges if repeated (set/enable/disable). |
-| `DESTRUCTIVE` | — | ✅ | ✅ | Removes/replaces state; safe to repeat (target already gone). |
-| `DANGEROUS` | — | ✅ | — | High blast radius and not safely repeatable (restore, import, factory setup). |
+| Preset             | `readOnlyHint` | `destructiveHint` | `idempotentHint` | Meaning                                                                       |
+| ------------------ | :------------: | :---------------: | :--------------: | ----------------------------------------------------------------------------- |
+| `READ`             |       ✅       |         —         |        ✅        | Inspection only; side-effect free; repeatable.                                |
+| `WRITE`            |       —        |        ❌         |        —         | Creates/changes state; not inherently destructive; not idempotent.            |
+| `WRITE_IDEMPOTENT` |       —        |        ❌         |        ✅        | Changes state but converges if repeated (set/enable/disable).                 |
+| `DESTRUCTIVE`      |       —        |        ✅         |        ✅        | Removes/replaces state; safe to repeat (target already gone).                 |
+| `DANGEROUS`        |       —        |        ✅         |        —         | High blast radius and not safely repeatable (restore, import, factory setup). |
 
 `registerTools()` registers every module's tools in one pass and throws on a
 duplicate tool name, so the catalog can never ship a collision.

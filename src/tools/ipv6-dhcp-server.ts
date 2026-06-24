@@ -20,28 +20,18 @@ export const ipv6DhcpServerTools: ToolModule = [
     inputSchema: {
       name: z.string(),
       interface: z.string(),
-      address_pool: z
-        .string()
-        .describe("IPv6 pool name the server delegates from"),
-      lease_time: z
-        .string()
-        .default("3d")
-        .describe("Lease duration e.g. '1d', '12h', '30m'"),
+      address_pool: z.string().describe("IPv6 pool name the server delegates from"),
+      lease_time: z.string().default("3d").describe("Lease duration e.g. '1d', '12h', '30m'"),
       binding_script: z.string().optional(),
       rapid_commit: z.boolean().optional(),
       preference: z.number().int().min(0).max(255).optional(),
       route_distance: z.number().int().optional(),
-      dhcp_option: z
-        .array(z.string())
-        .optional()
-        .describe("Custom DHCPv6 option names"),
+      dhcp_option: z.array(z.string()).optional().describe("Custom DHCPv6 option names"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating DHCPv6 server: name=${a.name}, interface=${a.interface}`,
-      );
+      ctx.info(`Creating DHCPv6 server: name=${a.name}, interface=${a.interface}`);
       const cmd = new Cmd("/ipv6 dhcp-server add")
         .set("name", a.name)
         .set("interface", a.interface)
@@ -51,17 +41,13 @@ export const ipv6DhcpServerTools: ToolModule = [
         .bool("rapid-commit", a.rapid_commit)
         .opt("preference", a.preference)
         .opt("route-distance", a.route_distance)
-        .opt(
-          "dhcp-option",
-          a.dhcp_option?.length ? a.dhcp_option.join(",") : undefined,
-        )
+        .opt("dhcp-option", a.dhcp_option?.length ? a.dhcp_option.join(",") : undefined)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create DHCPv6 server: ${result}`;
+      if (looksLikeError(result)) return `Failed to create DHCPv6 server: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 dhcp-server print detail where name="${a.name}"`,
         ctx,
@@ -135,8 +121,7 @@ export const ipv6DhcpServerTools: ToolModule = [
         `/ipv6 dhcp-server remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove DHCPv6 server: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove DHCPv6 server: ${result}`;
       return `DHCPv6 server '${a.name}' removed successfully.`;
     },
   }),
@@ -154,10 +139,7 @@ export const ipv6DhcpServerTools: ToolModule = [
       "    prefix: the delegated prefix, e.g. '2001:db8:1::/64'.",
     inputSchema: {
       address: z.string().optional().describe("Assigned IPv6 address, if any"),
-      prefix: z
-        .string()
-        .optional()
-        .describe("Delegated prefix, e.g. '2001:db8:1::/64'"),
+      prefix: z.string().optional().describe("Delegated prefix, e.g. '2001:db8:1::/64'"),
       duid: z.string().describe("Client DUID the binding matches"),
       iaid: z.string().optional().describe("Identity Association ID"),
       server: z.string().optional().describe("DHCPv6 server name, or 'all'"),
@@ -179,8 +161,7 @@ export const ipv6DhcpServerTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add DHCPv6 binding: ${result}`;
+      if (looksLikeError(result)) return `Failed to add DHCPv6 binding: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 dhcp-server binding print detail where duid="${a.duid}"`,
         ctx,
@@ -222,8 +203,7 @@ export const ipv6DhcpServerTools: ToolModule = [
     name: "remove_ipv6_dhcp_binding",
     title: "Remove DHCPv6 Binding",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a DHCPv6 server binding by ID or DUID from the MikroTik device.",
+    description: "Removes a DHCPv6 server binding by ID or DUID from the MikroTik device.",
     inputSchema: {
       binding_id: z.string().describe("RouterOS .id (e.g. '*1') or the DUID"),
     },
@@ -240,18 +220,14 @@ export const ipv6DhcpServerTools: ToolModule = [
           `/ipv6 dhcp-server binding print count-only where duid="${a.binding_id}"`,
           ctx,
         );
-        if (count.trim() === "0")
-          return `DHCPv6 binding '${a.binding_id}' not found.`;
+        if (count.trim() === "0") return `DHCPv6 binding '${a.binding_id}' not found.`;
       }
-      const selector = byId
-        ? `.id="${a.binding_id}"`
-        : `duid="${a.binding_id}"`;
+      const selector = byId ? `.id="${a.binding_id}"` : `duid="${a.binding_id}"`;
       const result = await executeMikrotikCommand(
         `/ipv6 dhcp-server binding remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove DHCPv6 binding: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove DHCPv6 binding: ${result}`;
       return `DHCPv6 binding '${a.binding_id}' removed successfully.`;
     },
   }),
@@ -282,8 +258,7 @@ export const ipv6DhcpServerTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add DHCPv6 option: ${result}`;
+      if (looksLikeError(result)) return `Failed to add DHCPv6 option: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 dhcp-server option print detail where name="${a.name}"`,
         ctx,
@@ -319,8 +294,7 @@ export const ipv6DhcpServerTools: ToolModule = [
     name: "remove_ipv6_dhcp_option",
     title: "Remove DHCPv6 Option",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a custom DHCPv6 option by name from the MikroTik device.",
+    description: "Removes a custom DHCPv6 option by name from the MikroTik device.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing DHCPv6 option: name=${a.name}`);
@@ -334,8 +308,7 @@ export const ipv6DhcpServerTools: ToolModule = [
         `/ipv6 dhcp-server option remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove DHCPv6 option: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove DHCPv6 option: ${result}`;
       return `DHCPv6 option '${a.name}' removed successfully.`;
     },
   }),

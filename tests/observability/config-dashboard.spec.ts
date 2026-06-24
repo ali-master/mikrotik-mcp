@@ -21,7 +21,7 @@ describe("dashboard config", () => {
   it("defaults to disabled with sensible values", () => {
     const cfg = loadConfig([]);
     expect(cfg.dashboard.enabled).toBe(false);
-    expect(cfg.dashboard.host).toBe("127.0.0.1");
+    expect(cfg.dashboard.host).toBe("0.0.0.0"); // LAN-reachable by default
     expect(cfg.dashboard.port).toBe(9090);
     expect(cfg.dashboard.captureBody).toBe(true);
     expect(cfg.dashboard.maxEvents).toBe(100_000);

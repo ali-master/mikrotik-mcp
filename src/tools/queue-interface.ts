@@ -19,14 +19,8 @@ export const queueInterfaceTools: ToolModule = [
     description:
       "Lists per-interface queue assignments on the MikroTik device (`/queue interface`).",
     inputSchema: {
-      interface_filter: z
-        .string()
-        .optional()
-        .describe("Partial interface-name match"),
-      queue_filter: z
-        .string()
-        .optional()
-        .describe("Partial queue-type-name match"),
+      interface_filter: z.string().optional().describe("Partial interface-name match"),
+      queue_filter: z.string().optional().describe("Partial queue-type-name match"),
     },
     async handler(a, ctx) {
       ctx.info("Listing queue interfaces");
@@ -48,12 +42,9 @@ export const queueInterfaceTools: ToolModule = [
     name: "get_queue_interface",
     title: "Get Queue Interface",
     annotations: READ,
-    description:
-      "Gets the queue assignment for a specific interface by name or '.id'.",
+    description: "Gets the queue assignment for a specific interface by name or '.id'.",
     inputSchema: {
-      interface_id: z
-        .string()
-        .describe("Interface name (e.g. 'ether1') or RouterOS '.id'"),
+      interface_id: z.string().describe("Interface name (e.g. 'ether1') or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting queue interface: interface_id=${a.interface_id}`);
@@ -83,9 +74,7 @@ export const queueInterfaceTools: ToolModule = [
       "    queue: the queue-type name to apply, e.g. 'ethernet-default',\n" +
       "        'only-hardware-queue', or a custom queue type.",
     inputSchema: {
-      interface_id: z
-        .string()
-        .describe("Interface name (e.g. 'ether1') or RouterOS '.id'"),
+      interface_id: z.string().describe("Interface name (e.g. 'ether1') or RouterOS '.id'"),
       queue: z.string().describe("Queue-type name to apply to the interface"),
     },
     async handler(a, ctx) {
@@ -93,13 +82,10 @@ export const queueInterfaceTools: ToolModule = [
       const selector = a.interface_id.startsWith("*")
         ? `.id="${a.interface_id}"`
         : `interface="${a.interface_id}"`;
-      const cmd = new Cmd(`/queue interface set [find ${selector}]`)
-        .set("queue", a.queue)
-        .build();
+      const cmd = new Cmd(`/queue interface set [find ${selector}]`).set("queue", a.queue).build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update queue interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to update queue interface: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/queue interface print detail where ${selector}`,

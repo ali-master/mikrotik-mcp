@@ -33,9 +33,7 @@ export const speedTestTools: ToolModule = [
       password: z.string().optional().describe("Password for the target device"),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Speed test to ${a.address} (duration=${a.duration}s, direction=${a.direction})`,
-      );
+      ctx.info(`Speed test to ${a.address} (duration=${a.duration}s, direction=${a.direction})`);
       const cmd = new Cmd(`/tool speed-test address=${a.address}`)
         .set("duration", `${a.duration}s`)
         .set("direction", a.direction)
@@ -44,8 +42,7 @@ export const speedTestTools: ToolModule = [
         .opt("password", a.password)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to run speed test to ${a.address}: ${result}`;
+      if (looksLikeError(result)) return `Failed to run speed test to ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No speed-test results for ${a.address}.`
         : `SPEED TEST:\n\n${result}`;

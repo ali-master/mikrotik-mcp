@@ -1,13 +1,7 @@
 /** DHCPv6 relay — `/ipv6 dhcp-relay`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -25,9 +19,7 @@ export const ipv6DhcpRelayTools: ToolModule = [
     inputSchema: {
       name: z.string(),
       interface: z.string().describe("Interface facing the DHCPv6 clients"),
-      dhcp_server: z
-        .string()
-        .describe("Comma-separated upstream DHCPv6 server IPv6 address(es)"),
+      dhcp_server: z.string().describe("Comma-separated upstream DHCPv6 server IPv6 address(es)"),
       delay_time: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -44,8 +36,7 @@ export const ipv6DhcpRelayTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add DHCPv6 relay: ${result}`;
+      if (looksLikeError(result)) return `Failed to add DHCPv6 relay: ${result}`;
       const details = await executeMikrotikCommand(
         `/ipv6 dhcp-relay print detail where name="${a.name}"`,
         ctx,
@@ -113,8 +104,7 @@ export const ipv6DhcpRelayTools: ToolModule = [
         `/ipv6 dhcp-relay enable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable DHCPv6 relay: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable DHCPv6 relay: ${result}`;
       return `DHCPv6 relay '${a.name}' enabled successfully.`;
     },
   }),
@@ -131,8 +121,7 @@ export const ipv6DhcpRelayTools: ToolModule = [
         `/ipv6 dhcp-relay disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable DHCPv6 relay: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable DHCPv6 relay: ${result}`;
       return `DHCPv6 relay '${a.name}' disabled successfully.`;
     },
   }),
@@ -155,8 +144,7 @@ export const ipv6DhcpRelayTools: ToolModule = [
         `/ipv6 dhcp-relay remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove DHCPv6 relay: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove DHCPv6 relay: ${result}`;
       return `DHCPv6 relay '${a.name}' removed successfully.`;
     },
   }),

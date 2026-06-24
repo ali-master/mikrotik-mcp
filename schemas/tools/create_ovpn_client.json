@@ -34,17 +34,11 @@
     },
     "mode": {
       "type": "string",
-      "enum": [
-        "ip",
-        "ethernet"
-      ]
+      "enum": ["ip", "ethernet"]
     },
     "protocol": {
       "type": "string",
-      "enum": [
-        "tcp",
-        "udp"
-      ]
+      "enum": ["tcp", "udp"]
     },
     "profile": {
       "type": "string"
@@ -63,11 +57,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "connect_to",
-    "port",
-    "disabled"
-  ],
+  "required": ["name", "connect_to", "port", "disabled"],
   "additionalProperties": false
 }

@@ -19,6 +19,7 @@
  * route (page, API and WebSocket via `?token=`).
  */
 import { readFileSync } from "node:fs";
+import { networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { serve } from "bun";
 import type { Server, ServerWebSocket } from "bun";
@@ -560,10 +561,27 @@ export async function runDashboard(
     },
   });
 
+  // When bound to all interfaces, "0.0.0.0" isn't a usable URL — surface the
+  // actual LAN addresses so the dashboard can be opened from another device.
+  const wildcard = cfg.host === "0.0.0.0" || cfg.host === "::";
+  const urls = wildcard
+    ? [
+        `http://localhost:${cfg.port}`,
+        ...Object.values(networkInterfaces())
+          .flat()
+          .filter((a) => a && a.family === "IPv4" && !a.internal)
+          .map((a) => `http://${a!.address}:${cfg.port}`),
+      ].join("  ")
+    : `http://${cfg.host}:${cfg.port}`;
   logger.info(
-    `Observability dashboard ready on http://${cfg.host}:${cfg.port} ` +
+    `Observability dashboard ready — open ${urls} ` +
       `(db=${cfg.dbPath}, capture=${cfg.captureBody ? "on" : "off"}${cfg.token ? ", token required" : ""})`,
   );
+  if (wildcard && !cfg.token) {
+    logger.warn(
+      "Dashboard is bound to all network interfaces with no token — anyone on your LAN can view it and edit device config. Set dashboard.token (or --dashboard-token) to require auth.",
+    );
+  }
 
   return {
     server,

@@ -53,22 +53,12 @@
     },
     "channel_width": {
       "type": "string",
-      "enum": [
-        "20mhz",
-        "40mhz",
-        "80mhz",
-        "160mhz",
-        "20/40mhz-eC",
-        "20/40mhz-Ce"
-      ]
+      "enum": ["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"]
     },
     "security_profile": {
       "type": "string"
     }
   },
-  "required": [
-    "name",
-    "disabled"
-  ],
+  "required": ["name", "disabled"],
   "additionalProperties": false
 }

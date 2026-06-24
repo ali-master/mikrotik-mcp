@@ -6,13 +6,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -24,13 +18,8 @@ export const addressListTools: ToolModule = [
     description: "Adds an address to a firewall address-list.",
     inputSchema: {
       list: z.string().describe("Address-list name"),
-      address: z
-        .string()
-        .describe("Address or subnet to add, e.g. '10.0.0.1' or '10.0.0.0/24'"),
-      timeout: z
-        .string()
-        .optional()
-        .describe("Auto-remove timeout, e.g. '1d00:00:00'"),
+      address: z.string().describe("Address or subnet to add, e.g. '10.0.0.1' or '10.0.0.0/24'"),
+      timeout: z.string().optional().describe("Auto-remove timeout, e.g. '1d00:00:00'"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -44,8 +33,7 @@ export const addressListTools: ToolModule = [
         .flag("disabled", a.disabled)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to add address-list entry: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip firewall address-list print detail where list="${a.list}" address="${a.address}"`,
@@ -65,10 +53,7 @@ export const addressListTools: ToolModule = [
     inputSchema: {
       list_filter: z.string().optional().describe("Partial list-name match"),
       address_filter: z.string().optional().describe("Partial address match"),
-      dynamic_only: z
-        .boolean()
-        .default(false)
-        .describe("Only show dynamically-added entries"),
+      dynamic_only: z.boolean().default(false).describe("Only show dynamically-added entries"),
     },
     async handler(a, ctx) {
       ctx.info("Listing address-list entries");
@@ -121,15 +106,13 @@ export const addressListTools: ToolModule = [
         `/ip firewall address-list print count-only where .id="${a.entry_id}"`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `Address-list entry '${a.entry_id}' not found.`;
+      if (count.trim() === "0") return `Address-list entry '${a.entry_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ip firewall address-list remove [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove address-list entry: ${result}`;
       return `Address-list entry '${a.entry_id}' removed successfully.`;
     },
   }),
@@ -148,8 +131,7 @@ export const addressListTools: ToolModule = [
         `/ip firewall address-list enable [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable address-list entry: ${result}`;
       return `Address-list entry '${a.entry_id}' enabled.`;
     },
   }),
@@ -168,8 +150,7 @@ export const addressListTools: ToolModule = [
         `/ip firewall address-list disable [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable address-list entry: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable address-list entry: ${result}`;
       return `Address-list entry '${a.entry_id}' disabled.`;
     },
   }),

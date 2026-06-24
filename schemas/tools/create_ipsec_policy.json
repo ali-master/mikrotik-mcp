@@ -21,19 +21,11 @@
     "action": {
       "default": "encrypt",
       "type": "string",
-      "enum": [
-        "encrypt",
-        "discard",
-        "none"
-      ]
+      "enum": ["encrypt", "discard", "none"]
     },
     "level": {
       "type": "string",
-      "enum": [
-        "require",
-        "unique",
-        "use"
-      ]
+      "enum": ["require", "unique", "use"]
     },
     "proposal": {
       "description": "Phase-2 proposal name",
@@ -58,9 +50,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "action",
-    "tunnel"
-  ],
+  "required": ["action", "tunnel"],
   "additionalProperties": false
 }

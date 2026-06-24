@@ -37,11 +37,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "interface",
-    "public_key",
-    "allowed_address",
-    "disabled"
-  ],
+  "required": ["interface", "public_key", "allowed_address", "disabled"],
   "additionalProperties": false
 }

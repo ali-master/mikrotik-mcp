@@ -24,11 +24,7 @@
     "authoritative": {
       "default": "yes",
       "type": "string",
-      "enum": [
-        "yes",
-        "no",
-        "after-2sec-delay"
-      ]
+      "enum": ["yes", "no", "after-2sec-delay"]
     },
     "delay_threshold": {
       "type": "string"
@@ -37,12 +33,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "name",
-    "interface",
-    "lease_time",
-    "disabled",
-    "authoritative"
-  ],
+  "required": ["name", "interface", "lease_time", "disabled", "authoritative"],
   "additionalProperties": false
 }

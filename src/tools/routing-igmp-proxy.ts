@@ -1,21 +1,9 @@
 /** IGMP Proxy — `/routing igmp-proxy` (settings, interface, mfc) — RouterOS v7. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  yesno,
-  looksLikeError,
-  isEmpty,
-  commandUnsupported,
-  Cmd,
-} from "../core/routeros";
+import { yesno, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
 
 const UNSUPPORTED =
   "IGMP proxy is not available on this device (requires RouterOS v7 with the routing/multicast package).";
@@ -31,10 +19,7 @@ export const routingIgmpProxyTools: ToolModule = [
       "upstream and one or more downstream interfaces without a full multicast routing protocol — ideal for IPTV.",
     async handler(_a, ctx) {
       ctx.info("Getting IGMP proxy settings");
-      const result = await executeMikrotikCommand(
-        "/routing igmp-proxy print",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing igmp-proxy print", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
       return isEmpty(result)
         ? "No IGMP proxy settings reported."
@@ -66,12 +51,8 @@ export const routingIgmpProxyTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update IGMP proxy settings: ${result}`;
-      const details = await executeMikrotikCommand(
-        "/routing igmp-proxy print",
-        ctx,
-      );
+      if (looksLikeError(result)) return `Failed to update IGMP proxy settings: ${result}`;
+      const details = await executeMikrotikCommand("/routing igmp-proxy print", ctx);
       return `IGMP proxy settings updated:\n\n${details}`;
     },
   }),
@@ -131,8 +112,7 @@ export const routingIgmpProxyTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add IGMP proxy interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to add IGMP proxy interface: ${result}`;
       return `IGMP proxy interface '${a.interface}' added successfully.`;
     },
   }),
@@ -165,8 +145,7 @@ export const routingIgmpProxyTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update IGMP proxy interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IGMP proxy interface: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing igmp-proxy interface print detail where interface="${a.interface}"`,
         ctx,
@@ -190,8 +169,7 @@ export const routingIgmpProxyTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove IGMP proxy interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IGMP proxy interface: ${result}`;
       return `IGMP proxy interface '${a.interface}' removed successfully.`;
     },
   }),
@@ -206,16 +184,13 @@ export const routingIgmpProxyTools: ToolModule = [
       enabled: z.boolean(),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Setting IGMP proxy interface ${a.interface} enabled=${a.enabled}`,
-      );
+      ctx.info(`Setting IGMP proxy interface ${a.interface} enabled=${a.enabled}`);
       const result = await executeMikrotikCommand(
         `/routing igmp-proxy interface set [find interface="${a.interface}"] disabled=${yesno(!a.enabled)}`,
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update IGMP proxy interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IGMP proxy interface: ${result}`;
       return `IGMP proxy interface '${a.interface}' ${a.enabled ? "enabled" : "disabled"}.`;
     },
   }),
@@ -230,10 +205,7 @@ export const routingIgmpProxyTools: ToolModule = [
       "and which downstream interfaces each is being forwarded to. Read-only — the live multicast forwarding state.",
     async handler(_a, ctx) {
       ctx.info("Listing IGMP proxy MFC");
-      const result = await executeMikrotikCommand(
-        "/routing igmp-proxy mfc print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing igmp-proxy mfc print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
       return isEmpty(result)
         ? "IGMP proxy forwarding cache is empty."

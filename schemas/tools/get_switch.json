@@ -8,8 +8,6 @@
       "description": "Switch name (e.g. 'switch1') or RouterOS '.id'"
     }
   },
-  "required": [
-    "switch_id"
-  ],
+  "required": ["switch_id"],
   "additionalProperties": false
 }

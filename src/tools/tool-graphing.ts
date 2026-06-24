@@ -16,10 +16,7 @@ export const graphingTools: ToolModule = [
       "Adds an interface graphing rule so the device records traffic graphs " +
       "for an interface (`/tool graphing interface`).",
     inputSchema: {
-      interface: z
-        .string()
-        .default("all")
-        .describe("Interface to graph, or 'all'"),
+      interface: z.string().default("all").describe("Interface to graph, or 'all'"),
       allow_address: z
         .string()
         .optional()
@@ -34,8 +31,7 @@ export const graphingTools: ToolModule = [
         .bool("store-on-disk", a.store_on_disk)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add interface graphing: ${result}`;
+      if (looksLikeError(result)) return `Failed to add interface graphing: ${result}`;
       return `Interface graphing rule added for '${a.interface}'.`;
     },
   }),
@@ -44,13 +40,9 @@ export const graphingTools: ToolModule = [
     name: "add_graphing_queue",
     title: "Add Queue Graphing",
     annotations: WRITE,
-    description:
-      "Adds a simple-queue graphing rule (`/tool graphing queue`).",
+    description: "Adds a simple-queue graphing rule (`/tool graphing queue`).",
     inputSchema: {
-      simple_queue: z
-        .string()
-        .default("all")
-        .describe("Simple queue to graph, or 'all'"),
+      simple_queue: z.string().default("all").describe("Simple queue to graph, or 'all'"),
       allow_address: z.string().optional(),
       store_on_disk: z.boolean().optional(),
     },
@@ -62,8 +54,7 @@ export const graphingTools: ToolModule = [
         .bool("store-on-disk", a.store_on_disk)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add queue graphing: ${result}`;
+      if (looksLikeError(result)) return `Failed to add queue graphing: ${result}`;
       return `Queue graphing rule added for '${a.simple_queue}'.`;
     },
   }),
@@ -73,8 +64,7 @@ export const graphingTools: ToolModule = [
     title: "Add Resource Graphing",
     annotations: WRITE,
     description:
-      "Adds a system-resource graphing rule (CPU, memory, disk) " +
-      "(`/tool graphing resource`).",
+      "Adds a system-resource graphing rule (CPU, memory, disk) " + "(`/tool graphing resource`).",
     inputSchema: {
       allow_address: z.string().optional(),
       store_on_disk: z.boolean().optional(),
@@ -86,8 +76,7 @@ export const graphingTools: ToolModule = [
         .bool("store-on-disk", a.store_on_disk)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add resource graphing: ${result}`;
+      if (looksLikeError(result)) return `Failed to add resource graphing: ${result}`;
       return "Resource graphing rule added.";
     },
   }),
@@ -96,8 +85,7 @@ export const graphingTools: ToolModule = [
     name: "list_graphing",
     title: "List Graphing Rules",
     annotations: READ,
-    description:
-      "Lists graphing rules of the given kind (interface, queue or resource).",
+    description: "Lists graphing rules of the given kind (interface, queue or resource).",
     inputSchema: {
       kind: Kind.describe("Which graphing table to list"),
     },
@@ -117,8 +105,7 @@ export const graphingTools: ToolModule = [
     name: "remove_graphing",
     title: "Remove Graphing Rule",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a graphing rule of the given kind by '.id' (from list output).",
+    description: "Removes a graphing rule of the given kind by '.id' (from list output).",
     inputSchema: {
       kind: Kind,
       entry_id: z.string().describe("RouterOS '.id', e.g. '*1'"),
@@ -129,15 +116,13 @@ export const graphingTools: ToolModule = [
         `/tool graphing ${a.kind} print count-only where .id="${a.entry_id}"`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `${a.kind} graphing rule '${a.entry_id}' not found.`;
+      if (count.trim() === "0") return `${a.kind} graphing rule '${a.entry_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/tool graphing ${a.kind} remove [find .id="${a.entry_id}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove ${a.kind} graphing rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove ${a.kind} graphing rule: ${result}`;
       return `${a.kind} graphing rule '${a.entry_id}' removed successfully.`;
     },
   }),

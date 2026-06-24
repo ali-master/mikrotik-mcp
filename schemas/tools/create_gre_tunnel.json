@@ -22,10 +22,7 @@
     "dont_fragment": {
       "description": "Don't-fragment behavior",
       "type": "string",
-      "enum": [
-        "inherit",
-        "no"
-      ]
+      "enum": ["inherit", "no"]
     },
     "clamp_tcp_mss": {
       "description": "Clamp TCP MSS to the tunnel MTU",
@@ -44,10 +41,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "remote_address",
-    "disabled"
-  ],
+  "required": ["name", "remote_address", "disabled"],
   "additionalProperties": false
 }

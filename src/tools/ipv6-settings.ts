@@ -12,14 +12,11 @@ export const ipv6SettingsTools: ToolModule = [
     name: "get_ipv6_settings",
     title: "Get IPv6 Settings",
     annotations: READ,
-    description:
-      "Gets the global IPv6 settings of the MikroTik device (`/ipv6 settings`).",
+    description: "Gets the global IPv6 settings of the MikroTik device (`/ipv6 settings`).",
     async handler(_a, ctx) {
       ctx.info("Getting IPv6 settings");
       const result = await executeMikrotikCommand("/ipv6 settings print", ctx);
-      return isEmpty(result)
-        ? "Unable to read IPv6 settings."
-        : `IPV6 SETTINGS:\n\n${result}`;
+      return isEmpty(result) ? "Unable to read IPv6 settings." : `IPV6 SETTINGS:\n\n${result}`;
     },
   }),
 
@@ -54,8 +51,7 @@ export const ipv6SettingsTools: ToolModule = [
       if (built === "/ipv6 settings set") return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update IPv6 settings: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IPv6 settings: ${result}`;
 
       const details = await executeMikrotikCommand("/ipv6 settings print", ctx);
       return `IPv6 settings updated successfully:\n\n${details}`;

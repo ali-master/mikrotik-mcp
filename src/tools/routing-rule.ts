@@ -1,13 +1,7 @@
 /** Policy routing rules — `/routing rule` (RouterOS v7). */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import {
   yesno,
@@ -21,12 +15,7 @@ import {
 const UNSUPPORTED =
   "Routing rules are not available on this device (requires RouterOS v7 with the routing package).";
 
-const ACTIONS = [
-  "lookup",
-  "lookup-only-in-table",
-  "drop",
-  "unreachable",
-] as const;
+const ACTIONS = ["lookup", "lookup-only-in-table", "drop", "unreachable"] as const;
 
 export const routingRuleTools: ToolModule = [
   defineTool({
@@ -37,10 +26,7 @@ export const routingRuleTools: ToolModule = [
       "Lists policy routing rules (`/routing rule`). Rules are evaluated top-down and pick which routing " +
       "table a packet is looked up in based on source/destination, interface or routing-mark.",
     inputSchema: {
-      table_filter: z
-        .string()
-        .optional()
-        .describe("Match rules targeting this table"),
+      table_filter: z.string().optional().describe("Match rules targeting this table"),
       disabled_only: z.boolean().default(false),
     },
     async handler(a, ctx) {
@@ -53,9 +39,7 @@ export const routingRuleTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No routing rules found."
-        : `ROUTING RULES:\n\n${result}`;
+      return isEmpty(result) ? "No routing rules found." : `ROUTING RULES:\n\n${result}`;
     },
   }),
 
@@ -63,8 +47,7 @@ export const routingRuleTools: ToolModule = [
     name: "get_routing_rule",
     title: "Get Routing Rule",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific routing rule by its internal id.",
+    description: "Gets detailed information about a specific routing rule by its internal id.",
     inputSchema: {
       rule_id: z.string().describe('Rule id from list output, e.g. "*3"'),
     },
@@ -91,23 +74,11 @@ export const routingRuleTools: ToolModule = [
       "`lookup-only-in-table` stops at that table, `drop`/`unreachable` discard the packet.",
     inputSchema: {
       action: z.enum(ACTIONS).default("lookup"),
-      table: z
-        .string()
-        .optional()
-        .describe("Target routing table for lookup actions"),
-      src_address: z
-        .string()
-        .optional()
-        .describe('Source prefix, e.g. "192.168.10.0/24"'),
+      table: z.string().optional().describe("Target routing table for lookup actions"),
+      src_address: z.string().optional().describe('Source prefix, e.g. "192.168.10.0/24"'),
       dst_address: z.string().optional().describe("Destination prefix"),
-      routing_mark: z
-        .string()
-        .optional()
-        .describe("Match packets carrying this routing-mark"),
-      interface: z
-        .string()
-        .optional()
-        .describe("Match this incoming interface"),
+      routing_mark: z.string().optional().describe("Match packets carrying this routing-mark"),
+      interface: z.string().optional().describe("Match this incoming interface"),
       min_prefix: z.number().int().optional(),
       max_prefix: z.number().int().optional(),
       comment: z.string().optional(),
@@ -135,12 +106,9 @@ export const routingRuleTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add routing rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to add routing rule: ${result}`;
       const t = result.trim();
-      return t
-        ? `Routing rule added (id ${t}).`
-        : "Routing rule added successfully.";
+      return t ? `Routing rule added (id ${t}).` : "Routing rule added successfully.";
     },
   }),
 
@@ -174,8 +142,7 @@ export const routingRuleTools: ToolModule = [
         ["interface", a.interface],
       ];
       for (const [key, val] of clearable) {
-        if (val !== undefined)
-          cmd.raw(val === "" ? `!${key}` : `${key}=${val}`);
+        if (val !== undefined) cmd.raw(val === "" ? `!${key}` : `${key}=${val}`);
       }
       if (a.comment !== undefined) cmd.set("comment", a.comment);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
@@ -185,8 +152,7 @@ export const routingRuleTools: ToolModule = [
 
       const result = await executeMikrotikCommand(built, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update routing rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to update routing rule: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing rule print detail where .id=${a.rule_id}`,
         ctx,
@@ -203,13 +169,9 @@ export const routingRuleTools: ToolModule = [
     inputSchema: { rule_id: z.string().describe('Rule id, e.g. "*3"') },
     async handler(a, ctx) {
       ctx.info(`Removing routing rule: ${a.rule_id}`);
-      const result = await executeMikrotikCommand(
-        `/routing rule remove ${a.rule_id}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/routing rule remove ${a.rule_id}`, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove routing rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove routing rule: ${result}`;
       return `Routing rule '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -230,8 +192,7 @@ export const routingRuleTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to update routing rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to update routing rule: ${result}`;
       return `Routing rule '${a.rule_id}' ${a.enabled ? "enabled" : "disabled"}.`;
     },
   }),

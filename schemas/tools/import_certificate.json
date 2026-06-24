@@ -16,8 +16,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "file_name"
-  ],
+  "required": ["file_name"],
   "additionalProperties": false
 }

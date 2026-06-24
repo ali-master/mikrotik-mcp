@@ -37,8 +37,7 @@ export const floodPingTools: ToolModule = [
         .opt("src-address", a.src_address)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to flood-ping ${a.address}: ${result}`;
+      if (looksLikeError(result)) return `Failed to flood-ping ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No response from ${a.address}.`
         : `FLOOD PING ${a.address}:\n\n${result}`;

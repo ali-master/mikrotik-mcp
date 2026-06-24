@@ -1,21 +1,9 @@
 /** IPv6 firewall mangle rules — `/ipv6 firewall mangle`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -73,23 +61,19 @@ async function updateMangleRule(
   put("new-routing-mark", a.new_routing_mark);
   put("new-dscp", a.new_dscp);
   put("new-hop-limit", a.new_hop_limit);
-  if (a.passthrough !== undefined)
-    updates.push(`passthrough=${a.passthrough ? "yes" : "no"}`);
+  if (a.passthrough !== undefined) updates.push(`passthrough=${a.passthrough ? "yes" : "no"}`);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
-  if (a.disabled !== undefined)
-    updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
+  if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
     updates.push(`log=${a.log ? "yes" : "no"}`);
-    if (a.log && a.log_prefix)
-      updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
+    if (a.log && a.log_prefix) updates.push(`log-prefix=${quoteValue(a.log_prefix)}`);
   }
 
   if (updates.length === 0) return "No updates specified.";
 
   const cmd = `/ipv6 firewall mangle set ${a.rule_id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
-  if (looksLikeError(result))
-    return `Failed to update IPv6 firewall mangle rule: ${result}`;
+  if (looksLikeError(result)) return `Failed to update IPv6 firewall mangle rule: ${result}`;
 
   const details = await executeMikrotikCommand(
     `/ipv6 firewall mangle print detail where .id=${a.rule_id}`,
@@ -111,13 +95,7 @@ export const ipv6FirewallMangleTools: ToolModule = [
       "Set the matching new-*-mark field for mark-* actions and keep " +
       "passthrough=true to let later rules also match.",
     inputSchema: {
-      chain: z.enum([
-        "prerouting",
-        "input",
-        "forward",
-        "output",
-        "postrouting",
-      ]),
+      chain: z.enum(["prerouting", "input", "forward", "output", "postrouting"]),
       action: z.enum([
         "accept",
         "drop",
@@ -148,24 +126,16 @@ export const ipv6FirewallMangleTools: ToolModule = [
       new_packet_mark: z.string().optional(),
       new_routing_mark: z.string().optional(),
       new_dscp: z.string().optional(),
-      new_hop_limit: z
-        .string()
-        .optional()
-        .describe('e.g. "decrement", "increment", or "set:64"'),
+      new_hop_limit: z.string().optional().describe('e.g. "decrement", "increment", or "set:64"'),
       passthrough: z.boolean().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
       log_prefix: z.string().optional(),
-      place_before: z
-        .string()
-        .optional()
-        .describe("Rule number or ID (*N) to insert before"),
+      place_before: z.string().optional().describe("Rule number or ID (*N) to insert before"),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating IPv6 firewall mangle rule: chain=${a.chain}, action=${a.action}`,
-      );
+      ctx.info(`Creating IPv6 firewall mangle rule: chain=${a.chain}, action=${a.action}`);
 
       const cmd = new Cmd("/ipv6 firewall mangle add")
         .set("chain", a.chain)
@@ -245,10 +215,8 @@ export const ipv6FirewallMangleTools: ToolModule = [
       const filters: string[] = [];
       if (a.chain_filter) filters.push(`chain=${a.chain_filter}`);
       if (a.action_filter) filters.push(`action=${a.action_filter}`);
-      if (a.connection_mark_filter)
-        filters.push(`connection-mark="${a.connection_mark_filter}"`);
-      if (a.packet_mark_filter)
-        filters.push(`packet-mark="${a.packet_mark_filter}"`);
+      if (a.connection_mark_filter) filters.push(`connection-mark="${a.connection_mark_filter}"`);
+      if (a.packet_mark_filter) filters.push(`packet-mark="${a.packet_mark_filter}"`);
       if (a.disabled_only) filters.push("disabled=yes");
       if (a.invalid_only) filters.push("invalid=yes");
       if (a.dynamic_only) filters.push("dynamic=yes");
@@ -267,15 +235,12 @@ export const ipv6FirewallMangleTools: ToolModule = [
     name: "get_ipv6_mangle_rule",
     title: "Get IPv6 Firewall Mangle Rule",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific IPv6 firewall mangle rule.",
+    description: "Gets detailed information about a specific IPv6 firewall mangle rule.",
     inputSchema: {
       rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Getting IPv6 firewall mangle rule details: rule_id=${a.rule_id}`,
-      );
+      ctx.info(`Getting IPv6 firewall mangle rule details: rule_id=${a.rule_id}`);
       const result = await executeMikrotikCommand(
         `/ipv6 firewall mangle print detail where .id=${a.rule_id}`,
         ctx,
@@ -291,8 +256,7 @@ export const ipv6FirewallMangleTools: ToolModule = [
     title: "Update IPv6 Firewall Mangle Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing IPv6 firewall mangle rule. " +
-      'Pass "" to clear an optional field.',
+      "Updates an existing IPv6 firewall mangle rule. " + 'Pass "" to clear an optional field.',
     inputSchema: {
       rule_id: z.string(),
       chain: z.string().optional(),
@@ -327,8 +291,7 @@ export const ipv6FirewallMangleTools: ToolModule = [
     name: "remove_ipv6_mangle_rule",
     title: "Remove IPv6 Firewall Mangle Rule",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes an IPv6 firewall mangle rule from the MikroTik device.",
+    description: "Removes an IPv6 firewall mangle rule from the MikroTik device.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 firewall mangle rule: rule_id=${a.rule_id}`);
@@ -340,12 +303,8 @@ export const ipv6FirewallMangleTools: ToolModule = [
       if (count.trim() === "0")
         return `IPv6 firewall mangle rule with ID '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/ipv6 firewall mangle remove ${a.rule_id}`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to remove IPv6 firewall mangle rule: ${result}`;
+      const result = await executeMikrotikCommand(`/ipv6 firewall mangle remove ${a.rule_id}`, ctx);
+      if (looksLikeError(result)) return `Failed to remove IPv6 firewall mangle rule: ${result}`;
       return `IPv6 firewall mangle rule with ID '${a.rule_id}' removed successfully.`;
     },
   }),
@@ -354,8 +313,7 @@ export const ipv6FirewallMangleTools: ToolModule = [
     name: "move_ipv6_mangle_rule",
     title: "Move IPv6 Mangle Rule",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Moves an IPv6 firewall mangle rule to a different position in the chain.",
+    description: "Moves an IPv6 firewall mangle rule to a different position in the chain.",
     inputSchema: {
       rule_id: z.string(),
       destination: z.number().int().describe("0-based target position index"),
@@ -376,8 +334,7 @@ export const ipv6FirewallMangleTools: ToolModule = [
         `/ipv6 firewall mangle move ${a.rule_id} destination=${a.destination}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to move IPv6 firewall mangle rule: ${result}`;
+      if (looksLikeError(result)) return `Failed to move IPv6 firewall mangle rule: ${result}`;
       return `IPv6 firewall mangle rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
     },
   }),

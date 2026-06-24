@@ -7,21 +7,9 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 export const wireguardTools: ToolModule = [
   // ── WireGuard Interface Management ────────────────────────────────────────
@@ -50,8 +38,7 @@ export const wireguardTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create WireGuard interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to create WireGuard interface: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/interface wireguard print detail where name="${a.name}"`,
@@ -94,8 +81,7 @@ export const wireguardTools: ToolModule = [
     name: "get_wireguard_interface",
     title: "Get WireGuard Interface",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific WireGuard interface.",
+    description: "Gets detailed information about a specific WireGuard interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting WireGuard interface details: name=${a.name}`);
@@ -113,8 +99,7 @@ export const wireguardTools: ToolModule = [
     name: "update_wireguard_interface",
     title: "Update WireGuard Interface",
     annotations: WRITE_IDEMPOTENT,
-    description:
-      "Updates an existing WireGuard interface's settings on the MikroTik device.",
+    description: "Updates an existing WireGuard interface's settings on the MikroTik device.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -132,17 +117,14 @@ export const wireguardTools: ToolModule = [
         .opt("listen-port", a.listen_port)
         .opt("private-key", a.private_key)
         .opt("mtu", a.mtu)
-        .raw(
-          a.comment !== undefined ? `comment=${quoteValue(a.comment)}` : null,
-        )
+        .raw(a.comment !== undefined ? `comment=${quoteValue(a.comment)}` : null)
         .bool("disabled", a.disabled)
         .build();
 
       if (cmd === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update WireGuard interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to update WireGuard interface: ${result}`;
 
       const lookupName = a.new_name ? a.new_name : a.name;
       const details = await executeMikrotikCommand(
@@ -165,15 +147,13 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard print count-only where name="${a.name}"`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `WireGuard interface '${a.name}' not found.`;
+      if (count.trim() === "0") return `WireGuard interface '${a.name}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/interface wireguard remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove WireGuard interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove WireGuard interface: ${result}`;
       return `WireGuard interface '${a.name}' removed successfully.`;
     },
   }),
@@ -190,8 +170,7 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard enable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable WireGuard interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable WireGuard interface: ${result}`;
       return `WireGuard interface '${a.name}' enabled successfully.`;
     },
   }),
@@ -208,8 +187,7 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable WireGuard interface: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable WireGuard interface: ${result}`;
       return `WireGuard interface '${a.name}' disabled successfully.`;
     },
   }),
@@ -239,10 +217,7 @@ export const wireguardTools: ToolModule = [
         .describe('remote host IP or hostname e.g. "203.0.113.1"'),
       endpoint_port: z.number().int().optional(),
       preshared_key: z.string().optional(),
-      persistent_keepalive: z
-        .string()
-        .optional()
-        .describe('seconds as string e.g. "25"'),
+      persistent_keepalive: z.string().optional().describe('seconds as string e.g. "25"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -263,8 +238,7 @@ export const wireguardTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add WireGuard peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to add WireGuard peer: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/interface wireguard peers print detail where interface="${a.interface}" public-key="${a.public_key}"`,
@@ -295,9 +269,7 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard peers print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No WireGuard peers found."
-        : `WIREGUARD PEERS:\n\n${result}`;
+      return isEmpty(result) ? "No WireGuard peers found." : `WIREGUARD PEERS:\n\n${result}`;
     },
   }),
 
@@ -374,17 +346,14 @@ export const wireguardTools: ToolModule = [
             ? `persistent-keepalive=${a.persistent_keepalive}`
             : null,
         )
-        .raw(
-          a.comment !== undefined ? `comment=${quoteValue(a.comment)}` : null,
-        )
+        .raw(a.comment !== undefined ? `comment=${quoteValue(a.comment)}` : null)
         .bool("disabled", a.disabled)
         .build();
 
       if (cmd === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update WireGuard peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to update WireGuard peer: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/interface wireguard peers print detail where .id=${a.peer_id}`,
@@ -411,15 +380,13 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard peers print count-only where .id=${a.peer_id}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `WireGuard peer with ID '${a.peer_id}' not found.`;
+      if (count.trim() === "0") return `WireGuard peer with ID '${a.peer_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/interface wireguard peers remove ${a.peer_id}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove WireGuard peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove WireGuard peer: ${result}`;
       return `WireGuard peer '${a.peer_id}' removed successfully.`;
     },
   }),
@@ -441,8 +408,7 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard peers enable ${a.peer_id}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to enable WireGuard peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to enable WireGuard peer: ${result}`;
       return `WireGuard peer '${a.peer_id}' enabled successfully.`;
     },
   }),
@@ -464,8 +430,7 @@ export const wireguardTools: ToolModule = [
         `/interface wireguard peers disable ${a.peer_id}`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable WireGuard peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to disable WireGuard peer: ${result}`;
       return `WireGuard peer '${a.peer_id}' disabled successfully.`;
     },
   }),
@@ -505,8 +470,7 @@ export const wireguardTools: ToolModule = [
         `AllowedIPs = ${a.allowed_ips}`,
       );
 
-      if (a.persistent_keepalive > 0)
-        lines.push(`PersistentKeepalive = ${a.persistent_keepalive}`);
+      if (a.persistent_keepalive > 0) lines.push(`PersistentKeepalive = ${a.persistent_keepalive}`);
 
       const configText = lines.join("\n");
 

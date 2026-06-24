@@ -86,16 +86,13 @@ export class MikroTikSSHClient {
           cfg.privateKey = readFileSync(this.opts.keyFilename);
         } catch (e) {
           this.lastError = `could not read key file ${this.opts.keyFilename}: ${e instanceof Error ? e.message : String(e)}`;
-          logger.error(
-            `Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`,
-          );
+          logger.error(`Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`);
           resolve(false);
           return;
         }
       }
       // Passphrase only applies to a private key; ssh2 ignores it otherwise.
-      if (cfg.privateKey && this.opts.keyPassphrase)
-        cfg.passphrase = this.opts.keyPassphrase;
+      if (cfg.privateKey && this.opts.keyPassphrase) cfg.passphrase = this.opts.keyPassphrase;
       // A password may still be supplied as a fallback (ssh2 tries key first).
       if (this.opts.password) cfg.password = this.opts.password;
 
@@ -142,9 +139,7 @@ export class MikroTikSSHClient {
   }
 
   /** Open a persistent interactive shell channel (used by Safe Mode). */
-  shell(
-    opts: { term?: string; cols?: number; rows?: number } = {},
-  ): Promise<ClientChannel> {
+  shell(opts: { term?: string; cols?: number; rows?: number } = {}): Promise<ClientChannel> {
     if (!this.client) {
       return Promise.reject(new Error("Not connected to MikroTik device"));
     }
@@ -156,8 +151,7 @@ export class MikroTikSSHClient {
           cols: opts.cols ?? 220,
           rows: opts.rows ?? 50,
         },
-        (err: Error | undefined, stream: ClientChannel) =>
-          err ? reject(err) : resolve(stream),
+        (err: Error | undefined, stream: ClientChannel) => (err ? reject(err) : resolve(stream)),
       );
     });
   }

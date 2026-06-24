@@ -13,6 +13,7 @@ arguments:
     description: The public IP / hostname of the remote peer.
     required: true
 ---
+
 Build a secure IPsec **IKEv2** site-to-site tunnel. IKEv2 is the interoperability
 choice — it works against other MikroTik routers and third-party firewalls
 (Cisco, Fortinet, pfSense). Plan first, present the parameters for both ends to
@@ -39,7 +40,7 @@ identical on both ends):
    `dst_address={{remote_subnet}}`, `tunnel=true`, `action=encrypt`, the peer, and
    the proposal.
 6. **Firewall / NAT** — ensure UDP 500 + 4500 and IP protocol 50 (ESP) are
-   accepted from {{peer_address}} on the input chain, and add a NAT *bypass*
+   accepted from {{peer_address}} on the input chain, and add a NAT _bypass_
    (accept/no-nat) rule so {{local_subnet}}→{{remote_subnet}} traffic is NOT
    masqueraded. Apply firewall edits under `enable_safe_mode`.
 7. **Verify** — `get_ipsec_active_peers` and `get_ipsec_installed_sa` to confirm

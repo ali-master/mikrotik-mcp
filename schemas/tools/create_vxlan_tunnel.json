@@ -41,11 +41,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "vni",
-    "port",
-    "disabled"
-  ],
+  "required": ["name", "vni", "port", "disabled"],
   "additionalProperties": false
 }

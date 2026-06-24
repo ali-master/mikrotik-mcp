@@ -20,9 +20,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "topics",
-    "disabled"
-  ],
+  "required": ["topics", "disabled"],
   "additionalProperties": false
 }

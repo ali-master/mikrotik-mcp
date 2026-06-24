@@ -10,12 +10,7 @@
     "file_system": {
       "description": "File system to create",
       "type": "string",
-      "enum": [
-        "ext4",
-        "fat32",
-        "exfat",
-        "ntfs"
-      ]
+      "enum": ["ext4", "fat32", "exfat", "ntfs"]
     },
     "label": {
       "description": "Volume label",
@@ -26,9 +21,6 @@
       "description": "Must be true to actually erase the disk"
     }
   },
-  "required": [
-    "name",
-    "confirm"
-  ],
+  "required": ["name", "confirm"],
   "additionalProperties": false
 }

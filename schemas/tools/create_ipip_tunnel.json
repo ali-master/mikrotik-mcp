@@ -32,10 +32,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "remote_address",
-    "disabled"
-  ],
+  "required": ["name", "remote_address", "disabled"],
   "additionalProperties": false
 }

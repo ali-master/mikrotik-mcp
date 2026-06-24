@@ -10,6 +10,7 @@ arguments:
     description: The interface/segment the affected clients are on (e.g. bridge, vlan50). Optional.
     required: false
 ---
+
 Troubleshoot a connectivity issue on a MikroTik RouterOS device, reasoning from
 the bottom of the stack up. Use read-only tools only — do not change config until
 you've localized the fault and the user approves a fix.

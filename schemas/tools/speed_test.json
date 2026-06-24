@@ -17,11 +17,7 @@
     "direction": {
       "default": "both",
       "type": "string",
-      "enum": [
-        "receive",
-        "transmit",
-        "both"
-      ]
+      "enum": ["receive", "transmit", "both"]
     },
     "tcp_connection_count": {
       "description": "Parallel TCP connections to use",
@@ -38,10 +34,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "address",
-    "duration",
-    "direction"
-  ],
+  "required": ["address", "duration", "direction"],
   "additionalProperties": false
 }

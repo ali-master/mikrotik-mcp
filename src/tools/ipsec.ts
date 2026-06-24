@@ -7,13 +7,7 @@
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -23,33 +17,16 @@ export const ipsecTools: ToolModule = [
     name: "create_ipsec_profile",
     title: "Create IPsec Profile",
     annotations: WRITE,
-    description:
-      "Creates an IPsec phase-1 profile (IKE proposal) on the MikroTik device.",
+    description: "Creates an IPsec phase-1 profile (IKE proposal) on the MikroTik device.",
     inputSchema: {
       name: z.string().describe("Name for the new IPsec profile"),
-      dh_group: z
-        .string()
-        .default("modp2048")
-        .describe("Diffie-Hellman group, e.g. 'modp2048'"),
-      enc_algorithm: z
-        .string()
-        .optional()
-        .describe("Encryption algorithm, e.g. 'aes-256'"),
-      hash_algorithm: z
-        .string()
-        .default("sha256")
-        .describe("Hash algorithm, e.g. 'sha256'"),
+      dh_group: z.string().default("modp2048").describe("Diffie-Hellman group, e.g. 'modp2048'"),
+      enc_algorithm: z.string().optional().describe("Encryption algorithm, e.g. 'aes-256'"),
+      hash_algorithm: z.string().default("sha256").describe("Hash algorithm, e.g. 'sha256'"),
       lifetime: z.string().optional().describe("Phase-1 lifetime, e.g. '1d'"),
       nat_traversal: z.boolean().optional().describe("Enable NAT-T"),
-      dpd_interval: z
-        .string()
-        .optional()
-        .describe("Dead peer detection interval, e.g. '2m'"),
-      dpd_maximum_failures: z
-        .number()
-        .int()
-        .optional()
-        .describe("DPD max failures before drop"),
+      dpd_interval: z.string().optional().describe("Dead peer detection interval, e.g. '2m'"),
+      dpd_maximum_failures: z.number().int().optional().describe("DPD max failures before drop"),
     },
     async handler(a, ctx) {
       ctx.info(`Creating IPsec profile: name=${a.name}`);
@@ -65,8 +42,7 @@ export const ipsecTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create IPsec profile: ${result}`;
+      if (looksLikeError(result)) return `Failed to create IPsec profile: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip ipsec profile print detail where name="${a.name}"`,
@@ -95,9 +71,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec profile print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No IPsec profiles found."
-        : `IPSEC PROFILES:\n\n${result}`;
+      return isEmpty(result) ? "No IPsec profiles found." : `IPSEC PROFILES:\n\n${result}`;
     },
   }),
 
@@ -152,8 +126,7 @@ export const ipsecTools: ToolModule = [
       if (cmd === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update IPsec profile: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IPsec profile: ${result}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -182,8 +155,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec profile remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPsec profile: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPsec profile: ${result}`;
       return `IPsec profile '${a.name}' removed successfully.`;
     },
   }),
@@ -193,16 +165,13 @@ export const ipsecTools: ToolModule = [
     name: "create_ipsec_peer",
     title: "Create IPsec Peer",
     annotations: WRITE,
-    description:
-      "Creates an IPsec peer (remote endpoint) on the MikroTik device.",
+    description: "Creates an IPsec peer (remote endpoint) on the MikroTik device.",
     inputSchema: {
       name: z.string().describe("Name for the new IPsec peer"),
       address: z
         .string()
         .optional()
-        .describe(
-          "Remote address, e.g. '203.0.113.1' or '0.0.0.0/0' for responder",
-        ),
+        .describe("Remote address, e.g. '203.0.113.1' or '0.0.0.0/0' for responder"),
       profile: z.string().optional().describe("Phase-1 profile name"),
       exchange_mode: z
         .enum(["main", "aggressive", "ike2"])
@@ -229,8 +198,7 @@ export const ipsecTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create IPsec peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to create IPsec peer: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip ipsec peer print detail where name="${a.name}"`,
@@ -259,9 +227,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec peer print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No IPsec peers found."
-        : `IPSEC PEERS:\n\n${result}`;
+      return isEmpty(result) ? "No IPsec peers found." : `IPSEC PEERS:\n\n${result}`;
     },
   }),
 
@@ -316,8 +282,7 @@ export const ipsecTools: ToolModule = [
       if (cmd === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update IPsec peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IPsec peer: ${result}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -346,8 +311,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec peer remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPsec peer: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPsec peer: ${result}`;
       return `IPsec peer '${a.name}' removed successfully.`;
     },
   }),
@@ -357,26 +321,17 @@ export const ipsecTools: ToolModule = [
     name: "create_ipsec_identity",
     title: "Create IPsec Identity",
     annotations: WRITE,
-    description:
-      "Creates an IPsec identity (authentication binding) for a peer.",
+    description: "Creates an IPsec identity (authentication binding) for a peer.",
     inputSchema: {
       peer: z.string().describe("Peer name this identity authenticates"),
       auth_method: z
-        .enum([
-          "pre-shared-key",
-          "rsa-signature",
-          "digital-signature",
-          "eap",
-          "eap-radius",
-        ])
+        .enum(["pre-shared-key", "rsa-signature", "digital-signature", "eap", "eap-radius"])
         .default("pre-shared-key")
         .describe("Authentication method"),
       secret: z.string().optional().describe("Pre-shared key secret"),
       my_id: z.string().optional(),
       remote_id: z.string().optional(),
-      generate_policy: z
-        .enum(["no", "port-override", "port-strict"])
-        .optional(),
+      generate_policy: z.enum(["no", "port-override", "port-strict"]).optional(),
       mode_config: z.string().optional(),
       policy_template_group: z.string().optional(),
       certificate: z.string().optional(),
@@ -398,8 +353,7 @@ export const ipsecTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create IPsec identity: ${result}`;
+      if (looksLikeError(result)) return `Failed to create IPsec identity: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip ipsec identity print detail where peer="${a.peer}"`,
@@ -428,9 +382,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec identity print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No IPsec identities found."
-        : `IPSEC IDENTITIES:\n\n${result}`;
+      return isEmpty(result) ? "No IPsec identities found." : `IPSEC IDENTITIES:\n\n${result}`;
     },
   }),
 
@@ -440,9 +392,7 @@ export const ipsecTools: ToolModule = [
     annotations: DESTRUCTIVE,
     description: "Removes an IPsec identity by its internal ID (e.g. '*1').",
     inputSchema: {
-      identity_id: z
-        .string()
-        .describe("Internal .id from list output, e.g. '*1'"),
+      identity_id: z.string().describe("Internal .id from list output, e.g. '*1'"),
     },
     async handler(a, ctx) {
       ctx.info(`Removing IPsec identity: identity_id=${a.identity_id}`);
@@ -450,15 +400,13 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec identity print count-only where .id=${a.identity_id}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `IPsec identity with ID '${a.identity_id}' not found.`;
+      if (count.trim() === "0") return `IPsec identity with ID '${a.identity_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ip ipsec identity remove [find .id=${a.identity_id}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPsec identity: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPsec identity: ${result}`;
       return `IPsec identity '${a.identity_id}' removed successfully.`;
     },
   }),
@@ -479,10 +427,7 @@ export const ipsecTools: ToolModule = [
         .string()
         .default("aes-256-cbc")
         .describe("Encryption algorithms, e.g. 'aes-256-cbc'"),
-      pfs_group: z
-        .string()
-        .default("modp2048")
-        .describe("PFS group, e.g. 'modp2048'"),
+      pfs_group: z.string().default("modp2048").describe("PFS group, e.g. 'modp2048'"),
       lifetime: z.string().optional().describe("Phase-2 lifetime, e.g. '30m'"),
     },
     async handler(a, ctx) {
@@ -496,8 +441,7 @@ export const ipsecTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create IPsec proposal: ${result}`;
+      if (looksLikeError(result)) return `Failed to create IPsec proposal: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip ipsec proposal print detail where name="${a.name}"`,
@@ -526,9 +470,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec proposal print${whereClause(filters)}`,
         ctx,
       );
-      return isEmpty(result)
-        ? "No IPsec proposals found."
-        : `IPSEC PROPOSALS:\n\n${result}`;
+      return isEmpty(result) ? "No IPsec proposals found." : `IPSEC PROPOSALS:\n\n${result}`;
     },
   }),
 
@@ -577,8 +519,7 @@ export const ipsecTools: ToolModule = [
       if (cmd === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update IPsec proposal: ${result}`;
+      if (looksLikeError(result)) return `Failed to update IPsec proposal: ${result}`;
 
       const target = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -607,8 +548,7 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec proposal remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPsec proposal: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPsec proposal: ${result}`;
       return `IPsec proposal '${a.name}' removed successfully.`;
     },
   }),
@@ -618,18 +558,11 @@ export const ipsecTools: ToolModule = [
     name: "create_ipsec_policy",
     title: "Create IPsec Policy",
     annotations: WRITE,
-    description:
-      "Creates an IPsec policy defining which traffic is secured and how.",
+    description: "Creates an IPsec policy defining which traffic is secured and how.",
     inputSchema: {
       peer: z.string().optional().describe("Peer name this policy applies to"),
-      src_address: z
-        .string()
-        .optional()
-        .describe("Source subnet, e.g. '10.0.0.0/24'"),
-      dst_address: z
-        .string()
-        .optional()
-        .describe("Destination subnet, e.g. '10.0.1.0/24'"),
+      src_address: z.string().optional().describe("Source subnet, e.g. '10.0.0.0/24'"),
+      dst_address: z.string().optional().describe("Destination subnet, e.g. '10.0.1.0/24'"),
       protocol: z.string().optional(),
       action: z.enum(["encrypt", "discard", "none"]).default("encrypt"),
       level: z.enum(["require", "unique", "use"]).optional(),
@@ -637,10 +570,7 @@ export const ipsecTools: ToolModule = [
       tunnel: z.boolean().default(true).describe("Tunnel mode (vs transport)"),
       sa_src_address: z.string().optional(),
       sa_dst_address: z.string().optional(),
-      template: z
-        .boolean()
-        .optional()
-        .describe("Policy template (for dynamic policies)"),
+      template: z.boolean().optional().describe("Policy template (for dynamic policies)"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -661,13 +591,9 @@ export const ipsecTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create IPsec policy: ${result}`;
+      if (looksLikeError(result)) return `Failed to create IPsec policy: ${result}`;
 
-      const details = await executeMikrotikCommand(
-        "/ip ipsec policy print detail",
-        ctx,
-      );
+      const details = await executeMikrotikCommand("/ip ipsec policy print detail", ctx);
       return details.trim()
         ? `IPsec policy created successfully:\n\n${details}`
         : "IPsec policy created successfully.";
@@ -681,13 +607,8 @@ export const ipsecTools: ToolModule = [
     description: "Lists IPsec policies on the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Listing IPsec policies");
-      const result = await executeMikrotikCommand(
-        "/ip ipsec policy print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No IPsec policies found."
-        : `IPSEC POLICIES:\n\n${result}`;
+      const result = await executeMikrotikCommand("/ip ipsec policy print", ctx);
+      return isEmpty(result) ? "No IPsec policies found." : `IPSEC POLICIES:\n\n${result}`;
     },
   }),
 
@@ -697,9 +618,7 @@ export const ipsecTools: ToolModule = [
     annotations: DESTRUCTIVE,
     description: "Removes an IPsec policy by its internal ID (e.g. '*1').",
     inputSchema: {
-      policy_id: z
-        .string()
-        .describe("Internal .id from list output, e.g. '*1'"),
+      policy_id: z.string().describe("Internal .id from list output, e.g. '*1'"),
     },
     async handler(a, ctx) {
       ctx.info(`Removing IPsec policy: policy_id=${a.policy_id}`);
@@ -707,15 +626,13 @@ export const ipsecTools: ToolModule = [
         `/ip ipsec policy print count-only where .id=${a.policy_id}`,
         ctx,
       );
-      if (count.trim() === "0")
-        return `IPsec policy with ID '${a.policy_id}' not found.`;
+      if (count.trim() === "0") return `IPsec policy with ID '${a.policy_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ip ipsec policy remove [find .id=${a.policy_id}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove IPsec policy: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove IPsec policy: ${result}`;
       return `IPsec policy '${a.policy_id}' removed successfully.`;
     },
   }),
@@ -725,17 +642,11 @@ export const ipsecTools: ToolModule = [
     name: "get_ipsec_active_peers",
     title: "Get IPsec Active Peers",
     annotations: READ,
-    description:
-      "Shows currently established IPsec peers (active IKE sessions).",
+    description: "Shows currently established IPsec peers (active IKE sessions).",
     async handler(_a, ctx) {
       ctx.info("Getting IPsec active peers");
-      const result = await executeMikrotikCommand(
-        "/ip ipsec active-peers print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No active IPsec peers."
-        : `IPSEC ACTIVE PEERS:\n\n${result}`;
+      const result = await executeMikrotikCommand("/ip ipsec active-peers print", ctx);
+      return isEmpty(result) ? "No active IPsec peers." : `IPSEC ACTIVE PEERS:\n\n${result}`;
     },
   }),
 
@@ -746,13 +657,8 @@ export const ipsecTools: ToolModule = [
     description: "Shows installed IPsec security associations (SAs).",
     async handler(_a, ctx) {
       ctx.info("Getting IPsec installed SAs");
-      const result = await executeMikrotikCommand(
-        "/ip ipsec installed-sa print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No installed IPsec SAs."
-        : `IPSEC INSTALLED SAs:\n\n${result}`;
+      const result = await executeMikrotikCommand("/ip ipsec installed-sa print", ctx);
+      return isEmpty(result) ? "No installed IPsec SAs." : `IPSEC INSTALLED SAs:\n\n${result}`;
     },
   }),
 
@@ -760,14 +666,10 @@ export const ipsecTools: ToolModule = [
     name: "flush_ipsec_installed_sa",
     title: "Flush IPsec Installed SAs",
     annotations: DESTRUCTIVE,
-    description:
-      "Flushes all installed IPsec security associations, forcing tunnels to rekey.",
+    description: "Flushes all installed IPsec security associations, forcing tunnels to rekey.",
     async handler(_a, ctx) {
       ctx.info("Flushing IPsec installed SAs");
-      const result = await executeMikrotikCommand(
-        "/ip ipsec installed-sa flush",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/ip ipsec installed-sa flush", ctx);
       if (looksLikeError(result)) return `Failed to flush IPsec SAs: ${result}`;
       return "IPsec security associations flushed (tunnels will rekey).";
     },
@@ -780,13 +682,8 @@ export const ipsecTools: ToolModule = [
     description: "Shows IPsec subsystem statistics and counters.",
     async handler(_a, ctx) {
       ctx.info("Getting IPsec statistics");
-      const result = await executeMikrotikCommand(
-        "/ip ipsec statistics print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No IPsec statistics available."
-        : `IPSEC STATISTICS:\n\n${result}`;
+      const result = await executeMikrotikCommand("/ip ipsec statistics print", ctx);
+      return isEmpty(result) ? "No IPsec statistics available." : `IPSEC STATISTICS:\n\n${result}`;
     },
   }),
 ];

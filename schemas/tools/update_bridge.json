@@ -18,12 +18,7 @@
     },
     "protocol_mode": {
       "type": "string",
-      "enum": [
-        "none",
-        "rstp",
-        "stp",
-        "mstp"
-      ]
+      "enum": ["none", "rstp", "stp", "mstp"]
     },
     "disabled": {
       "type": "boolean"
@@ -34,8 +29,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

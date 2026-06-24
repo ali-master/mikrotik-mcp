@@ -20,14 +20,8 @@ const InterfaceType = z.enum([
   "sfp-sfpplus",
 ]);
 
-async function verify(
-  name: string,
-  ctx: Parameters<typeof executeMikrotikCommand>[1],
-) {
-  return executeMikrotikCommand(
-    `/interface print detail where name="${name}"`,
-    ctx,
-  );
+async function verify(name: string, ctx: Parameters<typeof executeMikrotikCommand>[1]) {
+  return executeMikrotikCommand(`/interface print detail where name="${name}"`, ctx);
 }
 
 export const interfaceTools: ToolModule = [
@@ -41,10 +35,7 @@ export const interfaceTools: ToolModule = [
       type_filter: InterfaceType.optional().describe(
         "RouterOS interface type, e.g. 'ether', 'bridge'",
       ),
-      name_filter: z
-        .string()
-        .optional()
-        .describe("Partial name match, e.g. 'ether'"),
+      name_filter: z.string().optional().describe("Partial name match, e.g. 'ether'"),
       running_only: z.boolean().default(false),
       disabled_only: z.boolean().default(false),
     },
@@ -56,10 +47,7 @@ export const interfaceTools: ToolModule = [
       if (a.running_only) filters.push("running=yes");
       if (a.disabled_only) filters.push("disabled=yes");
 
-      const result = await executeMikrotikCommand(
-        `/interface print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/interface print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No interfaces found matching the criteria."
         : `INTERFACES:\n\n${result}`;
@@ -70,8 +58,7 @@ export const interfaceTools: ToolModule = [
     name: "get_interface",
     title: "Get Interface",
     annotations: READ,
-    description:
-      "Gets detailed information about a specific interface by name.",
+    description: "Gets detailed information about a specific interface by name.",
     inputSchema: {
       name: z.string().describe("Exact interface name, e.g. 'ether1', 'wg0'"),
     },
@@ -92,12 +79,8 @@ export const interfaceTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling interface: name=${a.name}`);
-      const result = await executeMikrotikCommand(
-        `/interface enable [find name="${a.name}"]`,
-        ctx,
-      );
-      if (looksLikeError(result))
-        return `Failed to enable interface '${a.name}': ${result}`;
+      const result = await executeMikrotikCommand(`/interface enable [find name="${a.name}"]`, ctx);
+      if (looksLikeError(result)) return `Failed to enable interface '${a.name}': ${result}`;
       const details = await verify(a.name, ctx);
       return isEmpty(details)
         ? `Interface '${a.name}' not found.`
@@ -117,8 +100,7 @@ export const interfaceTools: ToolModule = [
         `/interface disable [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to disable interface '${a.name}': ${result}`;
+      if (looksLikeError(result)) return `Failed to disable interface '${a.name}': ${result}`;
       const details = await verify(a.name, ctx);
       return isEmpty(details)
         ? `Interface '${a.name}' not found.`

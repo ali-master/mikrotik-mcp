@@ -8,8 +8,6 @@
       "description": "Source port name (e.g. 'ether1') or RouterOS '.id'"
     }
   },
-  "required": [
-    "isolation_id"
-  ],
+  "required": ["isolation_id"],
   "additionalProperties": false
 }

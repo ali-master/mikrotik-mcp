@@ -10,6 +10,7 @@ arguments:
     description: The router's address on the VPN/LAN side that clients use as gateway/DNS, e.g. 192.168.89.1.
     required: true
 ---
+
 Configure **L2TP/IPsec** remote access — the right choice when users must connect
 with the **built-in** VPN client on Windows, macOS, iOS, and Android (no app to
 install). Plan first, then apply (firewall under Safe Mode).

@@ -91,6 +91,4 @@ edit by hand — regenerate instead.
 );
 
 // eslint-disable-next-line node/prefer-global/process
-process.stdout.write(
-  `Generated schemas for ${count} tools into ${SCHEMAS_DIR}\n`,
-);
+process.stdout.write(`Generated schemas for ${count} tools into ${SCHEMAS_DIR}\n`);

@@ -29,9 +29,7 @@ export const dhcpTools: ToolModule = [
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating DHCP server: name=${a.name}, interface=${a.interface}`,
-      );
+      ctx.info(`Creating DHCP server: name=${a.name}, interface=${a.interface}`);
 
       const cmd = new Cmd("/ip dhcp-server add")
         .set("name", a.name)
@@ -39,16 +37,13 @@ export const dhcpTools: ToolModule = [
         .set("lease-time", a.lease_time)
         .opt("address-pool", a.address_pool)
         .flag("disabled", a.disabled)
-        .raw(
-          a.authoritative !== "yes" ? `authoritative=${a.authoritative}` : null,
-        )
+        .raw(a.authoritative !== "yes" ? `authoritative=${a.authoritative}` : null)
         .opt("delay-threshold", a.delay_threshold)
         .opt("comment", a.comment)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create DHCP server: ${result}`;
+      if (looksLikeError(result)) return `Failed to create DHCP server: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip dhcp-server print detail where name="${a.name}"`,
@@ -126,37 +121,22 @@ export const dhcpTools: ToolModule = [
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Creating DHCP network: network=${a.network}, gateway=${a.gateway}`,
-      );
+      ctx.info(`Creating DHCP network: network=${a.network}, gateway=${a.gateway}`);
 
       const cmd = new Cmd("/ip dhcp-server network add")
         .set("address", a.network)
         .set("gateway", a.gateway)
         .opt("netmask", a.netmask)
-        .opt(
-          "dns-server",
-          a.dns_servers?.length ? a.dns_servers.join(",") : undefined,
-        )
+        .opt("dns-server", a.dns_servers?.length ? a.dns_servers.join(",") : undefined)
         .opt("domain", a.domain)
-        .opt(
-          "wins-server",
-          a.wins_servers?.length ? a.wins_servers.join(",") : undefined,
-        )
-        .opt(
-          "ntp-server",
-          a.ntp_servers?.length ? a.ntp_servers.join(",") : undefined,
-        )
-        .opt(
-          "dhcp-option",
-          a.dhcp_option?.length ? a.dhcp_option.join(",") : undefined,
-        )
+        .opt("wins-server", a.wins_servers?.length ? a.wins_servers.join(",") : undefined)
+        .opt("ntp-server", a.ntp_servers?.length ? a.ntp_servers.join(",") : undefined)
+        .opt("dhcp-option", a.dhcp_option?.length ? a.dhcp_option.join(",") : undefined)
         .opt("comment", a.comment)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create DHCP network: ${result}`;
+      if (looksLikeError(result)) return `Failed to create DHCP network: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip dhcp-server network print detail where address="${a.network}"`,
@@ -176,9 +156,7 @@ export const dhcpTools: ToolModule = [
       '        Multiple ranges comma-separated: "10.0.0.1-10.0.0.50,10.0.0.100-10.0.0.120"',
     inputSchema: {
       name: z.string(),
-      ranges: z
-        .string()
-        .describe('IP range(s) e.g. "192.168.1.1-192.168.1.100"'),
+      ranges: z.string().describe('IP range(s) e.g. "192.168.1.1-192.168.1.100"'),
       next_pool: z.string().optional(),
       comment: z.string().optional(),
     },
@@ -193,8 +171,7 @@ export const dhcpTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create DHCP pool: ${result}`;
+      if (looksLikeError(result)) return `Failed to create DHCP pool: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/ip pool print detail where name="${a.name}"`,
@@ -223,8 +200,7 @@ export const dhcpTools: ToolModule = [
         `/ip dhcp-server remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove DHCP server: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove DHCP server: ${result}`;
 
       return `DHCP server '${a.name}' removed successfully.`;
     },

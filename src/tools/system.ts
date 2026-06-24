@@ -19,13 +19,8 @@ export const systemTools: ToolModule = [
     description: "Gets the system identity (hostname) of the MikroTik device.",
     async handler(_a, ctx) {
       ctx.info("Getting system identity");
-      const result = await executeMikrotikCommand(
-        "/system identity print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No system identity found."
-        : `SYSTEM IDENTITY:\n\n${result}`;
+      const result = await executeMikrotikCommand("/system identity print", ctx);
+      return isEmpty(result) ? "No system identity found." : `SYSTEM IDENTITY:\n\n${result}`;
     },
   }),
 
@@ -41,13 +36,9 @@ export const systemTools: ToolModule = [
       ctx.info(`Setting system identity: name=${a.name}`);
       const cmd = new Cmd("/system identity set").set("name", a.name).build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to set system identity: ${result}`;
+      if (looksLikeError(result)) return `Failed to set system identity: ${result}`;
 
-      const details = await executeMikrotikCommand(
-        "/system identity print",
-        ctx,
-      );
+      const details = await executeMikrotikCommand("/system identity print", ctx);
       return `System identity updated successfully:\n\n${details}`;
     },
   }),
@@ -56,17 +47,11 @@ export const systemTools: ToolModule = [
     name: "get_system_resources",
     title: "Get Resources",
     annotations: READ,
-    description:
-      "Gets system resource information (CPU, memory, uptime, board name, version).",
+    description: "Gets system resource information (CPU, memory, uptime, board name, version).",
     async handler(_a, ctx) {
       ctx.info("Getting system resources");
-      const result = await executeMikrotikCommand(
-        "/system resource print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No system resources found."
-        : `SYSTEM RESOURCES:\n\n${result}`;
+      const result = await executeMikrotikCommand("/system resource print", ctx);
+      return isEmpty(result) ? "No system resources found." : `SYSTEM RESOURCES:\n\n${result}`;
     },
   }),
 
@@ -89,17 +74,11 @@ export const systemTools: ToolModule = [
     name: "get_routerboard",
     title: "Get RouterBOARD",
     annotations: READ,
-    description:
-      "Gets RouterBOARD hardware information (model, serial, firmware).",
+    description: "Gets RouterBOARD hardware information (model, serial, firmware).",
     async handler(_a, ctx) {
       ctx.info("Getting RouterBOARD information");
-      const result = await executeMikrotikCommand(
-        "/system routerboard print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No RouterBOARD information found."
-        : `ROUTERBOARD:\n\n${result}`;
+      const result = await executeMikrotikCommand("/system routerboard print", ctx);
+      return isEmpty(result) ? "No RouterBOARD information found." : `ROUTERBOARD:\n\n${result}`;
     },
   }),
 
@@ -111,9 +90,7 @@ export const systemTools: ToolModule = [
     async handler(_a, ctx) {
       ctx.info("Getting system clock");
       const result = await executeMikrotikCommand("/system clock print", ctx);
-      return isEmpty(result)
-        ? "No system clock information found."
-        : `SYSTEM CLOCK:\n\n${result}`;
+      return isEmpty(result) ? "No system clock information found." : `SYSTEM CLOCK:\n\n${result}`;
     },
   }),
 
@@ -121,20 +98,15 @@ export const systemTools: ToolModule = [
     name: "set_system_clock",
     title: "Set Clock",
     annotations: WRITE,
-    description:
-      "Sets system clock settings. Provide at least one of time-zone, date, or time.",
+    description: "Sets system clock settings. Provide at least one of time-zone, date, or time.",
     inputSchema: {
-      time_zone_name: z
-        .string()
-        .optional()
-        .describe("e.g. 'Europe/Amsterdam' or 'manual'"),
+      time_zone_name: z.string().optional().describe("e.g. 'Europe/Amsterdam' or 'manual'"),
       date: z.string().optional().describe("e.g. 'jun/19/2026'"),
       time: z.string().optional().describe("e.g. '13:45:00'"),
     },
     async handler(a, ctx) {
       ctx.info("Setting system clock");
-      if (!a.time_zone_name && !a.date && !a.time)
-        return "No clock settings specified.";
+      if (!a.time_zone_name && !a.date && !a.time) return "No clock settings specified.";
 
       const cmd = new Cmd("/system clock set")
         .opt("time-zone-name", a.time_zone_name)
@@ -142,8 +114,7 @@ export const systemTools: ToolModule = [
         .opt("time", a.time)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to set system clock: ${result}`;
+      if (looksLikeError(result)) return `Failed to set system clock: ${result}`;
 
       const details = await executeMikrotikCommand("/system clock print", ctx);
       return `System clock updated successfully:\n\n${details}`;
@@ -154,17 +125,11 @@ export const systemTools: ToolModule = [
     name: "get_ntp_client",
     title: "Get NTP Client",
     annotations: READ,
-    description:
-      "Gets the NTP client configuration and synchronization status.",
+    description: "Gets the NTP client configuration and synchronization status.",
     async handler(_a, ctx) {
       ctx.info("Getting NTP client configuration");
-      const result = await executeMikrotikCommand(
-        "/system ntp client print",
-        ctx,
-      );
-      return isEmpty(result)
-        ? "No NTP client information found."
-        : `NTP CLIENT:\n\n${result}`;
+      const result = await executeMikrotikCommand("/system ntp client print", ctx);
+      return isEmpty(result) ? "No NTP client information found." : `NTP CLIENT:\n\n${result}`;
     },
   }),
 
@@ -174,14 +139,8 @@ export const systemTools: ToolModule = [
     annotations: WRITE,
     description: "Configures the NTP client (enable/disable and server list).",
     inputSchema: {
-      enabled: z
-        .boolean()
-        .optional()
-        .describe("Enable or disable the NTP client"),
-      servers: z
-        .string()
-        .optional()
-        .describe("Comma-separated NTP server list"),
+      enabled: z.boolean().optional().describe("Enable or disable the NTP client"),
+      servers: z.string().optional().describe("Comma-separated NTP server list"),
     },
     async handler(a, ctx) {
       ctx.info("Setting NTP client configuration");
@@ -192,10 +151,7 @@ export const systemTools: ToolModule = [
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set NTP client: ${result}`;
 
-      const details = await executeMikrotikCommand(
-        "/system ntp client print",
-        ctx,
-      );
+      const details = await executeMikrotikCommand("/system ntp client print", ctx);
       return `NTP client updated successfully:\n\n${details}`;
     },
   }),
@@ -208,9 +164,7 @@ export const systemTools: ToolModule = [
     async handler(_a, ctx) {
       ctx.info("Getting installed packages");
       const result = await executeMikrotikCommand("/system package print", ctx);
-      return isEmpty(result)
-        ? "No installed packages found."
-        : `INSTALLED PACKAGES:\n\n${result}`;
+      return isEmpty(result) ? "No installed packages found." : `INSTALLED PACKAGES:\n\n${result}`;
     },
   }),
 
@@ -218,17 +172,14 @@ export const systemTools: ToolModule = [
     name: "check_for_updates",
     title: "Check Updates",
     annotations: READ,
-    description:
-      "Checks for available RouterOS updates on the configured update channel.",
+    description: "Checks for available RouterOS updates on the configured update channel.",
     async handler(_a, ctx) {
       ctx.info("Checking for updates");
       const result = await executeMikrotikCommand(
         "/system package update check-for-updates once",
         ctx,
       );
-      return isEmpty(result)
-        ? "No update information returned."
-        : `UPDATE CHECK:\n\n${result}`;
+      return isEmpty(result) ? "No update information returned." : `UPDATE CHECK:\n\n${result}`;
     },
   }),
 
@@ -236,14 +187,11 @@ export const systemTools: ToolModule = [
     name: "get_system_history",
     title: "Get History",
     annotations: READ,
-    description:
-      "Gets the system change history (recent configuration actions).",
+    description: "Gets the system change history (recent configuration actions).",
     async handler(_a, ctx) {
       ctx.info("Getting system history");
       const result = await executeMikrotikCommand("/system history print", ctx);
-      return isEmpty(result)
-        ? "No system history found."
-        : `SYSTEM HISTORY:\n\n${result}`;
+      return isEmpty(result) ? "No system history found." : `SYSTEM HISTORY:\n\n${result}`;
     },
   }),
 
@@ -251,16 +199,12 @@ export const systemTools: ToolModule = [
     name: "reboot_system",
     title: "Reboot System",
     annotations: DANGEROUS,
-    description:
-      "Reboots the MikroTik device. Requires confirm=true; the connection will drop.",
+    description: "Reboots the MikroTik device. Requires confirm=true; the connection will drop.",
     inputSchema: {
-      confirm: z
-        .boolean()
-        .describe("Must be true to actually reboot the device"),
+      confirm: z.boolean().describe("Must be true to actually reboot the device"),
     },
     async handler(a, ctx) {
-      if (!a.confirm)
-        return "Reboot not confirmed. Pass confirm=true to reboot.";
+      if (!a.confirm) return "Reboot not confirmed. Pass confirm=true to reboot.";
       ctx.info("Rebooting system");
       await executeMikrotikCommand("/system reboot", ctx);
       return "Reboot command sent. The device is rebooting and the connection will drop.";
@@ -271,16 +215,12 @@ export const systemTools: ToolModule = [
     name: "shutdown_system",
     title: "Shutdown System",
     annotations: DANGEROUS,
-    description:
-      "Shuts down the MikroTik device. Requires confirm=true; the connection will drop.",
+    description: "Shuts down the MikroTik device. Requires confirm=true; the connection will drop.",
     inputSchema: {
-      confirm: z
-        .boolean()
-        .describe("Must be true to actually shut down the device"),
+      confirm: z.boolean().describe("Must be true to actually shut down the device"),
     },
     async handler(a, ctx) {
-      if (!a.confirm)
-        return "Shutdown not confirmed. Pass confirm=true to shutdown.";
+      if (!a.confirm) return "Shutdown not confirmed. Pass confirm=true to shutdown.";
       ctx.info("Shutting down system");
       await executeMikrotikCommand("/system shutdown", ctx);
       return "Shutdown command sent.";

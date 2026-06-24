@@ -10,8 +10,7 @@ export const certificateTools: ToolModule = [
     name: "list_certificates",
     title: "List Certificates",
     annotations: READ,
-    description:
-      "Lists certificates in the MikroTik device's certificate store.",
+    description: "Lists certificates in the MikroTik device's certificate store.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -20,10 +19,7 @@ export const certificateTools: ToolModule = [
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
 
-      const result = await executeMikrotikCommand(
-        `/certificate print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/certificate print${whereClause(filters)}`, ctx);
       return isEmpty(result)
         ? "No certificates found matching the criteria."
         : `CERTIFICATES:\n\n${result}`;
@@ -56,19 +52,10 @@ export const certificateTools: ToolModule = [
       "Creates a certificate template on the MikroTik device. Use sign_certificate to self-sign it after creating.",
     inputSchema: {
       name: z.string().describe("Name for the certificate"),
-      common_name: z
-        .string()
-        .describe("Common name (CN), e.g. a hostname or domain"),
+      common_name: z.string().describe("Common name (CN), e.g. a hostname or domain"),
       key_size: z.number().int().default(2048).describe("RSA key size in bits"),
-      days_valid: z
-        .number()
-        .int()
-        .default(365)
-        .describe("Validity period in days"),
-      key_usage: z
-        .string()
-        .optional()
-        .describe("Comma-separated key usages, e.g. 'tls-server'"),
+      days_valid: z.number().int().default(365).describe("Validity period in days"),
+      key_usage: z.string().optional().describe("Comma-separated key usages, e.g. 'tls-server'"),
       country: z.string().optional().describe("Country code (C), e.g. 'US'"),
       organization: z.string().optional().describe("Organization (O)"),
     },
@@ -85,8 +72,7 @@ export const certificateTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to create certificate: ${result}`;
+      if (looksLikeError(result)) return `Failed to create certificate: ${result}`;
 
       const details = await executeMikrotikCommand(
         `/certificate print detail where name="${a.name}"`,
@@ -109,13 +95,8 @@ export const certificateTools: ToolModule = [
       ca: z
         .string()
         .optional()
-        .describe(
-          "Name of the CA certificate to sign with (omit to self-sign)",
-        ),
-      common_name: z
-        .string()
-        .optional()
-        .describe("Override the common name when signing"),
+        .describe("Name of the CA certificate to sign with (omit to self-sign)"),
+      common_name: z.string().optional().describe("Override the common name when signing"),
     },
     async handler(a, ctx) {
       ctx.info(`Signing certificate: name=${a.name}`);
@@ -126,8 +107,7 @@ export const certificateTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to sign certificate: ${result}`;
+      if (looksLikeError(result)) return `Failed to sign certificate: ${result}`;
       return `Signing certificate '${a.name}'...\n\n${result}`;
     },
   }),
@@ -136,8 +116,7 @@ export const certificateTools: ToolModule = [
     name: "remove_certificate",
     title: "Remove Certificate",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes a certificate from the MikroTik device's certificate store.",
+    description: "Removes a certificate from the MikroTik device's certificate store.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing certificate: name=${a.name}`);
@@ -151,8 +130,7 @@ export const certificateTools: ToolModule = [
         `/certificate remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove certificate: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove certificate: ${result}`;
       return `Certificate '${a.name}' removed successfully.`;
     },
   }),
@@ -161,20 +139,11 @@ export const certificateTools: ToolModule = [
     name: "import_certificate",
     title: "Import Certificate",
     annotations: WRITE,
-    description:
-      "Imports a certificate or key from a file in the MikroTik device's file system.",
+    description: "Imports a certificate or key from a file in the MikroTik device's file system.",
     inputSchema: {
-      file_name: z
-        .string()
-        .describe("Name of the certificate/key file to import"),
-      passphrase: z
-        .string()
-        .optional()
-        .describe("Passphrase protecting the imported key, if any"),
-      name: z
-        .string()
-        .optional()
-        .describe("Name to assign to the imported certificate"),
+      file_name: z.string().describe("Name of the certificate/key file to import"),
+      passphrase: z.string().optional().describe("Passphrase protecting the imported key, if any"),
+      name: z.string().optional().describe("Name to assign to the imported certificate"),
     },
     async handler(a, ctx) {
       ctx.info(`Importing certificate from file: ${a.file_name}`);
@@ -185,8 +154,7 @@ export const certificateTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to import certificate: ${result}`;
+      if (looksLikeError(result)) return `Failed to import certificate: ${result}`;
       return `Certificate import completed:\n\n${result}`;
     },
   }),

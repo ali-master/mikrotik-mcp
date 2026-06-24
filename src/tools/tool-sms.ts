@@ -1,12 +1,7 @@
 /** SMS over an LTE/modem channel — `/tool sms`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
@@ -19,9 +14,7 @@ export const smsTools: ToolModule = [
     async handler(_a, ctx) {
       ctx.info("Getting sms settings");
       const result = await executeMikrotikCommand("/tool sms print", ctx);
-      return isEmpty(result)
-        ? "Unable to read sms settings."
-        : `SMS SETTINGS:\n\n${result}`;
+      return isEmpty(result) ? "Unable to read sms settings." : `SMS SETTINGS:\n\n${result}`;
     },
   }),
 
@@ -58,8 +51,7 @@ export const smsTools: ToolModule = [
       if (built === "/tool sms set") return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update sms settings: ${result}`;
+      if (looksLikeError(result)) return `Failed to update sms settings: ${result}`;
       const details = await executeMikrotikCommand("/tool sms print", ctx);
       return `SMS settings updated successfully:\n\n${details}`;
     },
@@ -69,8 +61,7 @@ export const smsTools: ToolModule = [
     name: "send_sms",
     title: "Send SMS",
     annotations: WRITE,
-    description:
-      "Sends an SMS message via the device's LTE/modem (`/tool sms send`).",
+    description: "Sends an SMS message via the device's LTE/modem (`/tool sms send`).",
     inputSchema: {
       port: z.string().describe("LTE/modem port, e.g. 'lte1'"),
       phone_number: z.string().describe("Destination phone number"),

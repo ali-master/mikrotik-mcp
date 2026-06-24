@@ -63,13 +63,13 @@ no network listener and is unaffected.
 Every tool carries an MCP **risk annotation** so clients can decide what to allow
 automatically and what to gate behind confirmation:
 
-| Risk | Annotation | Examples |
-|------|------------|----------|
-| read | `readOnlyHint` | `list_*`, `get_*`, `ping`, `traceroute` |
-| write | `destructiveHint: false` | `create_*`, `add_*` |
-| write-idempotent | `destructiveHint: false`, `idempotentHint` | `set_*`, `enable_*`, `disable_*` |
-| destructive | `destructiveHint` | `remove_*`, `delete_*` |
-| dangerous | `destructiveHint`, not idempotent | restore, import, factory setup |
+| Risk             | Annotation                                 | Examples                                |
+| ---------------- | ------------------------------------------ | --------------------------------------- |
+| read             | `readOnlyHint`                             | `list_*`, `get_*`, `ping`, `traceroute` |
+| write            | `destructiveHint: false`                   | `create_*`, `add_*`                     |
+| write-idempotent | `destructiveHint: false`, `idempotentHint` | `set_*`, `enable_*`, `disable_*`        |
+| destructive      | `destructiveHint`                          | `remove_*`, `delete_*`                  |
+| dangerous        | `destructiveHint`, not idempotent          | restore, import, factory setup          |
 
 **Destructive and dangerous tools should be gated by the client** — require human
 confirmation before they run. The annotations exist precisely so a client can

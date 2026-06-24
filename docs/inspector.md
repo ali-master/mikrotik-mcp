@@ -102,9 +102,9 @@ Or open the UI straight at the right target:
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
+| Symptom                                                                      | Fix                                                                                |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | UI connects but tool calls error with "Failed to connect to MikroTik device" | Credentials/host are wrong or unreachable — verify with `mikrotik-mcp auth-check`. |
-| No `device` dropdown though you set devices | A `device` selector only appears when **more than one** device is configured. |
-| Port already in use | Set `CLIENT_PORT` / `SERVER_PORT`. |
-| Want raw logs | Set `MIKROTIK_LOG_LEVEL=debug` (the config's `mikrotik` server already does). |
+| No `device` dropdown though you set devices                                  | A `device` selector only appears when **more than one** device is configured.      |
+| Port already in use                                                          | Set `CLIENT_PORT` / `SERVER_PORT`.                                                 |
+| Want raw logs                                                                | Set `MIKROTIK_LOG_LEVEL=debug` (the config's `mikrotik` server already does).      |

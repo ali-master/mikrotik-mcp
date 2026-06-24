@@ -20,10 +20,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "name",
-    "prefix",
-    "prefix_length"
-  ],
+  "required": ["name", "prefix", "prefix_length"],
   "additionalProperties": false
 }

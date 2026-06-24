@@ -18,12 +18,7 @@
     "protocol_mode": {
       "description": "Spanning-tree protocol mode",
       "type": "string",
-      "enum": [
-        "none",
-        "rstp",
-        "stp",
-        "mstp"
-      ]
+      "enum": ["none", "rstp", "stp", "mstp"]
     },
     "disabled": {
       "default": false,
@@ -35,10 +30,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "name",
-    "vlan_filtering",
-    "disabled"
-  ],
+  "required": ["name", "vlan_filtering", "disabled"],
   "additionalProperties": false
 }

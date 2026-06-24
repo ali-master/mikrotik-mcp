@@ -11,19 +11,11 @@
     },
     "accept_redirects": {
       "type": "string",
-      "enum": [
-        "yes",
-        "no",
-        "yes-if-forwarding-disabled"
-      ]
+      "enum": ["yes", "no", "yes-if-forwarding-disabled"]
     },
     "accept_router_advertisements": {
       "type": "string",
-      "enum": [
-        "yes",
-        "no",
-        "yes-if-forwarding-disabled"
-      ]
+      "enum": ["yes", "no", "yes-if-forwarding-disabled"]
     },
     "max_neighbor_entries": {
       "type": "integer",

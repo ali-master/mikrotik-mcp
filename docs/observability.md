@@ -46,16 +46,16 @@ Then open **http://127.0.0.1:9090/** in a browser on the same machine.
 
 ## Configuration
 
-| Env var | Flag | Default | Meaning |
-|---|---|---|---|
-| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard` | `false` | Master switch. When off, zero overhead and no SQLite is loaded. |
-| `MIKROTIK_DASHBOARD__HOST` | `--dashboard-host` | `127.0.0.1` | Bind host (loopback by default). |
-| `MIKROTIK_DASHBOARD__PORT` | `--dashboard-port` | `9090` | Bind port. |
-| `MIKROTIK_DASHBOARD__DB_PATH` | `--dashboard-db` | `~/.mikrotik-mcp/events.db` | SQLite file (per-user home on Win/macOS/Linux); `:memory:` for an ephemeral store. |
-| `MIKROTIK_DASHBOARD__MAX_EVENTS` | `--dashboard-max-events` | `100000` | Retention cap; older rows are pruned. |
-| `MIKROTIK_DASHBOARD__CAPTURE_BODY` | `--dashboard-capture-body` | `true` | Record redacted input/output bodies. |
-| `MIKROTIK_DASHBOARD__MAX_BODY_BYTES` | `--dashboard-max-body-bytes` | `16384` | Per-body truncation budget. |
-| `MIKROTIK_DASHBOARD__TOKEN` | `--dashboard-token` | _(none)_ | Optional bearer token; when set, the page, API and WebSocket all require it. |
+| Env var                              | Flag                         | Default                     | Meaning                                                                            |
+| ------------------------------------ | ---------------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| `MIKROTIK_DASHBOARD__ENABLED`        | `--dashboard`                | `false`                     | Master switch. When off, zero overhead and no SQLite is loaded.                    |
+| `MIKROTIK_DASHBOARD__HOST`           | `--dashboard-host`           | `127.0.0.1`                 | Bind host (loopback by default).                                                   |
+| `MIKROTIK_DASHBOARD__PORT`           | `--dashboard-port`           | `9090`                      | Bind port.                                                                         |
+| `MIKROTIK_DASHBOARD__DB_PATH`        | `--dashboard-db`             | `~/.mikrotik-mcp/events.db` | SQLite file (per-user home on Win/macOS/Linux); `:memory:` for an ephemeral store. |
+| `MIKROTIK_DASHBOARD__MAX_EVENTS`     | `--dashboard-max-events`     | `100000`                    | Retention cap; older rows are pruned.                                              |
+| `MIKROTIK_DASHBOARD__CAPTURE_BODY`   | `--dashboard-capture-body`   | `true`                      | Record redacted input/output bodies.                                               |
+| `MIKROTIK_DASHBOARD__MAX_BODY_BYTES` | `--dashboard-max-body-bytes` | `16384`                     | Per-body truncation budget.                                                        |
+| `MIKROTIK_DASHBOARD__TOKEN`          | `--dashboard-token`          | _(none)_                    | Optional bearer token; when set, the page, API and WebSocket all require it.       |
 
 A `dashboard` block in a JSON config file (`--config`) overrides env/flags:
 
@@ -100,17 +100,17 @@ imported lazily — `bun:sqlite` is only loaded when the dashboard is enabled.
 
 The dashboard is backed by a small JSON API on the same port (handy for scripts):
 
-| Endpoint | Returns |
-|---|---|
-| `GET /api/stats?window=<ms>&buckets=<n>` | Computed analytics over the window. |
-| `GET /api/events?limit&offset&tool&risk&device&status&q&since&until` | Filtered, paginated events. |
-| `GET /api/event/:id` | One event with full (redacted) bodies. |
-| `GET /api/meta` | Filter facets (tools/devices), totals, live-client count. |
-| `GET /api/devices` | Configured devices + SSH connectivity status + activity. |
-| `GET /api/config` | Effective runtime config, secrets redacted. |
-| `GET /api/stream` | **WebSocket** — pushes `{type:"event", event}` for every new call. |
-| `GET /api/sse` | **Server-Sent Events** — same event stream as a fallback transport. |
-| `GET /health` | Liveness probe (`OK`). |
+| Endpoint                                                             | Returns                                                             |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `GET /api/stats?window=<ms>&buckets=<n>`                             | Computed analytics over the window.                                 |
+| `GET /api/events?limit&offset&tool&risk&device&status&q&since&until` | Filtered, paginated events.                                         |
+| `GET /api/event/:id`                                                 | One event with full (redacted) bodies.                              |
+| `GET /api/meta`                                                      | Filter facets (tools/devices), totals, live-client count.           |
+| `GET /api/devices`                                                   | Configured devices + SSH connectivity status + activity.            |
+| `GET /api/config`                                                    | Effective runtime config, secrets redacted.                         |
+| `GET /api/stream`                                                    | **WebSocket** — pushes `{type:"event", event}` for every new call.  |
+| `GET /api/sse`                                                       | **Server-Sent Events** — same event stream as a fallback transport. |
+| `GET /health`                                                        | Liveness probe (`OK`).                                              |
 
 The front-end connects over the Bun-native WebSocket by default and falls back
 to SSE automatically if the upgrade fails. All routes require the bearer token

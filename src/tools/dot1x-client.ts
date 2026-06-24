@@ -1,22 +1,9 @@
 /** 802.1X supplicant — `/interface dot1x client`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  yesno,
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 export const dot1xClientTools: ToolModule = [
   defineTool({
@@ -36,15 +23,10 @@ export const dot1xClientTools: ToolModule = [
       interface: z.string(),
       eap_methods: z
         .string()
-        .describe(
-          "Comma-separated EAP methods, e.g. 'eap-tls' or 'eap-peap,eap-mschapv2'",
-        ),
+        .describe("Comma-separated EAP methods, e.g. 'eap-tls' or 'eap-peap,eap-mschapv2'"),
       identity: z.string().optional().describe("EAP identity (username)"),
       anonymous_identity: z.string().optional(),
-      certificate: z
-        .string()
-        .optional()
-        .describe("Client certificate name (required for eap-tls)"),
+      certificate: z.string().optional().describe("Client certificate name (required for eap-tls)"),
       password: z.string().optional().describe("EAP password (password methods)"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -64,8 +46,7 @@ export const dot1xClientTools: ToolModule = [
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to add dot1x client: ${result}`;
+      if (looksLikeError(result)) return `Failed to add dot1x client: ${result}`;
       const details = await executeMikrotikCommand(
         `/interface dot1x client print detail where interface="${a.interface}"`,
         ctx,
@@ -112,9 +93,7 @@ export const dot1xClientTools: ToolModule = [
     annotations: READ,
     description: "Gets a specific 802.1X supplicant by interface or '.id'.",
     inputSchema: {
-      client_id: z
-        .string()
-        .describe("Interface name (e.g. 'ether3') or RouterOS '.id'"),
+      client_id: z.string().describe("Interface name (e.g. 'ether3') or RouterOS '.id'"),
     },
     async handler(a, ctx) {
       ctx.info(`Getting dot1x client: client_id=${a.client_id}`);
@@ -170,8 +149,7 @@ export const dot1xClientTools: ToolModule = [
       if (built === base) return "No updates specified.";
 
       const result = await executeMikrotikCommand(built, ctx);
-      if (looksLikeError(result))
-        return `Failed to update dot1x client: ${result}`;
+      if (looksLikeError(result)) return `Failed to update dot1x client: ${result}`;
       const details = await executeMikrotikCommand(
         `/interface dot1x client print detail where ${selector}`,
         ctx,
@@ -184,8 +162,7 @@ export const dot1xClientTools: ToolModule = [
     name: "remove_dot1x_client",
     title: "Remove Dot1x Client",
     annotations: DESTRUCTIVE,
-    description:
-      "Removes an 802.1X supplicant by interface or '.id' from the MikroTik device.",
+    description: "Removes an 802.1X supplicant by interface or '.id' from the MikroTik device.",
     inputSchema: {
       client_id: z.string().describe("Interface name or RouterOS '.id'"),
     },
@@ -204,8 +181,7 @@ export const dot1xClientTools: ToolModule = [
         `/interface dot1x client remove [find ${selector}]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove dot1x client: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove dot1x client: ${result}`;
       return `Dot1x client '${a.client_id}' removed successfully.`;
     },
   }),

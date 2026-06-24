@@ -3,12 +3,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  looksLikeError,
-  isEmpty,
-  commandUnsupported,
-  Cmd,
-} from "../core/routeros";
+import { looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core/routeros";
 
 const UNSUPPORTED =
   "PIM-SM is not available on this device (requires RouterOS v7 with the routing/multicast package).";
@@ -24,14 +19,9 @@ export const routingPimsmTools: ToolModule = [
       "rooted at a Rendezvous Point (RP). An instance fixes the address family and VRF the protocol runs in.",
     async handler(_a, ctx) {
       ctx.info("Listing PIM-SM instances");
-      const result = await executeMikrotikCommand(
-        "/routing pimsm instance print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing pimsm instance print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No PIM-SM instances found."
-        : `PIM-SM INSTANCES:\n\n${result}`;
+      return isEmpty(result) ? "No PIM-SM instances found." : `PIM-SM INSTANCES:\n\n${result}`;
     },
   }),
 
@@ -61,8 +51,7 @@ export const routingPimsmTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add PIM-SM instance: ${result}`;
+      if (looksLikeError(result)) return `Failed to add PIM-SM instance: ${result}`;
       const details = await executeMikrotikCommand(
         `/routing pimsm instance print detail where name="${a.name}"`,
         ctx,
@@ -86,8 +75,7 @@ export const routingPimsmTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove PIM-SM instance: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove PIM-SM instance: ${result}`;
       return `PIM-SM instance '${a.name}' removed successfully.`;
     },
   }),
@@ -117,16 +105,12 @@ export const routingPimsmTools: ToolModule = [
     name: "add_pimsm_interface_template",
     title: "Add PIM-SM Interface Template",
     annotations: WRITE,
-    description:
-      "Adds a PIM-SM interface template binding interfaces to an instance.",
+    description: "Adds a PIM-SM interface template binding interfaces to an instance.",
     inputSchema: {
       instance: z.string().describe("PIM-SM instance name"),
       interfaces: z.string().describe("Interface or interface-list name"),
       priority: z.number().int().optional().describe("DR election priority"),
-      hello_period: z
-        .string()
-        .optional()
-        .describe('Hello interval, e.g. "30s"'),
+      hello_period: z.string().optional().describe('Hello interval, e.g. "30s"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -143,8 +127,7 @@ export const routingPimsmTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to add PIM-SM interface template: ${result}`;
+      if (looksLikeError(result)) return `Failed to add PIM-SM interface template: ${result}`;
       const t = result.trim();
       return t
         ? `PIM-SM interface template added (id ${t}).`
@@ -165,8 +148,7 @@ export const routingPimsmTools: ToolModule = [
         ctx,
       );
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove PIM-SM interface template: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove PIM-SM interface template: ${result}`;
       return `PIM-SM interface template '${a.template_id}' removed successfully.`;
     },
   }),
@@ -181,14 +163,9 @@ export const routingPimsmTools: ToolModule = [
       "serves as the root of the shared tree.",
     async handler(_a, ctx) {
       ctx.info("Listing PIM-SM RPs");
-      const result = await executeMikrotikCommand(
-        "/routing pimsm rp print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing pimsm rp print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No PIM-SM RPs found."
-        : `PIM-SM RENDEZVOUS POINTS:\n\n${result}`;
+      return isEmpty(result) ? "No PIM-SM RPs found." : `PIM-SM RENDEZVOUS POINTS:\n\n${result}`;
     },
   }),
 
@@ -200,10 +177,7 @@ export const routingPimsmTools: ToolModule = [
     inputSchema: {
       instance: z.string().describe("PIM-SM instance name"),
       address: z.string().describe("RP IP address"),
-      group: z
-        .string()
-        .optional()
-        .describe('Multicast group range, e.g. "239.0.0.0/8"'),
+      group: z.string().optional().describe('Multicast group range, e.g. "239.0.0.0/8"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -232,13 +206,9 @@ export const routingPimsmTools: ToolModule = [
     inputSchema: { rp_id: z.string().describe('RP id, e.g. "*1"') },
     async handler(a, ctx) {
       ctx.info(`Removing PIM-SM RP ${a.rp_id}`);
-      const result = await executeMikrotikCommand(
-        `/routing pimsm rp remove ${a.rp_id}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/routing pimsm rp remove ${a.rp_id}`, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      if (looksLikeError(result))
-        return `Failed to remove PIM-SM RP: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove PIM-SM RP: ${result}`;
       return `PIM-SM RP '${a.rp_id}' removed successfully.`;
     },
   }),
@@ -253,14 +223,9 @@ export const routingPimsmTools: ToolModule = [
       "with their DR priority and timers. Read-only.",
     async handler(_a, ctx) {
       ctx.info("Listing PIM-SM neighbors");
-      const result = await executeMikrotikCommand(
-        "/routing pimsm neighbor print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing pimsm neighbor print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No PIM-SM neighbors found."
-        : `PIM-SM NEIGHBORS:\n\n${result}`;
+      return isEmpty(result) ? "No PIM-SM neighbors found." : `PIM-SM NEIGHBORS:\n\n${result}`;
     },
   }),
 ];

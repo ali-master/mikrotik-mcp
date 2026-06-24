@@ -366,11 +366,11 @@ function auditTransform(rules: FirewallRule[], table: "nat" | "mangle"): AuditFi
 
 function ruleKey(r: FirewallRule): string {
   const m = Object.entries(r.match)
-    .sort()
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([k, v]) => `${k}=${v}`)
     .join("&");
   const t = Object.entries(r.transform)
-    .sort()
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([k, v]) => `${k}=${v}`)
     .join("&");
   return `${r.chain}|${r.action}|${m}|${t}`;

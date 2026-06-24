@@ -13,6 +13,7 @@ arguments:
     description: The interface that reaches the internet (for the masquerade rule).
     required: true
 ---
+
 Build an **isolated guest network** on this MikroTik device. Guests must reach the
 internet but must NOT reach the LAN or the router's management. Plan the whole
 change first, show it to the user, then apply it under Safe Mode.
@@ -35,8 +36,8 @@ Proposed build (adapt to what you discover with `list_interfaces`,
    `create_filter_rule`:
    - allow {{subnet}} → WAN (established/related + new),
    - **drop {{subnet}} → LAN subnets (RFC1918)**,
-   and in the `input` chain drop {{subnet}} → router except DHCP/DNS. Consider an
-   `add_address_list_entry` list named `guest` to keep the rules tidy.
+     and in the `input` chain drop {{subnet}} → router except DHCP/DNS. Consider an
+     `add_address_list_entry` list named `guest` to keep the rules tidy.
 6. **Verify** — re-list the rules and confirm ordering; `enable_safe_mode` before
    applying, test, then `commit_safe_mode`.
 

@@ -13,6 +13,7 @@ arguments:
     description: UDP port for WireGuard (default 13231).
     required: false
 ---
+
 Provision a WireGuard VPN on this MikroTik device and produce a working client
 config. Confirm the plan with the user before applying changes.
 

@@ -123,8 +123,12 @@ export type S3Config = z.infer<typeof S3ConfigSchema>;
 export const DashboardConfigSchema = z.object({
   /** Master switch. When false, zero overhead and no SQLite is loaded. */
   enabled: z.boolean().default(false),
-  /** Bind host for the dashboard HTTP/WebSocket server. */
-  host: z.string().default("127.0.0.1"),
+  /**
+   * Bind host for the dashboard HTTP/WebSocket server. Defaults to `0.0.0.0` so
+   * the dashboard is reachable from other devices on the LAN (e.g. a phone or
+   * laptop) — set a `token` to require auth, or bind `127.0.0.1` for local-only.
+   */
+  host: z.string().default("0.0.0.0"),
   /** Bind port for the dashboard server. */
   port: z.coerce.number().int().positive().default(9090),
   /** SQLite database path (`:memory:` for an ephemeral, in-process store). */

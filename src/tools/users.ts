@@ -1,21 +1,9 @@
 /** Users, user groups, active sessions, and SSH keys — `/user`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
-import {
-  WRITE_IDEMPOTENT,
-  WRITE,
-  READ,
-  DESTRUCTIVE,
-  defineTool,
-} from "../core/registry";
+import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import {
-  whereClause,
-  quoteValue,
-  looksLikeError,
-  isEmpty,
-  Cmd,
-} from "../core/routeros";
+import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import { redactSecrets } from "../utils";
 
 const VALID_POLICIES = [
@@ -63,11 +51,9 @@ async function runUpdateUser(
   if (a.new_name) updates.push(`name=${quoteValue(a.new_name)}`);
   if (a.password) updates.push(`password=${quoteValue(a.password)}`);
   if (a.group) updates.push(`group=${a.group}`);
-  if (a.address !== undefined)
-    updates.push(a.address === "" ? "!address" : `address=${a.address}`);
+  if (a.address !== undefined) updates.push(a.address === "" ? "!address" : `address=${a.address}`);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
-  if (a.disabled !== undefined)
-    updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
+  if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
 
   if (updates.length === 0) return "No updates specified.";
 
@@ -117,8 +103,7 @@ export const userTools: ToolModule = [
             `/user print detail where .id=${userId}`,
             ctx,
           );
-          if (details.trim())
-            return `User created successfully:\n\n${redactSecrets(details)}`;
+          if (details.trim()) return `User created successfully:\n\n${redactSecrets(details)}`;
           return `User created with ID: ${result}`;
         }
         return `Failed to create user: ${result}`;
@@ -128,8 +113,7 @@ export const userTools: ToolModule = [
         `/user print detail where name="${a.name}"`,
         ctx,
       );
-      if (details.trim())
-        return `User created successfully:\n\n${redactSecrets(details)}`;
+      if (details.trim()) return `User created successfully:\n\n${redactSecrets(details)}`;
       return "User creation completed but unable to verify.";
     },
   }),
@@ -146,18 +130,13 @@ export const userTools: ToolModule = [
       active_only: z.boolean().default(false),
     },
     async handler(a, ctx) {
-      ctx.info(
-        `Listing users with filters: name=${a.name_filter}, group=${a.group_filter}`,
-      );
+      ctx.info(`Listing users with filters: name=${a.name_filter}, group=${a.group_filter}`);
       const filters: string[] = [];
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
       if (a.group_filter) filters.push(`group="${a.group_filter}"`);
       if (a.disabled_only) filters.push("disabled=yes");
 
-      const result = await executeMikrotikCommand(
-        `/user print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/user print${whereClause(filters)}`, ctx);
       if (isEmpty(result)) return "No users found matching the criteria.";
       return `USERS:\n\n${redactSecrets(result)}`;
     },
@@ -171,10 +150,7 @@ export const userTools: ToolModule = [
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting user details: name=${a.name}`);
-      const result = await executeMikrotikCommand(
-        `/user print detail where name="${a.name}"`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/user print detail where name="${a.name}"`, ctx);
       if (isEmpty(result)) return `User '${a.name}' not found.`;
       return `USER DETAILS:\n\n${redactSecrets(result)}`;
     },
@@ -209,8 +185,7 @@ export const userTools: ToolModule = [
       ctx.info(`Removing user: name=${a.name}`);
 
       // Don't allow removal of admin user
-      if (a.name.toLowerCase() === "admin")
-        return "Cannot remove the admin user.";
+      if (a.name.toLowerCase() === "admin") return "Cannot remove the admin user.";
 
       const count = await executeMikrotikCommand(
         `/user print count-only where name="${a.name}"`,
@@ -218,10 +193,7 @@ export const userTools: ToolModule = [
       );
       if (count.trim() === "0") return `User '${a.name}' not found.`;
 
-      const result = await executeMikrotikCommand(
-        `/user remove [find name="${a.name}"]`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/user remove [find name="${a.name}"]`, ctx);
       if (looksLikeError(result)) return `Failed to remove user: ${result}`;
       return `User '${a.name}' removed successfully.`;
     },
@@ -286,8 +258,7 @@ export const userTools: ToolModule = [
             `/user group print detail where .id=${groupId}`,
             ctx,
           );
-          if (details.trim())
-            return `User group created successfully:\n\n${details}`;
+          if (details.trim()) return `User group created successfully:\n\n${details}`;
           return `User group created with ID: ${result}`;
         }
         return `Failed to create user group: ${result}`;
@@ -297,8 +268,7 @@ export const userTools: ToolModule = [
         `/user group print detail where name="${a.name}"`,
         ctx,
       );
-      if (details.trim())
-        return `User group created successfully:\n\n${details}`;
+      if (details.trim()) return `User group created successfully:\n\n${details}`;
       return "User group creation completed but unable to verify.";
     },
   }),
@@ -318,10 +288,7 @@ export const userTools: ToolModule = [
       if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
       if (a.policy_filter) filters.push(`policy~"${a.policy_filter}"`);
 
-      const result = await executeMikrotikCommand(
-        `/user group print${whereClause(filters)}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/user group print${whereClause(filters)}`, ctx);
       if (isEmpty(result)) return "No user groups found matching the criteria.";
       return `USER GROUPS:\n\n${result}`;
     },
@@ -360,24 +327,20 @@ export const userTools: ToolModule = [
       ctx.info(`Updating user group: name=${a.name}`);
 
       // Don't allow modification of built-in groups
-      if (BUILTIN_GROUPS.includes(a.name))
-        return `Cannot modify built-in group '${a.name}'.`;
+      if (BUILTIN_GROUPS.includes(a.name)) return `Cannot modify built-in group '${a.name}'.`;
 
       const updates: string[] = [];
       if (a.new_name) updates.push(`name=${quoteValue(a.new_name)}`);
-      if (a.policy && a.policy.length)
-        updates.push(`policy=${a.policy.join(",")}`);
+      if (a.policy && a.policy.length) updates.push(`policy=${a.policy.join(",")}`);
       if (a.skin !== undefined)
         updates.push(a.skin === "" ? "!skin" : `skin=${quoteValue(a.skin)}`);
-      if (a.comment !== undefined)
-        updates.push(`comment=${quoteValue(a.comment)}`);
+      if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
 
       if (updates.length === 0) return "No updates specified.";
 
       const cmd = `/user group set [find name="${a.name}"] ${updates.join(" ")}`;
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result))
-        return `Failed to update user group: ${result}`;
+      if (looksLikeError(result)) return `Failed to update user group: ${result}`;
 
       const detailsName = a.new_name ?? a.name;
       const details = await executeMikrotikCommand(
@@ -398,8 +361,7 @@ export const userTools: ToolModule = [
       ctx.info(`Removing user group: name=${a.name}`);
 
       // Don't allow removal of built-in groups
-      if (BUILTIN_GROUPS.includes(a.name))
-        return `Cannot remove built-in group '${a.name}'.`;
+      if (BUILTIN_GROUPS.includes(a.name)) return `Cannot remove built-in group '${a.name}'.`;
 
       const count = await executeMikrotikCommand(
         `/user group print count-only where name="${a.name}"`,
@@ -420,8 +382,7 @@ export const userTools: ToolModule = [
         `/user group remove [find name="${a.name}"]`,
         ctx,
       );
-      if (looksLikeError(result))
-        return `Failed to remove user group: ${result}`;
+      if (looksLikeError(result)) return `Failed to remove user group: ${result}`;
       return `User group '${a.name}' removed successfully.`;
     },
   }),
@@ -447,10 +408,7 @@ export const userTools: ToolModule = [
     inputSchema: { user_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disconnecting user: user_id=${a.user_id}`);
-      const result = await executeMikrotikCommand(
-        `/user active remove ${a.user_id}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/user active remove ${a.user_id}`, ctx);
       if (looksLikeError(result)) return `Failed to disconnect user: ${result}`;
       return `User session ${a.user_id} disconnected successfully.`;
     },
@@ -465,12 +423,8 @@ export const userTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info("Exporting user configuration");
       const filename = a.filename || "user_config";
-      const result = await executeMikrotikCommand(
-        `/user export file=${filename}`,
-        ctx,
-      );
-      if (!result.trim())
-        return `User configuration exported to ${filename}.rsc`;
+      const result = await executeMikrotikCommand(`/user export file=${filename}`, ctx);
+      if (!result.trim()) return `User configuration exported to ${filename}.rsc`;
       return `Export result: ${result}`;
     },
   }),
@@ -520,10 +474,7 @@ export const userTools: ToolModule = [
     inputSchema: { key_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing SSH key: key_id=${a.key_id}`);
-      const result = await executeMikrotikCommand(
-        `/user ssh-keys remove ${a.key_id}`,
-        ctx,
-      );
+      const result = await executeMikrotikCommand(`/user ssh-keys remove ${a.key_id}`, ctx);
       if (looksLikeError(result)) return `Failed to remove SSH key: ${result}`;
       return `SSH key ${a.key_id} removed successfully.`;
     },

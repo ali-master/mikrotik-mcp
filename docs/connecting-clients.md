@@ -77,12 +77,12 @@ environment, and speak JSON-RPC over stdin/stdout. Conceptually:
 ```jsonc
 {
   "command": "mikrotik-mcp",
-  "args": [],            // "serve" is implied
+  "args": [], // "serve" is implied
   "env": {
     "MIKROTIK_HOST": "192.168.88.1",
     "MIKROTIK_USERNAME": "admin",
-    "MIKROTIK_PASSWORD": "your-password"
-  }
+    "MIKROTIK_PASSWORD": "your-password",
+  },
 }
 ```
 

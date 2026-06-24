@@ -63,9 +63,7 @@ lines.push("");
 lines.push("| Module | Group | Tools | Scope |");
 lines.push("|--------|-------|------:|-------|");
 for (const m of moduleCatalog) {
-  lines.push(
-    `| [${m.label}](#${m.slug}) | ${m.group} | ${m.tools.length} | ${m.description} |`,
-  );
+  lines.push(`| [${m.label}](#${m.slug}) | ${m.group} | ${m.tools.length} | ${m.description} |`);
 }
 lines.push("");
 
@@ -85,9 +83,6 @@ for (const m of moduleCatalog) {
   lines.push("");
 }
 
-writeFileSync(
-  join(PROJECT_ROOT, "docs", "tools-reference.md"),
-  `${lines.join("\n")}\n`,
-);
+writeFileSync(join(PROJECT_ROOT, "docs", "tools-reference.md"), `${lines.join("\n")}\n`);
 // eslint-disable-next-line node/prefer-global/process
 process.stdout.write(`Wrote docs/tools-reference.md (${total} tools)\n`);

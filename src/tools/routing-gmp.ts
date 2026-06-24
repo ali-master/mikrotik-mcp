@@ -19,14 +19,9 @@ export const routingGmpTools: ToolModule = [
       "Read-only — shows the querier role, version and timers per interface.",
     async handler(_a, ctx) {
       ctx.info("Listing GMP interfaces");
-      const result = await executeMikrotikCommand(
-        "/routing gmp interface print detail",
-        ctx,
-      );
+      const result = await executeMikrotikCommand("/routing gmp interface print detail", ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
-      return isEmpty(result)
-        ? "No GMP interfaces found."
-        : `GMP INTERFACES:\n\n${result}`;
+      return isEmpty(result) ? "No GMP interfaces found." : `GMP INTERFACES:\n\n${result}`;
     },
   }),
 
@@ -38,10 +33,7 @@ export const routingGmpTools: ToolModule = [
       "Lists GMP group memberships (`/routing gmp group`): the multicast groups currently joined per interface, " +
       "as learned from IGMP/MLD reports. Read-only — the source of truth for which downstream segments want which groups.",
     inputSchema: {
-      interface_filter: z
-        .string()
-        .optional()
-        .describe("Show only memberships on this interface"),
+      interface_filter: z.string().optional().describe("Show only memberships on this interface"),
       group_filter: z
         .string()
         .optional()

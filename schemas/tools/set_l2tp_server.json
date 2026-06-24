@@ -16,11 +16,7 @@
     },
     "use_ipsec": {
       "type": "string",
-      "enum": [
-        "yes",
-        "no",
-        "required"
-      ]
+      "enum": ["yes", "no", "required"]
     },
     "ipsec_secret": {
       "description": "Pre-shared key for L2TP/IPsec",

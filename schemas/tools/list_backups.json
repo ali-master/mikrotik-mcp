@@ -11,8 +11,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "include_exports"
-  ],
+  "required": ["include_exports"],
   "additionalProperties": false
 }

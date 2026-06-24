@@ -34,9 +34,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "duid",
-    "disabled"
-  ],
+  "required": ["duid", "disabled"],
   "additionalProperties": false
 }

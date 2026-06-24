@@ -13,6 +13,7 @@ arguments:
     description: Tunnel type to use — wireguard, ipsec, gre, eoip, or "recommend" to let you choose.
     required: false
 ---
+
 You are configuring a **site-to-site tunnel between two MikroTik routers** that
 this server can both reach. You will drive BOTH devices in one flow by passing
 the `device` argument on each tool call.
