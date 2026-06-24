@@ -2053,6 +2053,177 @@ function JsonView({ value, maxHeight }: { value: unknown; maxHeight?: number }):
   );
 }
 
+// ── Config snapshots view ────────────────────────────────────────────────────
+interface Snapshot {
+  id: string;
+  device: string;
+  ts: number;
+  label?: string;
+  rosVersion?: string;
+  bytes: number;
+  lines: number;
+  sha: string;
+  body?: string;
+}
+
+/** Browse stored `/export` snapshots and time-travel diff any two. */
+function SnapshotsView(): ReactNode {
+  const [snaps, setSnaps] = useState<Snapshot[] | null>(null);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [sel, setSel] = useState<Snapshot | null>(null);
+  const [diff, setDiff] = useState<{ summary: DiffSummary; unified: string } | null>(null);
+
+  const load = useCallback(() => {
+    void api<{ snapshots: Snapshot[] }>("/api/snapshots")
+      .then((r) => setSnaps(r.snapshots))
+      .catch(() => setSnaps([]));
+  }, []);
+  useEffect(() => load(), [load]);
+
+  const viewBody = (id: string): void => {
+    void api<Snapshot>(`/api/snapshot/${encodeURIComponent(id)}`)
+      .then(setSel)
+      .catch(() => {});
+  };
+  const runDiff = (): void => {
+    if (!from || !to) return;
+    void postJson<{ summary: DiffSummary; unified: string }>("/api/snapshots/diff", { from, to })
+      .then(setDiff)
+      .catch(() => {});
+  };
+
+  if (!snaps) return <div className="muted">loading snapshots…</div>;
+  if (snaps.length === 0) {
+    return (
+      <div className="feed-empty">
+        <div className="feed-empty__icon">🕰️</div>
+        <p className="feed-empty__title">No config snapshots yet</p>
+        <p className="feed-empty__sub">
+          Capture one with the <code>capture_config_snapshot</code> tool — then time-travel diff any
+          two here.
+        </p>
+      </div>
+    );
+  }
+
+  const opts = snaps.map((s) => (
+    <option key={s.id} value={s.id}>
+      {s.device} · {s.label ?? s.id} · {clock(s.ts)}
+    </option>
+  ));
+
+  return (
+    <section className="view">
+      <Panel
+        title="Config snapshots"
+        className="reveal"
+        extra={
+          <button className="btn" onClick={load}>
+            ↻ Refresh
+          </button>
+        }
+      >
+        <div className="toolbar" style={{ marginBottom: 12 }}>
+          <select className="btn" value={from} onChange={(e) => setFrom(e.target.value)}>
+            <option value="">diff from…</option>
+            {opts}
+          </select>
+          <select className="btn" value={to} onChange={(e) => setTo(e.target.value)}>
+            <option value="">to…</option>
+            {opts}
+          </select>
+          <button className="btn is-active" onClick={runDiff} disabled={!from || !to}>
+            Diff →
+          </button>
+          <span className="muted">{snaps.length} snapshots</span>
+        </div>
+        <div className="feedwrap">
+          <table className="feed">
+            <thead>
+              <tr>
+                <th>captured</th>
+                <th>device</th>
+                <th>label</th>
+                <th>version</th>
+                <th className="num">lines</th>
+                <th className="num">size</th>
+                <th>output</th>
+              </tr>
+            </thead>
+            <tbody>
+              {snaps.map((s) => (
+                <tr
+                  key={s.id}
+                  className={sel?.id === s.id ? "is-selected" : undefined}
+                  onClick={() => viewBody(s.id)}
+                >
+                  <td>{clock(s.ts)}</td>
+                  <td>{s.device}</td>
+                  <td>{s.label ?? "—"}</td>
+                  <td>{s.rosVersion ?? "—"}</td>
+                  <td className="num">{s.lines}</td>
+                  <td className="num">{bytes(s.bytes)}</td>
+                  <td className="preview">view export →</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+
+      {diff && (
+        <Panel
+          title="Time-travel diff"
+          className="reveal"
+          extra={
+            <span className="muted">
+              {diff.summary.changed
+                ? `+${diff.summary.added} / -${diff.summary.removed}`
+                : "identical"}
+            </span>
+          }
+        >
+          <pre className="cfg-diff">
+            {(diff.unified || "(identical)").split("\n").map((l, i) => (
+              <div
+                key={i}
+                className={
+                  l.startsWith("+")
+                    ? "d-add"
+                    : l.startsWith("-")
+                      ? "d-del"
+                      : l.startsWith("@@")
+                        ? "d-hunk"
+                        : ""
+                }
+              >
+                {l || " "}
+              </div>
+            ))}
+          </pre>
+        </Panel>
+      )}
+
+      {sel && (
+        <Panel
+          title={`Snapshot · ${sel.label ?? sel.id}`}
+          className="reveal"
+          extra={
+            <button className="btn" onClick={() => setSel(null)}>
+              ✕ Close
+            </button>
+          }
+        >
+          <pre className="body" style={{ maxHeight: 460 }}>
+            {sel.body || "(empty)"}
+          </pre>
+        </Panel>
+      )}
+    </section>
+  );
+}
+
 // ── detail drawer ────────────────────────────────────────────────────────────
 function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => void }): ReactNode {
   const copy = (text: string): void => void navigator.clipboard?.writeText(text).catch(() => {});
@@ -2140,12 +2311,13 @@ function download(name: string, text: string, mime: string): void {
 }
 
 // ── view navigation ─────────────────────────────────────────────────────────
-type ViewId = "overview" | "devices" | "topology" | "packets" | "config" | "feed";
+type ViewId = "overview" | "devices" | "topology" | "packets" | "snapshots" | "config" | "feed";
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
   { id: "devices", label: "Devices", sub: "Connectivity radar & system health" },
   { id: "topology", label: "Topology", sub: "Layer-2 neighbours via MNDP / CDP / LLDP" },
   { id: "packets", label: "Packets", sub: "Live TZSP capture & decode" },
+  { id: "snapshots", label: "Snapshots", sub: "Config history & time-travel diff" },
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
@@ -2177,6 +2349,13 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
       </>
     ),
     packets: <path d="M3 12h4l2-7 4 14 2-7h6" />,
+    snapshots: (
+      <>
+        <path d="M12 3 3 7.5 12 12 21 7.5 12 3Z" />
+        <path d="M3 12 12 16.5 21 12" />
+        <path d="M3 16.5 12 21 21 16.5" />
+      </>
+    ),
     config: (
       <>
         <path d="M4 7h8M16 7h4M4 17h4M12 17h8" />
@@ -2785,6 +2964,9 @@ function App(): ReactNode {
             </Panel>
           </section>
         )}
+
+        {/* ── Snapshots ── */}
+        {view === "snapshots" && <SnapshotsView />}
 
         {/* ── Config ── */}
         {view === "config" &&

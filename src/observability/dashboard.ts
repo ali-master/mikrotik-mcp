@@ -24,10 +24,18 @@ import { join } from "node:path";
 import { serve } from "bun";
 import type { Server, ServerWebSocket } from "bun";
 import { z } from "zod";
-import { DeviceConfigSchema, MikrotikConfigSchema, getConfigSource } from "../config";
+import {
+  DEFAULT_SNAPSHOT_DB,
+  DeviceConfigSchema,
+  MikrotikConfigSchema,
+  getConfigSource,
+} from "../config";
 import type { DashboardConfig } from "../config";
 import { atomicWrite, mergeSecrets } from "../config-write";
 import { diffLines } from "../core/diff";
+import { normalizeExport } from "../snapshots/format";
+import { openSnapshotStore } from "../snapshots/store";
+import type { SnapshotStore } from "../snapshots/store";
 import { getConfig, setConfig } from "../core/runtime";
 import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
@@ -381,6 +389,61 @@ async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
   return null;
 }
 
+// Lazily open the config-snapshot store (shared with the snapshot tools), so the
+// SQLite handle isn't created unless the Snapshots page is actually used.
+let snapStorePromise: Promise<SnapshotStore> | null = null;
+function snapStore(): Promise<SnapshotStore> {
+  if (!snapStorePromise) snapStorePromise = openSnapshotStore(DEFAULT_SNAPSHOT_DB);
+  return snapStorePromise;
+}
+
+/**
+ * Read-only feature pages that surface existing MCP capabilities in the dashboard:
+ *   • `/api/snapshots*` — config-snapshot history + time-travel diff (local store).
+ *   • `/api/plan`        — a terraform-style dry-run of intended RouterOS commands
+ *     (pure `buildChangePlan`, never touches a device).
+ */
+async function featureRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+
+  // ── Config snapshots ──────────────────────────────────────────────────────
+  if (p === "/api/snapshots" && req.method === "GET") {
+    const store = await snapStore();
+    const cfg = getConfig();
+    const all = Object.keys(cfg.devices).flatMap((d) => store.list(d, 200, false));
+    all.sort((a, b) => b.ts - a.ts);
+    return json({ snapshots: all });
+  }
+  const snapMatch = p.match(/^\/api\/snapshot\/(.+)$/);
+  if (snapMatch && req.method === "GET") {
+    const store = await snapStore();
+    const s = store.get(decodeURIComponent(snapMatch[1] as string));
+    return s ? json(s) : json({ error: "not found" }, 404);
+  }
+  if (p === "/api/snapshots/diff" && req.method === "POST") {
+    const store = await snapStore();
+    const b = (await readJson(req)) as { from?: string; to?: string };
+    const from = b?.from ? store.get(b.from) : null;
+    const to = b?.to ? store.get(b.to) : null;
+    if (!from || !to) {
+      return json({ error: "both 'from' and 'to' snapshot ids are required" }, 400);
+    }
+    // Diff the normalised exports so the volatile header line is ignored.
+    const diff = diffLines(normalizeExport(from.body), normalizeExport(to.body), {
+      fromLabel: from.label ?? from.id,
+      toLabel: to.label ?? to.id,
+    });
+    return json({
+      from: { id: from.id, label: from.label, ts: from.ts, device: from.device },
+      to: { id: to.id, label: to.label, ts: to.ts, device: to.device },
+      summary: diff.summary,
+      unified: diff.unified,
+    });
+  }
+
+  return null;
+}
+
 export interface DashboardHandle {
   server: Server<SocketData>;
   store: EventStore;
@@ -471,6 +534,9 @@ export async function runDashboard(
 
       const captureResp = await captureRoutes(req, url);
       if (captureResp) return captureResp;
+
+      const featureResp = await featureRoutes(req, url);
+      if (featureResp) return featureResp;
 
       const db = getEventStore();
       if (!db) return json({ error: "recorder not active" }, 503);
