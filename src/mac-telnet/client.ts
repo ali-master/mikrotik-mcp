@@ -25,6 +25,7 @@ import {
   isBroadcastHost,
   MAC_TELNET_PORT,
   createUdpMacTelnetTransport,
+  formatMac,
   parseMac,
   resolveMacTelnetRoute,
 } from "@tikoci/centrs/protocols";
@@ -63,6 +64,8 @@ export class MikroTikMacTelnetClient {
 
   /** Human-readable reason the last `connect()` failed, if it did. */
   lastError?: string;
+  /** A route-resolution diagnostic, appended to {@link lastError} on failure. */
+  private routeHint?: string;
 
   constructor(opts: MacTelnetClientOptions) {
     this.opts = {
@@ -80,6 +83,13 @@ export class MikroTikMacTelnetClient {
       const explicitSourceMac = this.opts.sourceMac ? parseMac(this.opts.sourceMac) : undefined;
       const host = this.opts.host ?? DEFAULT_MAC_TELNET_BROADCAST;
 
+      // When no host/sourceMac is pinned, the resolver sprays every interface's
+      // directed broadcast and uses whichever the device answers. If nothing
+      // answers it silently falls back to the *limited* broadcast — which on most
+      // OSes only egresses the default-route NIC, so a device on any other segment
+      // becomes unreachable. Detect that fallback to give a precise failure reason.
+      const askedDiscovery = host === DEFAULT_MAC_TELNET_BROADCAST && !explicitSourceMac;
+      logger.info(`[mac-telnet] resolving route to ${this.opts.mac}…`);
       const route = await resolveMacTelnetRoute({
         destinationMac,
         host,
@@ -87,6 +97,17 @@ export class MikroTikMacTelnetClient {
         timeoutMs: this.opts.timeoutMs,
         explicitSourceMac,
       });
+      const discoveryFailed = askedDiscovery && route.host === DEFAULT_MAC_TELNET_BROADCAST;
+      this.routeHint = discoveryFailed
+        ? "no local interface got a reply from the device during discovery — it is likely on a " +
+          "different Layer-2 segment, mac-server is disabled on the facing interface, or a host " +
+          "firewall is dropping the UDP 20561 reply. Pin the segment by setting `macHost` to the " +
+          "device subnet's broadcast (e.g. 192.168.88.255) and, if needed, `sourceMac`."
+        : undefined;
+      logger.info(
+        `[mac-telnet] route: source ${formatMac(route.sourceMac)} → ${route.host} ` +
+          `(${explicitSourceMac ? "explicit" : discoveryFailed ? "DISCOVERY FAILED — limited broadcast" : "discovered"})`,
+      );
 
       const transport = createUdpMacTelnetTransport({
         host: route.host,
@@ -95,6 +116,7 @@ export class MikroTikMacTelnetClient {
       });
       this.transport = transport;
       await transport.ready();
+      logger.info(`[mac-telnet] socket ready; starting login (this can take ~10–30s)…`);
 
       const console = new MacTelnetConsole({
         sink: transport,
@@ -113,7 +135,10 @@ export class MikroTikMacTelnetClient {
       await console.open();
       return true;
     } catch (e) {
-      this.lastError = e instanceof Error ? e.message : String(e);
+      const base = e instanceof Error ? e.message : String(e);
+      // Surface the discovery diagnostic alongside the raw failure — for a
+      // timeout it usually IS the reason (the device never saw our SESSIONSTART).
+      this.lastError = this.routeHint ? `${base} (${this.routeHint})` : base;
       logger.error(`Failed to connect to MikroTik over MAC-Telnet: ${this.lastError}`);
       this.disconnect();
       return false;

@@ -29,7 +29,11 @@
  */
 
 import { MacTelnetSession } from "@tikoci/centrs/protocols";
-import type { MacAddress, MacTelnetDatagramSink } from "@tikoci/centrs/protocols";
+import type {
+  MacAddress,
+  MacTelnetDatagramSink,
+  MacTelnetSessionOptions,
+} from "@tikoci/centrs/protocols";
 
 const ESC = "\x1B";
 const enc = new TextEncoder();
@@ -48,6 +52,22 @@ const TICK_INTERVAL_MS = 15;
 /** The first-login one-time license question. */
 const LICENSE_RE = /do you want to see the software license/i;
 
+/**
+ * The slice of {@link MacTelnetSession} this console drives. Declaring it as an
+ * interface lets a test inject a scripted session to exercise the live
+ * login/prompt/command orchestration with no L2 network.
+ */
+export interface MacTelnetSessionLike {
+  start(): void;
+  handlePacket(bytes: Uint8Array): void;
+  sendInput(bytes: Uint8Array): void;
+  tick(nowMs: number): void;
+  end(): void;
+}
+
+/** Builds the session from its init options (defaults to a real {@link MacTelnetSession}). */
+export type MacTelnetSessionFactory = (init: MacTelnetSessionOptions) => MacTelnetSessionLike;
+
 export interface MacTelnetConsoleOptions {
   /** Datagram sink the underlying session writes to (UDP socket, or a test bridge). */
   sink: MacTelnetDatagramSink;
@@ -56,6 +76,8 @@ export interface MacTelnetConsoleOptions {
   username: string;
   password: string;
   sessionKey?: number;
+  /** Override the session implementation (tests only). */
+  createSession?: MacTelnetSessionFactory;
   /**
    * Rows/cols reported to the console's DSR probe. Defaults are deliberately
    * huge so the console never paginates (rows) or wraps the echo (cols) in
@@ -163,9 +185,11 @@ export function extractCommandOutput(raw: string, command?: string): string {
  * datagrams via {@link handlePacket} and provides the outbound {@link sink}.
  */
 export class MacTelnetConsole {
-  private readonly options: Required<Omit<MacTelnetConsoleOptions, "sink" | "sessionKey">> &
-    Pick<MacTelnetConsoleOptions, "sink" | "sessionKey">;
-  private readonly session: MacTelnetSession;
+  private readonly options: Required<
+    Omit<MacTelnetConsoleOptions, "sink" | "sessionKey" | "createSession">
+  > &
+    Pick<MacTelnetConsoleOptions, "sink" | "sessionKey" | "createSession">;
+  private readonly session: MacTelnetSessionLike;
   private buffer = "";
   private ready = false;
   private closed = false;
@@ -190,7 +214,9 @@ export class MacTelnetConsole {
       acceptLicense: true,
       ...options,
     };
-    this.session = new MacTelnetSession({
+    const createSession: MacTelnetSessionFactory =
+      options.createSession ?? ((init) => new MacTelnetSession(init));
+    this.session = createSession({
       sink: options.sink,
       sourceMac: options.sourceMac,
       destinationMac: options.destinationMac,
