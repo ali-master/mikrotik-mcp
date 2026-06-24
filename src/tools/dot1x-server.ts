@@ -11,18 +11,23 @@ const MacAuthMode = z.enum(["mac-as-username", "mac-as-username-and-password"]);
 export const dot1xServerTools: ToolModule = [
   defineTool({
     name: "add_dot1x_server",
-    title: "Add Dot1x Server",
+    title: "Add 802.1X Server (Authenticator) Entry",
     annotations: WRITE,
     description:
-      "Adds an 802.1X authenticator (server) on an interface, enforcing " +
-      "port-based network access control against a RADIUS server " +
-      "(`/interface dot1x server`).\n\n" +
+      "Creates an 802.1X authenticator entry on an interface (`/interface dot1x server add`), " +
+      "enabling port-based network access control (IEEE 802.1X) enforced against a RADIUS server. " +
+      "Use this to require EAP supplicant authentication (`dot1x`), MAC-bypass authentication " +
+      "(`mac-auth`), or both on a physical port before granting network access. " +
+      "For viewing existing entries use `list_dot1x_servers`; for modifying use `update_dot1x_server`; " +
+      "for removal use `remove_dot1x_server`. " +
+      "Returns the created entry's full detail.\n\n" +
       "Notes:\n" +
       "    auth_types: 'dot1x' (EAP supplicant), 'mac-auth' (MAC bypass), or\n" +
-      "        both.\n" +
+      "        'dot1x,mac-auth' (both).\n" +
       "    guest_vlan_id / reject_vlan_id / server_fail_vlan_id: VLAN to assign\n" +
       "        when there is no supplicant, on auth failure, or when RADIUS is\n" +
-      "        unreachable (number, or 'none').",
+      "        unreachable (number, or 'none').\n" +
+      "    interim_update: RADIUS interim-accounting update interval, e.g. '5m' or '0s'.",
     inputSchema: {
       interface: z.string(),
       auth_types: AuthTypes.optional(),
@@ -66,9 +71,13 @@ export const dot1xServerTools: ToolModule = [
 
   defineTool({
     name: "list_dot1x_servers",
-    title: "List Dot1x Servers",
+    title: "List 802.1X Server (Authenticator) Entries",
     annotations: READ,
-    description: "Lists 802.1X authenticators on the MikroTik device.",
+    description:
+      "Lists all 802.1X authenticator entries (`/interface dot1x server print`). " +
+      "Optionally filter by interface name (`interface_filter`) or restrict output to disabled entries only (`disabled_only=true`). " +
+      "For full detail on a single entry use `get_dot1x_server`. " +
+      "Returns the tabular RouterOS print output including each entry's `.id`, interface, auth-types, and VLAN assignments.",
     inputSchema: {
       interface_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -91,9 +100,14 @@ export const dot1xServerTools: ToolModule = [
 
   defineTool({
     name: "get_dot1x_server",
-    title: "Get Dot1x Server",
+    title: "Get 802.1X Server (Authenticator) Entry Detail",
     annotations: READ,
-    description: "Gets a specific 802.1X authenticator by interface or '.id'.",
+    description:
+      "Retrieves full detail of a single 802.1X authenticator entry (`/interface dot1x server print detail`). " +
+      "Accepts either the RouterOS `.id` (e.g. `*1`, from `list_dot1x_servers`) or the interface name (e.g. `ether2`) as `server_id`; " +
+      "tries `.id` lookup first, then falls back to interface-name lookup. " +
+      "For a summary list of all entries use `list_dot1x_servers`. " +
+      "Returns the detailed entry or a not-found message if no match exists.",
     inputSchema: {
       server_id: z.string().describe("Interface name (e.g. 'ether2') or RouterOS '.id'"),
     },
@@ -117,11 +131,14 @@ export const dot1xServerTools: ToolModule = [
 
   defineTool({
     name: "update_dot1x_server",
-    title: "Update Dot1x Server",
+    title: "Update 802.1X Server (Authenticator) Entry",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an 802.1X authenticator (by interface or '.id'). " +
-      'Pass comment="" to clear the comment.',
+      "Modifies an existing 802.1X authenticator entry (`/interface dot1x server set`) identified by interface name or RouterOS `.id`. " +
+      "Pass `server_id` as a `.id` string (starts with `*`, e.g. `*1` — obtain from `list_dot1x_servers`) or as the interface name (e.g. `ether2`). " +
+      'Omit any optional field to leave it unchanged; pass `comment=""` to clear the comment. ' +
+      "For creating a new entry use `add_dot1x_server`; for deletion use `remove_dot1x_server`. " +
+      "Returns the updated entry's full detail after the change.",
     inputSchema: {
       server_id: z.string().describe("Interface name or RouterOS '.id'"),
       auth_types: AuthTypes.optional(),
@@ -168,9 +185,13 @@ export const dot1xServerTools: ToolModule = [
 
   defineTool({
     name: "remove_dot1x_server",
-    title: "Remove Dot1x Server",
+    title: "Remove 802.1X Server (Authenticator) Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes an 802.1X authenticator by interface or '.id' from the MikroTik device.",
+    description:
+      "Permanently removes an 802.1X authenticator entry (`/interface dot1x server remove`) identified by interface name or RouterOS `.id`. " +
+      "Pass `server_id` as a `.id` string (starts with `*`, e.g. `*1` — obtain from `list_dot1x_servers`) or as the interface name (e.g. `ether2`). " +
+      "Verifies the entry exists via a `count-only` check before deletion — returns a not-found message if absent. " +
+      "For creating an entry use `add_dot1x_server`; for non-destructive disabling use `update_dot1x_server` with `disabled=true`.",
     inputSchema: {
       server_id: z.string().describe("Interface name or RouterOS '.id'"),
     },

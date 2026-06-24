@@ -9,9 +9,17 @@ import { redactSecrets } from "../utils";
 export const radiusTools: ToolModule = [
   defineTool({
     name: "add_radius_server",
-    title: "Add RADIUS Server",
+    title: "Add RADIUS Server Entry",
     annotations: WRITE,
-    description: "Adds a RADIUS server entry that the router uses to authenticate clients.",
+    description:
+      "Adds a RADIUS server entry (`/radius add`) — configures the router as a RADIUS client" +
+      " that authenticates PPP users, hotspot clients, wireless stations, DHCP leases, login" +
+      " sessions, IPsec peers, or dot1x supplicants against an external RADIUS server." +
+      " For listing existing entries use `list_radius_servers`." +
+      " Returns the created entry's detail with the shared secret redacted." +
+      ' `service` is a comma-separated list, e.g. `"login,ppp,hotspot,wireless,dhcp,ipsec,dot1x"`;' +
+      ' `timeout` is a RouterOS duration string, e.g. `"300ms"`;' +
+      " default authentication port is 1812 and accounting port is 1813.",
     inputSchema: {
       address: z.string().describe("RADIUS server IP address or hostname"),
       secret: z.string().describe("Shared secret used with the RADIUS server"),
@@ -60,9 +68,14 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "list_radius_servers",
-    title: "List RADIUS Servers",
+    title: "List RADIUS Server Entries",
     annotations: READ,
-    description: "Lists configured RADIUS servers.",
+    description:
+      "Lists all configured RADIUS server entries (`/radius print`) — the router's RADIUS" +
+      " client table. Optionally filter by partial service name or partial address string." +
+      " Returns all matching entries with shared secrets redacted; use the `.id` values from" +
+      " this output with `get_radius_server`, `update_radius_server`, `remove_radius_server`," +
+      " `enable_radius_server`, or `disable_radius_server`.",
     inputSchema: {
       service_filter: z.string().optional().describe("Partial service match"),
       address_filter: z.string().optional().describe("Partial address match"),
@@ -82,9 +95,14 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "get_radius_server",
-    title: "Get RADIUS Server",
+    title: "Get RADIUS Server Entry Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific RADIUS server by its internal id.",
+    description:
+      "Retrieves full detail of a single RADIUS server entry (`/radius print detail where .id=`)" +
+      " — use when you need the exact current configuration of one entry." +
+      " The `radius_id` is the `.id` returned by `list_radius_servers` (e.g. `'*1'`)." +
+      " Returns the entry's full field set with the shared secret redacted." +
+      " For a summary list of all entries use `list_radius_servers`.",
     inputSchema: {
       radius_id: z.string().describe("RADIUS entry internal .id, e.g. '*1'"),
     },
@@ -102,9 +120,15 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "update_radius_server",
-    title: "Update RADIUS Server",
+    title: "Update RADIUS Server Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing RADIUS server entry.",
+    description:
+      "Updates one or more fields on an existing RADIUS server entry (`/radius set <id>`) —" +
+      " use to change the address, shared secret, services, ports, timeout, realm, or enabled" +
+      " state without recreating the entry. The `radius_id` is the `.id` returned by" +
+      " `list_radius_servers`. Returns the updated entry's full detail with the shared secret" +
+      " redacted. To create a new entry use `add_radius_server`; to toggle enabled state only" +
+      " use `enable_radius_server` or `disable_radius_server`.",
     inputSchema: {
       radius_id: z.string().describe("RADIUS entry internal .id, e.g. '*1'"),
       address: z.string().optional(),
@@ -153,9 +177,14 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "remove_radius_server",
-    title: "Remove RADIUS Server",
+    title: "Remove RADIUS Server Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes a RADIUS server entry.",
+    description:
+      "Permanently deletes a RADIUS server entry (`/radius remove [find .id=...]`) — use when" +
+      " an external RADIUS server is decommissioned or should no longer be used for any service." +
+      " The `radius_id` is the `.id` returned by `list_radius_servers`." +
+      " Performs an existence check before removal and reports if the entry is not found." +
+      " To temporarily stop using a server without deleting it use `disable_radius_server`.",
     inputSchema: {
       radius_id: z.string().describe("RADIUS entry internal .id, e.g. '*1'"),
     },
@@ -178,9 +207,14 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "enable_radius_server",
-    title: "Enable RADIUS Server",
+    title: "Enable RADIUS Server Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a RADIUS server entry.",
+    description:
+      "Re-enables a previously disabled RADIUS server entry (`/radius enable [find .id=...]`) —" +
+      " the router resumes sending authentication/accounting requests to this server for the" +
+      " services it covers. The `radius_id` is the `.id` returned by `list_radius_servers`." +
+      " To disable without deleting use `disable_radius_server`;" +
+      " to remove permanently use `remove_radius_server`.",
     inputSchema: {
       radius_id: z.string().describe("RADIUS entry internal .id, e.g. '*1'"),
     },
@@ -197,9 +231,14 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "disable_radius_server",
-    title: "Disable RADIUS Server",
+    title: "Disable RADIUS Server Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a RADIUS server entry.",
+    description:
+      "Disables a RADIUS server entry without removing it (`/radius disable [find .id=...]`) —" +
+      " the router stops sending authentication/accounting requests to this server but preserves" +
+      " its configuration for later re-activation. The `radius_id` is the `.id` returned by" +
+      " `list_radius_servers`. To re-enable use `enable_radius_server`;" +
+      " to delete permanently use `remove_radius_server`.",
     inputSchema: {
       radius_id: z.string().describe("RADIUS entry internal .id, e.g. '*1'"),
     },
@@ -216,9 +255,14 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "get_radius_incoming",
-    title: "Get RADIUS Incoming",
+    title: "Get RADIUS Incoming (CoA) Settings",
     annotations: READ,
-    description: "Gets the RADIUS incoming (Change of Authorization / CoA) settings.",
+    description:
+      "Reads the global RADIUS Change of Authorization (CoA) listener settings" +
+      " (`/radius incoming print`) — shows whether the router accepts incoming CoA/Disconnect" +
+      " packets from RADIUS servers and on which UDP port it listens." +
+      " This is a router-wide singleton; no `radius_id` is needed." +
+      " To change these settings use `set_radius_incoming`.",
     async handler(_a, ctx) {
       ctx.info("Getting RADIUS incoming (CoA) settings");
       const result = await executeMikrotikCommand("/radius incoming print", ctx);
@@ -230,9 +274,15 @@ export const radiusTools: ToolModule = [
 
   defineTool({
     name: "set_radius_incoming",
-    title: "Set RADIUS Incoming",
+    title: "Set RADIUS Incoming (CoA) Settings",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures RADIUS incoming (Change of Authorization / CoA) settings.",
+    description:
+      "Configures the global RADIUS Change of Authorization (CoA) listener" +
+      " (`/radius incoming set`) — controls whether the router accepts unsolicited CoA or" +
+      " Disconnect-Request packets pushed by the RADIUS server to forcibly terminate or update" +
+      " active sessions. `accept` enables/disables the listener; `port` sets the UDP listen" +
+      " port (default 3799). This is a router-wide singleton; no `radius_id` is needed." +
+      " To read current CoA settings use `get_radius_incoming`.",
     inputSchema: {
       accept: z.boolean().optional().describe("Whether to accept incoming CoA requests"),
       port: z.number().int().optional().describe("UDP port to listen on for CoA requests"),
@@ -259,7 +309,11 @@ export const radiusTools: ToolModule = [
     name: "reset_radius_counters",
     title: "Reset RADIUS Counters",
     annotations: DESTRUCTIVE,
-    description: "Resets the RADIUS request/response counters.",
+    description:
+      "Zeroes all RADIUS request/response packet counters on the router (`/radius reset-counters`)" +
+      " — use after a measurement window ends or before starting a new traffic test to get a" +
+      " clean baseline. This does not modify any server entry configuration;" +
+      " to delete an entry use `remove_radius_server`.",
     async handler(_a, ctx) {
       ctx.info("Resetting RADIUS counters");
       const result = await executeMikrotikCommand("/radius reset-counters", ctx);

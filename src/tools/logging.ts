@@ -8,10 +8,14 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const systemLoggingTools: ToolModule = [
   defineTool({
     name: "add_logging_rule",
-    title: "Add Logging Rule",
+    title: "Add System Logging Rule",
     annotations: WRITE,
     description:
-      "Adds a system logging rule that routes log messages matching the given topics to a logging action.",
+      "Creates a system logging rule (`/system logging add`) that routes log messages matching specified topics to a named logging action — defines WHICH topics go WHERE." +
+      ' The `topics` field accepts comma-separated RouterOS topic strings (e.g. `"info"`, `"firewall,!debug"`).' +
+      " The referenced action must already exist; to define a physical log destination (memory, disk, remote syslog, email, echo) use `add_logging_action`." +
+      " To inspect existing rules use `list_logging_rules`." +
+      " Returns the created rule's detail.",
     inputSchema: {
       topics: z.string().describe('Comma-separated log topics, e.g. "info", "firewall,!debug"'),
       action: z.string().optional().describe("Logging action name (default 'memory')"),
@@ -42,9 +46,13 @@ export const systemLoggingTools: ToolModule = [
 
   defineTool({
     name: "list_logging_rules",
-    title: "List Logging Rules",
+    title: "List System Logging Rules",
     annotations: READ,
-    description: "Lists system logging rules on the MikroTik device.",
+    description:
+      "Lists system logging rules (`/system logging print`), optionally filtered by partial topics match or exact action name." +
+      " Returns the topic-to-action routing table — each rule shows which log topics are forwarded to which named action." +
+      " To see what each action does (its physical destination) use `list_logging_actions`." +
+      " Returns matching rules or a 'no rules found' message.",
     inputSchema: {
       topics_filter: z.string().optional().describe("Partial topics match"),
       action_filter: z.string().optional().describe("Exact action name"),
@@ -67,9 +75,13 @@ export const systemLoggingTools: ToolModule = [
 
   defineTool({
     name: "remove_logging_rule",
-    title: "Remove Logging Rule",
+    title: "Remove System Logging Rule",
     annotations: DESTRUCTIVE,
-    description: "Removes a system logging rule by its internal id.",
+    description:
+      "Permanently removes a system logging rule (`/system logging remove`) by its `.id` — stops the matched topics from being routed to that action." +
+      " Confirms the rule exists before deleting." +
+      " `rule_id` is the `.id` value returned by `list_logging_rules` (e.g. `'*1'`)." +
+      " To remove a logging action (physical destination) instead use `remove_logging_action`.",
     inputSchema: {
       rule_id: z.string().describe("Internal .id of the logging rule, e.g. '*1'"),
     },
@@ -92,10 +104,16 @@ export const systemLoggingTools: ToolModule = [
 
   defineTool({
     name: "add_logging_action",
-    title: "Add Logging Action",
+    title: "Add System Logging Action",
     annotations: WRITE,
     description:
-      "Adds a system logging action defining where matching log messages are sent (memory, disk, echo, remote syslog or email).",
+      "Creates a system logging action (`/system logging action add`) defining a physical log destination — the named target referenced by logging rules." +
+      " `target` selects the destination type: `memory` (in-RAM buffer), `disk` (file), `echo` (terminal), `remote` (UDP syslog server), or `email`." +
+      " Target-specific parameters: `remote`/`remote_port`/`bsd_syslog`/`syslog_facility`/`syslog_severity` for remote syslog;" +
+      " `disk_file_name`/`disk_lines_per_file` for disk; `memory_lines` for memory; `email_to` for email." +
+      " Once created, reference this action by name in `add_logging_rule`." +
+      " To list existing actions use `list_logging_actions`." +
+      " Returns the created action's detail.",
     inputSchema: {
       name: z.string().describe("Name for the new logging action"),
       target: z
@@ -144,9 +162,13 @@ export const systemLoggingTools: ToolModule = [
 
   defineTool({
     name: "list_logging_actions",
-    title: "List Logging Actions",
+    title: "List System Logging Actions",
     annotations: READ,
-    description: "Lists system logging actions on the MikroTik device.",
+    description:
+      "Lists system logging actions (`/system logging action print`), optionally filtered by partial name match." +
+      " Returns the named destinations available for use in logging rules — each entry shows target type (memory, disk, echo, remote, email) and its configuration." +
+      " To see the topic-routing rules that reference these actions use `list_logging_rules`." +
+      " Returns matching actions or a 'no actions found' message.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -167,9 +189,14 @@ export const systemLoggingTools: ToolModule = [
 
   defineTool({
     name: "remove_logging_action",
-    title: "Remove Logging Action",
+    title: "Remove System Logging Action",
     annotations: DESTRUCTIVE,
-    description: "Removes a system logging action by name.",
+    description:
+      "Permanently removes a system logging action (`/system logging action remove`) by its name — deletes the physical log destination definition." +
+      " Confirms the action exists before deleting." +
+      " `name` is the action name from `list_logging_actions`." +
+      " Warning: removing an action still referenced by active logging rules leaves those rules with an invalid target — remove or update dependent rules first using `remove_logging_rule`." +
+      " To remove a logging rule (topic filter) instead use `remove_logging_rule`.",
     inputSchema: {
       name: z.string().describe("Name of the logging action to remove"),
     },

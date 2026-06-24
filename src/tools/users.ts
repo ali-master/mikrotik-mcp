@@ -72,9 +72,13 @@ async function runUpdateUser(
 export const userTools: ToolModule = [
   defineTool({
     name: "add_user",
-    title: "Add User",
+    title: "Add Local User Account",
     annotations: WRITE,
-    description: "Adds a user to MikroTik device.",
+    description:
+      "Create a local user account (`/user add`) — grants interactive access to the router via SSH, Winbox, web, telnet, or API. " +
+      "The `group` parameter (default: `read`) sets permissions; built-in groups are `read`, `write`, `full`; use `add_user_group` to create custom groups. " +
+      "Use `address` to restrict login to a specific IP/subnet. For PPP/dial-in credentials use `create_ppp_secret` instead. " +
+      "Returns the created account's full detail including its `.id`.",
     inputSchema: {
       name: z.string(),
       password: z.string(),
@@ -120,9 +124,13 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "list_users",
-    title: "List Users",
+    title: "List Local User Accounts",
     annotations: READ,
-    description: "Lists users on MikroTik device.",
+    description:
+      "List local router user accounts (`/user print`) — shows each account's group, address restriction, and enabled/disabled state. " +
+      "Supports optional filters: `name_filter` (name substring match), `group_filter` (exact group name), `disabled_only`. " +
+      "Note: `active_only` is accepted by the schema but is not applied as a filter — it has no effect on the output. " +
+      "Passwords are redacted from output. For currently logged-in sessions use `get_active_users`. For PPP dial-in secrets use `create_ppp_secret`.",
     inputSchema: {
       name_filter: z.string().optional(),
       group_filter: z.string().optional(),
@@ -144,9 +152,12 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "get_user",
-    title: "Get User",
+    title: "Get Local User Account Details",
     annotations: READ,
-    description: "Gets detailed information about a specific user.",
+    description:
+      "Fetch full detail for a single local user account (`/user print detail where name=...`). " +
+      "Identified by login `name`. Passwords are redacted from output. " +
+      "For all accounts use `list_users`; for currently active sessions use `get_active_users`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting user details: name=${a.name}`);
@@ -158,9 +169,13 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "update_user",
-    title: "Update User",
+    title: "Update Local User Account",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a user.",
+    description:
+      "Modify a local user account (`/user set [find name=...]`). " +
+      "Can change login name (`new_name`), `password`, `group`, allowed source `address` (pass empty string to remove address restriction), `comment`, or `disabled` state. " +
+      "For toggling enabled/disabled state only, prefer `enable_user` or `disable_user`. " +
+      "Returns the updated user detail with passwords redacted.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -177,9 +192,12 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "remove_user",
-    title: "Remove User",
+    title: "Remove Local User Account",
     annotations: DESTRUCTIVE,
-    description: "Removes a user.",
+    description:
+      "Permanently delete a local user account (`/user remove [find name=...]`). " +
+      "Refuses to remove the built-in `admin` account. Verifies the user exists before removing. " +
+      "To temporarily block access without deleting use `disable_user`. To end a live session without deleting the account use `disconnect_user`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing user: name=${a.name}`);
@@ -201,9 +219,11 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "disable_user",
-    title: "Disable User",
+    title: "Disable Local User Account",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a user.",
+    description:
+      "Disable a local user account (`/user set [find name=...] disabled=yes`), preventing new logins without deleting the account. " +
+      "To re-enable use `enable_user`. For a full attribute update use `update_user`. To permanently delete the account use `remove_user`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       return runUpdateUser({ name: a.name, disabled: true }, ctx);
@@ -212,9 +232,11 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "enable_user",
-    title: "Enable User",
+    title: "Enable Local User Account",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a user.",
+    description:
+      "Re-enable a previously disabled local user account (`/user set [find name=...] disabled=no`). " +
+      "To disable use `disable_user`. For a full attribute update use `update_user`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       return runUpdateUser({ name: a.name, disabled: false }, ctx);
@@ -225,7 +247,11 @@ export const userTools: ToolModule = [
     name: "add_user_group",
     title: "Add User Group",
     annotations: WRITE,
-    description: "Adds a user group.",
+    description:
+      "Create a custom user group (`/user group add`) that defines a named permission policy for router access. " +
+      "`policy` is a list of permissions to grant from: local, telnet, ssh, ftp, reboot, read, write, policy, test, winbox, password, web, sniff, sensitive, api, romon, dude, tikapp, rest-api. " +
+      "The built-in groups (`read`, `write`, `full`) already exist on the device; this tool does not guard against those names — attempting to create a group with a duplicate name will be rejected by the device. Assign users to the new group via `add_user` or `update_user`. " +
+      "Returns the created group's full detail.",
     inputSchema: {
       name: z.string(),
       policy: z.array(z.string()),
@@ -277,7 +303,10 @@ export const userTools: ToolModule = [
     name: "list_user_groups",
     title: "List User Groups",
     annotations: READ,
-    description: "Lists user groups on MikroTik device.",
+    description:
+      "List all user groups (`/user group print`), including built-in groups (`read`, `write`, `full`) and custom ones, showing their policy sets. " +
+      "Supports optional filters: `name_filter` (name substring), `policy_filter` (policy substring). " +
+      "To see individual user accounts use `list_users`; to see which users belong to a specific group use `list_users` with `group_filter`.",
     inputSchema: {
       name_filter: z.string().optional(),
       policy_filter: z.string().optional(),
@@ -296,9 +325,11 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "get_user_group",
-    title: "Get User Group",
+    title: "Get User Group Details",
     annotations: READ,
-    description: "Gets detailed information about a specific user group.",
+    description:
+      "Fetch full detail for a single user group (`/user group print detail where name=...`), showing its complete policy list and skin setting. " +
+      "For all groups use `list_user_groups`. To see which users belong to this group use `list_users` with `group_filter`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting user group details: name=${a.name}`);
@@ -315,7 +346,12 @@ export const userTools: ToolModule = [
     name: "update_user_group",
     title: "Update User Group",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates a user group.",
+    description:
+      "Modify a custom user group (`/user group set [find name=...]`). " +
+      "Can change group name (`new_name`), `policy` list, `skin`, or `comment`. " +
+      "Refuses to modify built-in groups (`read`, `write`, `full`). " +
+      "Valid policies: local, telnet, ssh, ftp, reboot, read, write, policy, test, winbox, password, web, sniff, sensitive, api, romon, dude, tikapp, rest-api. " +
+      "Returns the updated group detail.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -355,7 +391,11 @@ export const userTools: ToolModule = [
     name: "remove_user_group",
     title: "Remove User Group",
     annotations: DESTRUCTIVE,
-    description: "Removes a user group.",
+    description:
+      "Delete a custom user group (`/user group remove [find name=...]`). " +
+      "Refuses to remove built-in groups (`read`, `write`, `full`). " +
+      "Checks that no users are currently assigned to the group — reassign or remove those users first via `update_user` or `remove_user`. " +
+      "To remove individual user accounts use `remove_user`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing user group: name=${a.name}`);
@@ -389,9 +429,11 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "get_active_users",
-    title: "Active Users",
+    title: "List Active User Sessions",
     annotations: READ,
-    description: "Gets currently active/logged-in users.",
+    description:
+      "List currently logged-in user sessions (`/user active print`), showing who is connected right now via SSH, Winbox, web, telnet, or API, with source address and session start time. " +
+      "For the full account list use `list_users`. To forcibly end a session use `disconnect_user` with the `.id` from this output.",
     async handler(_a, ctx) {
       ctx.info("Getting active users");
       const result = await executeMikrotikCommand("/user active print", ctx);
@@ -402,9 +444,12 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "disconnect_user",
-    title: "Disconnect User",
+    title: "Disconnect Active User Session",
     annotations: DESTRUCTIVE,
-    description: "Disconnects an active user session.",
+    description:
+      "Forcibly terminate an active user session (`/user active remove <user_id>`). " +
+      "`user_id` is the `.id` from `get_active_users`. " +
+      "Does NOT delete the user account — to delete the account use `remove_user`. To prevent future logins without deleting use `disable_user`.",
     inputSchema: { user_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disconnecting user: user_id=${a.user_id}`);
@@ -416,9 +461,12 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "export_user_config",
-    title: "Export User Config",
+    title: "Export User Configuration to File",
     annotations: READ,
-    description: "Exports user configuration to a file.",
+    description:
+      "Export the router's user accounts and user-group configuration as a RouterOS script (`/user export file=<filename>`). " +
+      "The file is saved on the router's flash storage as `<filename>.rsc`. If `filename` is omitted, defaults to `user_config`. " +
+      "The exported script can be used to restore user accounts on another device.",
     inputSchema: { filename: z.string().optional() },
     async handler(a, ctx) {
       ctx.info("Exporting user configuration");
@@ -431,9 +479,12 @@ export const userTools: ToolModule = [
 
   defineTool({
     name: "set_user_ssh_keys",
-    title: "Set User SSH Keys",
+    title: "Import SSH Public Key for User",
     annotations: WRITE,
-    description: "Sets SSH keys for a specific user.",
+    description:
+      "Import an SSH public key for a user (`/user ssh-keys import user=... public-key-file=...`), enabling key-based SSH authentication in addition to password login. " +
+      "`key_file` must be the path to a public key file already present on the router's filesystem. " +
+      "To list a user's existing keys use `list_user_ssh_keys`; to remove a key use `remove_user_ssh_key`.",
     inputSchema: {
       username: z.string(),
       key_file: z.string(),
@@ -453,7 +504,9 @@ export const userTools: ToolModule = [
     name: "list_user_ssh_keys",
     title: "List User SSH Keys",
     annotations: READ,
-    description: "Lists SSH keys for a specific user.",
+    description:
+      "List SSH public keys registered for a specific user (`/user ssh-keys print where user=...`). " +
+      "Returns each key's `.id`, which is required by `remove_user_ssh_key`. To add a key use `set_user_ssh_keys`.",
     inputSchema: { username: z.string() },
     async handler(a, ctx) {
       ctx.info(`Listing SSH keys for user: ${a.username}`);
@@ -470,7 +523,10 @@ export const userTools: ToolModule = [
     name: "remove_user_ssh_key",
     title: "Remove User SSH Key",
     annotations: DESTRUCTIVE,
-    description: "Removes an SSH key.",
+    description:
+      "Delete a specific SSH public key (`/user ssh-keys remove <key_id>`). " +
+      "`key_id` is the `.id` from `list_user_ssh_keys`. " +
+      "Does NOT disable the user's password-based login — to block all logins use `disable_user`; to delete the account use `remove_user`.",
     inputSchema: { key_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing SSH key: key_id=${a.key_id}`);

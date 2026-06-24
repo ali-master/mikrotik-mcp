@@ -18,9 +18,14 @@ export const systemConfigTools: ToolModule = [
   // ── Console `/system console` ───────────────────────────────────────────
   defineTool({
     name: "list_system_console",
-    title: "List Console",
+    title: "List System Console Sessions",
     annotations: READ,
-    description: "Lists the system console sessions/ports (`/system console`).",
+    description:
+      "Lists console sessions and virtual terminal entries (`/system console`). " +
+      "Use to see which physical or virtual consoles are registered on the device. " +
+      "For auto-login rules tied to a console port use `list_special_login`; " +
+      "for physical serial port line settings use `list_ports`. " +
+      "Returns all console entries or a message when none are configured.",
     async handler(_a, ctx) {
       ctx.info("Listing system console");
       const result = await executeMikrotikCommand("/system console print", ctx);
@@ -31,9 +36,13 @@ export const systemConfigTools: ToolModule = [
   // ── LEDs `/system leds` ─────────────────────────────────────────────────
   defineTool({
     name: "list_leds",
-    title: "List LEDs",
+    title: "List LED Triggers",
     annotations: READ,
-    description: "Lists the configured LEDs and their triggers (`/system leds`).",
+    description:
+      "Lists all hardware LED entries and their configured trigger types (`/system leds`). " +
+      "Use to see per-LED assignments (interface-activity, wireless-signal, etc.). " +
+      "For the global all-LEDs-off (dark-mode) schedule use `get_leds_settings`. " +
+      "Returns each LED's name, type, and trigger settings.",
     async handler(_a, ctx) {
       ctx.info("Listing LEDs");
       const result = await executeMikrotikCommand("/system leds print", ctx);
@@ -43,9 +52,13 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "get_leds_settings",
-    title: "Get LED Settings",
+    title: "Get Global LED Settings",
     annotations: READ,
-    description: "Gets the global LED settings (`/system leds settings`).",
+    description:
+      "Reads the global LED behaviour settings (`/system leds settings`). " +
+      "Use to check the dark-mode schedule (all-leds-off). " +
+      "For per-LED trigger assignments use `list_leds`; to change this setting use `set_leds_settings`. " +
+      "Returns the current all-leds-off value.",
     async handler(_a, ctx) {
       ctx.info("Getting LED settings");
       const result = await executeMikrotikCommand("/system leds settings print", ctx);
@@ -55,9 +68,14 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "set_leds_settings",
-    title: "Set LED Settings",
+    title: "Set Global LED Settings",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates the global LED settings, e.g. dark-mode scheduling via all-leds-off.",
+    description:
+      "Writes the global LED behaviour settings (`/system leds settings set`). " +
+      "Use to enable dark mode by scheduling all LEDs off. " +
+      "For per-LED trigger assignments use `list_leds`; to read current settings use `get_leds_settings`. " +
+      "Accepts `all_leds_off`: `never` | `immediate` | `after-1h` | `after-1min`. " +
+      "Returns the updated settings on success.",
     inputSchema: {
       all_leds_off: z
         .enum(["never", "immediate", "after-1h", "after-1min"])
@@ -80,10 +98,14 @@ export const systemConfigTools: ToolModule = [
   // ── License `/system license` ───────────────────────────────────────────
   defineTool({
     name: "get_license",
-    title: "Get License",
+    title: "Get RouterOS License",
     annotations: READ,
     description:
-      "Gets the RouterOS license (`/system license`). On CHR shows the license level and deadline; on RouterBOARD the menu may differ or be absent.",
+      "Reads the RouterOS software license details (`/system license`). " +
+      "Use to check the license level and expiry — on CHR shows the level (free/P1/P10/etc.) and deadline; " +
+      "on RouterBOARD hardware the menu may be absent. " +
+      "For general system identity or resource info use the system identity/resource tools. " +
+      "Returns license info, or a friendly unavailable message on unsupported hardware.",
     async handler(_a, ctx) {
       ctx.info("Getting system license");
       const result = await executeMikrotikCommand("/system license print", ctx);
@@ -95,9 +117,13 @@ export const systemConfigTools: ToolModule = [
   // ── Note `/system note` ─────────────────────────────────────────────────
   defineTool({
     name: "get_note",
-    title: "Get Note",
+    title: "Get System Login Note",
     annotations: READ,
-    description: "Gets the system note shown at login (`/system note`).",
+    description:
+      "Reads the system-wide login banner text (`/system note`). " +
+      "Use to retrieve the message shown to all users at login. " +
+      "To change the note use `set_note`. " +
+      "Returns the note text and the show-at-login flag.",
     async handler(_a, ctx) {
       ctx.info("Getting system note");
       const result = await executeMikrotikCommand("/system note print", ctx);
@@ -107,9 +133,14 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "set_note",
-    title: "Set Note",
+    title: "Set System Login Note",
     annotations: WRITE_IDEMPOTENT,
-    description: "Sets the system note and whether it is displayed at login.",
+    description:
+      "Writes the system-wide login banner text (`/system note set`). " +
+      "Use to set or clear the message displayed to users at login. " +
+      "To read the current note use `get_note`. " +
+      "Accepts optional `note` (text string) and `show_at_login` (boolean). " +
+      "Returns the updated note on success.",
     inputSchema: {
       note: z.string().optional().describe("The note text to display"),
       show_at_login: z.boolean().optional().describe("Show the note on login"),
@@ -133,9 +164,15 @@ export const systemConfigTools: ToolModule = [
   // ── NTP server `/system ntp server` (RouterOS 7) ────────────────────────
   defineTool({
     name: "get_ntp_server",
-    title: "Get NTP Server",
+    title: "Get Built-In NTP Server Configuration",
     annotations: READ,
-    description: "Gets the NTP server configuration (`/system ntp server`, RouterOS 7).",
+    description:
+      "Reads the device's built-in NTP *server* configuration (`/system ntp server`, RouterOS 7+). " +
+      "Use to check whether the router is advertising time to LAN clients via broadcast/multicast/manycast. " +
+      "This tool reads the local NTP *server* role; for the NTP *client* (upstream time sources) " +
+      "use the NTP client tools in the system module. " +
+      "Falls back with a friendly message on RouterOS 6 where this menu is absent. " +
+      "Returns server enabled state and mode flags.",
     async handler(_a, ctx) {
       ctx.info("Getting NTP server configuration");
       const result = await executeMikrotikCommand("/system ntp server print", ctx);
@@ -147,9 +184,15 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "set_ntp_server",
-    title: "Set NTP Server",
+    title: "Configure Built-In NTP Server",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures the built-in NTP server (enable, broadcast/multicast/manycast modes).",
+    description:
+      "Writes the device's built-in NTP *server* settings (`/system ntp server set`, RouterOS 7+). " +
+      "Use to enable the router as a time server for LAN clients via broadcast, multicast, or manycast. " +
+      "This tool configures the local NTP *server* role; to set upstream NTP *client* sources " +
+      "use the NTP client tools in the system module. " +
+      "Accepts `enabled`, `broadcast`, `multicast`, `manycast` (booleans) and `broadcast_address` (string). " +
+      "Returns the updated server configuration on success.",
     inputSchema: {
       enabled: z.boolean().optional().describe("Enable or disable the NTP server"),
       broadcast: z.boolean().optional(),
@@ -187,10 +230,14 @@ export const systemConfigTools: ToolModule = [
   // ── Passwords `/password` ───────────────────────────────────────────────
   defineTool({
     name: "change_password",
-    title: "Change Password",
+    title: "Change Current User Password",
     annotations: WRITE,
     description:
-      "Changes the current user's login password (`/password`). The old and new passwords are never echoed back in the result.",
+      "Changes the password of the currently authenticated user (`/password`). " +
+      "Use to rotate the login credential without touching other user accounts; " +
+      "passwords are never echoed in the response. " +
+      "To manage other users' accounts or create new users use `add_user`. " +
+      "Requires `old_password` and `new_password`; returns success or a rejection message (no credentials logged).",
     inputSchema: {
       old_password: z.string().describe("The current password"),
       new_password: z.string().describe("The new password to set"),
@@ -215,7 +262,13 @@ export const systemConfigTools: ToolModule = [
     name: "list_ports",
     title: "List Serial Ports",
     annotations: READ,
-    description: "Lists the device's serial ports (`/port`).",
+    description:
+      "Lists the physical serial ports registered on the device (`/port print`). " +
+      "Use to discover available serial ports and their current line settings before reconfiguring. " +
+      "For auto-login rules tied to a serial port use `list_special_login`; " +
+      "for console session entries use `list_system_console`. " +
+      "Accepts optional `name_filter` for partial name match. " +
+      "Returns port entries or an empty message when none match.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial port name match"),
     },
@@ -233,9 +286,13 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "get_port",
-    title: "Get Serial Port",
+    title: "Get Serial Port Details",
     annotations: READ,
-    description: "Gets detailed information about a specific serial port.",
+    description:
+      "Reads detailed settings for a named serial port (`/port print detail where name=...`). " +
+      "Use to inspect baud rate, parity, data/stop bits, and flow control for a specific port. " +
+      "For an overview of all ports use `list_ports`; to change settings use `set_port`. " +
+      "Requires `name` (e.g. `serial0`). Returns full detail for the named port.",
     inputSchema: {
       name: z.string().describe("Serial port name, e.g. 'serial0'"),
     },
@@ -250,10 +307,16 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "set_port",
-    title: "Set Serial Port",
+    title: "Configure Serial Port Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates a serial port's line settings (baud rate, data/stop bits, parity, flow control).",
+      "Writes line settings for a named serial port (`/port set [find name=...]`). " +
+      "Use to change baud rate, data bits, parity, stop bits, or flow control on a serial port. " +
+      "To read current settings first use `get_port`; for a list of all ports use `list_ports`. " +
+      "Requires `name` (e.g. `serial0`), plus optional `baud_rate` (e.g. `115200` or `auto`), " +
+      "`data_bits`, `parity` (`none`|`odd`|`even`), `stop_bits`, " +
+      "`flow_control` (`none`|`hardware`|`xon-xoff`). " +
+      "Returns the updated port detail on success.",
     inputSchema: {
       name: z.string().describe("Serial port name to update"),
       baud_rate: z.string().optional().describe("e.g. '115200' or 'auto'"),
@@ -295,10 +358,15 @@ export const systemConfigTools: ToolModule = [
   // ── Regulatory / country (wireless) ─────────────────────────────────────
   defineTool({
     name: "get_regulatory",
-    title: "Get Regulatory",
+    title: "Get Wireless Regulatory / Country Settings",
     annotations: READ,
     description:
-      "Surfaces the wireless regulatory/country domain. RouterOS has no `/system regulatory` menu; this reads `/interface wifi radio` (wifiwave2), which exposes the country and regulatory settings of the radios.",
+      "Reads wireless radio country and regulatory domain settings (`/interface wifi radio print`). " +
+      "Use to check which country code and regulatory profile the Wi-Fi radios are operating under " +
+      "(requires the wifiwave2 package — RouterOS 7). " +
+      "RouterOS has no `/system regulatory` menu; the country/regulatory data lives on the radio interface. " +
+      "Returns regulatory/country info per radio, or a not-available message when no wifiwave2 " +
+      "interface is present or a legacy wireless package is installed.",
     async handler(_a, ctx) {
       ctx.info("Getting wireless regulatory / country information");
       const result = await executeMikrotikCommand("/interface wifi radio print", ctx);
@@ -314,10 +382,16 @@ export const systemConfigTools: ToolModule = [
   // ── Reset configuration `/system reset-configuration` ───────────────────
   defineTool({
     name: "reset_configuration",
-    title: "Reset Configuration",
+    title: "Factory Reset Device Configuration",
     annotations: DANGEROUS,
     description:
-      "Factory-resets the device configuration (`/system reset-configuration`). Requires confirm=true; the device reboots into a default configuration and the connection will drop.",
+      "Sends a factory-reset command to the device (`/system reset-configuration`). " +
+      "Use ONLY to wipe the entire configuration and reboot into defaults — " +
+      "the SSH connection will drop immediately after and all config will be lost. " +
+      "Requires `confirm=true`; without it the command is blocked. " +
+      "Optional: `keep_users` (preserve user accounts), `no_defaults` (skip loading default config), " +
+      "`skip_backup` (skip automatic pre-reset backup), `run_after_reset` (script to execute post-reboot). " +
+      "This operation is irreversible — there is no undo.",
     inputSchema: {
       confirm: z.boolean().describe("Must be true to actually ERASE the configuration"),
       keep_users: z.boolean().optional().describe("Keep existing user accounts after reset"),
@@ -342,10 +416,15 @@ export const systemConfigTools: ToolModule = [
   // ── Special login `/system special-login` ───────────────────────────────
   defineTool({
     name: "list_special_login",
-    title: "List Special Login",
+    title: "List Special Login Entries",
     annotations: READ,
     description:
-      "Lists special-login entries, e.g. serial-console auto-login (`/system special-login`).",
+      "Lists special-login entries (`/system special-login`). " +
+      "Use to see auto-login rules that map a serial/console port to a user account " +
+      "(e.g. serial-console auto-login without a password prompt). " +
+      "For general console session entries use `list_system_console`; " +
+      "for serial port line settings use `list_ports`. " +
+      "Returns entries or a not-available message on hardware that lacks this feature.",
     async handler(_a, ctx) {
       ctx.info("Listing special login");
       const result = await executeMikrotikCommand("/system special-login print", ctx);
@@ -357,9 +436,14 @@ export const systemConfigTools: ToolModule = [
   // ── Watchdog `/system watchdog` ─────────────────────────────────────────
   defineTool({
     name: "get_watchdog",
-    title: "Get Watchdog",
+    title: "Get Watchdog Configuration",
     annotations: READ,
-    description: "Gets the hardware/software watchdog configuration (`/system watchdog`).",
+    description:
+      "Reads the hardware/software watchdog timer settings (`/system watchdog`). " +
+      "Use to check whether the watchdog is enabled, which address it pings to detect hangs, " +
+      "and how the supout diagnostic report is configured. " +
+      "To change watchdog settings use `set_watchdog`. " +
+      "Returns the current watchdog configuration.",
     async handler(_a, ctx) {
       ctx.info("Getting watchdog configuration");
       const result = await executeMikrotikCommand("/system watchdog print", ctx);
@@ -369,9 +453,18 @@ export const systemConfigTools: ToolModule = [
 
   defineTool({
     name: "set_watchdog",
-    title: "Set Watchdog",
+    title: "Configure Watchdog Timer",
     annotations: WRITE_IDEMPOTENT,
-    description: "Configures the watchdog timer and the host it pings to detect a hung device.",
+    description:
+      "Writes the hardware/software watchdog timer settings (`/system watchdog set`). " +
+      "Use to enable automatic reboots when the device becomes unresponsive " +
+      "(triggered when pings to `watch_address` fail). " +
+      "To read current settings use `get_watchdog`. " +
+      "Accepts `watchdog_timer` (enable HW watchdog), `watch_address` (IP to ping), " +
+      "`ping_timeout` (e.g. `1m`), `no_ping_delay` (e.g. `5m`), " +
+      "`automatic_supout` (generate diagnostic file on crash), " +
+      "`auto_send_supout` (email the diagnostic). " +
+      "Returns the updated watchdog configuration on success.",
     inputSchema: {
       watchdog_timer: z.boolean().optional().describe("Enable the hardware watchdog timer"),
       watch_address: z.string().optional().describe("Address to ping; reboot if unreachable"),

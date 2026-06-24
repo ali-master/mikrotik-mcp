@@ -60,10 +60,18 @@ async function runGetLogs(o: GetLogsOptions, ctx: ToolContext): Promise<string> 
 export const logTools: ToolModule = [
   defineTool({
     name: "get_logs",
-    title: "Get Logs",
+    title: "Fetch System Log Entries",
     annotations: READ,
     description:
-      "Gets logs from the MikroTik device with optional topic, time, and message filters.",
+      "Fetch RouterOS log entries (`/log print`) with any combination of topic, severity, message," +
+      " prefix, time, and action filters — the general-purpose log reader for arbitrary filter" +
+      " combinations. For a single severity level use `get_logs_by_severity`; for a single" +
+      " named facility use `get_logs_by_topic`; for full-text message search use `search_logs`;" +
+      " for security-keyword presets spanning multiple topics use `get_security_logs`; for" +
+      " login/reboot/config events use `get_system_events`. Returns matching lines in `value`," +
+      " `detail`, or `terse` format; `limit` caps to the N most recent lines." +
+      " `time_filter` is a RouterOS duration string (e.g. `1h`, `30m`, `2d`);" +
+      " `topics` accepts comma-separated RouterOS topic names (e.g. `system,firewall`).",
     inputSchema: {
       topics: z.string().optional(),
       action: z.string().optional(),
@@ -93,9 +101,17 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "get_logs_by_severity",
-    title: "Get Logs by Severity",
+    title: "Fetch Log Entries by Severity",
     annotations: READ,
-    description: "Gets logs filtered by severity level (debug/info/warning/error/critical).",
+    description:
+      'Fetch RouterOS log entries (`/log print where topics~"<level>"`) filtered by severity' +
+      " level — maps each choice to the corresponding RouterOS topic(s):" +
+      " debug→debug, info→info, warning→warning, error→error,critical, critical→critical." +
+      " Use when you know the severity but not a specific topic or message keyword." +
+      " For combined topic+message filtering use `get_logs`; for a named facility use" +
+      " `get_logs_by_topic`; for security keywords across multiple topics use `get_security_logs`." +
+      " Returns matching log lines; `limit` caps to the N most recent lines;" +
+      " `time_filter` is a RouterOS duration string (e.g. `1h`, `30m`).",
     inputSchema: {
       severity: z.enum(["debug", "info", "warning", "error", "critical"]),
       time_filter: z.string().optional(),
@@ -121,10 +137,16 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "get_logs_by_topic",
-    title: "Get Logs by Topic",
+    title: "Fetch Log Entries by Topic",
     annotations: READ,
     description:
-      "Gets logs for a specific topic/facility (system, dhcp, interface, firewall, etc.).",
+      'Fetch RouterOS log entries (`/log print where topics~"<topic>"`) for a single named' +
+      " RouterOS topic/facility (e.g. `system`, `dhcp`, `firewall`, `interface`, `wireless`)." +
+      " Use when you need all entries for one facility regardless of severity or message content." +
+      " For multiple topics or message filtering use `get_logs`; for severity-level filtering use" +
+      " `get_logs_by_severity`; for security-keyword presets use `get_security_logs`." +
+      " Returns matching log lines; `limit` caps to the N most recent lines;" +
+      " `time_filter` is a RouterOS duration string (e.g. `1h`).",
     inputSchema: {
       topic: z.string(),
       time_filter: z.string().optional(),
@@ -138,9 +160,16 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "search_logs",
-    title: "Search Logs",
+    title: "Search Log Messages by Keyword",
     annotations: READ,
-    description: "Searches log messages for a specific term.",
+    description:
+      'Search RouterOS log entries (`/log print where message~"<term>"`) for lines containing' +
+      " a keyword or substring — case-insensitive full-text search across all log message bodies." +
+      " Use when you have a string to match in the log body (e.g. an IP address, MAC address," +
+      " username, or error text). For topic-scoped reads use `get_logs_by_topic`; for" +
+      " severity-scoped reads use `get_logs_by_severity`; for security-keyword presets use" +
+      " `get_security_logs`. Returns matching log lines; `limit` caps to the N most recent" +
+      " matches; `time_filter` is a RouterOS duration string (e.g. `1h`).",
     inputSchema: {
       search_term: z.string(),
       time_filter: z.string().optional(),
@@ -160,9 +189,18 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "get_system_events",
-    title: "System Events",
+    title: "Fetch System Event Log Entries",
     annotations: READ,
-    description: "Gets system-related log events (login, reboot, config-change, etc.).",
+    description:
+      'Fetch RouterOS log entries (`/log print where topics~"system"`) for system-level events,' +
+      " optionally narrowed by `event_type` (login, logout, reboot, config-change, backup," +
+      " restore, upgrade) which maps to a `message~` keyword filter. Use for auditing" +
+      " administrative actions such as logins and configuration changes." +
+      " For security events spanning multiple topics (firewall, error, warning) use" +
+      " `get_security_logs`; for arbitrary message keyword searches use `search_logs`;" +
+      " for full filter control use `get_logs`. Returns matching system-topic log lines;" +
+      " `limit` caps to the N most recent lines; `time_filter` is a RouterOS duration" +
+      " string (e.g. `1h`).",
     inputSchema: {
       event_type: z.string().optional(),
       time_filter: z.string().optional(),
@@ -199,9 +237,18 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "get_security_logs",
-    title: "Security Logs",
+    title: "Fetch Security-Related Log Entries",
     annotations: READ,
-    description: "Gets security-related log entries (login failures, blocked connections, etc.).",
+    description:
+      'Fetch RouterOS log entries (`/log print where (topics~"system" or topics~"firewall"' +
+      ' or topics~"warning" or topics~"error") and message~"(login|logout|failed|denied' +
+      '|blocked|attack|invalid|unauthorized)"`) — a preset multi-topic security keyword search.' +
+      " Use to investigate login failures, blocked connections, and potential attacks without" +
+      " manually specifying individual filters. For single-topic reads use `get_logs_by_topic`;" +
+      " for system admin events only use `get_system_events`; for arbitrary keyword searches use" +
+      " `search_logs`; for full filter control use `get_logs`. Returns matching entries;" +
+      " `limit` caps to the N most recent lines; `time_filter` is a RouterOS duration string" +
+      " (e.g. `1h`).",
     inputSchema: {
       time_filter: z.string().optional(),
       limit: z.number().int().optional(),
@@ -229,9 +276,17 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "clear_logs",
-    title: "Clear Logs",
+    title: "Clear Router Log Buffer",
     annotations: DESTRUCTIVE,
-    description: "Clears all logs from the MikroTik device. This action cannot be undone.",
+    description:
+      "Runs `/log print follow-only` as a non-interactive SSH exec — because the session is" +
+      " non-interactive, the command skips all pre-existing entries and exits immediately," +
+      " returning no output. The tool treats an empty response as success and returns" +
+      " 'Logs cleared successfully.' Note: this does NOT delete entries from the RouterOS" +
+      " in-memory log buffer; existing entries remain in the device buffer until it cycles" +
+      " on its own. Entries already sent to a remote syslog or written to an export file" +
+      " are unaffected. For reading entries before running this command use `get_logs`;" +
+      " to save entries to a device file first use `export_logs`.",
     async handler(_a, ctx) {
       ctx.info("Clearing all logs");
 
@@ -243,9 +298,15 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "get_log_statistics",
-    title: "Log Statistics",
+    title: "Get Log Entry Statistics",
     annotations: READ,
-    description: "Gets log entry counts by topic and severity from the MikroTik device.",
+    description:
+      "Summarize RouterOS log volume by running `/log print count-only` — reports total entry" +
+      " count, per-topic counts for info/warning/error/system/dhcp/firewall/interface, entries" +
+      " in the last hour, and entries in the last 24 hours. Use to get a quick activity overview" +
+      " without retrieving all log lines. For reading actual log content use `get_logs`;" +
+      " for exporting entries to a device file use `export_logs`." +
+      " Returns a formatted statistics block with totals per topic and recency counts.",
     async handler(_a, ctx) {
       ctx.info("Getting log statistics");
 
@@ -287,10 +348,16 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "export_logs",
-    title: "Export Logs",
+    title: "Export Log Entries to a Device File",
     annotations: READ,
     description:
-      "Exports logs to a file on the MikroTik device with optional topic and time filters.",
+      "Export RouterOS log entries to a file on the device filesystem (`/log print file=<name>`)" +
+      " with optional topic and time filters. Use when you need a persistent log file on the" +
+      " router for later retrieval (e.g. via FTP or SCP). For reading log entries directly" +
+      " to the MCP client use `get_logs`; for a quick count summary use `get_log_statistics`." +
+      " `filename` defaults to `logs_export_<unix-timestamp>`; `time_filter` is a RouterOS" +
+      " duration string (e.g. `1h`); `topics` accepts a single RouterOS topic name." +
+      " Returns the filename on success (file is written as `<filename>.txt` on the device).",
     inputSchema: {
       filename: z.string().optional(),
       topics: z.string().optional(),
@@ -319,9 +386,16 @@ export const logTools: ToolModule = [
 
   defineTool({
     name: "monitor_logs",
-    title: "Monitor Logs",
+    title: "Fetch Log Entries Within a Recent Time Window",
     annotations: READ,
-    description: "Monitors MikroTik logs in near-real-time for a limited duration (max 60s).",
+    description:
+      "Fetch RouterOS log entries (`/log print where time > ([:timestamp] - <duration>s)`)" +
+      " recorded within the last N seconds (1–60, capped at 60) — a snapshot of recent activity" +
+      " rather than a true streaming tail (non-interactive SSH exec cannot block on `follow`)." +
+      " Use to observe what was logged during a short recent window without a full `get_logs`" +
+      " query. For persistent reads with broader filter options use `get_logs`; for full-text" +
+      " message search use `search_logs`. Optional `topics` and `action` filters narrow results." +
+      " Returns up to 100 of the most recent matching log lines.",
     inputSchema: {
       topics: z.string().optional(),
       action: z.string().optional(),

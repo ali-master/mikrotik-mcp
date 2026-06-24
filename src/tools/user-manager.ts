@@ -19,9 +19,14 @@ export const userManagerTools: ToolModule = [
   // ── SETTINGS `/user-manager` ──────────────────────────────────────────────
   defineTool({
     name: "get_user_manager_settings",
-    title: "Get User Manager Settings",
+    title: "Get User Manager Global Settings",
     annotations: READ,
-    description: "Gets the User Manager settings (enabled, certificate, use-profiles).",
+    description:
+      "Reads the global User Manager daemon configuration (`/user-manager print`) — the top-level" +
+      " `enabled` flag, TLS certificate, and whether the profile/payment subsystem is active" +
+      " (`use-profiles`). Use this to inspect whether the built-in RADIUS server is running before" +
+      " calling any other user-manager tools. Returns the current settings block, or a NOT_AVAILABLE" +
+      " message if the user-manager package is not installed on the device.",
     async handler(_a, ctx) {
       ctx.info("Getting User Manager settings");
       const result = await executeMikrotikCommand("/user-manager print", ctx);
@@ -34,9 +39,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "set_user_manager_settings",
-    title: "Set User Manager Settings",
+    title: "Set User Manager Global Settings",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates the User Manager settings.",
+    description:
+      "Updates the global User Manager daemon configuration (`/user-manager set`) — toggle the" +
+      " built-in RADIUS server on/off (`enabled`), set the TLS certificate, or enable the" +
+      " profile/payment subsystem (`use_profiles`). Applies changes idempotently to the single" +
+      " global settings entry; returns the full updated settings after applying. For per-user" +
+      " changes use update_user_manager_user; for profile creation use add_user_manager_profile.",
     inputSchema: {
       enabled: z.boolean().optional().describe("Enable or disable the User Manager server"),
       certificate: z.string().optional().describe("TLS certificate name for RADIUS over TLS"),
@@ -63,9 +73,14 @@ export const userManagerTools: ToolModule = [
   // ── USERS `/user-manager user` ────────────────────────────────────────────
   defineTool({
     name: "add_user_manager_user",
-    title: "Add User Manager User",
+    title: "Add User Manager RADIUS User",
     annotations: WRITE,
-    description: "Adds a user to the User Manager RADIUS database.",
+    description:
+      "Creates a new user in the User Manager RADIUS database (`/user-manager user add`) — for" +
+      " hotspot, PPP, or 802.1X authentication managed by the built-in RADIUS server. Not for" +
+      " local router login accounts; for those use add_user. Supply `name` and `password`;" +
+      " optionally set `group`, `shared_users` (max simultaneous sessions), and custom RADIUS" +
+      " `attributes`. Returns the created user's detail with secrets redacted.",
     inputSchema: {
       name: z.string().describe("Login name for the user"),
       password: z.string().describe("Login password for the user"),
@@ -103,9 +118,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "list_user_manager_users",
-    title: "List User Manager Users",
+    title: "List User Manager RADIUS Users",
     annotations: READ,
-    description: "Lists users in the User Manager RADIUS database.",
+    description:
+      "Returns all users in the User Manager RADIUS database (`/user-manager user print`) — the" +
+      " accounts that authenticate against the built-in RADIUS server for hotspot, PPP, or 802.1X." +
+      " Optionally filter by partial `name_filter`. Not for local router login accounts; for those" +
+      " use list_users. Returns user list with secrets redacted; for full" +
+      " single-user detail use get_user_manager_user.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -127,9 +147,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "get_user_manager_user",
-    title: "Get User Manager User",
+    title: "Get User Manager RADIUS User Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific User Manager user.",
+    description:
+      "Returns full detail for a single User Manager RADIUS user" +
+      " (`/user-manager user print detail where name=`) — all fields including group," +
+      " shared-users limit, RADIUS attributes, and status, with secrets redacted. Use when you" +
+      " need the complete record for one user by exact name. To browse all users use" +
+      " list_user_manager_users; to modify the record use update_user_manager_user.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting User Manager user details: name=${a.name}`);
@@ -146,9 +171,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "update_user_manager_user",
-    title: "Update User Manager User",
+    title: "Update User Manager RADIUS User",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing User Manager user.",
+    description:
+      "Modifies an existing User Manager RADIUS user (`/user-manager user set [find name=...]`)" +
+      " — change name, password, group, shared-users limit, RADIUS attributes, comment, or" +
+      " enabled/disabled state. Locate the user by its current `name` (from" +
+      " list_user_manager_users or get_user_manager_user). Returns the updated record with" +
+      " secrets redacted. To permanently delete the user use remove_user_manager_user.",
     inputSchema: {
       name: z.string().describe("Current name of the user to update"),
       new_name: z.string().optional(),
@@ -187,9 +217,13 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "remove_user_manager_user",
-    title: "Remove User Manager User",
+    title: "Remove User Manager RADIUS User",
     annotations: DESTRUCTIVE,
-    description: "Removes a user from the User Manager RADIUS database.",
+    description:
+      "Permanently deletes a User Manager RADIUS user (`/user-manager user remove [find name=...]`)" +
+      " — verifies the user exists via count-only check first, then removes them. Does NOT" +
+      " automatically remove the user's profile assignments; check list_user_manager_user_profiles" +
+      " first. To disable without deleting use update_user_manager_user with `disabled=true`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing User Manager user: name=${a.name}`);
@@ -212,9 +246,15 @@ export const userManagerTools: ToolModule = [
   // ── PROFILES `/user-manager profile` ──────────────────────────────────────
   defineTool({
     name: "add_user_manager_profile",
-    title: "Add User Manager Profile",
+    title: "Add User Manager Service Profile",
     annotations: WRITE,
-    description: "Adds a User Manager profile (a billing/service plan).",
+    description:
+      "Creates a new User Manager service/billing profile (`/user-manager profile add`) — a named" +
+      " plan template that defines validity period (e.g. '30d'), price, and session override" +
+      " limits (`starts_when`, `override_shared_users`) that can be assigned to users. Profiles are" +
+      " templates only; to link a profile to a specific user use assign_user_manager_profile. For" +
+      " rate/quota constraints attach a limitation (add_user_manager_limitation). Returns the" +
+      " created profile's detail.",
     inputSchema: {
       name: z.string().describe("Profile name"),
       name_for_users: z.string().optional().describe("Display name shown to users"),
@@ -252,9 +292,13 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "list_user_manager_profiles",
-    title: "List User Manager Profiles",
+    title: "List User Manager Service Profiles",
     annotations: READ,
-    description: "Lists User Manager profiles.",
+    description:
+      "Returns all User Manager service/billing profile templates (`/user-manager profile print`)" +
+      " — the named plans defining validity, price, and session limits. Optionally filter by" +
+      " partial `name_filter`. Not the same as user-profile assignments; to see which profiles" +
+      " are linked to which users use list_user_manager_user_profiles. Returns profile list.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -276,9 +320,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "remove_user_manager_profile",
-    title: "Remove User Manager Profile",
+    title: "Remove User Manager Service Profile",
     annotations: DESTRUCTIVE,
-    description: "Removes a User Manager profile.",
+    description:
+      "Permanently deletes a User Manager service/billing profile" +
+      " (`/user-manager profile remove [find name=...]`) — verifies existence via count-only check" +
+      " first, then removes the plan template. Does NOT automatically remove existing user-profile" +
+      " assignments that reference this profile; check list_user_manager_user_profiles before" +
+      " removing to avoid orphaned assignments. For creating a profile use add_user_manager_profile.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing User Manager profile: name=${a.name}`);
@@ -301,9 +350,14 @@ export const userManagerTools: ToolModule = [
   // ── USER-PROFILE ASSIGNMENT `/user-manager user-profile` ──────────────────
   defineTool({
     name: "assign_user_manager_profile",
-    title: "Assign User Manager Profile",
+    title: "Assign Service Profile to User Manager User",
     annotations: WRITE,
-    description: "Assigns a profile to a User Manager user.",
+    description:
+      "Creates a user-profile assignment in User Manager (`/user-manager user-profile add`) —" +
+      " links an existing service profile plan to a specific user so the user inherits the plan's" +
+      " limits (rate, transfer, validity). Both `user` and `profile` must already exist; to create" +
+      " a user use add_user_manager_user; to create a profile use add_user_manager_profile. To view" +
+      " existing assignments use list_user_manager_user_profiles.",
     inputSchema: {
       user: z.string().describe("User to assign the profile to"),
       profile: z.string().describe("Profile to assign"),
@@ -324,9 +378,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "list_user_manager_user_profiles",
-    title: "List User Manager User-Profiles",
+    title: "List User Manager User-Profile Assignments",
     annotations: READ,
-    description: "Lists User Manager user-profile assignments.",
+    description:
+      "Returns all User Manager user-to-profile assignment records" +
+      " (`/user-manager user-profile print`) — shows which service profile plan is linked to each" +
+      " user. Optionally filter by partial `user_filter`. Not the same as listing profile" +
+      " definitions; for the plan templates themselves use list_user_manager_profiles. To create an" +
+      " assignment use assign_user_manager_profile.",
     inputSchema: {
       user_filter: z.string().optional().describe("Partial user match"),
     },
@@ -349,9 +408,14 @@ export const userManagerTools: ToolModule = [
   // ── ROUTERS (RADIUS clients / NAS) `/user-manager router` ─────────────────
   defineTool({
     name: "add_user_manager_router",
-    title: "Add User Manager Router",
+    title: "Add User Manager RADIUS Client (Router/NAS)",
     annotations: WRITE,
-    description: "Adds a RADIUS client (router/NAS) that authenticates against User Manager.",
+    description:
+      "Registers a new RADIUS client (router or NAS device) in User Manager" +
+      " (`/user-manager router add`) — the network device that forwards authentication requests to" +
+      " this built-in RADIUS server. Requires a friendly `name`, the client's IP `address`, and a" +
+      " `shared_secret`; optionally set the CoA port. Not related to IP routing; for routing table" +
+      " entries use add_route. Returns the created entry with secrets redacted.",
     inputSchema: {
       name: z.string().describe("Friendly name for the RADIUS client"),
       address: z.string().describe("IP address of the RADIUS client"),
@@ -385,9 +449,13 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "list_user_manager_routers",
-    title: "List User Manager Routers",
+    title: "List User Manager RADIUS Clients (Routers/NAS)",
     annotations: READ,
-    description: "Lists RADIUS clients (routers/NAS) configured in User Manager.",
+    description:
+      "Returns all RADIUS clients (routers/NAS devices) registered in User Manager" +
+      " (`/user-manager router print`) — the devices authorized to forward authentication requests" +
+      " to this built-in RADIUS server. Optionally filter by partial `name_filter`. Not related to" +
+      " IP routing; for routing table entries use list_routes. Returns entries with secrets redacted.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -409,9 +477,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "remove_user_manager_router",
-    title: "Remove User Manager Router",
+    title: "Remove User Manager RADIUS Client (Router/NAS)",
     annotations: DESTRUCTIVE,
-    description: "Removes a RADIUS client (router/NAS) from User Manager.",
+    description:
+      "Permanently removes a RADIUS client (router/NAS) from User Manager" +
+      " (`/user-manager router remove [find name=...]`) — verifies existence via count-only check" +
+      " first, then deletes the entry. The device will no longer be able to forward authentication" +
+      " requests to this RADIUS server after removal. Not related to IP routing; for routing table" +
+      " management use remove_route.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing User Manager router: name=${a.name}`);
@@ -434,9 +507,15 @@ export const userManagerTools: ToolModule = [
   // ── LIMITATIONS `/user-manager limitation` ────────────────────────────────
   defineTool({
     name: "add_user_manager_limitation",
-    title: "Add User Manager Limitation",
+    title: "Add User Manager Limitation Template",
     annotations: WRITE,
-    description: "Adds a User Manager limitation (rate/transfer/uptime limits).",
+    description:
+      "Creates a new User Manager limitation template (`/user-manager limitation add`) — a reusable" +
+      " named set of rate and quota constraints: download rate (`rate_limit_rx`, e.g. '10M')," +
+      " upload rate (`rate_limit_tx`), total transfer cap (`transfer_limit`, e.g. '10G'), and" +
+      " uptime cap (`uptime_limit`, e.g. '1d'). Limitations are templates attached to profiles, not" +
+      " users directly; for service plan templates use add_user_manager_profile. Returns the created" +
+      " limitation's detail.",
     inputSchema: {
       name: z.string().describe("Limitation name"),
       rate_limit_rx: z.string().optional().describe("Download rate limit, e.g. '10M'"),
@@ -472,9 +551,13 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "list_user_manager_limitations",
-    title: "List User Manager Limitations",
+    title: "List User Manager Limitation Templates",
     annotations: READ,
-    description: "Lists User Manager limitations.",
+    description:
+      "Returns all User Manager limitation templates (`/user-manager limitation print`) — the named" +
+      " rate/quota constraint definitions (rate-limit-rx/tx, transfer-limit, uptime-limit) that can" +
+      " be attached to service profiles. Optionally filter by partial `name_filter`. Limitations are" +
+      " distinct from profile plan templates; for those use list_user_manager_profiles.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -496,9 +579,14 @@ export const userManagerTools: ToolModule = [
 
   defineTool({
     name: "remove_user_manager_limitation",
-    title: "Remove User Manager Limitation",
+    title: "Remove User Manager Limitation Template",
     annotations: DESTRUCTIVE,
-    description: "Removes a User Manager limitation.",
+    description:
+      "Permanently deletes a User Manager limitation template" +
+      " (`/user-manager limitation remove [find name=...]`) — verifies existence via count-only" +
+      " check first, then removes the constraint definition. Does NOT check whether the limitation" +
+      " is still referenced by any profiles; verify with list_user_manager_profiles before removing" +
+      " to avoid orphaned references. For listing limitations use list_user_manager_limitations.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing User Manager limitation: name=${a.name}`);
@@ -521,9 +609,15 @@ export const userManagerTools: ToolModule = [
   // ── SESSIONS `/user-manager session` ──────────────────────────────────────
   defineTool({
     name: "list_user_manager_sessions",
-    title: "List User Manager Sessions",
+    title: "List User Manager Accounting Sessions",
     annotations: READ,
-    description: "Lists User Manager accounting sessions.",
+    description:
+      "Returns User Manager RADIUS accounting session records (`/user-manager session print`) — the" +
+      " log of authentication and accounting events for users connecting through registered RADIUS" +
+      " clients. Optionally filter by partial `user_filter` or restrict to currently active sessions" +
+      " with `active_only=true`. Returns session data including bytes transferred, uptime, and" +
+      " status. For the user accounts themselves use list_user_manager_users; for registered RADIUS" +
+      " clients use list_user_manager_routers.",
     inputSchema: {
       user_filter: z.string().optional().describe("Partial user match"),
       active_only: z.boolean().default(false).describe("Only show currently active sessions"),

@@ -10,7 +10,12 @@ export const certificateTools: ToolModule = [
     name: "list_certificates",
     title: "List Certificates",
     annotations: READ,
-    description: "Lists certificates in the MikroTik device's certificate store.",
+    description:
+      "Lists certificates from the device certificate store (`/certificate`). " +
+      "Use to browse all installed certificates — CA, TLS server, client, and self-signed — " +
+      "along with their validity, fingerprint, and key-usage flags. " +
+      "Returns all entries or those matching an optional partial `name_filter` on the certificate name. " +
+      "For full detail on a single certificate use `get_certificate`.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
     },
@@ -28,9 +33,13 @@ export const certificateTools: ToolModule = [
 
   defineTool({
     name: "get_certificate",
-    title: "Get Certificate",
+    title: "Get Certificate Details",
     annotations: READ,
-    description: "Gets detailed information about a specific certificate.",
+    description:
+      "Retrieves full detail for a single named certificate (`/certificate print detail where name=...`). " +
+      "Use to inspect a certificate's subject, issuer, expiry date, fingerprint, key-usage flags, and trust status. " +
+      "Takes the certificate `name` as a string — use `list_certificates` to find available names. " +
+      "For bulk browsing of all certificates use `list_certificates`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting certificate details: name=${a.name}`);
@@ -46,10 +55,17 @@ export const certificateTools: ToolModule = [
 
   defineTool({
     name: "create_certificate",
-    title: "Create Certificate",
+    title: "Create Certificate Template",
     annotations: WRITE,
     description:
-      "Creates a certificate template on the MikroTik device. Use sign_certificate to self-sign it after creating.",
+      "Creates an unsigned certificate template in the device store (`/certificate add`). " +
+      "Use as the first step in generating a local PKI certificate — sets subject fields " +
+      "(common-name, country, organization), RSA key size, validity period in days, and key-usage flags " +
+      "(e.g. 'tls-server', 'key-cert-sign'). " +
+      "The resulting certificate is NOT yet signed; call `sign_certificate` next to self-sign it " +
+      "or sign it with a named CA certificate. " +
+      "To register an externally generated cert/key file already on the device filesystem use `import_certificate`. " +
+      "Returns the created certificate's full detail including its name.",
     inputSchema: {
       name: z.string().describe("Name for the certificate"),
       common_name: z.string().describe("Common name (CN), e.g. a hostname or domain"),
@@ -89,7 +105,13 @@ export const certificateTools: ToolModule = [
     title: "Sign Certificate",
     annotations: WRITE,
     description:
-      "Signs a certificate on the MikroTik device (self-sign or sign with a CA). This may be long-running.",
+      "Signs an existing certificate template (`/certificate sign`) to produce a valid certificate. " +
+      "Omit `ca` to produce a self-signed certificate; supply the name of an existing CA certificate in `ca` " +
+      "to issue it under that CA. " +
+      "The certificate template to sign must already exist — create it first with `create_certificate`. " +
+      "Optionally override the common name at signing time via `common_name`. " +
+      "May run for several seconds while the device generates key material. " +
+      "Returns the signing operation output from the device.",
     inputSchema: {
       name: z.string().describe("Name of the certificate to sign"),
       ca: z
@@ -116,7 +138,11 @@ export const certificateTools: ToolModule = [
     name: "remove_certificate",
     title: "Remove Certificate",
     annotations: DESTRUCTIVE,
-    description: "Removes a certificate from the MikroTik device's certificate store.",
+    description:
+      "Permanently deletes a named certificate from the device store (`/certificate remove [find name=...]`). " +
+      "Performs an existence check first and returns an error if the certificate is not found. " +
+      "Removing a CA certificate will invalidate any leaf certificates it signed. " +
+      "Use `list_certificates` to browse certificate names before removal.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing certificate: name=${a.name}`);
@@ -137,9 +163,14 @@ export const certificateTools: ToolModule = [
 
   defineTool({
     name: "import_certificate",
-    title: "Import Certificate",
+    title: "Import Certificate from File",
     annotations: WRITE,
-    description: "Imports a certificate or key from a file in the MikroTik device's file system.",
+    description:
+      "Imports a certificate or private key from a file already present on the device filesystem (`/certificate import`). " +
+      "Use when you have uploaded a PEM, DER, or PKCS12 file to the device via FTP/SCP/Winbox and need to " +
+      "register it in the certificate store. " +
+      "Supply `passphrase` if the key is encrypted, and `name` to label the imported entry in the store. " +
+      "To generate a certificate locally on the device instead use `create_certificate` followed by `sign_certificate`.",
     inputSchema: {
       file_name: z.string().describe("Name of the certificate/key file to import"),
       passphrase: z.string().optional().describe("Passphrase protecting the imported key, if any"),

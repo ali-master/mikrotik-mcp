@@ -8,9 +8,13 @@ import { quoteValue, looksLikeError, isEmpty, commandUnsupported, Cmd } from "..
 export const diskTools: ToolModule = [
   defineTool({
     name: "list_disks",
-    title: "List Disks",
+    title: "List All Attached Disks",
     annotations: READ,
-    description: "Lists storage disks (USB, NVMe, internal flash) attached to the MikroTik device.",
+    description:
+      "List all storage disks (`/disk print`) attached to the MikroTik device — USB drives, NVMe, and internal flash. " +
+      "Use this to discover available storage and obtain disk names before calling get_disk or format_disk. " +
+      "Returns each disk's name, type, size, and status. " +
+      "For per-disk detail use get_disk.",
     async handler(_a, ctx) {
       ctx.info("Listing disks");
       const result = await executeMikrotikCommand("/disk print", ctx);
@@ -21,9 +25,13 @@ export const diskTools: ToolModule = [
 
   defineTool({
     name: "get_disk",
-    title: "Get Disk",
+    title: "Get Disk Details",
     annotations: READ,
-    description: "Gets detailed information about a specific disk.",
+    description:
+      "Get detailed information about a single disk (`/disk print detail where name=...`). " +
+      "Use this to inspect a specific disk's filesystem type, free space, mount status, and other properties. " +
+      "The `name` argument takes a disk name (e.g. `disk1`) as returned by list_disks. " +
+      "For all disks in one call use list_disks; to erase and reformat a disk use format_disk.",
     inputSchema: { name: z.string().describe("Disk name, e.g. 'disk1'") },
     async handler(a, ctx) {
       ctx.info(`Getting disk details: name=${a.name}`);
@@ -35,10 +43,15 @@ export const diskTools: ToolModule = [
 
   defineTool({
     name: "format_disk",
-    title: "Format Disk",
+    title: "Format Disk (Destructive Erase)",
     annotations: DANGEROUS,
     description:
-      "Formats (ERASES) a disk on the MikroTik device. This destroys all data on the disk. Requires confirm=true.",
+      "Erase and reformat a disk (`/disk format-drive`) — PERMANENTLY DESTROYS all data on the target disk. " +
+      "Use this to prepare a new or blank storage device for use on the router. " +
+      "Requires confirm=true to proceed; without it the command is aborted. " +
+      "Optional file_system (ext4, fat32, exfat, ntfs) selects the filesystem; optional label sets the volume label. " +
+      "The `name` argument takes a disk name (e.g. `disk1`) as returned by list_disks. " +
+      "For read-only disk inspection use list_disks or get_disk.",
     inputSchema: {
       name: z.string().describe("Disk name to format, e.g. 'disk1'"),
       file_system: z

@@ -8,17 +8,18 @@ import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "..
 export const dot1xClientTools: ToolModule = [
   defineTool({
     name: "add_dot1x_client",
-    title: "Add Dot1x Client",
+    title: "Add 802.1X Supplicant Client",
     annotations: WRITE,
     description:
-      "Adds an 802.1X supplicant (client) on an interface so the device can " +
-      "authenticate itself to an upstream authenticator " +
-      "(`/interface dot1x client`).\n\n" +
-      "Notes:\n" +
-      "    eap_methods: comma-separated, e.g. 'eap-tls', 'eap-peap',\n" +
-      "        'eap-mschapv2', 'eap-ttls'.\n" +
-      "    certificate: required for eap-tls; identity/password for the\n" +
-      "        password-based methods.",
+      "Adds an 802.1X supplicant client entry on a specific interface (`/interface dot1x client add`) " +
+      "so the router authenticates itself to an upstream 802.1X authenticator (e.g. a managed switch " +
+      "or wireless AP). Use this when the MikroTik device is the *supplicant* (client) side of 802.1X " +
+      "— not the server/authenticator side. " +
+      "`eap_methods` is a comma-separated list, e.g. `'eap-tls'`, `'eap-peap'`, `'eap-mschapv2'`, " +
+      "`'eap-ttls'`; `certificate` is required for eap-tls; `identity`/`password` are required for " +
+      "password-based EAP methods. " +
+      "Returns the created entry's full detail (including its `.id`) which is used by " +
+      "update_dot1x_client, get_dot1x_client, and remove_dot1x_client.",
     inputSchema: {
       interface: z.string(),
       eap_methods: z
@@ -59,9 +60,14 @@ export const dot1xClientTools: ToolModule = [
 
   defineTool({
     name: "list_dot1x_clients",
-    title: "List Dot1x Clients",
+    title: "List 802.1X Supplicant Clients",
     annotations: READ,
-    description: "Lists 802.1X supplicants on the MikroTik device.",
+    description:
+      "Lists all 802.1X supplicant client entries configured on the device (`/interface dot1x client print`). " +
+      "Optionally filters by interface name (`interface_filter`), authentication status string " +
+      "(`status_filter`, e.g. `'authenticated'`, `'authenticating'`), or disabled state (`disabled_only`). " +
+      "Returns a table of all matching supplicant entries with their interface, EAP method, and status; " +
+      "for full detail on a single entry use get_dot1x_client.",
     inputSchema: {
       interface_filter: z.string().optional(),
       status_filter: z
@@ -89,9 +95,14 @@ export const dot1xClientTools: ToolModule = [
 
   defineTool({
     name: "get_dot1x_client",
-    title: "Get Dot1x Client",
+    title: "Get 802.1X Supplicant Client Detail",
     annotations: READ,
-    description: "Gets a specific 802.1X supplicant by interface or '.id'.",
+    description:
+      "Fetches full detail for a single 802.1X supplicant client entry (`/interface dot1x client print detail`). " +
+      "Accepts either an interface name (e.g. `'ether3'`) or a RouterOS `.id` string (e.g. `'*1'`) from " +
+      "list_dot1x_clients as `client_id` — tries `.id` lookup first, then falls back to interface name. " +
+      "Returns the complete supplicant configuration including EAP method, identity, certificate, and current " +
+      "authentication status. For a bulk view of all entries use list_dot1x_clients.",
     inputSchema: {
       client_id: z.string().describe("Interface name (e.g. 'ether3') or RouterOS '.id'"),
     },
@@ -115,11 +126,15 @@ export const dot1xClientTools: ToolModule = [
 
   defineTool({
     name: "update_dot1x_client",
-    title: "Update Dot1x Client",
+    title: "Update 802.1X Supplicant Client",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an 802.1X supplicant (by interface or '.id'). " +
-      'Pass comment="" to clear the comment.',
+      "Modifies an existing 802.1X supplicant client entry (`/interface dot1x client set`) identified by " +
+      "interface name or RouterOS `.id` from list_dot1x_clients. `client_id` accepts an interface name " +
+      "(e.g. `'ether3'`) or a `.id` string starting with `'*'`. Only supplied fields are changed; " +
+      'pass `comment=""` to clear the comment. ' +
+      "Returns the updated entry's full detail after the change. To add a new supplicant entry use add_dot1x_client; " +
+      "to delete one use remove_dot1x_client.",
     inputSchema: {
       client_id: z.string().describe("Interface name or RouterOS '.id'"),
       eap_methods: z.string().optional(),
@@ -160,9 +175,14 @@ export const dot1xClientTools: ToolModule = [
 
   defineTool({
     name: "remove_dot1x_client",
-    title: "Remove Dot1x Client",
+    title: "Remove 802.1X Supplicant Client",
     annotations: DESTRUCTIVE,
-    description: "Removes an 802.1X supplicant by interface or '.id' from the MikroTik device.",
+    description:
+      "Removes an 802.1X supplicant client entry (`/interface dot1x client remove`) identified by interface " +
+      "name or RouterOS `.id` from list_dot1x_clients. `client_id` accepts an interface name (e.g. `'ether3'`) " +
+      "or a `.id` string starting with `'*'`. Verifies the entry exists with a count-only check before deletion " +
+      "and returns an error if not found. Permanently stops 802.1X authentication on that interface; " +
+      "to temporarily halt authentication without deleting the entry use update_dot1x_client with `disabled=true`.",
     inputSchema: {
       client_id: z.string().describe("Interface name or RouterOS '.id'"),
     },
