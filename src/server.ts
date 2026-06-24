@@ -80,13 +80,41 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
       ],
     },
     {
-      capabilities: { tools: {}, prompts: {}, resources: {}, logging: {} },
+      capabilities: {
+        // Tools, prompts and resources are registered below. McpServer advertises
+        // `listChanged: true` for each at registration; this catalog is static so
+        // no list_changed notifications are actually emitted, but the SDK declares
+        // the capability either way.
+        tools: { listChanged: true },
+        prompts: { listChanged: true },
+        resources: { listChanged: true },
+        // Structured log notifications (`notifications/message`): every tool
+        // handler's ctx.info / ctx.error is forwarded to the client (wired via
+        // `sendLog` just below). The SDK honours the client's `logging/setLevel`.
+        logging: {},
+      },
       instructions,
     },
   );
 
+  // Make the advertised `logging` capability real: forward tool-handler
+  // diagnostics (ctx.info / ctx.error) to the connected client as MCP log
+  // notifications. Best-effort and fire-and-forget — the SDK no-ops when the
+  // client has filtered the level out, and any failure is swallowed so logging
+  // can never break a tool call. A caller may inject its own `sendLog` (e.g.
+  // per-session HTTP transports or tests).
+  const sendLog: SendLog =
+    opts.sendLog ??
+    ((level, message) => {
+      try {
+        void server.server.sendLoggingMessage({ level, data: message }).catch(() => {});
+      } catch {
+        /* logging is best-effort; never propagate into the tool call */
+      }
+    });
+
   const toolCount = registerTools(server, allToolModules, {
-    sendLog: opts.sendLog,
+    sendLog,
     deviceNames: names,
     readOnly,
   });
