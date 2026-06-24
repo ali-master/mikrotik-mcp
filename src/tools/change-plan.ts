@@ -32,14 +32,17 @@ function collectCommands(a: { commands?: string[]; script?: string }): string[] 
 export const changePlanTools: ToolModule = [
   defineTool({
     name: "plan_changes",
-    title: "Plan Changes (Dry-Run)",
+    title: "Plan RouterOS Changes (Dry-Run Preview)",
     annotations: READ,
     description:
-      "Previews a set of intended RouterOS commands WITHOUT touching the device — a 'terraform " +
-      "plan'. Returns ADD/MODIFY/REMOVE counts, a risk score, lock-out warnings (e.g. an " +
-      "input-chain drop or removing your management IP), and the steps reordered into a safe " +
-      "sequence (additive changes before destructive ones). Feed the same commands to apply_plan " +
-      "to execute them under Safe Mode. Provide commands as an array and/or a newline script.",
+      "Parses a set of intended RouterOS CLI commands locally — without contacting the device — " +
+      "and returns a risk-scored, lock-out-aware execution plan. Classifies each command as " +
+      "ADD/MODIFY/REMOVE/OTHER, calculates an overall risk score, emits warnings when commands would " +
+      "drop input-chain traffic or remove the management IP, and reorders steps into the safest " +
+      "sequence (additive changes before destructive ones). Use this to understand what will " +
+      "happen before committing; to execute the plan use apply_plan. Provide commands as an " +
+      "array via `commands`, as a newline-delimited string via `script`, or both — they are " +
+      "merged. Returns a human-readable plan text and a structured plan object with per-step details.",
     inputSchema: {
       commands: z.array(z.string()).optional().describe("Intended RouterOS CLI commands."),
       script: z
@@ -60,14 +63,21 @@ export const changePlanTools: ToolModule = [
 
   defineTool({
     name: "apply_plan",
-    title: "Apply Plan (Safe Mode)",
+    title: "Apply RouterOS Change Plan in Safe Mode",
     annotations: DANGEROUS,
     description:
-      "Executes intended RouterOS commands inside Safe Mode and reports the EXACT `/export` diff. " +
-      "With confirm=false (default) it applies, shows the diff, then rolls everything back — a true " +
-      "dry-run. With confirm=true it commits, but ONLY after verifying the device is still reachable, " +
-      "so a change that would lock you out auto-reverts instead. Steps run in the safe order from " +
-      "plan_changes. Safe Mode requires SSH (not available on MAC-Telnet devices).",
+      "Executes intended RouterOS commands inside RouterOS Safe Mode (activated by Ctrl+X over " +
+      "an interactive SSH shell) and reports the exact unified diff of what changed, computed " +
+      "from `/export terse` snapshots captured before and after execution. With confirm=false " +
+      "(default) it applies all steps, captures the diff, then rolls everything back — a true " +
+      "dry-run that shows precisely what would change without persisting anything. With " +
+      "confirm=true it commits permanently, but ONLY after verifying the device still responds " +
+      "to `/system identity print` — a change that would lock you out auto-reverts instead of " +
+      "sticking. Steps execute in the same safe order that plan_changes computes (additive before " +
+      "destructive); if any step returns a RouterOS error the entire plan rolls back immediately. " +
+      "Safe Mode requires SSH — not available on MAC-Telnet devices. For a no-device preview " +
+      "use plan_changes instead. Returns the plan summary, per-step execution log, unified diff, " +
+      "and commit/rollback outcome.",
     inputSchema: {
       commands: z.array(z.string()).optional(),
       script: z.string().optional(),

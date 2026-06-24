@@ -87,14 +87,20 @@ function describe(s: Snapshot): string {
 export const configSnapshotTools: ToolModule = [
   defineTool({
     name: "capture_config_snapshot",
-    title: "Capture Config Snapshot",
+    title: "Capture RouterOS Configuration Snapshot",
     annotations: WRITE,
     description:
-      "Captures the device's current configuration (`/export`) and stores it locally as a " +
-      "timestamped snapshot for later diffing/rollback reference. Sensitive values are hidden " +
-      "unless show_sensitive is set. By default an identical capture (no config change since the " +
-      "last snapshot) is skipped; set force to store it anyway. Optionally limit to one RouterOS " +
-      'section (e.g. "ip firewall filter").',
+      "Runs `/export` (or `/<section> export` when `section` is set) on the device and persists " +
+      "the output as a timestamped snapshot in the local MCP-host SQLite database " +
+      "(`~/.mikrotik-mcp/snapshots.db`) — not on the device filesystem. Use this to build a " +
+      "configuration history that survives device reboots and can be diffed later to answer " +
+      "'what changed since X?'. If the content SHA matches the previous snapshot and " +
+      "force=false (default), nothing is written and a 'no change' message is returned; set " +
+      "force=true to store unconditionally. Limit to one RouterOS section via `section` " +
+      '(e.g. "ip firewall filter"); sensitive values (passwords, keys) are redacted unless ' +
+      "show_sensitive=true. To compare snapshots use diff_config_snapshots; to read a stored " +
+      "body use get_config_snapshot; to browse stored entries use list_config_snapshots. " +
+      "Returns the new snapshot id and metadata, or a 'no change' message.",
     inputSchema: {
       label: z.string().optional().describe("Human label, e.g. 'pre-firewall-change'."),
       section: z
@@ -156,11 +162,16 @@ export const configSnapshotTools: ToolModule = [
 
   defineTool({
     name: "list_config_snapshots",
-    title: "List Config Snapshots",
+    title: "List RouterOS Configuration Snapshots",
     annotations: READ,
     description:
-      "Lists stored configuration snapshots for the target device, newest first (metadata only — " +
-      "id, label, time, size, RouterOS version, content hash). Use get_config_snapshot for a body.",
+      "Lists metadata for stored configuration snapshots for the current device from the local " +
+      "MCP-host SQLite database (`~/.mikrotik-mcp/snapshots.db`), newest first. Returns each " +
+      "snapshot's id, optional label, capture timestamp, line/byte count, RouterOS version (when available), and " +
+      "content SHA — the `/export` body text is not included. Use the returned id with " +
+      "get_config_snapshot to read the full body, or pass it to diff_config_snapshots as `from` " +
+      "or `to`. To capture a new snapshot use capture_config_snapshot; to delete entries use " +
+      "remove_config_snapshot.",
     inputSchema: {
       limit: z.number().int().min(1).max(500).default(50),
     },
@@ -179,12 +190,15 @@ export const configSnapshotTools: ToolModule = [
 
   defineTool({
     name: "get_config_snapshot",
-    title: "Get Config Snapshot",
+    title: "Get RouterOS Configuration Snapshot Body",
     annotations: READ,
     description:
-      "Returns a stored configuration snapshot by id. With include_body=true (default) the full " +
-      "captured `/export` text is returned — this body is itself a RouterOS `.rsc` script suitable " +
-      "for review or manual re-application. Set include_body=false for metadata only.",
+      "Retrieves a stored configuration snapshot by id from the local MCP-host SQLite database. " +
+      "With include_body=true (default) returns the full `/export` text — a RouterOS `.rsc` script " +
+      "suitable for review or manual re-application on the device. Set include_body=false to return " +
+      "metadata only (id, timestamp, size, SHA). The id comes from list_config_snapshots. " +
+      "To compare two snapshots or a snapshot against the live device use diff_config_snapshots; " +
+      "to delete a snapshot use remove_config_snapshot.",
     inputSchema: {
       id: z.string(),
       include_body: z.boolean().default(true),
@@ -200,13 +214,17 @@ export const configSnapshotTools: ToolModule = [
 
   defineTool({
     name: "diff_config_snapshots",
-    title: "Diff Config Snapshots",
+    title: "Diff RouterOS Configuration Snapshots",
     annotations: READ,
     description:
-      "Time-travel diff: compares two configurations and reports a unified diff (added/removed " +
-      `lines) plus a summary. Each of \`from\`/\`to\` may be ${RELATIVE_HINT}. Typical uses: drift ` +
-      "check (from=latest, to=live), or compare two stored snapshots by id. Volatile export " +
-      "header timestamps are ignored so unchanged configs diff clean.",
+      "Compares two RouterOS `/export` configurations and returns a unified diff (lines added/" +
+      `removed) plus a +added/-removed/unchanged summary. Each of \`from\`/\`to\` may be ${RELATIVE_HINT}. ` +
+      "Typical uses: drift check (from=latest, to=live) to see what changed since the last " +
+      "stored snapshot; or compare two stored snapshots by id. Volatile `/export` header " +
+      "timestamps are normalized out so unchanged configs diff clean. " +
+      "To capture a new snapshot first use capture_config_snapshot; to list snapshot ids use " +
+      "list_config_snapshots; to read a full snapshot body use get_config_snapshot. " +
+      "Returns the unified diff text truncated at max_output_lines (raise it if needed).",
     inputSchema: {
       from: z.string().describe(`Baseline side: ${RELATIVE_HINT}.`),
       to: z
@@ -252,11 +270,13 @@ export const configSnapshotTools: ToolModule = [
 
   defineTool({
     name: "remove_config_snapshot",
-    title: "Remove Config Snapshot",
+    title: "Remove RouterOS Configuration Snapshots",
     annotations: DESTRUCTIVE,
     description:
-      "Deletes stored configuration snapshots by id (local history only — never touches the device). " +
-      "Accepts one or more ids.",
+      "Deletes one or more stored configuration snapshots by id from the local MCP-host SQLite " +
+      "database (`~/.mikrotik-mcp/snapshots.db`) — never touches the device. Accepts a list of " +
+      "one or more ids (obtain ids from list_config_snapshots). Returns the count of entries " +
+      "actually removed. To capture snapshots use capture_config_snapshot.",
     inputSchema: {
       ids: z.array(z.string()).min(1),
     },

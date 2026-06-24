@@ -14,9 +14,16 @@ import { isEmpty, Cmd } from "../core/routeros";
 export const backupTools: ToolModule = [
   defineTool({
     name: "create_backup",
-    title: "Create Backup",
+    title: "Create System Backup",
     annotations: WRITE,
-    description: "Creates a system backup on the MikroTik device.",
+    description:
+      "Creates a binary system backup (`/system backup save`) — a full encrypted snapshot of all" +
+      " device configuration, suitable for disaster recovery and full-config restore. Unlike" +
+      " `create_export` or `export_section` which produce human-readable text files, this produces" +
+      " an opaque `.backup` binary that can only be applied via `restore_backup`. Name defaults to" +
+      " `backup_<device-datetime>` if omitted; `dont_encrypt=true` skips encryption;" +
+      " `include_password=false` omits credentials from the snapshot. Returns file details of the" +
+      " created `.backup` file on success.",
     inputSchema: {
       name: z.string().optional(),
       dont_encrypt: z.boolean().default(false),
@@ -51,9 +58,13 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "list_backups",
-    title: "List Backups",
+    title: "List Backup Files",
     annotations: READ,
-    description: "Lists backup files on the MikroTik device.",
+    description:
+      "Lists `.backup` binary files on the device filesystem (`/file print where type=backup`)." +
+      " By default shows only binary backup files; set `include_exports=true` to also include" +
+      " `.rsc` script files. Filter by name substring with `name_filter`. For detailed metadata on" +
+      " a specific file use `backup_info`. Returns a table of matching files or a not-found message.",
     inputSchema: {
       name_filter: z.string().optional(),
       include_exports: z.boolean().default(false),
@@ -80,9 +91,20 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "create_export",
-    title: "Create Config Export",
+    title: "Create Full Configuration Export",
     annotations: READ,
-    description: "Creates a configuration export file (rsc/json/xml) on the MikroTik device.",
+    description:
+      "Exports the complete device configuration to a `.rsc` plain-text script file (`/export" +
+      " file=<name>`), re-applicable via `import_configuration`. Unlike `create_backup`, the result" +
+      " is human-readable plain text — not a binary snapshot — and passwords are hidden by default" +
+      " (`hide_sensitive=true`). `file_format` changes only the file extension used when looking up" +
+      " the saved file — no `format=` flag is ever sent to RouterOS, so the content is always" +
+      " RouterOS script text regardless of the chosen extension; selecting `json` or `xml` will also" +
+      " cause the post-export file lookup to fail because RouterOS saves the file as `.rsc`. Use the" +
+      " `compact` boolean to omit default values, or `verbose` to include all parameters;" +
+      " `export_type` only controls where the `file=` argument is positioned in the command and" +
+      " does not independently drive compactness or verbosity. For a single subsection only use" +
+      " `export_section`. Returns file details of the created export file.",
     inputSchema: {
       name: z.string().optional(),
       file_format: z.enum(["rsc", "json", "xml"]).default("rsc"),
@@ -124,12 +146,15 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "export_section",
-    title: "Export Config Section",
+    title: "Export Configuration Section",
     annotations: READ,
     description:
-      "Exports a specific RouterOS configuration section to a file. " +
-      'section: RouterOS path without leading slash e.g. "ip address", "interface vlan", ' +
-      '"ip firewall filter", "ip firewall nat", "queue simple".',
+      "Exports one RouterOS subsection to a `.rsc` script file (`/<section> export file=<name>`)." +
+      " Use when you need only a partial config snapshot rather than the full device export." +
+      " `section` is the RouterOS command path without a leading slash —" +
+      ' e.g. "ip address", "interface vlan", "ip firewall filter", "ip firewall nat",' +
+      ' "queue simple". For the full device configuration use `create_export`; to apply the' +
+      " resulting file use `import_configuration`. Returns file details of the created `.rsc` file.",
     inputSchema: {
       section: z.string(),
       name: z.string().optional(),
@@ -166,10 +191,18 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "download_file",
-    title: "Download File",
+    title: "Download File as Base64",
     annotations: READ,
     description:
-      "Downloads a backup or export file from the MikroTik device as base64-encoded content.",
+      "Attempts to read a file from the device filesystem via `/file print file=<filename>` and" +
+      " returns the RouterOS API text response base64-encoded as `FILE_CONTENT_BASE64:<data>`." +
+      " NOTE: this is a simplified implementation. RouterOS has no file-content-read API over SSH;" +
+      " `/file print file=<name>` saves the directory-listing output to a file named `<name>` rather" +
+      " than streaming an existing file's bytes. The returned base64 payload is the RouterOS text" +
+      " response to that command — not the actual file contents. Binary `.backup` files cannot be" +
+      " reliably retrieved this way. Verifies file existence first" +
+      " (`/file print count-only where name=<filename>`); returns a not-found message if absent." +
+      " To list available files use `list_backups`; for file metadata only use `backup_info`.",
     inputSchema: {
       filename: z.string(),
       file_type: z.enum(["backup", "export"]).default("backup"),
@@ -198,9 +231,13 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "upload_file",
-    title: "Upload File",
+    title: "Upload File to Device (Simulated)",
     annotations: WRITE,
-    description: "Uploads a base64-encoded file to the MikroTik device (for restore operations).",
+    description:
+      "Accepts a base64-encoded file intended for the device filesystem. NOTE: the current handler" +
+      " only validates the base64 encoding and returns a simulated success — it does not transfer" +
+      " bytes to the device over SSH. Once a `.backup` file is present on the device apply it with" +
+      " `restore_backup`; for `.rsc` configuration scripts use `import_configuration`.",
     inputSchema: {
       filename: z.string(),
       content_base64: z.string(),
@@ -222,9 +259,15 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "restore_backup",
-    title: "Restore Backup",
+    title: "Restore System Backup",
     annotations: DANGEROUS,
-    description: "Restores a system backup on the MikroTik device; triggers a reboot.",
+    description:
+      "Loads a `.backup` file from the device filesystem and replaces the running configuration" +
+      " (`/system backup load`). DANGEROUS: the device REBOOTS immediately — all current config is" +
+      " replaced with the snapshot. Verifies file existence first (`/file print count-only`)." +
+      " Provide `password` if the backup was created with encryption. For applying a text `.rsc`" +
+      " script without rebooting use `import_configuration`; to create a new backup first use" +
+      " `create_backup`.",
     inputSchema: {
       filename: z.string(),
       password: z.string().optional(),
@@ -254,9 +297,15 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "import_configuration",
-    title: "Import Configuration",
+    title: "Import RouterOS Configuration Script",
     annotations: DANGEROUS,
-    description: "Imports and executes a RouterOS configuration script (.rsc file) on the device.",
+    description:
+      "Executes a `.rsc` script file already on the device filesystem (`/import file=<filename>`)." +
+      " Use to apply a configuration exported by `create_export` or `export_section`. DANGEROUS:" +
+      " the script's commands run immediately and can overwrite live configuration; unlike" +
+      " `restore_backup` no reboot is triggered. `run_after_reset=true` defers execution until" +
+      " after the next factory-reset; `verbose=true` logs each command as it runs. Returns the" +
+      " script execution output or a success message.",
     inputSchema: {
       filename: z.string(),
       run_after_reset: z.boolean().default(false),
@@ -288,9 +337,13 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "remove_file",
-    title: "Remove File",
+    title: "Remove File from Device",
     annotations: DANGEROUS,
-    description: "Removes a file from the MikroTik device filesystem.",
+    description:
+      "Permanently deletes a named file from the device filesystem (`/file remove <filename>`)." +
+      " DANGEROUS: deletion is immediate and irreversible — applies to any file type (`.backup`," +
+      " `.rsc`, logs, etc.). Verifies existence first via `/file print count-only`; returns" +
+      " success or a not-found message.",
     inputSchema: {
       filename: z.string(),
     },
@@ -312,9 +365,13 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "backup_info",
-    title: "Backup File Info",
+    title: "Get Backup File Details",
     annotations: READ,
-    description: "Gets detailed information about a backup file on the MikroTik device.",
+    description:
+      "Returns detailed metadata for a specific file on the device filesystem" +
+      " (`/file print detail where name=<filename>`). Shows size, creation time, type, and other" +
+      " file attributes. For scanning all backup files use `list_backups`; to retrieve the file" +
+      " contents use `download_file`.",
     inputSchema: {
       filename: z.string(),
     },

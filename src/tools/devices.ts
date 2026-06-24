@@ -14,11 +14,13 @@ import { listDevices, getConfig } from "../core/runtime";
 export const deviceTools: ToolModule = [
   defineTool({
     name: "list_mikrotik_devices",
-    title: "List Devices",
+    title: "List Configured MikroTik Devices",
     annotations: READ,
     description:
-      "Lists the configured MikroTik devices (name, host, description) and which is the default. " +
-      "Pass a device's name as the `device` argument on any other tool to target it. Secrets are never shown.",
+      "List all MikroTik devices registered in this server's configuration (server-side metadata — no RouterOS command is run, no SSH connection is opened). " +
+      "Use this to discover the exact device name strings required by the `device` argument on every other tool, especially when working across multiple routers (e.g. building a tunnel between two devices). " +
+      "Returns each device's name, username, host, port, auth method (key / password / none), optional description, and which entry is the default. " +
+      "Credentials and private-key material are never included in the output.",
     handler(_a, ctx) {
       ctx.info("Listing configured MikroTik devices");
       const { names, default: def } = listDevices();

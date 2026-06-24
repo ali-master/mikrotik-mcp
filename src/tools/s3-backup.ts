@@ -38,11 +38,18 @@ function fetchSucceeded(output: string): boolean {
 export const s3BackupTools: ToolModule = [
   defineTool({
     name: "s3_backup_status",
-    title: "S3 Backup Status",
+    title: "Check S3 Backup Configuration Status",
     annotations: READ,
     description:
-      "Reports whether optional S3 backup storage is configured and where " +
-      "backups will be stored.",
+      "Report whether S3 backup storage is enabled and show the configured " +
+      "target bucket/endpoint (MCP-side check only — no RouterOS command is " +
+      "executed). Use this to verify the S3 integration is active before " +
+      "attempting uploads or downloads; if disabled, the response includes the " +
+      "required environment variables / config block. " +
+      "For uploading a device file to S3 use upload_backup_to_s3; for listing " +
+      "stored objects use list_s3_backups. " +
+      "Returns 'ENABLED' with the target endpoint, or 'DISABLED' with setup " +
+      "instructions.",
     async handler(_a, ctx) {
       ctx.info("Checking S3 backup status");
       if (!isS3Configured()) return `S3 backup storage is DISABLED.\n\n${NOT_CONFIGURED}`;
@@ -52,18 +59,27 @@ export const s3BackupTools: ToolModule = [
 
   defineTool({
     name: "upload_backup_to_s3",
-    title: "Upload Backup to S3",
+    title: "Upload Device Backup File to S3",
     annotations: WRITE,
     description:
-      "Uploads a file from the device (e.g. a .backup or .rsc export) to the " +
-      "configured S3 bucket. The device streams it directly to S3 via a " +
-      "short-lived presigned URL.\n\n" +
+      "Upload a file from the RouterOS device filesystem to the configured " +
+      "S3-compatible bucket (`/tool fetch` with `http-method=put` via a " +
+      "server-side presigned PUT URL). Solves the problem of pushing `.backup` " +
+      "or `.rsc` export files from the router to cloud storage without routing " +
+      "bytes through this MCP process — the device streams directly to S3. " +
+      "First verifies the file exists on the device via `/file print count-only`; " +
+      "fails clearly if S3 is not configured. " +
+      "For downloading a stored object back to the device use " +
+      "download_backup_from_s3; for listing what is already in S3 use " +
+      "list_s3_backups; to check S3 is configured use s3_backup_status.\n\n" +
       "Notes:\n" +
-      "    filename: the file on the device, e.g. 'daily.backup'.\n" +
+      "    filename: the on-device filename, e.g. 'daily.backup'.\n" +
       "    key: optional S3 object key; defaults to '<prefix>/<device>/" +
-      "<device-datetime>-<filename>' so each upload is organised per router and " +
-      "stamped with the DEVICE's local date-time (Jalali calendar in Tehran, " +
-      "Gregorian elsewhere) — so repeat uploads version instead of overwriting.",
+      "<device-datetime>-<filename>' stamped with the DEVICE's local date-time " +
+      "(Jalali calendar in Tehran, Gregorian elsewhere) so repeat uploads " +
+      "version automatically instead of overwriting.\n" +
+      "    expires_in: presigned-URL lifetime in seconds (minimum 60).\n" +
+      "Returns the final S3 key and target endpoint on success.",
     inputSchema: {
       filename: z.string().describe("File on the device, e.g. 'daily.backup'"),
       key: z
@@ -118,16 +134,23 @@ export const s3BackupTools: ToolModule = [
 
   defineTool({
     name: "download_backup_from_s3",
-    title: "Download Backup from S3",
+    title: "Download S3 Backup File to Device",
     annotations: WRITE,
     description:
-      "Downloads an object from the configured S3 bucket onto the device " +
-      "filesystem (e.g. to later restore a backup). The device streams it " +
-      "directly from S3 via a short-lived presigned URL.\n\n" +
+      "Download an object from the configured S3 bucket onto the RouterOS " +
+      "device filesystem (`/tool fetch` via a server-side presigned GET URL). " +
+      "Use this to stage a previously uploaded backup or export onto the router " +
+      "before restoring it — bytes stream directly from S3 to the device without " +
+      "passing through this MCP process. " +
+      "For uploading a device file to S3 use upload_backup_to_s3; to find " +
+      "available object keys use list_s3_backups; to inspect a key's metadata " +
+      "before downloading use s3_backup_info.\n\n" +
       "Notes:\n" +
-      "    key: the S3 object key to download.\n" +
-      "    filename: optional device destination; defaults to the key's base " +
-      "name.",
+      "    key: the exact S3 object key to download (get it from list_s3_backups).\n" +
+      "    filename: optional device destination path; defaults to the key's " +
+      "basename.\n" +
+      "    expires_in: presigned-URL lifetime in seconds (minimum 60).\n" +
+      "Returns the S3 key and device filename on success.",
     inputSchema: {
       key: z.string().describe("S3 object key to download"),
       filename: z
@@ -165,12 +188,19 @@ export const s3BackupTools: ToolModule = [
 
   defineTool({
     name: "list_s3_backups",
-    title: "List S3 Backups",
+    title: "List S3 Backup Objects",
     annotations: READ,
     description:
-      "Lists objects in the configured S3 bucket. By default lists only the " +
-      "current device's backups (under '<prefix>/<device>/'); pass an explicit " +
-      "prefix to list elsewhere (e.g. '' for the whole bucket).",
+      "List objects in the configured S3 bucket (MCP-side `S3.list()` call — " +
+      "no RouterOS command is executed). Use this to discover available backup " +
+      "keys before downloading or deleting. By default scopes to this device's " +
+      "prefix (`<prefix>/<device>/`); pass an explicit `prefix` (including `''` " +
+      "for the entire bucket) to list backups for all devices or arbitrary paths. " +
+      "For metadata on a specific key use s3_backup_info; to download a key to " +
+      "the device use download_backup_from_s3; to delete a key use " +
+      "delete_s3_backup; to upload a new file use upload_backup_to_s3. " +
+      "Returns each object's key, size in bytes, and last-modified timestamp " +
+      "(up to `max_keys`, 1–1000); indicates if results are truncated.",
     inputSchema: {
       prefix: z
         .string()
@@ -208,11 +238,18 @@ export const s3BackupTools: ToolModule = [
 
   defineTool({
     name: "s3_backup_info",
-    title: "S3 Backup Info",
+    title: "Get S3 Backup Object Metadata",
     annotations: READ,
     description:
-      "Gets metadata (size, etag, last-modified, content type) for an object " +
-      "in the configured S3 bucket.",
+      "Retrieve metadata for a single S3 object (`S3.stat()` server-side — no " +
+      "RouterOS command is executed): size in bytes, content-type, ETag, and " +
+      "last-modified timestamp. Use this to verify an upload completed correctly " +
+      "or to inspect a backup before downloading it. " +
+      "To list all available keys first use list_s3_backups; to download the " +
+      "object to the device use download_backup_from_s3; to delete it use " +
+      "delete_s3_backup. " +
+      "`key` is the exact S3 object key as returned by list_s3_backups. " +
+      "Returns 'not found' if the key does not exist.",
     inputSchema: {
       key: z.string().describe("S3 object key"),
     },
@@ -238,9 +275,18 @@ export const s3BackupTools: ToolModule = [
 
   defineTool({
     name: "delete_s3_backup",
-    title: "Delete S3 Backup",
+    title: "Delete S3 Backup Object",
     annotations: DESTRUCTIVE,
-    description: "Deletes an object from the configured S3 bucket.",
+    description:
+      "Permanently delete a single object from the configured S3 bucket " +
+      "(`S3.delete()` server-side — no RouterOS command is executed). Use this " +
+      "to clean up old or superseded backup files from S3 storage; the operation " +
+      "is irreversible. " +
+      "To list available keys before deleting use list_s3_backups; to inspect " +
+      "an object's metadata first use s3_backup_info; to upload new backups use " +
+      "upload_backup_to_s3. " +
+      "`key` is the exact S3 object key as returned by list_s3_backups. " +
+      "Returns a 'not found' message if the key does not exist.",
     inputSchema: {
       key: z.string().describe("S3 object key to delete"),
     },

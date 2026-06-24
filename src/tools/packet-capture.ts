@@ -23,14 +23,17 @@ const MIRROR_TAG = "mcp-capture";
 export const packetCaptureTools: ToolModule = [
   defineTool({
     name: "start_packet_capture",
-    title: "Start Packet Capture",
+    title: "Start Packet Capture (TZSP Streaming)",
     annotations: WRITE,
     description:
-      "Starts a live packet capture: opens a TZSP receiver on this host and configures the device's " +
-      "`/tool sniffer` to stream mirrored packets to it. receiver_host is the IP THIS host has on the " +
-      "segment the device can reach (where TZSP is sent). Optional interface/protocol/port filters " +
-      "narrow what is mirrored. View packets live in the dashboard's Packet Capture panel or via " +
-      "packet_capture_status.",
+      "Opens a host-side TZSP receiver and configures the device's `/tool sniffer` (`/tool sniffer set` + `/tool sniffer start`) " +
+      "to stream mirrored packets to it — enables live capture of router traffic for protocol debugging or traffic inspection. " +
+      "Call this before `mirror_traffic_to_capture`, which adds per-flow `/ip firewall mangle action=sniff-tzsp` rules " +
+      "for surgical filtering of specific flows; `start_packet_capture` must be running first for those mirrors to deliver packets here. " +
+      "`receiver_host` must be the IP this host has on a segment the device can reach (the TZSP UDP destination). " +
+      "Optional `interface` sets `filter-interface`, `protocol` sets `filter-ip-protocol`, `port_filter` sets `filter-port`. " +
+      "View packets live in the dashboard Packet Capture panel or poll with `packet_capture_status`. " +
+      "Stop and tear down everything with `stop_packet_capture`.",
     inputSchema: {
       receiver_host: z
         .string()
@@ -79,13 +82,17 @@ export const packetCaptureTools: ToolModule = [
 
   defineTool({
     name: "mirror_traffic_to_capture",
-    title: "Mirror Traffic to Capture",
+    title: "Mirror Specific Traffic Flow to Capture",
     annotations: WRITE,
     description:
-      "Adds a surgical per-flow mirror: a firewall mangle `action=sniff-tzsp` rule that copies only " +
-      "matching packets to the capture receiver (the original traffic is untouched). Use after " +
-      "start_packet_capture to focus on one host/port/protocol. Rules are tagged for cleanup by " +
-      "stop_packet_capture.",
+      "Adds a per-flow packet mirror (`/ip firewall mangle add action=sniff-tzsp`) that copies only " +
+      "matching packets to the active TZSP capture receiver without affecting the original traffic. " +
+      "Use after `start_packet_capture` to focus on a specific host, port, or protocol — `start_packet_capture` " +
+      "must already be running; without it, packets have nowhere to go. For broad unfiltered capture " +
+      "without per-flow selection, use only `start_packet_capture` with its built-in interface/protocol/port filters. " +
+      "Accepts `chain` (forward/input/output/prerouting/postrouting, default forward), optional `src_address`, " +
+      "`dst_address`, `protocol`, and `dst_port` to match the desired flow. Rules are tagged `mcp-capture` " +
+      "so `stop_packet_capture` removes them all automatically. Returns confirmation of the chain and destination.",
     inputSchema: {
       receiver_host: z.string().describe("TZSP stream destination (this host's IP)."),
       port: z.number().int().min(1).max(65535).default(DEFAULT_TZSP_PORT),
@@ -115,11 +122,15 @@ export const packetCaptureTools: ToolModule = [
 
   defineTool({
     name: "packet_capture_status",
-    title: "Packet Capture Status",
+    title: "Get Packet Capture Status and Recent Packets",
     annotations: READ,
     description:
-      "Reports the live capture: whether the receiver is running, packet/byte totals, the protocol " +
-      "breakdown, top talkers, and the most recent decoded packets. Works without the dashboard.",
+      "Reads the current state of the in-process TZSP capture receiver — whether it is running, " +
+      "cumulative packet and byte totals, per-protocol breakdown, top talker IP addresses, and the " +
+      "most recently decoded packets (up to `limit`, default 40, max 500) with timestamps, byte lengths, and info strings. " +
+      "Does not query the device; reads only the local capture session started by `start_packet_capture`. " +
+      "Works headlessly without the dashboard. " +
+      "To start or stop the session use `start_packet_capture` or `stop_packet_capture`.",
     inputSchema: {
       limit: z.number().int().min(1).max(500).default(40).describe("Recent packets to include."),
     },
@@ -146,11 +157,16 @@ export const packetCaptureTools: ToolModule = [
 
   defineTool({
     name: "stop_packet_capture",
-    title: "Stop Packet Capture",
+    title: "Stop Packet Capture and Remove Mirror Rules",
     annotations: DESTRUCTIVE,
     description:
-      "Stops the device sniffer + streaming, removes any capture mirror rules, and closes the host " +
-      "receiver. Returns the final capture summary.",
+      "Tears down the entire capture session: stops the device sniffer (`/tool sniffer stop`), " +
+      "disables streaming (`/tool sniffer set streaming-enabled=no`), removes all per-flow mirror " +
+      "rules that were added by `mirror_traffic_to_capture` " +
+      '(`/ip firewall mangle remove [find action=sniff-tzsp and comment="mcp-capture"]`), ' +
+      "and closes the host-side TZSP receiver. " +
+      "Returns the final cumulative packet and byte totals from the session. " +
+      "To inspect the session without stopping it use `packet_capture_status`.",
     async handler(_a, ctx) {
       await executeMikrotikCommand("/tool sniffer stop", ctx);
       await executeMikrotikCommand("/tool sniffer set streaming-enabled=no", ctx);

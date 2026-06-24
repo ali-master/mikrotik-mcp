@@ -20,12 +20,17 @@ import { whereClause, isEmpty, looksLikeError, Cmd } from "../core/routeros";
 export const neighborTools: ToolModule = [
   defineTool({
     name: "list_neighbors",
-    title: "List Neighbors (MNDP)",
+    title: "List Discovered Neighbor Devices (MNDP/CDP/LLDP)",
     annotations: READ,
     description:
-      "Lists directly-attached devices discovered via MNDP/CDP/LLDP (`/ip neighbor`) — identity, " +
-      "MAC, IP, the local interface they were seen on, platform, board and version. This is the " +
-      "Layer-2 view of what is physically connected, including devices with no routable IP.",
+      "Lists directly-attached devices discovered via MNDP, CDP, and LLDP (`/ip neighbor`) — " +
+      "each entry shows identity, MAC address, IP address, the local interface it was seen on, " +
+      "platform, board name, and RouterOS version. Use this to build a Layer-2 topology view or " +
+      "to locate devices (including those with no routable IP yet) before initiating MAC-Telnet " +
+      "onboarding. Filterable by local interface, identity substring, IP address substring, or MAC " +
+      "address substring. Returns all matching neighbor cache entries; the cache is read-only and " +
+      "populated by the protocols — to control which interfaces and protocols participate use " +
+      "get_neighbor_discovery_settings or set_neighbor_discovery_settings.",
     inputSchema: {
       interface_filter: z.string().optional().describe("Match the local discovery interface."),
       identity_filter: z
@@ -61,8 +66,11 @@ export const neighborTools: ToolModule = [
     title: "Get Neighbor Discovery Settings",
     annotations: READ,
     description:
-      "Shows neighbor-discovery settings (`/ip neighbor discovery-settings`): which interface-list " +
-      "participates in discovery and which protocols (MNDP/CDP/LLDP) are enabled.",
+      "Reads the global neighbor-discovery configuration (`/ip neighbor discovery-settings print`) — " +
+      "the interface-list that participates in discovery, the tx/rx mode, and which protocols " +
+      "(MNDP, CDP, LLDP) are active. Use this to inspect discovery scope before changing it with " +
+      "set_neighbor_discovery_settings. Returns a single settings block; for the actual cache of " +
+      "discovered devices use list_neighbors.",
     inputSchema: {},
     async handler(_a, ctx) {
       ctx.info("Getting neighbor discovery settings");
@@ -78,9 +86,13 @@ export const neighborTools: ToolModule = [
     title: "Set Neighbor Discovery Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Configures neighbor discovery (`/ip neighbor discovery-settings set`): the interface-list to " +
-      "discover on, the discovery mode (tx/rx), and which protocols to speak. Controls which devices " +
-      "appear in the topology map.",
+      "Updates the global neighbor-discovery configuration (`/ip neighbor discovery-settings set`) — " +
+      "controls which interface-list participates (e.g. 'all', 'LAN', 'none'), the direction mode " +
+      "(tx-only, rx-only, tx-and-rx), the active protocols (comma-separated: 'mndp,cdp,lldp'), and " +
+      "the LLDP-MED network-policy VLAN. Use this to narrow or broaden which interfaces and protocols " +
+      "contribute entries to the neighbor cache. To inspect the current settings first use " +
+      "get_neighbor_discovery_settings; to view the resulting neighbor cache use list_neighbors. " +
+      "Returns the updated settings block.",
     inputSchema: {
       discover_interface_list: z
         .string()
