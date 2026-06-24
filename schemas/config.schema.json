@@ -226,6 +226,9 @@
     "readOnly": {
       "default": false,
       "type": "boolean"
+    },
+    "backupDir": {
+      "type": "string"
     }
   },
   "required": ["devices", "defaultDevice", "mcp", "dashboard", "readOnly"],

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_local_backup",
+  "type": "object",
+  "properties": {
+    "label": {
+      "description": "Optional label appended to the filename, e.g. \"pre-upgrade\".",
+      "type": "string"
+    },
+    "show_sensitive": {
+      "default": false,
+      "description": "Include secrets (keys/passwords) in the export. Default false.",
+      "type": "boolean"
+    }
+  },
+  "required": ["show_sensitive"],
+  "additionalProperties": false
+}

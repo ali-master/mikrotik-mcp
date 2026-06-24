@@ -27,6 +27,13 @@ export const DEFAULT_DASHBOARD_DB = join(homedir(), ".mikrotik-mcp", "events.db"
 export const DEFAULT_SNAPSHOT_DB = join(homedir(), ".mikrotik-mcp", "snapshots.db");
 
 /**
+ * Default local backup vault: `~/.mikrotik-mcp/backups/`. Holds `/export` `.rsc`
+ * config backups on the MCP server's own filesystem (NOT on the device, NOT S3),
+ * one file per backup. Override with `MIKROTIK_BACKUP_DIR`.
+ */
+export const DEFAULT_BACKUP_DIR = join(homedir(), ".mikrotik-mcp", "backups");
+
+/**
  * Where the dashboard's Config Studio writes when config did NOT come from a
  * `--config` file (e.g. it was assembled from env/flags). Sits beside the other
  * per-user state so a hand-started server can still be made file-editable.
@@ -169,6 +176,12 @@ export const MikrotikConfigSchema = z.object({
    * destructive tool from the surface entirely.
    */
   readOnly: z.boolean().default(false),
+  /**
+   * Directory for the local backup vault (`/export` `.rsc` files on the MCP host).
+   * Editable from the dashboard's Backups page and persisted here. Falls back to
+   * `~/.mikrotik-mcp/backups/` (the `MIKROTIK_BACKUP_DIR` env var overrides both).
+   */
+  backupDir: z.string().optional(),
 });
 export type MikrotikConfig = z.infer<typeof MikrotikConfigSchema>;
 

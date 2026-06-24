@@ -9,6 +9,7 @@ import type { ToolModule } from "../core/registry";
 import { addressListTools } from "./address-list";
 import { appViewTools } from "./app-views";
 import { backupTools } from "./backup";
+import { localBackupTools } from "./local-backup";
 import { s3BackupTools } from "./s3-backup";
 import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
@@ -765,6 +766,15 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Optional: ship device backups/exports to S3-compatible storage, organised per device (`/tool fetch` + Bun S3).",
     tools: s3BackupTools,
+  },
+  {
+    label: "Local Backups",
+    slug: "local-backup",
+    group: "System & Ops",
+    description:
+      "A local backup vault on the MCP server's own filesystem: create timestamped `/export` `.rsc` " +
+      "backups, list/read/rename/delete them, and restore one onto a device via Safe Mode.",
+    tools: localBackupTools,
   },
   {
     label: "Disk",

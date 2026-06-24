@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "restore_local_backup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Backup filename to restore (from list_local_backups)."
+    },
+    "confirm": {
+      "default": false,
+      "description": "false = apply, then roll back (dry-run). true = commit if still reachable.",
+      "type": "boolean"
+    }
+  },
+  "required": ["name", "confirm"],
+  "additionalProperties": false
+}

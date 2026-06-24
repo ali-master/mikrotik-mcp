@@ -1394,6 +1394,38 @@ pre.body.json .j-null {
   border-color: color-mix(in srgb, var(--mt-accent) 55%, var(--mt-border));
   color: var(--mt-accent);
 }
+.backup-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(60vw, 520px);
+}
+.backup-path > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.backup-path-input {
+  font: 11px var(--mt-mono);
+  color: var(--mt-text);
+  background: var(--mt-surface-2);
+  border: 1px solid color-mix(in srgb, var(--mt-accent) 45%, var(--mt-border));
+  border-radius: var(--mt-radius-sm);
+  padding: 5px 9px;
+  width: min(48vw, 380px);
+}
+.linkish {
+  font: inherit;
+  color: var(--mt-accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.linkish:hover {
+  text-decoration: underline;
+}
 .cfg-msg {
   font: 12px var(--mt-mono);
   color: var(--mt-text-dim);

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rename_local_backup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Current backup filename."
+    },
+    "new_name": {
+      "type": "string",
+      "description": "Desired filename (an `.rsc` suffix is added if missing)."
+    }
+  },
+  "required": ["name", "new_name"],
+  "additionalProperties": false
+}

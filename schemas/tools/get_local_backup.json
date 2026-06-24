@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_local_backup",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Backup filename, e.g. 'edge_2026-06-25_1430.rsc'."
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}

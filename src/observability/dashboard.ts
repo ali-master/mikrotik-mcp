@@ -19,7 +19,7 @@
  * route (page, API and WebSocket via `?token=`).
  */
 import { readFileSync } from "node:fs";
-import { networkInterfaces } from "node:os";
+import { homedir, networkInterfaces } from "node:os";
 import { join } from "node:path";
 import { serve } from "bun";
 import type { Server, ServerWebSocket } from "bun";
@@ -31,14 +31,25 @@ import {
   getConfigSource,
 } from "../config";
 import type { DashboardConfig } from "../config";
-import { atomicWrite, mergeSecrets } from "../config-write";
+import { atomicWrite, mergeSecrets, serializeConfig } from "../config-write";
 import { buildChangePlan, renderPlan, splitCommands } from "../core/change-plan";
 import { diffLines } from "../core/diff";
 import { getS3Client, isS3Configured, presignExpiresIn, s3Target } from "../core/s3";
+import { createLocalBackup } from "../backups/create";
+import { restoreLocalBackup } from "../backups/restore";
+import {
+  backupDir,
+  deleteBackup,
+  listBackups,
+  readBackup,
+  renameBackup,
+  writeBackup,
+} from "../backups/vault";
+import { createContext } from "../core/context";
 import { normalizeExport } from "../snapshots/format";
 import { openSnapshotStore } from "../snapshots/store";
 import type { SnapshotStore } from "../snapshots/store";
-import { getConfig, setConfig } from "../core/runtime";
+import { getConfig, resolveDeviceName, setConfig } from "../core/runtime";
 import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
 import { createConfigAdmin, validateConfig } from "./config-admin";
@@ -498,6 +509,110 @@ async function featureRoutes(req: Request, url: URL): Promise<Response | null> {
     } catch (e) {
       return json({ error: e instanceof Error ? e.message : String(e) }, 502);
     }
+  }
+
+  // ── Local backup vault (create on device side via tools; here: read/manage) ─
+  if (p === "/api/backups" && req.method === "GET") {
+    return json({
+      dir: backupDir(),
+      devices: Object.keys(getConfig().devices),
+      backups: listBackups(),
+    });
+  }
+  if (p === "/api/backups/dir" && req.method === "POST") {
+    const b = (await readJson(req)) as { dir?: string };
+    const raw = b?.dir?.trim();
+    if (!raw) return json({ error: "dir required" }, 400);
+    // Expand a leading ~ so users can type `~/backups` in the dashboard.
+    const dir = raw === "~" || raw.startsWith("~/") ? join(homedir(), raw.slice(1)) : raw;
+    const next = { ...getConfig(), backupDir: dir };
+    setConfig(next);
+    // Persist to the config file so the new path survives a restart. If the
+    // write fails (read-only fs, no config file), the change still applies live
+    // for this process — report that it wasn't persisted rather than failing.
+    try {
+      atomicWrite(getConfigSource().path, serializeConfig(next));
+    } catch (e) {
+      return json({
+        ok: true,
+        dir: backupDir(),
+        persisted: false,
+        warning: `applied live but not saved: ${e instanceof Error ? e.message : String(e)}`,
+      });
+    }
+    return json({ ok: true, dir: backupDir(), persisted: true });
+  }
+  if (p === "/api/backups/get" && req.method === "GET") {
+    const name = url.searchParams.get("name");
+    if (!name) return json({ error: "name required" }, 400);
+    try {
+      return json({ name, content: readBackup(name) });
+    } catch {
+      return json({ error: "not found" }, 404);
+    }
+  }
+  if (p === "/api/backups/raw" && req.method === "GET") {
+    const name = url.searchParams.get("name");
+    if (!name) return new Response("name required", { status: 400 });
+    try {
+      return new Response(readBackup(name), {
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "content-disposition": `attachment; filename="${name.replace(/[^A-Za-z0-9._-]/g, "_")}"`,
+        },
+      });
+    } catch {
+      return new Response("not found", { status: 404 });
+    }
+  }
+  if (p === "/api/backups/upload" && req.method === "POST") {
+    const b = (await readJson(req)) as { name?: string; content?: string };
+    if (!b?.name || typeof b.content !== "string") {
+      return json({ error: "name and content are required" }, 400);
+    }
+    try {
+      const safe = b.name.endsWith(".rsc") ? b.name : `${b.name}.rsc`;
+      return json({ ok: true, name: writeBackup(safe, b.content) });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : String(e) }, 400);
+    }
+  }
+  if (p === "/api/backups/rename" && req.method === "POST") {
+    const b = (await readJson(req)) as { name?: string; new_name?: string };
+    if (!b?.name || !b?.new_name) return json({ error: "name and new_name are required" }, 400);
+    try {
+      return json({ ok: true, name: renameBackup(b.name, b.new_name) });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : String(e) }, 400);
+    }
+  }
+  if (p === "/api/backups/delete" && req.method === "POST") {
+    const b = (await readJson(req)) as { name?: string };
+    if (!b?.name) return json({ error: "name required" }, 400);
+    try {
+      return deleteBackup(b.name) ? json({ ok: true }) : json({ error: "not found" }, 404);
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : String(e) }, 400);
+    }
+  }
+  if (p === "/api/backups/restore" && req.method === "POST") {
+    const b = (await readJson(req)) as { name?: string; device?: string; confirm?: boolean };
+    if (!b?.name) return json({ error: "name required" }, 400);
+    const device = resolveDeviceName(b.device);
+    return json(await restoreLocalBackup(device, b.name, b.confirm === true));
+  }
+  if (p === "/api/backups/create" && req.method === "POST") {
+    const b = (await readJson(req)) as {
+      device?: string;
+      label?: string;
+      show_sensitive?: boolean;
+    };
+    const ctx = createContext(undefined, b?.device);
+    const r = await createLocalBackup(ctx, {
+      label: b?.label,
+      showSensitive: b?.show_sensitive === true,
+    });
+    return r.ok ? json(r) : json({ error: r.error ?? "export failed" }, 502);
   }
 
   return null;
