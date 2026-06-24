@@ -32,6 +32,7 @@ import {
 } from "../config";
 import type { DashboardConfig } from "../config";
 import { atomicWrite, mergeSecrets } from "../config-write";
+import { buildChangePlan, renderPlan, splitCommands } from "../core/change-plan";
 import { diffLines } from "../core/diff";
 import { normalizeExport } from "../snapshots/format";
 import { openSnapshotStore } from "../snapshots/store";
@@ -439,6 +440,18 @@ async function featureRoutes(req: Request, url: URL): Promise<Response | null> {
       summary: diff.summary,
       unified: diff.unified,
     });
+  }
+
+  // ── Change plan (dry-run; pure, no device I/O) ────────────────────────────
+  if (p === "/api/plan" && req.method === "POST") {
+    const b = (await readJson(req)) as { commands?: string[]; script?: string };
+    const commands = [
+      ...(b?.commands ?? []).map((c) => c.trim()).filter(Boolean),
+      ...(b?.script ? splitCommands(b.script) : []),
+    ];
+    if (commands.length === 0) return json({ error: "no commands provided" }, 400);
+    const plan = buildChangePlan(commands);
+    return json({ plan, text: renderPlan(plan) });
   }
 
   return null;
