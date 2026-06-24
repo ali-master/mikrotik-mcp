@@ -2844,14 +2844,83 @@ function BackupsView(): ReactNode {
 }
 
 // ── detail drawer ────────────────────────────────────────────────────────────
+/** A clipboard glyph for icon-only copy affordances. */
+function CopyIcon(): ReactNode {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+/**
+ * Copy-to-clipboard button with an inline "Copied!" confirmation tooltip. Pass
+ * `icon` for an icon-only affordance (e.g. next to a title); otherwise a text
+ * label is shown. The tooltip auto-dismisses after a moment.
+ */
+function CopyButton({
+  text,
+  label = "Copy",
+  className = "btn",
+  icon = false,
+  title,
+}: {
+  text: string;
+  label?: ReactNode;
+  className?: string;
+  icon?: boolean;
+  title?: string;
+}): ReactNode {
+  const [copied, setCopied] = useState(false);
+  const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (tRef.current && clearTimeout(tRef.current)), []);
+  const onClick = (): void => {
+    void navigator.clipboard?.writeText(text).then(
+      () => {
+        setCopied(true);
+        if (tRef.current) clearTimeout(tRef.current);
+        tRef.current = setTimeout(() => setCopied(false), 1400);
+      },
+      () => {},
+    );
+  };
+  return (
+    <button
+      type="button"
+      className={`copybtn ${className}${icon ? " copybtn--icon" : ""}${copied ? " is-copied" : ""}`}
+      onClick={onClick}
+      title={title ?? "Copy to clipboard"}
+      aria-label={title ?? "Copy to clipboard"}
+    >
+      {icon ? <CopyIcon /> : label}
+      <span className="copybtn__tip" role="status" aria-live="polite">
+        Copied!
+      </span>
+    </button>
+  );
+}
+
 function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => void }): ReactNode {
-  const copy = (text: string): void => void navigator.clipboard?.writeText(text).catch(() => {});
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="sheet">
         <div className="sheet__hd">
           <span className={`risk risk-${event.risk}`}>{event.risk}</span>
-          <h3>{event.tool}</h3>
+          <h3 className="sheet__tool">
+            {event.tool}
+            <CopyButton text={event.tool} className="iconbtn" icon title="Copy tool name" />
+          </h3>
           <span style={{ flex: 1 }} />
           <button className="btn" onClick={onClose}>
             ✕ Close
@@ -2897,9 +2966,7 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
             INPUT
           </h2>
           <span style={{ flex: 1 }} />
-          <button className="btn" onClick={() => copy(event.input)}>
-            Copy
-          </button>
+          <CopyButton text={event.input} title="Copy input JSON" />
         </div>
         {event.input ? <JsonView value={event.input} /> : <pre className="body">—</pre>}
         <div className="sheet__hd">
@@ -2907,9 +2974,7 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
             OUTPUT
           </h2>
           <span style={{ flex: 1 }} />
-          <button className="btn" onClick={() => copy(event.output)}>
-            Copy
-          </button>
+          <CopyButton text={event.output} title="Copy output" />
         </div>
         <pre className="body">{event.output || "—"}</pre>
       </div>

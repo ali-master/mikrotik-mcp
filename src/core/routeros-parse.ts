@@ -28,6 +28,110 @@ export function parseKeyValues(text: string): Record<string, string> {
   return out;
 }
 
+/** Parse a RouterOS size string (`256.0MiB`, `1.2 GiB`, `12345`, `1280KiB`) to bytes. */
+export function parseSize(s: string | undefined): number | undefined {
+  if (!s) return undefined;
+  const m = s.trim().match(/^([\d.]+)\s*([KMGT]i?B|B)?$/i);
+  if (!m) return undefined;
+  const val = Number.parseFloat(m[1] as string);
+  if (!Number.isFinite(val)) return undefined;
+  const mult: Record<string, number> = {
+    B: 1,
+    KIB: 1024,
+    MIB: 1024 ** 2,
+    GIB: 1024 ** 3,
+    TIB: 1024 ** 4,
+    KB: 1e3,
+    MB: 1e6,
+    GB: 1e9,
+    TB: 1e12,
+  };
+  return val * (mult[(m[2] ?? "B").toUpperCase()] ?? 1);
+}
+
+/** Parse a RouterOS percentage string (`5%`, `0`, `12 %`) to a number 0–100. */
+export function parsePercent(s: string | undefined): number | undefined {
+  if (!s) return undefined;
+  const m = s.trim().match(/^([\d.]+)\s*%?$/);
+  if (!m) return undefined;
+  const v = Number.parseFloat(m[1] as string);
+  return Number.isFinite(v) ? v : undefined;
+}
+
+/** Used percentage (0–100) from a total and a free amount; undefined if unknown. */
+export function usedPct(total?: number, free?: number): number | undefined {
+  if (total == null || free == null || total <= 0) return undefined;
+  return Math.max(0, Math.min(100, ((total - free) / total) * 100));
+}
+
+/** Structured system metrics extracted from `/system resource print`. */
+export interface SystemResource {
+  version?: string;
+  boardName?: string;
+  architecture?: string;
+  cpuCount?: number;
+  /** Current CPU load, percent 0–100. */
+  cpuLoad?: number;
+  /** Free / total RAM, bytes. */
+  freeMemory?: number;
+  totalMemory?: number;
+  /** Used RAM, percent 0–100. */
+  memUsedPct?: number;
+  /** Free / total disk, bytes. */
+  freeHdd?: number;
+  totalHdd?: number;
+  /** Used disk, percent 0–100. */
+  hddUsedPct?: number;
+  uptime?: string;
+}
+
+/**
+ * Parse `/system resource print` into structured, typed metrics.
+ *
+ * Robust to the real-world variations of that output across RouterOS v6/v7 and
+ * transports (SSH exec vs the MAC-Telnet console): leading key alignment, one or
+ * many spaces after the colon, sizes in MiB/GiB/KiB or bare bytes, and a
+ * `cpu-load` reported with or without a `%`. Any field that is absent or
+ * unparseable is simply left `undefined` — the caller decides how to render a
+ * partial reading.
+ *
+ * Returns `null` when the text yields NO recognizable metric at all (e.g. an
+ * empty response or an error string), so the caller can distinguish "device
+ * reported nothing usable" from "device reported some zeros".
+ */
+export function parseSystemResource(text: string): SystemResource | null {
+  const r = parseKeyValues(text);
+  const totalMemory = parseSize(r["total-memory"]);
+  const freeMemory = parseSize(r["free-memory"]);
+  const totalHdd = parseSize(r["total-hdd-space"]);
+  const freeHdd = parseSize(r["free-hdd-space"]);
+  const cpuLoad = parsePercent(r["cpu-load"]);
+  const cpuCount = Number.parseInt(r["cpu-count"] ?? "", 10);
+  const out: SystemResource = {
+    version: r.version || undefined,
+    boardName: r["board-name"] || undefined,
+    architecture: r["architecture-name"] || undefined,
+    cpuCount: Number.isFinite(cpuCount) ? cpuCount : undefined,
+    cpuLoad,
+    freeMemory,
+    totalMemory,
+    memUsedPct: usedPct(totalMemory, freeMemory),
+    freeHdd,
+    totalHdd,
+    hddUsedPct: usedPct(totalHdd, freeHdd),
+    uptime: r.uptime || undefined,
+  };
+  // If not a single recognizable metric came through, the input wasn't a usable
+  // resource dump — signal that rather than returning an all-undefined object.
+  const gotMetric =
+    out.cpuLoad != null ||
+    out.totalMemory != null ||
+    out.totalHdd != null ||
+    out.version != null ||
+    out.uptime != null;
+  return gotMetric ? out : null;
+}
+
 /**
  * Parse a RouterOS `Flags:` legend line into a `{ letter: meaning }` map.
  *

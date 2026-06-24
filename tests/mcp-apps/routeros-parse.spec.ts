@@ -5,7 +5,10 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   parseKeyValues,
   parseLeadingNumber,
+  parseSize,
   parseSizeToBytes,
+  parseSystemResource,
+  parsePercent,
   parseFlagLegend,
   parseRecords,
   buildRecordsView,
@@ -216,5 +219,57 @@ describe("buildRecordsView", () => {
     const view = buildRecordsView("get_interface", "Get Interface", "Interface 'x' not found.", at);
     expect(view.rows).toEqual([]);
     expect(view.raw).toBe("Interface 'x' not found.");
+  });
+});
+
+describe("parseSize / parsePercent", () => {
+  it("parses RouterOS sizes with binary/SI units and bare bytes", () => {
+    expect(parseSize("256.0MiB")).toBe(256 * 1024 ** 2);
+    expect(parseSize("1.0GiB")).toBe(1024 ** 3);
+    expect(parseSize("1280KiB")).toBe(1280 * 1024);
+    expect(parseSize("16252928")).toBe(16252928); // bare bytes
+    expect(parseSize("188.5 MiB")).toBe(188.5 * 1024 ** 2); // space before unit
+    expect(parseSize(undefined)).toBeUndefined();
+  });
+  it("parses percentages with or without a sign", () => {
+    expect(parsePercent("0%")).toBe(0);
+    expect(parsePercent("12")).toBe(12);
+    expect(parsePercent("7 %")).toBe(7);
+    expect(parsePercent(undefined)).toBeUndefined();
+  });
+});
+
+describe("parseSystemResource", () => {
+  it("extracts cpu/memory/disk from a real v7 `/system resource print`", () => {
+    const text = [
+      "                   uptime: 2d3h4m5s",
+      "                  version: 7.15.3 (stable)",
+      "              free-memory: 184.6MiB",
+      "             total-memory: 256.0MiB",
+      "                cpu-count: 4",
+      "                 cpu-load: 12%",
+      "           free-hdd-space: 1167.0MiB",
+      "          total-hdd-space: 1280.0MiB",
+      "        architecture-name: x86_64",
+      "               board-name: CHR",
+    ].join("\n");
+    const r = parseSystemResource(text);
+    expect(r).not.toBeNull();
+    expect(r?.cpuLoad).toBe(12);
+    expect(r?.cpuCount).toBe(4);
+    expect(r?.totalMemory).toBe(256 * 1024 ** 2);
+    expect(Math.round(r?.memUsedPct ?? -1)).toBe(28); // (256-184.6)/256
+    expect(Math.round(r?.hddUsedPct ?? -1)).toBe(9); // (1280-1167)/1280
+    expect(r?.version).toBe("7.15.3 (stable)");
+    expect(r?.boardName).toBe("CHR");
+  });
+  it("handles an idle device reporting cpu-load 0% (a real 0, not missing)", () => {
+    const r = parseSystemResource("cpu-load: 0%\nfree-memory: 100MiB\ntotal-memory: 256MiB");
+    expect(r?.cpuLoad).toBe(0);
+    expect(r?.memUsedPct).toBeGreaterThan(0);
+  });
+  it("returns null when the output carries no usable metric (empty/error)", () => {
+    expect(parseSystemResource("")).toBeNull();
+    expect(parseSystemResource("bad command name (line 1 column 9)")).toBeNull();
   });
 });

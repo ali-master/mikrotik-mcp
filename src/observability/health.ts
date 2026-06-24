@@ -11,10 +11,14 @@
  */
 import type { DeviceConfig } from "../config";
 import { getConfig } from "../core/runtime";
-import { parseKeyValues } from "../core/routeros-parse";
+import { parseKeyValues, parseSystemResource } from "../core/routeros-parse";
 import { createDeviceClient } from "../core/transport";
+import { logger } from "../logger";
 import { parseNeighbors } from "./topology";
 import type { Neighbor } from "./topology";
+
+/** Log tag for health-probe diagnostics. */
+const LOG_TAG = "mikrotik-mcp";
 
 export interface DeviceStatus {
   /** true = reachable, false = unreachable, null = not probed yet. */
@@ -96,39 +100,6 @@ function pushHistory(name: string, sample: MetricSample): void {
   histories.set(name, arr);
 }
 
-/** Parse a RouterOS size string (`256.0MiB`, `1.2GiB`, `12345`) to bytes. */
-function parseSize(s: string | undefined): number | undefined {
-  if (!s) return undefined;
-  const m = s.trim().match(/^([\d.]+)\s*([KMGT]i?B|B)?$/i);
-  if (!m) return undefined;
-  const val = Number.parseFloat(m[1] as string);
-  if (!Number.isFinite(val)) return undefined;
-  const mult: Record<string, number> = {
-    B: 1,
-    KIB: 1024,
-    MIB: 1024 ** 2,
-    GIB: 1024 ** 3,
-    TIB: 1024 ** 4,
-    KB: 1e3,
-    MB: 1e6,
-    GB: 1e9,
-    TB: 1e12,
-  };
-  return val * (mult[(m[2] ?? "B").toUpperCase()] ?? 1);
-}
-
-/** Parse a RouterOS percentage string (`5%`, `0`) to a number 0–100. */
-function parsePercent(s: string | undefined): number | undefined {
-  if (!s) return undefined;
-  const m = s.trim().match(/^([\d.]+)\s*%?$/);
-  return m ? Number.parseFloat(m[1] as string) : undefined;
-}
-
-function usedPct(total?: number, free?: number): number | undefined {
-  if (total == null || free == null || total <= 0) return undefined;
-  return Math.max(0, Math.min(100, ((total - free) / total) * 100));
-}
-
 /** Probe one device once and cache the result. */
 export async function probeDevice(name: string, dc: DeviceConfig): Promise<DeviceStatus> {
   // MAC-Telnet devices ARE probed (so CPU/memory/disk health is collected for
@@ -155,44 +126,58 @@ export async function probeDevice(name: string, dc: DeviceConfig): Promise<Devic
         error: client.lastError ?? "connection failed",
       };
     } else {
-      const identity = parseKeyValues(await client.run("/system identity print")).name;
-      // One `/system resource print` yields version AND the live system metrics
-      // (cpu / memory / disk / uptime) — no extra round-trips beyond what the
-      // reachability probe already did.
-      const r = parseKeyValues(await client.run("/system resource print"));
+      // Fetch the system resource dump FIRST — it carries the metrics this card
+      // exists to show (cpu / memory / disk / version / uptime). Doing it as the
+      // primary command (rather than after identity) means a fragile transport
+      // that only reliably serves the first request per connection still yields
+      // the health data; identity is a nice-to-have fetched best-effort below.
+      const rawResource = await client.run("/system resource print");
       const checkedAt = Date.now();
       const latencyMs = checkedAt - t0;
-      const totalMemory = parseSize(r["total-memory"]);
-      const freeMemory = parseSize(r["free-memory"]);
-      const totalHdd = parseSize(r["total-hdd-space"]);
-      const freeHdd = parseSize(r["free-hdd-space"]);
-      const cpuLoad = parsePercent(r["cpu-load"]);
-      const memUsedPct = usedPct(totalMemory, freeMemory);
-      const hddUsedPct = usedPct(totalHdd, freeHdd);
-      const cpuCount = Number.parseInt(r["cpu-count"] ?? "", 10);
+      const sys = parseSystemResource(rawResource);
+
+      if (!sys) {
+        // Reachable, but the resource dump came back empty/unparseable. Surface
+        // the raw output (trimmed) once per probe so this is diagnosable instead
+        // of silently showing blank gauges forever.
+        logger.warn(
+          `[${LOG_TAG}] '${name}' is reachable but '/system resource print' returned no ` +
+            `parseable metrics. Raw output: ${JSON.stringify(rawResource.slice(0, 200))}`,
+        );
+      }
+
+      // Identity is secondary: never let it fail the probe or zero the metrics.
+      let identity: string | undefined;
+      try {
+        identity = parseKeyValues(await client.run("/system identity print")).name || undefined;
+      } catch {
+        /* identity is optional — the device name from config is the fallback */
+      }
+
       status = {
         reachable: true,
         checkedAt,
         latencyMs,
         identity,
-        version: r.version,
-        boardName: r["board-name"] || undefined,
-        architecture: r["architecture-name"] || undefined,
-        cpuCount: Number.isFinite(cpuCount) ? cpuCount : undefined,
-        cpuLoad,
-        freeMemory,
-        totalMemory,
-        memUsedPct,
-        freeHdd,
-        totalHdd,
-        hddUsedPct,
-        uptime: r.uptime || undefined,
+        version: sys?.version,
+        boardName: sys?.boardName,
+        architecture: sys?.architecture,
+        cpuCount: sys?.cpuCount,
+        cpuLoad: sys?.cpuLoad,
+        freeMemory: sys?.freeMemory,
+        totalMemory: sys?.totalMemory,
+        memUsedPct: sys?.memUsedPct,
+        freeHdd: sys?.freeHdd,
+        totalHdd: sys?.totalHdd,
+        hddUsedPct: sys?.hddUsedPct,
+        uptime: sys?.uptime,
+        error: sys ? undefined : "reachable, but no system metrics returned",
       };
       pushHistory(name, {
         ts: checkedAt,
-        cpuLoad: cpuLoad ?? null,
-        memUsedPct: memUsedPct ?? null,
-        hddUsedPct: hddUsedPct ?? null,
+        cpuLoad: sys?.cpuLoad ?? null,
+        memUsedPct: sys?.memUsedPct ?? null,
+        hddUsedPct: sys?.hddUsedPct ?? null,
         latencyMs,
       });
       // Reuse the open connection to read this device's MNDP/CDP/LLDP neighbour
