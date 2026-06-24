@@ -19,6 +19,7 @@ interface AddRouteArgs {
   distance?: number;
   scope?: number;
   target_scope?: number;
+  routing_table?: string;
   routing_mark?: string;
   comment?: string;
   disabled?: boolean;
@@ -39,7 +40,9 @@ async function addRoute(
     .opt("distance", a.distance)
     .opt("scope", a.scope)
     .opt("target-scope", a.target_scope)
-    .opt("routing-mark", a.routing_mark)
+    // RouterOS v7 renamed the route's `routing-mark` property to `routing-table`
+    // (v6's name is accepted here as a deprecated alias for back-compat).
+    .opt("routing-table", a.routing_table ?? a.routing_mark)
     .opt("comment", a.comment)
     .flag("disabled", a.disabled)
     .opt("vrf-interface", a.vrf_interface)
@@ -93,8 +96,9 @@ export const routeTools: ToolModule = [
       "non-default unicast next-hop (host, subnet, or summarized prefix). " +
       "For the 0.0.0.0/0 default gateway use add_default_route; for null/drop routes use " +
       "add_blackhole_route; for IPv6 use add_ipv6_route. " +
-      "`distance` sets priority (1–255, lower wins); `routing_mark` assigns the route to a " +
-      'policy-routing table; `check_gateway` ("ping" or "arp") enables active gateway monitoring. ' +
+      "`distance` sets priority (1–255, lower wins); `routing_table` assigns the route to a " +
+      'policy-routing table (must already exist — see add_routing_table); `check_gateway` ("ping" ' +
+      'or "arp") enables active gateway monitoring. ' +
       "Returns the created route's detail including its `.id`.",
     inputSchema: {
       dst_address: z.string().describe('CIDR e.g. "0.0.0.0/0", "192.168.1.0/24"'),
@@ -102,7 +106,14 @@ export const routeTools: ToolModule = [
       distance: z.number().int().optional().describe("1-255 (lower = higher priority)"),
       scope: z.number().int().optional(),
       target_scope: z.number().int().optional(),
-      routing_mark: z.string().optional(),
+      routing_table: z
+        .string()
+        .optional()
+        .describe('Policy-routing table name, e.g. "main" or a custom table (RouterOS v7)'),
+      routing_mark: z
+        .string()
+        .optional()
+        .describe("Deprecated alias for routing_table (RouterOS v6 name)"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       vrf_interface: z.string().optional(),
@@ -121,7 +132,7 @@ export const routeTools: ToolModule = [
     description:
       "Lists IPv4 routes from `/ip route` with optional filters — the primary tool for inspecting " +
       "what routes the router knows. `dst_filter` and `gateway_filter` do substring matching; " +
-      "`routing_mark_filter` and `distance_filter` do exact matching; " +
+      "`routing_table_filter` and `distance_filter` do exact matching; " +
       "`active_only`/`disabled_only`/`dynamic_only`/`static_only` are boolean flags. " +
       "For a table-scoped view of active routes use get_routing_table; for counts and summary stats " +
       "use get_route_statistics; for IPv6 use list_ipv6_routes. " +
@@ -129,7 +140,14 @@ export const routeTools: ToolModule = [
     inputSchema: {
       dst_filter: z.string().optional(),
       gateway_filter: z.string().optional(),
-      routing_mark_filter: z.string().optional(),
+      routing_table_filter: z
+        .string()
+        .optional()
+        .describe("Exact policy-routing table name (RouterOS v7)"),
+      routing_mark_filter: z
+        .string()
+        .optional()
+        .describe("Deprecated alias for routing_table_filter"),
       distance_filter: z.number().int().optional(),
       active_only: z.boolean().default(false),
       disabled_only: z.boolean().default(false),
@@ -141,7 +159,8 @@ export const routeTools: ToolModule = [
       const filters: string[] = [];
       if (a.dst_filter) filters.push(`dst-address~"${a.dst_filter}"`);
       if (a.gateway_filter) filters.push(`gateway~"${a.gateway_filter}"`);
-      if (a.routing_mark_filter) filters.push(`routing-mark="${a.routing_mark_filter}"`);
+      const tableFilter = a.routing_table_filter ?? a.routing_mark_filter;
+      if (tableFilter) filters.push(`routing-table="${tableFilter}"`);
       if (a.distance_filter !== undefined) filters.push(`distance=${a.distance_filter}`);
       if (a.active_only) filters.push("active=yes");
       if (a.disabled_only) filters.push("disabled=yes");
@@ -184,9 +203,9 @@ export const routeTools: ToolModule = [
     annotations: WRITE_IDEMPOTENT,
     description:
       "Modifies an existing IPv4 static route (`/ip route set`) — change its gateway, dst-address, " +
-      "distance, scope, routing-mark, VRF interface, preferred-source, or gateway check method. " +
+      "distance, scope, routing-table, VRF interface, preferred-source, or gateway check method. " +
       "`route_id` is the `*N` `.id` from list_routes. " +
-      'Pass an empty string ("") for `routing_mark`, `vrf_interface`, or `pref_src` to clear those fields. ' +
+      'Pass an empty string ("") for `routing_table`, `vrf_interface`, or `pref_src` to clear those fields. ' +
       "For toggling active state without editing attributes use enable_route / disable_route. " +
       "Returns the updated route detail.",
     inputSchema: {
@@ -196,7 +215,14 @@ export const routeTools: ToolModule = [
       distance: z.number().int().optional().describe("1-255"),
       scope: z.number().int().optional(),
       target_scope: z.number().int().optional(),
-      routing_mark: z.string().optional(),
+      routing_table: z
+        .string()
+        .optional()
+        .describe('Policy-routing table name (RouterOS v7); "" clears it'),
+      routing_mark: z
+        .string()
+        .optional()
+        .describe("Deprecated alias for routing_table (RouterOS v6 name)"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
       vrf_interface: z.string().optional(),
@@ -212,10 +238,10 @@ export const routeTools: ToolModule = [
       if (a.distance !== undefined) cmd.set("distance", a.distance);
       if (a.scope !== undefined) cmd.set("scope", a.scope);
       if (a.target_scope !== undefined) cmd.set("target-scope", a.target_scope);
-      if (a.routing_mark !== undefined) {
-        cmd.raw(
-          a.routing_mark === "" ? "!routing-mark" : `routing-mark=${quoteValue(a.routing_mark)}`,
-        );
+      // v7 property is `routing-table`; `routing_mark` is the v6-named alias.
+      const table = a.routing_table ?? a.routing_mark;
+      if (table !== undefined) {
+        cmd.raw(table === "" ? "!routing-table" : `routing-table=${quoteValue(table)}`);
       }
       if (a.comment !== undefined) cmd.raw(`comment=${quoteValue(a.comment)}`);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);

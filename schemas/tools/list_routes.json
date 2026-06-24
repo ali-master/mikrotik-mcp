@@ -9,7 +9,12 @@
     "gateway_filter": {
       "type": "string"
     },
+    "routing_table_filter": {
+      "description": "Exact policy-routing table name (RouterOS v7)",
+      "type": "string"
+    },
     "routing_mark_filter": {
+      "description": "Deprecated alias for routing_table_filter",
       "type": "string"
     },
     "distance_filter": {

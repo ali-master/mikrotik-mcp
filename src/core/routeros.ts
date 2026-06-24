@@ -134,10 +134,16 @@ export function looksLikeError(result: string): boolean {
 }
 
 /**
- * True when RouterOS rejected the command word itself — i.e. the command path
+ * True when RouterOS rejected the command *word* itself — i.e. the command path
  * does not exist on this RouterOS version (e.g. `/ip route cache`, removed in
  * v7) or was mistyped. Distinct from a value-level `failure:`; lets a tool give
  * a version-aware message instead of surfacing a raw parser error.
+ *
+ * Note: this deliberately does NOT match "expected end of command". That error
+ * means the parser *recognized* the command path but found unexpected trailing
+ * tokens — an argument-level syntax error, not a missing command. Treating it as
+ * "unsupported" would mask real bugs in a generated command as a false
+ * "feature not available on this device" (it is caught by `looksLikeError`).
  */
 export function commandUnsupported(result: string): boolean {
   const t = result.toLowerCase();
@@ -145,7 +151,6 @@ export function commandUnsupported(result: string): boolean {
     t.includes("bad command name") ||
     t.includes("no such command") ||
     t.includes("no such command prefix") ||
-    t.includes("expected end of command") ||
     t.includes("invalid command name")
   );
 }

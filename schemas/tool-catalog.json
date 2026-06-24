@@ -2089,7 +2089,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Adds an IPv4 static route (`/ip route add`) to the routing table — use this to define any non-default unicast next-hop (host, subnet, or summarized prefix). For the 0.0.0.0/0 default gateway use add_default_route; for null/drop routes use add_blackhole_route; for IPv6 use add_ipv6_route. `distance` sets priority (1–255, lower wins); `routing_mark` assigns the route to a policy-routing table; `check_gateway` (\"ping\" or \"arp\") enables active gateway monitoring. Returns the created route's detail including its `.id`.",
+      "description": "Adds an IPv4 static route (`/ip route add`) to the routing table — use this to define any non-default unicast next-hop (host, subnet, or summarized prefix). For the 0.0.0.0/0 default gateway use add_default_route; for null/drop routes use add_blackhole_route; for IPv6 use add_ipv6_route. `distance` sets priority (1–255, lower wins); `routing_table` assigns the route to a policy-routing table (must already exist — see add_routing_table); `check_gateway` (\"ping\" or \"arp\") enables active gateway monitoring. Returns the created route's detail including its `.id`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -2117,7 +2117,12 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "routing_table": {
+            "description": "Policy-routing table name, e.g. \"main\" or a custom table (RouterOS v7)",
+            "type": "string"
+          },
           "routing_mark": {
+            "description": "Deprecated alias for routing_table (RouterOS v6 name)",
             "type": "string"
           },
           "comment": {
@@ -2151,7 +2156,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Lists IPv4 routes from `/ip route` with optional filters — the primary tool for inspecting what routes the router knows. `dst_filter` and `gateway_filter` do substring matching; `routing_mark_filter` and `distance_filter` do exact matching; `active_only`/`disabled_only`/`dynamic_only`/`static_only` are boolean flags. For a table-scoped view of active routes use get_routing_table; for counts and summary stats use get_route_statistics; for IPv6 use list_ipv6_routes. Returns all matching route entries.",
+      "description": "Lists IPv4 routes from `/ip route` with optional filters — the primary tool for inspecting what routes the router knows. `dst_filter` and `gateway_filter` do substring matching; `routing_table_filter` and `distance_filter` do exact matching; `active_only`/`disabled_only`/`dynamic_only`/`static_only` are boolean flags. For a table-scoped view of active routes use get_routing_table; for counts and summary stats use get_route_statistics; for IPv6 use list_ipv6_routes. Returns all matching route entries.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -2162,7 +2167,12 @@
           "gateway_filter": {
             "type": "string"
           },
+          "routing_table_filter": {
+            "description": "Exact policy-routing table name (RouterOS v7)",
+            "type": "string"
+          },
           "routing_mark_filter": {
+            "description": "Deprecated alias for routing_table_filter",
             "type": "string"
           },
           "distance_filter": {
@@ -2223,7 +2233,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Modifies an existing IPv4 static route (`/ip route set`) — change its gateway, dst-address, distance, scope, routing-mark, VRF interface, preferred-source, or gateway check method. `route_id` is the `*N` `.id` from list_routes. Pass an empty string (\"\") for `routing_mark`, `vrf_interface`, or `pref_src` to clear those fields. For toggling active state without editing attributes use enable_route / disable_route. Returns the updated route detail.",
+      "description": "Modifies an existing IPv4 static route (`/ip route set`) — change its gateway, dst-address, distance, scope, routing-table, VRF interface, preferred-source, or gateway check method. `route_id` is the `*N` `.id` from list_routes. Pass an empty string (\"\") for `routing_table`, `vrf_interface`, or `pref_src` to clear those fields. For toggling active state without editing attributes use enable_route / disable_route. Returns the updated route detail.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -2255,7 +2265,12 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "routing_table": {
+            "description": "Policy-routing table name (RouterOS v7); \"\" clears it",
+            "type": "string"
+          },
           "routing_mark": {
+            "description": "Deprecated alias for routing_table (RouterOS v6 name)",
             "type": "string"
           },
           "comment": {

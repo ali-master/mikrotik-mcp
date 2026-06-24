@@ -115,7 +115,11 @@ describe("RouterOS command builder", () => {
     // The exact string a v7 device returns for `/ip route cache print`.
     expect(commandUnsupported("bad command name cache (line 1 column 11)")).toBe(true);
     expect(commandUnsupported("no such command prefix")).toBe(true);
-    expect(commandUnsupported("expected end of command")).toBe(true);
+    // "expected end of command" is an ARGUMENT syntax error (the path was
+    // recognized), NOT a missing command — so it must not read as unsupported,
+    // otherwise a syntax slip in a generated command is masked as a missing
+    // feature (it is caught by looksLikeError / indicatesFailure instead).
+    expect(commandUnsupported("expected end of command (line 1 column 14)")).toBe(false);
     // Real output and value-level failures are NOT "command unsupported".
     expect(commandUnsupported("0 D 0.0.0.0/0 gw 10.0.0.1")).toBe(false);
     expect(commandUnsupported("failure: already have such entry")).toBe(false);

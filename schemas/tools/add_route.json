@@ -26,7 +26,12 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "routing_table": {
+      "description": "Policy-routing table name, e.g. \"main\" or a custom table (RouterOS v7)",
+      "type": "string"
+    },
     "routing_mark": {
+      "description": "Deprecated alias for routing_table (RouterOS v6 name)",
       "type": "string"
     },
     "comment": {
