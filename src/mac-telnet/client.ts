@@ -26,6 +26,7 @@ import {
   MAC_TELNET_PORT,
   createUdpMacTelnetTransport,
   formatMac,
+  listBroadcastInterfaces,
   parseMac,
   resolveMacTelnetRoute,
 } from "@tikoci/centrs/protocols";
@@ -89,6 +90,19 @@ export class MikroTikMacTelnetClient {
       // OSes only egresses the default-route NIC, so a device on any other segment
       // becomes unreachable. Detect that fallback to give a precise failure reason.
       const askedDiscovery = host === DEFAULT_MAC_TELNET_BROADCAST && !explicitSourceMac;
+      if (askedDiscovery) {
+        // Log the interfaces discovery will spray, with the source MAC it
+        // resolved for each. A same-LAN timeout is usually visible here: the LAN
+        // NIC is missing, or shows an all-zero MAC the device will silently reject.
+        const candidates = listBroadcastInterfaces();
+        logger.info(
+          `[mac-telnet] discovery candidates: ${
+            candidates.length
+              ? candidates.map((i) => `${i.name}(${formatMac(i.mac)}→${i.broadcast})`).join(", ")
+              : "NONE — no usable non-internal IPv4 interface found"
+          }`,
+        );
+      }
       logger.info(`[mac-telnet] resolving route to ${this.opts.mac}…`);
       const route = await resolveMacTelnetRoute({
         destinationMac,
