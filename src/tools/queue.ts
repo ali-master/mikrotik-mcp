@@ -64,10 +64,10 @@ export const queueTools: ToolModule = [
   // ── Queue Types ───────────────────────────────────────────────
   defineTool({
     name: "create_queue_type",
-    title: "Create Queue Type",
+    title: "Create Queue Type (Qdisc)",
     annotations: WRITE,
     description:
-      "Creates a queue type (qdisc). kind selects the discipline (cake, fq-codel, sfq, red, pcq, pfifo, bfifo); remaining params are per-discipline options.",
+      "Creates a named queue discipline (`/queue type`) — the algorithm (cake, fq-codel, sfq, red, pcq, pfifo, bfifo, pfifo-bpf, mq-pfifo, none) that controls how packets within a queue are scheduled and dropped. Queue types are referenced by name in `create_queue_tree` and `create_simple_queue` via their `queue` parameter. `kind` selects the discipline; remaining params are per-discipline options (e.g. cake_flowmode, cake_nat, pcq_rate, pcq_classifier, fq_codel_target). For hierarchical bandwidth shaping use `create_queue_tree`; for flat per-target rate limiting use `create_simple_queue`. Returns details of the created queue type.",
     inputSchema: {
       name: z.string(),
       kind: QueueKind.default("cake"),
@@ -145,9 +145,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "list_queue_types",
-    title: "List Queue Types",
+    title: "List Queue Types (Qdiscs)",
     annotations: READ,
-    description: "Lists queue types on the MikroTik device.",
+    description:
+      "Lists all queue disciplines (`/queue type print`) configured on the device. Use `name_filter` (substring match) or `kind_filter` (exact kind) to narrow results. Returns all built-in and custom queue type entries. Use `get_queue_type` for full detail on a single entry. To list scheduling hierarchies use `list_queue_trees`; to list per-target rate limits use `list_simple_queues`.",
     inputSchema: {
       name_filter: z.string().optional(),
       kind_filter: z.string().optional(),
@@ -170,9 +171,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "get_queue_type",
-    title: "Get Queue Type",
+    title: "Get Queue Type Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific queue type.",
+    description:
+      "Retrieves full detail for a single queue discipline (`/queue type print detail where name=...`). Resolves the `name` referenced in `create_queue_tree` or `create_simple_queue` via the `queue` field. Returns all parameters of that type, or a not-found message. Use `list_queue_types` to discover available names.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting queue type details: name=${a.name}`);
@@ -188,9 +190,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "update_queue_type",
-    title: "Update Queue Type",
+    title: "Update Queue Type Settings",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing queue type's discipline-specific settings.",
+    description:
+      "Modifies an existing queue discipline (`/queue type set [find name=...]`). Supports renaming (`new_name`) and changing CAKE- or PCQ-specific parameters (cake_flowmode, cake_nat, cake_overhead, pcq_rate, pcq_classifier, etc.). Does not change the queue `kind` — to switch algorithm, remove and recreate the type with `remove_queue_type` then `create_queue_type`. Returns updated detail; if no parameters are provided returns 'No updates specified.' Use `get_queue_type` to confirm current values first.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -243,7 +246,8 @@ export const queueTools: ToolModule = [
     name: "remove_queue_type",
     title: "Remove Queue Type",
     annotations: DESTRUCTIVE,
-    description: "Removes a queue type from the MikroTik device.",
+    description:
+      "Permanently deletes a named queue discipline (`/queue type remove [find name=...]`). Will fail if the type is still referenced by an active queue tree or simple queue — remove those references first. Built-in types (e.g. 'default', 'default-small') cannot be removed. Returns a success or error message.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing queue type: name=${a.name}`);
@@ -259,9 +263,10 @@ export const queueTools: ToolModule = [
   // ── Queue Trees ───────────────────────────────────────────────
   defineTool({
     name: "create_queue_tree",
-    title: "Create Queue Tree",
+    title: "Create Queue Tree Entry",
     annotations: WRITE,
-    description: "Creates a hierarchical queue tree entry attached to a parent interface or queue.",
+    description:
+      "Creates a hierarchical bandwidth-shaping node (`/queue tree add`) attached to a `parent` interface or another queue tree entry — the HTB-style tree for multi-level QoS. Use this when you need nested queues with shared bandwidth pools and packet-mark-based classification (marks produced by mangle tools). `max_limit` caps peak throughput (e.g. '10M', '512k', '1G'); `limit_at` guarantees minimum bandwidth; `priority` sets preemption order (1 highest, 8 lowest); `queue` names the qdisc from `create_queue_type`. For flat per-IP/CIDR rate limiting without a hierarchy use `create_simple_queue` instead. Returns the created entry's detail.",
     inputSchema: {
       name: z.string(),
       parent: z.string().describe('Interface name e.g. "ether1" or parent queue name'),
@@ -302,9 +307,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "list_queue_trees",
-    title: "List Queue Trees",
+    title: "List Queue Tree Entries",
     annotations: READ,
-    description: "Lists queue trees on the MikroTik device.",
+    description:
+      "Lists all hierarchical queue tree nodes (`/queue tree print`) on the device. Supports filtering by `name_filter` (substring match), `parent_filter` (exact interface or parent queue name), `disabled_only`, and `invalid_only`. Returns the shaping hierarchy; use `get_queue_tree` for full detail on one node. For flat per-target rate-limiting queues use `list_simple_queues`.",
     inputSchema: {
       name_filter: z.string().optional(),
       parent_filter: z.string().optional(),
@@ -331,9 +337,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "get_queue_tree",
-    title: "Get Queue Tree",
+    title: "Get Queue Tree Entry Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific queue tree.",
+    description:
+      "Retrieves full detail for a single queue tree node (`/queue tree print detail where name=...`). Returns all attributes including bandwidth limits, parent, packet-mark, priority, qdisc reference, and enabled state, or a not-found message. Use `list_queue_trees` to discover names and `update_queue_tree` to modify. For simple per-target queues use `get_simple_queue`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting queue tree details: name=${a.name}`);
@@ -349,9 +356,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "update_queue_tree",
-    title: "Update Queue Tree",
+    title: "Update Queue Tree Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing queue tree entry (bandwidth limits, parent, priority, etc.).",
+    description:
+      "Modifies an existing queue tree node (`/queue tree set [find name=...]`). Accepts `new_name`, `parent`, `queue` (qdisc reference from `create_queue_type`), `packet_mark`, bandwidth params (`max_limit`, `limit_at`, `burst_limit`, `burst_threshold` as RouterOS rate strings e.g. '10M', '512k', '1G'; `burst_time` e.g. '8s'), `priority` (1 highest – 8 lowest), `comment`, and `disabled`. Returns updated detail; if no parameters are specified returns 'No updates specified.' Use `get_queue_tree` to confirm current state before updating. For simple per-target queues use `update_simple_queue`.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -402,9 +410,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "remove_queue_tree",
-    title: "Remove Queue Tree",
+    title: "Remove Queue Tree Entry",
     annotations: DESTRUCTIVE,
-    description: "Removes a queue tree from the MikroTik device.",
+    description:
+      "Permanently deletes a queue tree node (`/queue tree remove [find name=...]`). Child nodes that reference this entry as their `parent` will become invalid — remove or reparent them first. Returns a success or error message. Use `list_queue_trees` to identify the name. For simple per-target queues use `remove_simple_queue`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing queue tree: name=${a.name}`);
@@ -419,9 +428,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "enable_queue_tree",
-    title: "Enable Queue Tree",
+    title: "Enable Queue Tree Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a queue tree.",
+    description:
+      "Re-activates a disabled queue tree node (`/queue tree set [find name=...] disabled=no`). Restores the node's bandwidth-shaping rules in the hierarchy without modifying any other parameters. Returns the updated detail. To deactivate use `disable_queue_tree`. For simple per-target queues use `enable_simple_queue`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling queue tree: name=${a.name}`);
@@ -441,9 +451,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "disable_queue_tree",
-    title: "Disable Queue Tree",
+    title: "Disable Queue Tree Entry",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a queue tree.",
+    description:
+      "Deactivates a queue tree node without removing it (`/queue tree set [find name=...] disabled=yes`). Suspends that node's bandwidth constraints while preserving its configuration; re-activate with `enable_queue_tree`. Returns the updated detail. For simple per-target queues use `disable_simple_queue`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling queue tree: name=${a.name}`);
@@ -466,7 +477,8 @@ export const queueTools: ToolModule = [
     name: "create_simple_queue",
     title: "Create Simple Queue",
     annotations: WRITE,
-    description: "Creates a simple queue to rate-limit a target address or interface.",
+    description:
+      "Creates a flat per-target rate-limiting entry (`/queue simple add`) that shapes traffic for a specific IP address, CIDR subnet, or interface — the quickest way to cap upload/download bandwidth without building a queue tree hierarchy. `target` is the IP/CIDR or interface (e.g. '192.168.1.0/24', 'ether1'); `max_limit` caps bandwidth as 'UL/DL' or a single value (e.g. '10M/10M', '5M'); `limit_at` guarantees minimum bandwidth; `burst_limit`, `burst_threshold`, `burst_time` (e.g. '8s') allow short-term speed above `max_limit`; `queue` names the qdisc from `create_queue_type`. For packet-mark-based multi-level shaping use `create_queue_tree` instead. Returns the created entry's detail.",
     inputSchema: {
       name: z.string(),
       target: z.string().describe('IP/CIDR or interface e.g. "192.168.1.0/24" or "ether1"'),
@@ -533,7 +545,8 @@ export const queueTools: ToolModule = [
     name: "list_simple_queues",
     title: "List Simple Queues",
     annotations: READ,
-    description: "Lists simple queues on the MikroTik device.",
+    description:
+      "Lists all per-target rate-limiting entries (`/queue simple print`) on the device. Supports filtering by `name_filter` (substring match), `target_filter` (substring match on IP/interface), `disabled_only`, and `invalid_only`. Returns all matching simple queue entries. Use `get_simple_queue` for full detail on a single entry. For the hierarchical shaping tree use `list_queue_trees`.",
     inputSchema: {
       name_filter: z.string().optional(),
       target_filter: z.string().optional(),
@@ -560,9 +573,10 @@ export const queueTools: ToolModule = [
 
   defineTool({
     name: "get_simple_queue",
-    title: "Get Simple Queue",
+    title: "Get Simple Queue Detail",
     annotations: READ,
-    description: "Gets detailed information about a specific simple queue.",
+    description:
+      "Retrieves full detail for a single simple queue entry (`/queue simple print detail where name=...`). Returns target, bandwidth limits, burst parameters, qdisc reference, and enabled state, or a not-found message. Use `list_simple_queues` to discover names. For hierarchical queue nodes use `get_queue_tree`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting simple queue details: name=${a.name}`);
@@ -580,7 +594,8 @@ export const queueTools: ToolModule = [
     name: "update_simple_queue",
     title: "Update Simple Queue",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing simple queue's rate limits, target, or scheduling settings.",
+    description:
+      "Modifies an existing per-target rate-limiting entry (`/queue simple set [find name=...]`). Accepts `new_name`, `target` (IP/CIDR or interface e.g. '192.168.1.0/24', 'ether1'), `dst`, bandwidth params (`max_limit`, `limit_at`, `burst_limit`, `burst_threshold` as 'UL/DL' or single value e.g. '10M/10M', '5M'; `burst_time` e.g. '8s'), `queue` (qdisc reference), `parent`, `priority` (1 highest – 8 lowest), `packet_marks`, `comment`, and `disabled`. Returns updated detail; if no parameters are provided returns 'No updates specified.' Use `get_simple_queue` to confirm current state first. For hierarchical queue nodes use `update_queue_tree`.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),
@@ -660,7 +675,8 @@ export const queueTools: ToolModule = [
     name: "remove_simple_queue",
     title: "Remove Simple Queue",
     annotations: DESTRUCTIVE,
-    description: "Removes a simple queue from the MikroTik device.",
+    description:
+      "Permanently deletes a simple queue entry (`/queue simple remove [find name=...]`). Removes the per-target rate limit for that IP/CIDR or interface. Returns a success or error message. Use `list_simple_queues` to identify the name. For hierarchical queue nodes use `remove_queue_tree`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing simple queue: name=${a.name}`);
@@ -677,7 +693,8 @@ export const queueTools: ToolModule = [
     name: "enable_simple_queue",
     title: "Enable Simple Queue",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a simple queue.",
+    description:
+      "Re-activates a disabled simple queue entry (`/queue simple set [find name=...] disabled=no`). Restores the per-target bandwidth shaping without altering any other parameters. Returns the updated detail. To deactivate use `disable_simple_queue`. For hierarchical queue nodes use `enable_queue_tree`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling simple queue: name=${a.name}`);
@@ -699,7 +716,8 @@ export const queueTools: ToolModule = [
     name: "disable_simple_queue",
     title: "Disable Simple Queue",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a simple queue.",
+    description:
+      "Deactivates a simple queue entry without removing it (`/queue simple set [find name=...] disabled=yes`). Suspends the per-target rate limit while preserving its configuration; re-activate with `enable_simple_queue`. Returns the updated detail. For hierarchical queue nodes use `disable_queue_tree`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling simple queue: name=${a.name}`);

@@ -59,7 +59,11 @@ export const wirelessTools: ToolModule = [
     title: "Create Wireless Interface",
     annotations: WRITE,
     description:
-      "Creates a wireless interface on the MikroTik device (auto-detects RouterOS v6/v7 syntax).",
+      "Creates a wireless interface (`/interface wifi`, `/interface wifiwave2`, `/interface wireless`, or `/interface wlan` — auto-detected per device). " +
+      "Use to add a new AP or station interface to the device. " +
+      "On RouterOS v7 accepts name, ssid, disabled, and comment; on v6/legacy also requires radio_name (e.g. `wlan1`) and optionally accepts mode (default `ap-bridge`), frequency, band, channel_width, and security_profile. " +
+      "To modify an existing interface use update_wireless_interface; to see current interfaces use list_wireless_interfaces. " +
+      "Returns the created interface's full detail print including its `.id`.",
     inputSchema: {
       name: z.string(),
       ssid: z.string().optional(),
@@ -151,7 +155,11 @@ export const wirelessTools: ToolModule = [
     name: "list_wireless_interfaces",
     title: "List Wireless Interfaces",
     annotations: READ,
-    description: "Lists wireless interfaces on the MikroTik device.",
+    description:
+      "Lists all wireless interfaces (`/interface wifi`, `/interface wifiwave2`, `/interface wireless`, `/interface wlan`) — probes every supported command path and aggregates results. " +
+      "Filters by name_filter (substring match), disabled_only, or running_only. " +
+      "For full property detail on a single interface use get_wireless_interface; to see currently connected clients use get_wireless_registration_table. " +
+      "Falls back to `/interface print` with debugging info when no wireless interfaces match, to help identify the correct path on the device.",
     inputSchema: {
       name_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -208,9 +216,13 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
 
   defineTool({
     name: "get_wireless_interface",
-    title: "Get Wireless Interface",
+    title: "Get Wireless Interface Details",
     annotations: READ,
-    description: "Gets detailed information about a specific wireless interface.",
+    description:
+      "Retrieves the full detail of one named wireless interface (`<auto-detected path> print detail where name=...`), " +
+      "probing `/interface wifi`, `/interface wifiwave2`, `/interface wireless`, and `/interface wlan` in order. " +
+      "Use when you need all properties of a single interface; for a summary of all interfaces use list_wireless_interfaces. " +
+      "Returns the complete property set for the named interface, or an error if not found.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting wireless interface details: name=${a.name}`);
@@ -232,7 +244,11 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
     name: "remove_wireless_interface",
     title: "Remove Wireless Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes a wireless interface from the MikroTik device.",
+    description:
+      "Permanently deletes a named wireless interface (`<auto-detected path> remove [find name=...]`). " +
+      "Verifies the interface exists first (count-only check) and returns an error if not found. " +
+      "This action is irreversible — to keep the interface but stop traffic use disable_wireless_interface; " +
+      "for property changes only use update_wireless_interface.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing wireless interface: name=${a.name}`);
@@ -260,7 +276,11 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
     name: "enable_wireless_interface",
     title: "Enable Wireless Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a wireless interface.",
+    description:
+      "Enables a named wireless interface that is currently disabled (`<auto-detected path> enable [find name=...]`). " +
+      "Idempotent — safe to call on an already-enabled interface. " +
+      "For the reverse operation use disable_wireless_interface; to change other settings at the same time use update_wireless_interface. " +
+      "Obtain the interface name from list_wireless_interfaces.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling wireless interface: ${a.name}`);
@@ -282,7 +302,11 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
     name: "disable_wireless_interface",
     title: "Disable Wireless Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a wireless interface.",
+    description:
+      "Disables a named wireless interface without removing it (`<auto-detected path> disable [find name=...]`). " +
+      "Idempotent — safe to call on an already-disabled interface. " +
+      "For the reverse operation use enable_wireless_interface; to delete the interface permanently use remove_wireless_interface. " +
+      "Obtain the interface name from list_wireless_interfaces.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling wireless interface: ${a.name}`);
@@ -302,9 +326,14 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
 
   defineTool({
     name: "scan_wireless_networks",
-    title: "Scan Wireless Networks",
+    title: "Scan for Nearby Wireless Networks",
     annotations: READ,
-    description: "Scans for nearby wireless networks using the specified interface.",
+    description:
+      "Scans for visible nearby wireless networks/SSIDs/APs in range (`<auto-detected path> scan <interface> duration=<n>`). " +
+      "Use to discover external networks — not to list connected clients. " +
+      "For currently associated client stations use get_wireless_registration_table instead. " +
+      "`interface` is the local wireless interface name to scan from (e.g. `wlan1`); `duration` is scan time in seconds (default 5). " +
+      "Returns raw scan output from the device.",
     inputSchema: {
       interface: z.string(),
       duration: z.number().int().default(5),
@@ -329,10 +358,13 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
 
   defineTool({
     name: "get_wireless_registration_table",
-    title: "Wireless Registration Table",
+    title: "Get Wireless Registration Table (Connected Clients)",
     annotations: READ,
     description:
-      "Gets the wireless registration table (connected clients) from the MikroTik device.",
+      "Retrieves the wireless registration table — the list of client stations currently associated to this AP (`<auto-detected path> registration-table print [where interface=...]`). " +
+      "Each row is an actively connected wireless client with its MAC address, signal strength, and statistics. " +
+      "To discover nearby external APs/SSIDs instead use scan_wireless_networks. " +
+      "Optionally filter by interface name; omit to return all clients across all wireless interfaces.",
     inputSchema: {
       interface: z.string().optional(),
     },
@@ -354,10 +386,13 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
 
   defineTool({
     name: "check_wireless_support",
-    title: "Check Wireless Support",
+    title: "Check Wireless Support and Detected Interface Type",
     annotations: READ,
     description:
-      "Checks if the device supports wireless and reports the RouterOS version and wireless interface type.",
+      "Diagnoses which wireless subsystem the device supports by running `/system resource print`, `/system package print`, `/interface print`, " +
+      "and probing each wireless command path in priority order (`/interface wifi` → `/interface wifiwave2` → `/interface wireless` → `/interface wlan`). " +
+      "Returns RouterOS version, installed packages, all interfaces, and the detected wireless command path. " +
+      "Use this before other wireless tools when the device's wireless capability is unknown, or when wireless tools are returning unsupported/bad-command errors.",
     async handler(_a, ctx) {
       ctx.info("Checking wireless support");
 
@@ -397,9 +432,13 @@ For legacy systems:
 
   defineTool({
     name: "create_wireless_security_profile",
-    title: "Create Wireless Security Profile",
+    title: "Create Wireless Security Profile (Legacy v6 Only — Not Implemented)",
     annotations: WRITE,
-    description: "Legacy function - not supported in RouterOS v7.x",
+    description:
+      "Stub for creating a `/interface wireless security-profiles` entry — a RouterOS v6 concept that does not exist in v7. " +
+      "On RouterOS v7 devices (`/interface wifi` or `/interface wifiwave2`) always returns a not-supported message; security is configured directly on the interface. " +
+      "On v6 this is also not implemented and returns an error. " +
+      "For v6 interface creation with a security profile use create_wireless_interface (security_profile arg); for v7, security is configured directly on the interface but is not exposed by this server's wireless tools.",
     inputSchema: { name: z.string() },
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
@@ -412,9 +451,12 @@ For legacy systems:
 
   defineTool({
     name: "list_wireless_security_profiles",
-    title: "List Wireless Security Profiles",
+    title: "List Wireless Security Profiles (Legacy v6 Only — Not Implemented)",
     annotations: READ,
-    description: "Legacy function - not supported in RouterOS v7.x",
+    description:
+      "Stub for listing `/interface wireless security-profiles` entries — a RouterOS v6 concept that does not exist in v7. " +
+      "On RouterOS v7 devices always returns a not-supported message; on v6 also not implemented. " +
+      "To inspect current wireless interface configuration (including security) use list_wireless_interfaces or get_wireless_interface instead.",
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
       if (interfaceType && V7_WIFI.includes(interfaceType)) {
@@ -426,9 +468,12 @@ For legacy systems:
 
   defineTool({
     name: "get_wireless_security_profile",
-    title: "Get Wireless Security Profile",
+    title: "Get Wireless Security Profile (Legacy v6 Only — Not Implemented)",
     annotations: READ,
-    description: "Legacy function - not supported in RouterOS v7.x",
+    description:
+      "Stub for retrieving a named `/interface wireless security-profiles` entry — a RouterOS v6 concept that does not exist in v7. " +
+      "On RouterOS v7 devices always returns a not-supported message; on v6 also not implemented. " +
+      "Use get_wireless_interface to inspect the security settings on a v7 wireless interface instead.",
     inputSchema: { name: z.string() },
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
@@ -441,9 +486,12 @@ For legacy systems:
 
   defineTool({
     name: "remove_wireless_security_profile",
-    title: "Remove Wireless Security Profile",
+    title: "Remove Wireless Security Profile (Legacy v6 Only — Not Implemented)",
     annotations: DESTRUCTIVE,
-    description: "Legacy function - not supported in RouterOS v7.x",
+    description:
+      "Stub for deleting a named `/interface wireless security-profiles` entry — a RouterOS v6 concept that does not exist in v7. " +
+      "On RouterOS v7 devices always returns a not-supported message; on v6 also not implemented. " +
+      "To delete a wireless interface entirely use remove_wireless_interface; to change security settings use update_wireless_interface.",
     inputSchema: { name: z.string() },
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
@@ -456,9 +504,13 @@ For legacy systems:
 
   defineTool({
     name: "set_wireless_security_profile",
-    title: "Set Wireless Security Profile",
+    title: "Assign Security Profile to Wireless Interface (Legacy v6 Only — Not Implemented)",
     annotations: WRITE,
-    description: "Legacy function - not supported in RouterOS v7.x",
+    description:
+      "Stub for assigning a named security profile to a v6 `/interface wireless` interface — a RouterOS v6 concept that does not exist in v7. " +
+      "On RouterOS v7 devices always returns a not-supported message because security is set directly on the interface. " +
+      "On v6 also not implemented. " +
+      "To update a wireless interface's settings on supported versions use update_wireless_interface.",
     inputSchema: {
       interface_name: z.string(),
       security_profile: z.string(),
@@ -474,9 +526,13 @@ For legacy systems:
 
   defineTool({
     name: "create_wireless_access_list",
-    title: "Create Wireless Access List",
+    title: "Create Wireless Access List Entry (Legacy v6 Only — Not Implemented)",
     annotations: WRITE,
-    description: "Legacy function - different in RouterOS v7.x",
+    description:
+      "Stub for creating a `/interface wireless access-list` MAC-address filtering entry — a RouterOS v6 concept. " +
+      "On RouterOS v7 devices always returns a not-supported message; use firewall rules or other access-control methods instead. " +
+      "On v6 also not implemented. " +
+      "For v7 client filtering use create_filter_rule targeting the wireless interface.",
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
       if (interfaceType && V7_WIFI.includes(interfaceType)) {
@@ -488,9 +544,12 @@ For legacy systems:
 
   defineTool({
     name: "list_wireless_access_list",
-    title: "List Wireless Access List",
+    title: "List Wireless Access List Entries (Legacy v6 Only — Not Implemented)",
     annotations: READ,
-    description: "Legacy function - different in RouterOS v7.x",
+    description:
+      "Stub for listing `/interface wireless access-list` entries — a RouterOS v6 MAC-based client filtering concept. " +
+      "On RouterOS v7 devices always returns a not-supported message; on v6 also not implemented. " +
+      "For connected client visibility use get_wireless_registration_table; for firewall-based access control use list_filter_rules.",
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
       if (interfaceType && V7_WIFI.includes(interfaceType)) {
@@ -502,9 +561,13 @@ For legacy systems:
 
   defineTool({
     name: "remove_wireless_access_list_entry",
-    title: "Remove Wireless Access List Entry",
+    title: "Remove Wireless Access List Entry (Legacy v6 Only — Not Implemented)",
     annotations: DESTRUCTIVE,
-    description: "Legacy function - different in RouterOS v7.x",
+    description:
+      "Stub for removing a `/interface wireless access-list` entry by ID — a RouterOS v6 concept. " +
+      "On RouterOS v7 devices always returns a not-supported message; on v6 also not implemented. " +
+      "The entry_id would take the `.id` from list_wireless_access_list if that were implemented. " +
+      "For v7 access control use list_filter_rules and remove_filter_rule instead.",
     inputSchema: { entry_id: z.string() },
     async handler(_a, ctx) {
       const interfaceType = await detectWirelessInterfaceType(ctx);
@@ -517,10 +580,15 @@ For legacy systems:
 
   defineTool({
     name: "update_wireless_interface",
-    title: "Update Wireless Interface",
+    title: "Update Wireless Interface Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing wireless interface's settings (name, SSID, enabled state, etc.).",
+      "Updates settings on an existing named wireless interface (`<auto-detected path> set [find name=...] ...`). " +
+      "Supports renaming (new_name), changing SSID, toggling disabled state, and updating comment. " +
+      "Verifies the interface exists before applying; returns 'No updates specified.' if no optional fields are provided. " +
+      "To only enable or disable the interface prefer enable_wireless_interface or disable_wireless_interface; " +
+      "to create a new interface use create_wireless_interface; to delete one use remove_wireless_interface. " +
+      "Returns the updated interface's full detail print.",
     inputSchema: {
       name: z.string(),
       new_name: z.string().optional(),

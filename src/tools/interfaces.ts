@@ -27,10 +27,13 @@ async function verify(name: string, ctx: Parameters<typeof executeMikrotikComman
 export const interfaceTools: ToolModule = [
   defineTool({
     name: "list_interfaces",
-    title: "List Interfaces",
+    title: "List All Network Interfaces",
     annotations: READ,
     description:
-      "Lists all interfaces on the MikroTik device (ethernet, bridge, WireGuard, PPPoE, VLAN, WiFi, SFP, LTE, loopback, and any other type).",
+      "List all interfaces (`/interface print`) — the primary discovery tool for every interface name, type, and running state on the device (ethernet, bridge, WireGuard, PPPoE, VLAN, WiFi, SFP, LTE, loopback). " +
+      "Filter by `type_filter` (e.g. 'ether', 'bridge', 'wg'), `name_filter` (partial name match), `running_only`, or `disabled_only`. " +
+      "For a single interface's full property block use `get_interface`; to create type-specific interfaces use `create_vlan_interface`, `create_wireguard_interface`, or `create_wireless_interface`. " +
+      "Returns name, type, MAC, MTU, and running/disabled state for each matched interface.",
     inputSchema: {
       type_filter: InterfaceType.optional().describe(
         "RouterOS interface type, e.g. 'ether', 'bridge'",
@@ -56,9 +59,13 @@ export const interfaceTools: ToolModule = [
 
   defineTool({
     name: "get_interface",
-    title: "Get Interface",
+    title: "Get Network Interface Details",
     annotations: READ,
-    description: "Gets detailed information about a specific interface by name.",
+    description:
+      "Get full detail for a single interface by exact name (`/interface print detail where name=<name>`). " +
+      "Use when you already know the interface name and need its complete property set (MAC, MTU, type, running state, tx/rx counters). " +
+      "To browse all interfaces or find a name first use `list_interfaces`. " +
+      "Returns the full RouterOS detail block for the interface, or a not-found message if the name does not exist.",
     inputSchema: {
       name: z.string().describe("Exact interface name, e.g. 'ether1', 'wg0'"),
     },
@@ -73,9 +80,13 @@ export const interfaceTools: ToolModule = [
 
   defineTool({
     name: "enable_interface",
-    title: "Enable Interface",
+    title: "Enable a Network Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables an interface on the MikroTik device.",
+    description:
+      "Enable a disabled interface (`/interface enable [find name=<name>]`) so it resumes passing traffic. " +
+      "Idempotent — safe to call on an already-enabled interface. " +
+      "To take an interface offline use `disable_interface`. " +
+      "Returns the updated interface detail after enabling, confirming its new running state.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Enabling interface: name=${a.name}`);
@@ -90,9 +101,13 @@ export const interfaceTools: ToolModule = [
 
   defineTool({
     name: "disable_interface",
-    title: "Disable Interface",
+    title: "Disable a Network Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables an interface on the MikroTik device.",
+    description:
+      "Disable an active interface (`/interface disable [find name=<name>]`) so it stops forwarding traffic while remaining fully configured. " +
+      "Idempotent — safe to call on an already-disabled interface. " +
+      "To bring an interface back up use `enable_interface`. " +
+      "Returns the updated interface detail after disabling, confirming its new state.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Disabling interface: name=${a.name}`);

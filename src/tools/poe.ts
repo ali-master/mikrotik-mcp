@@ -16,10 +16,10 @@ const NO_POE =
 export const poeTools: ToolModule = [
   defineTool({
     name: "get_poe_monitor",
-    title: "PoE Monitor",
+    title: "Read PoE Interface Live Metrics",
     annotations: READ,
     description:
-      "Reads real-time Power-over-Ethernet (PoE) monitor data for one or more ethernet interfaces — PoE-out status, voltage, current, and power. Runs `/interface ethernet poe monitor <interfaces> once`.",
+      "Read live Power-over-Ethernet monitor data (`/interface ethernet poe monitor <interfaces> once`) — returns a real-time snapshot of PoE-out status, voltage (V), current (mA), and power (W) for one or more interfaces. Use this to diagnose active power delivery on PoE ports or confirm a powered device is drawing current. For static PoE-out configuration (mode, priority, thresholds) use `get_poe_settings`; for a summary list of all PoE-capable interfaces use `list_poe`. The `interfaces` argument takes a comma-separated list of ethernet interface names, e.g. 'ether1' or 'ether9,ether10'.",
     inputSchema: {
       interfaces: z
         .string()
@@ -43,10 +43,10 @@ export const poeTools: ToolModule = [
 
   defineTool({
     name: "list_poe",
-    title: "List PoE",
+    title: "List PoE Interface Configuration",
     annotations: READ,
     description:
-      "Lists the Power-over-Ethernet (PoE) configuration of PoE-capable ethernet interfaces (PoE-out mode, priority). Runs `/interface ethernet poe print`.",
+      "List the Power-over-Ethernet configuration of all PoE-capable ethernet interfaces (`/interface ethernet poe print`) — returns PoE-out mode and priority for each port. Use this to see at a glance which ports have PoE-out enabled across the whole device. For detailed settings of one specific interface (voltage thresholds, etc.) use `get_poe_settings`; for real-time voltage/current/power readings use `get_poe_monitor`. Optionally narrow results by partial interface name via `interface_filter`, e.g. 'ether'.",
     inputSchema: {
       interface_filter: z.string().optional().describe("Partial name match, e.g. 'ether'"),
     },
@@ -64,10 +64,10 @@ export const poeTools: ToolModule = [
 
   defineTool({
     name: "get_poe_settings",
-    title: "PoE Settings",
+    title: "Get PoE Interface Settings",
     annotations: READ,
     description:
-      "Gets the detailed PoE-out settings of a specific ethernet interface (mode, priority, voltage, thresholds). Runs `/interface ethernet poe print detail where name=<name>`.",
+      "Get detailed Power-over-Ethernet settings for a single ethernet interface (`/interface ethernet poe print detail where name=<name>`) — returns PoE-out mode, priority, voltage, and power thresholds for that port. Use this to inspect the full PoE-out configuration of one specific port. For a summary list across all PoE-capable interfaces use `list_poe`; for real-time voltage/current/power measurements use `get_poe_monitor`. The `name` argument takes the exact interface name, e.g. 'ether1'.",
     inputSchema: {
       name: z.string().describe("Exact ethernet interface name, e.g. 'ether1'"),
     },

@@ -8,10 +8,13 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const switchSettingsTools: ToolModule = [
   defineTool({
     name: "list_switches",
-    title: "List Switches",
+    title: "List Hardware Switch Chips",
     annotations: READ,
     description:
-      "Lists the hardware switch chips on the MikroTik device (`/interface ethernet switch`).",
+      "Lists hardware switch chips (`/interface ethernet switch`). " +
+      "Use to discover switch chip names and types present on the device before targeting a chip with get_switch or update_switch. " +
+      "Accepts optional `name_filter` and `type_filter` for partial-match filtering. " +
+      "Returns chip name, type, and mirror/flow-control configuration for each matching entry; returns an empty message if none match.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial switch-name match"),
       type_filter: z.string().optional().describe("Partial switch-type match"),
@@ -34,9 +37,13 @@ export const switchSettingsTools: ToolModule = [
 
   defineTool({
     name: "get_switch",
-    title: "Get Switch",
+    title: "Get Hardware Switch Chip Details",
     annotations: READ,
-    description: "Gets detailed settings for a specific switch chip by name or '.id'.",
+    description:
+      "Fetches full detail for a single hardware switch chip (`/interface ethernet switch print detail`). " +
+      "Use to inspect the current cpu-flow-control flag and mirror-source, mirror-target, and mirror-egress settings before modifying them with update_switch. " +
+      "`switch_id` accepts the chip name (e.g. 'switch1') or the RouterOS `.id` returned by list_switches — tries `.id` lookup first, then falls back to name lookup. " +
+      "Returns detailed chip settings or a not-found message.",
     inputSchema: {
       switch_id: z.string().describe("Switch name (e.g. 'switch1') or RouterOS '.id'"),
     },
@@ -60,16 +67,17 @@ export const switchSettingsTools: ToolModule = [
 
   defineTool({
     name: "update_switch",
-    title: "Update Switch Settings",
+    title: "Update Hardware Switch Chip Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates settings for a switch chip on the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    cpu_flow_control: pause CPU-bound traffic when the CPU port is\n" +
-      "        congested.\n" +
-      "    mirror_source / mirror_target: span/mirror a port's traffic to a\n" +
-      "        monitor port (or 'cpu'). Availability is chip-dependent.\n" +
-      "    Pass mirror_source/mirror_target='none' to disable mirroring.",
+      "Modifies settings on a hardware switch chip (`/interface ethernet switch set`) — " +
+      "use to configure port mirroring (SPAN) or CPU flow control on the chip itself. " +
+      "`switch_id` accepts the chip name (e.g. 'switch1') or the RouterOS `.id` returned by list_switches.\n\n" +
+      "cpu_flow_control: pauses CPU-bound traffic when the CPU port is congested.\n" +
+      "mirror_source / mirror_target: span a port's traffic to a monitor port or 'cpu' (chip-dependent availability).\n" +
+      "mirror_egress: egress mirror source port on newer chips.\n" +
+      "Pass mirror_source / mirror_target / mirror_egress='none' to disable mirroring.\n\n" +
+      "Returns updated switch details on success.",
     inputSchema: {
       switch_id: z.string().describe("Switch name (e.g. 'switch1') or RouterOS '.id'"),
       name: z.string().optional().describe("Rename the switch"),

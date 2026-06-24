@@ -17,10 +17,14 @@ const ArpMode = z.enum(["enabled", "disabled", "proxy-arp", "reply-only"]);
 export const vlanTools: ToolModule = [
   defineTool({
     name: "create_vlan_interface",
-    title: "Create VLAN",
+    title: "Create VLAN Interface",
     annotations: WRITE,
     description:
-      "Creates a VLAN interface on the MikroTik device with the given VLAN ID and parent interface.",
+      "Creates an 802.1Q VLAN sub-interface (`/interface vlan`) on a specified parent physical or bridge interface." +
+      " Use this to segment layer-2 traffic by VLAN ID (1–4094); set `use_service_tag=true` for 802.1ad QinQ double-tagging." +
+      " For listing existing VLAN interfaces use `list_vlan_interfaces`; for editing an existing VLAN use `update_vlan_interface`." +
+      " Returns the created interface's full detail including its name, which is the identifier accepted by `get_vlan_interface`, `update_vlan_interface`, and `remove_vlan_interface`." +
+      " ARP mode accepts: enabled (default), disabled, proxy-arp, reply-only.",
     inputSchema: {
       name: z.string().describe("Name for the new VLAN interface, e.g. 'vlan100'"),
       vlan_id: z.number().int().min(1).max(4094).describe("802.1Q VLAN ID (1-4094)"),
@@ -63,9 +67,13 @@ export const vlanTools: ToolModule = [
 
   defineTool({
     name: "list_vlan_interfaces",
-    title: "List VLANs",
+    title: "List VLAN Interfaces",
     annotations: READ,
-    description: "Lists VLAN interfaces on the MikroTik device.",
+    description:
+      "Lists all 802.1Q VLAN sub-interfaces (`/interface vlan print`) with optional filters by name substring, VLAN ID, parent interface, or disabled state." +
+      " Use to discover existing VLANs and obtain interface names for `get_vlan_interface`, `update_vlan_interface`, or `remove_vlan_interface`." +
+      " For a single interface's full property detail use `get_vlan_interface`." +
+      " Returns a table of matching VLAN interfaces, or a not-found message when no entries match the filters.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
       vlan_id_filter: z.number().int().optional(),
@@ -92,9 +100,12 @@ export const vlanTools: ToolModule = [
 
   defineTool({
     name: "get_vlan_interface",
-    title: "Get VLAN",
+    title: "Get VLAN Interface Details",
     annotations: READ,
-    description: "Gets detailed information about a specific VLAN interface.",
+    description:
+      'Returns full detail for a single named VLAN interface (`/interface vlan print detail where name="..."`), including VLAN ID, parent interface, ARP mode, MTU, and running state.' +
+      " Use when you already know the exact interface name and need all properties." +
+      " For searching across all VLANs or filtering by parent interface or VLAN ID use `list_vlan_interfaces`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting VLAN interface details: name=${a.name}`);
@@ -110,9 +121,15 @@ export const vlanTools: ToolModule = [
 
   defineTool({
     name: "update_vlan_interface",
-    title: "Update VLAN",
+    title: "Update VLAN Interface",
     annotations: WRITE_IDEMPOTENT,
-    description: "Updates an existing VLAN interface's settings on the MikroTik device.",
+    description:
+      'Modifies properties of an existing VLAN sub-interface (`/interface vlan set [find name="..."]`).' +
+      " Accepts any subset of the create parameters; omit fields to leave them unchanged." +
+      " Supply the current `name` from `list_vlan_interfaces` or `get_vlan_interface`; use `new_name` to rename the interface." +
+      " For creating a new VLAN interface use `create_vlan_interface`; to permanently delete use `remove_vlan_interface`." +
+      " Returns the updated interface's full detail after applying the change." +
+      " ARP mode accepts: enabled, disabled, proxy-arp, reply-only.",
     inputSchema: {
       name: z.string().describe("Current name of the VLAN interface to update"),
       new_name: z.string().optional(),
@@ -156,9 +173,13 @@ export const vlanTools: ToolModule = [
 
   defineTool({
     name: "remove_vlan_interface",
-    title: "Remove VLAN",
+    title: "Remove VLAN Interface",
     annotations: DESTRUCTIVE,
-    description: "Removes a VLAN interface from the MikroTik device.",
+    description:
+      'Permanently deletes a VLAN sub-interface (`/interface vlan remove [find name="..."]`) after confirming it exists via a count-only check.' +
+      " Supply the interface `name` from `list_vlan_interfaces` or `get_vlan_interface`." +
+      " Removing a VLAN interface also removes IP addresses assigned to it; firewall rules and other configuration that reference it by name are not automatically deleted and will remain as orphaned, ineffective entries." +
+      " To disable a VLAN temporarily without deleting it use `update_vlan_interface` with `disabled=true`.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing VLAN interface: name=${a.name}`);

@@ -14,10 +14,14 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 export const queueInterfaceTools: ToolModule = [
   defineTool({
     name: "list_queue_interfaces",
-    title: "List Queue Interfaces",
+    title: "List Queue Interface Assignments",
     annotations: READ,
     description:
-      "Lists per-interface queue assignments on the MikroTik device (`/queue interface`).",
+      "List per-interface queue assignments (`/queue interface`). " +
+      "Shows which queue type (e.g. 'ethernet-default', 'only-hardware-queue') is currently applied to each interface's egress traffic. " +
+      "RouterOS maintains exactly one entry per interface — these entries are fixed and cannot be created or deleted, only updated. " +
+      "For bandwidth-limited queues use list_simple_queues; for hierarchical queues use list_queue_trees. " +
+      "Returns all matching entries filtered optionally by partial interface name (interface_filter) or partial queue-type name (queue_filter).",
     inputSchema: {
       interface_filter: z.string().optional().describe("Partial interface-name match"),
       queue_filter: z.string().optional().describe("Partial queue-type-name match"),
@@ -40,9 +44,13 @@ export const queueInterfaceTools: ToolModule = [
 
   defineTool({
     name: "get_queue_interface",
-    title: "Get Queue Interface",
+    title: "Get Queue Interface Assignment",
     annotations: READ,
-    description: "Gets the queue assignment for a specific interface by name or '.id'.",
+    description:
+      "Get the queue-type assignment for a single interface (`/queue interface print detail`). " +
+      "Resolves by RouterOS '.id' first, then falls back to matching by interface name — pass either the interface name (e.g. 'ether1') or the '.id' from list_queue_interfaces. " +
+      "For all interfaces at once use list_queue_interfaces. " +
+      "Returns the full detail output for the matched entry including the interface name, queue type, and any active properties.",
     inputSchema: {
       interface_id: z.string().describe("Interface name (e.g. 'ether1') or RouterOS '.id'"),
     },
@@ -66,13 +74,15 @@ export const queueInterfaceTools: ToolModule = [
 
   defineTool({
     name: "update_queue_interface",
-    title: "Update Queue Interface",
+    title: "Update Queue Interface Assignment",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Assigns a queue type to an interface on the MikroTik device.\n\n" +
-      "Notes:\n" +
-      "    queue: the queue-type name to apply, e.g. 'ethernet-default',\n" +
-      "        'only-hardware-queue', or a custom queue type.",
+      "Assign a queue type to a specific interface (`/queue interface set`) — controls which egress queuing discipline is applied to outbound traffic on that interface. " +
+      "Use this to switch between built-in types such as 'ethernet-default' or 'only-hardware-queue', or to apply a custom queue type defined under /queue type. " +
+      "This does NOT create a bandwidth-limiting queue; for that use create_simple_queue (simple rate-limit) or create_queue_tree (hierarchical/HTB shaping). " +
+      "Accepts the interface name (e.g. 'ether1') or RouterOS '.id' (from list_queue_interfaces) as interface_id; " +
+      "if the id begins with '*' it is matched by .id, otherwise by interface name. " +
+      "Returns the updated entry detail on success.",
     inputSchema: {
       interface_id: z.string().describe("Interface name (e.g. 'ether1') or RouterOS '.id'"),
       queue: z.string().describe("Queue-type name to apply to the interface"),

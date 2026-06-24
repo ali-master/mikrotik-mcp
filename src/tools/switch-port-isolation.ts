@@ -13,16 +13,22 @@ function selectorFor(id: string): string {
 export const switchPortIsolationTools: ToolModule = [
   defineTool({
     name: "add_switch_port_isolation",
-    title: "Add Switch Port Isolation",
+    title: "Add Switch Port Isolation Entry",
     annotations: WRITE,
     description:
-      "Adds a switch port-isolation entry on the MikroTik device, overriding " +
-      "which ports a given port may forward traffic to (hardware private-VLAN " +
-      "style isolation).\n\n" +
-      "Notes:\n" +
-      "    port: the source port being isolated.\n" +
-      "    forwarding_override_ports: comma-separated list of the only ports\n" +
-      "        this port may forward to (others are blocked in hardware).",
+      "Add a port-isolation entry (`/interface ethernet switch port-isolation add`) — " +
+      "restricts which switch-chip ports a given source port may forward traffic to, " +
+      "implementing hardware-level private-VLAN-style isolation without IP rules.\n\n" +
+      "Use this when you need to prevent a switch port from communicating with all " +
+      "other ports except a specific allowed set (e.g. uplink only). This is a " +
+      "switch-chip hardware rule; for Layer-3 traffic filtering use the firewall tools " +
+      "(create_filter_rule, create_nat_rule). For VLAN segmentation use create_vlan_interface.\n\n" +
+      "Returns the created entry's details including its `.id` (use list_switch_port_isolation " +
+      "to obtain `.id` values of existing entries).\n\n" +
+      "Args:\n" +
+      "    port: source port to isolate, e.g. 'ether1'.\n" +
+      "    forwarding_override_ports: comma-separated list of the ONLY ports this port " +
+      "        may forward to — all others are blocked in hardware.",
     inputSchema: {
       port: z.string().describe("Source port to isolate, e.g. 'ether1'"),
       forwarding_override_ports: z.string().describe("Comma-separated allowed destination ports"),
@@ -50,9 +56,16 @@ export const switchPortIsolationTools: ToolModule = [
 
   defineTool({
     name: "list_switch_port_isolation",
-    title: "List Switch Port Isolation",
+    title: "List Switch Port Isolation Entries",
     annotations: READ,
-    description: "Lists switch port-isolation entries on the MikroTik device.",
+    description:
+      "List all switch port-isolation entries (`/interface ethernet switch port-isolation print`) — " +
+      "shows every source port that has a forwarding-override configured on the switch chip, " +
+      "including its allowed destination ports and `.id`.\n\n" +
+      "Use this to audit current port isolation policy or to retrieve `.id` values " +
+      "needed by get_switch_port_isolation, update_switch_port_isolation, or " +
+      "remove_switch_port_isolation. For a single entry's full detail use get_switch_port_isolation.\n\n" +
+      "Returns a table of all matching entries; optionally filter by partial port name via port_filter.",
     inputSchema: {
       port_filter: z.string().optional().describe("Partial source-port match"),
     },
@@ -73,9 +86,15 @@ export const switchPortIsolationTools: ToolModule = [
 
   defineTool({
     name: "get_switch_port_isolation",
-    title: "Get Switch Port Isolation",
+    title: "Get Switch Port Isolation Entry",
     annotations: READ,
-    description: "Gets a specific switch port-isolation entry by source port or '.id'.",
+    description:
+      "Retrieve detail for a single switch port-isolation entry " +
+      "(`/interface ethernet switch port-isolation print detail`) by source port name or RouterOS `.id`.\n\n" +
+      "Use this to inspect the forwarding-override-ports of one specific port in full detail. " +
+      "For all entries use list_switch_port_isolation. The `.id` argument (e.g. '*1') " +
+      "comes from list_switch_port_isolation; a plain port name (e.g. 'ether1') is also accepted.\n\n" +
+      "Returns the full detail block for the matched entry, or a not-found message.",
     inputSchema: {
       isolation_id: z.string().describe("Source port name (e.g. 'ether1') or RouterOS '.id'"),
     },
@@ -93,11 +112,16 @@ export const switchPortIsolationTools: ToolModule = [
 
   defineTool({
     name: "update_switch_port_isolation",
-    title: "Update Switch Port Isolation",
+    title: "Update Switch Port Isolation Entry",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates a switch port-isolation entry (by source port or '.id'). " +
-      'Pass comment="" to clear the comment.',
+      "Modify an existing switch port-isolation entry (`/interface ethernet switch port-isolation set`) " +
+      "— change the allowed forwarding-override-ports or comment without removing and recreating the entry.\n\n" +
+      "isolation_id accepts either the source port name (e.g. 'ether1') or the RouterOS `.id` " +
+      "(e.g. '*1') from list_switch_port_isolation. Only supplied fields are changed; " +
+      'pass comment="" to clear the comment. To change which port is being isolated ' +
+      "(the port field itself), use remove_switch_port_isolation then add_switch_port_isolation.\n\n" +
+      "Returns the entry's updated detail block.",
     inputSchema: {
       isolation_id: z.string().describe("Source port name or RouterOS '.id'"),
       forwarding_override_ports: z
@@ -128,10 +152,15 @@ export const switchPortIsolationTools: ToolModule = [
 
   defineTool({
     name: "remove_switch_port_isolation",
-    title: "Remove Switch Port Isolation",
+    title: "Remove Switch Port Isolation Entry",
     annotations: DESTRUCTIVE,
     description:
-      "Removes a switch port-isolation entry by source port or '.id' from the MikroTik device.",
+      "Permanently delete a switch port-isolation entry (`/interface ethernet switch port-isolation remove`) " +
+      "— restores the port's default forwarding behaviour (no forwarding restriction on the switch chip).\n\n" +
+      "isolation_id accepts either the source port name (e.g. 'ether1') or the RouterOS `.id` " +
+      "(e.g. '*1') from list_switch_port_isolation. Performs a count-only existence check before " +
+      "removal and returns a not-found message if the entry does not exist. To add a new isolation rule " +
+      "afterwards use add_switch_port_isolation; to only modify allowed ports use update_switch_port_isolation.",
     inputSchema: {
       isolation_id: z.string().describe("Source port name or RouterOS '.id'"),
     },

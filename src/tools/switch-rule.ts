@@ -90,19 +90,22 @@ async function updateSwitchRule(
 export const switchRuleTools: ToolModule = [
   defineTool({
     name: "add_switch_rule",
-    title: "Add Switch Rule",
+    title: "Add Switch Chip ACL Rule",
     annotations: WRITE,
     description:
-      "Adds a switch ACL/redirect rule on the MikroTik device " +
-      "(`/interface ethernet switch rule`). Rules match traffic in hardware on " +
-      "the listed source ports and apply an action.\n\n" +
-      "Notes:\n" +
+      "Creates a hardware switch ACL/redirect rule (`/interface ethernet switch rule add`) " +
+      "on the built-in switch chip. Use this to match traffic in hardware at Layer 2/3 on " +
+      "specified source ports and redirect, rate-limit, mirror, or drop it without CPU involvement. " +
+      "This is NOT a software firewall rule — for software packet filtering use create_filter_rule, " +
+      "for address translation use create_nat_rule. Returns the created rule's detail including its `.id`.\n\n" +
+      "Arguments:\n" +
       "    switch: the switch chip the rule belongs to, e.g. 'switch1'.\n" +
-      "    ports: comma-separated source ports the rule matches on.\n" +
-      "    new_dst_ports: redirect matched traffic to these ports; set to an\n" +
-      "        empty string to drop.\n" +
-      "    redirect_to_cpu / copy_to_cpu / mirror: divert, duplicate or span\n" +
-      "        matched traffic.",
+      "    ports: comma-separated source switch ports the rule matches on, e.g. 'ether1,ether2'.\n" +
+      "    new_dst_ports: redirect matched traffic to these ports (non-empty string; omit to leave unset).\n" +
+      "    redirect_to_cpu / copy_to_cpu / mirror: divert exclusively, duplicate, or span\n" +
+      "        matched traffic to CPU.\n" +
+      "    rate: rate limit in bits/second.\n" +
+      "    mac_protocol: e.g. 'ip', 'arp', 'vlan', or an EtherType number.",
     inputSchema: {
       switch: z.string().describe("Owning switch chip, e.g. 'switch1'"),
       ports: z.string().describe("Comma-separated source ports the rule matches"),
@@ -196,9 +199,15 @@ export const switchRuleTools: ToolModule = [
 
   defineTool({
     name: "list_switch_rules",
-    title: "List Switch Rules",
+    title: "List Switch Chip ACL Rules",
     annotations: READ,
-    description: "Lists switch ACL/redirect rules on the MikroTik device.",
+    description:
+      "Lists all hardware switch ACL/redirect rules (`/interface ethernet switch rule print`) " +
+      "on the switch chip. Use this to audit or discover existing rules before adding or updating. " +
+      "Optional filters narrow by switch chip name, port name substring, or disabled-only status. " +
+      "For software firewall rules use list_filter_rules; for NAT rules use list_nat_rules. " +
+      "Returns a formatted table of all matching rules including their `.id` values needed by " +
+      "get_switch_rule, update_switch_rule, remove_switch_rule, enable_switch_rule, and disable_switch_rule.",
     inputSchema: {
       switch_filter: z.string().optional(),
       ports_filter: z.string().optional(),
@@ -223,9 +232,15 @@ export const switchRuleTools: ToolModule = [
 
   defineTool({
     name: "get_switch_rule",
-    title: "Get Switch Rule",
+    title: "Get Switch Chip ACL Rule Detail",
     annotations: READ,
-    description: "Gets a specific switch rule by '.id'.",
+    description:
+      "Fetches full detail of a single hardware switch ACL/redirect rule " +
+      "(`/interface ethernet switch rule print detail where .id=…`). " +
+      "Use this to inspect all match criteria and action fields of one rule. " +
+      "`rule_id` takes the `.id` from list_switch_rules (e.g. '*1'). " +
+      "For a tabular overview of all rules use list_switch_rules; " +
+      "for software firewall rule detail use get_filter_rule.",
     inputSchema: {
       rule_id: z.string().describe("RouterOS '.id', e.g. '*1' or '0'"),
     },
@@ -243,11 +258,17 @@ export const switchRuleTools: ToolModule = [
 
   defineTool({
     name: "update_switch_rule",
-    title: "Update Switch Rule",
+    title: "Update Switch Chip ACL Rule",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates an existing switch rule on the MikroTik device. " +
-      'Pass "" to clear an optional matcher/action field.',
+      "Modifies an existing hardware switch ACL/redirect rule " +
+      "(`/interface ethernet switch rule set`) by `.id`. " +
+      "Use this to change match criteria (ports, addresses, VLAN, protocol) or actions " +
+      "(redirect target ports, mirror, rate limit, disabled state). " +
+      'Pass an empty string ("") for any optional field to clear it. ' +
+      "`rule_id` takes the `.id` from list_switch_rules. Returns the updated rule's full detail. " +
+      "For software firewall rule edits use update_filter_rule; " +
+      "to only toggle the enabled state use enable_switch_rule or disable_switch_rule.",
     inputSchema: {
       rule_id: z.string(),
       switch: z.string().optional(),
@@ -281,9 +302,15 @@ export const switchRuleTools: ToolModule = [
 
   defineTool({
     name: "remove_switch_rule",
-    title: "Remove Switch Rule",
+    title: "Remove Switch Chip ACL Rule",
     annotations: DESTRUCTIVE,
-    description: "Removes a switch rule by '.id' from the MikroTik device.",
+    description:
+      "Permanently deletes a hardware switch ACL/redirect rule " +
+      "(`/interface ethernet switch rule remove`) by `.id`. " +
+      "Performs an existence check first and returns an error if the rule is not found. " +
+      "`rule_id` takes the `.id` from list_switch_rules (e.g. '*1'). " +
+      "To keep the rule but stop it from matching use disable_switch_rule instead. " +
+      "For removing software firewall rules use remove_filter_rule.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       ctx.info(`Removing switch rule: rule_id=${a.rule_id}`);
@@ -304,9 +331,15 @@ export const switchRuleTools: ToolModule = [
 
   defineTool({
     name: "enable_switch_rule",
-    title: "Enable Switch Rule",
+    title: "Enable Switch Chip ACL Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Enables a switch rule by '.id'.",
+    description:
+      "Re-enables a previously disabled hardware switch ACL/redirect rule " +
+      "(`/interface ethernet switch rule set … disabled=no`). " +
+      "Use this to activate a rule without recreating it. " +
+      "`rule_id` takes the `.id` from list_switch_rules (e.g. '*1'). " +
+      "To deactivate a rule without deleting it use disable_switch_rule; " +
+      "to permanently delete use remove_switch_rule. Returns the updated rule's full detail.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateSwitchRule({ rule_id: a.rule_id, disabled: false }, ctx);
@@ -315,9 +348,15 @@ export const switchRuleTools: ToolModule = [
 
   defineTool({
     name: "disable_switch_rule",
-    title: "Disable Switch Rule",
+    title: "Disable Switch Chip ACL Rule",
     annotations: WRITE_IDEMPOTENT,
-    description: "Disables a switch rule by '.id'.",
+    description:
+      "Deactivates a hardware switch ACL/redirect rule without deleting it " +
+      "(`/interface ethernet switch rule set … disabled=yes`). " +
+      "Use this to temporarily suspend a rule's match/action while preserving its configuration. " +
+      "`rule_id` takes the `.id` from list_switch_rules (e.g. '*1'). " +
+      "To reactivate the rule use enable_switch_rule; to permanently delete use remove_switch_rule. " +
+      "Returns the updated rule's full detail.",
     inputSchema: { rule_id: z.string() },
     async handler(a, ctx) {
       return updateSwitchRule({ rule_id: a.rule_id, disabled: true }, ctx);

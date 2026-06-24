@@ -11,10 +11,16 @@ const VlanHeader = z.enum(["leave-as-is", "always-strip", "add-if-missing"]);
 export const switchPortTools: ToolModule = [
   defineTool({
     name: "list_switch_ports",
-    title: "List Switch Ports",
+    title: "List Switch Chip Ports",
     annotations: READ,
     description:
-      "Lists switch chip ports on the MikroTik device (`/interface ethernet switch port`).",
+      "List all switch chip ports (`/interface ethernet switch port print`) — the hardware-level " +
+      "per-port VLAN configuration entries on RouterOS switch chips. " +
+      "Use this to discover port names and their current vlan-mode, vlan-header, and " +
+      "default-vlan-id (PVID) settings before updating them. " +
+      "For a single port's full detail use get_switch_port; to change settings use update_switch_port. " +
+      "Optional filters narrow results by partial port name or owning switch (e.g. 'switch1'). " +
+      "Returns all matching port rows including VLAN mode, tag-header treatment, and PVID.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial port-name match"),
       switch_filter: z.string().optional().describe("Filter by owning switch, e.g. 'switch1'"),
@@ -37,9 +43,14 @@ export const switchPortTools: ToolModule = [
 
   defineTool({
     name: "get_switch_port",
-    title: "Get Switch Port",
+    title: "Get Switch Chip Port Details",
     annotations: READ,
-    description: "Gets detailed settings for a specific switch port by name or '.id'.",
+    description:
+      "Retrieve detailed settings for a single switch chip port (`/interface ethernet switch port print detail`) " +
+      "by port name (e.g. 'ether1') or RouterOS '.id' from list_switch_ports. " +
+      "Use this when you need the full attribute set of one port before updating it; " +
+      "for all ports use list_switch_ports; to change settings use update_switch_port. " +
+      "Returns a detailed view of vlan-mode, vlan-header, default-vlan-id, and force-vlan-id for the matched port.",
     inputSchema: {
       port_id: z.string().describe("Port name (e.g. 'ether1') or RouterOS '.id'"),
     },
@@ -63,10 +74,14 @@ export const switchPortTools: ToolModule = [
 
   defineTool({
     name: "update_switch_port",
-    title: "Update Switch Port",
+    title: "Update Switch Chip Port VLAN Settings",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates a switch port's hardware VLAN settings on the MikroTik device.\n\n" +
+      "Set hardware VLAN settings on a switch chip port (`/interface ethernet switch port set`) — " +
+      "controls how the port handles 802.1Q VLAN tags at the chip level (PVID, enforcement mode, tag treatment). " +
+      "To inspect current settings first use get_switch_port or list_switch_ports. " +
+      "port_id accepts a port name (e.g. 'ether1') or the '.id' returned by list_switch_ports. " +
+      "Returns the updated port's full detail on success.\n\n" +
       "Notes:\n" +
       "    vlan_mode: 'disabled' (ignore VLAN table), 'optional', 'enabled', or\n" +
       "        'secure' (strict VLAN table enforcement).\n" +
