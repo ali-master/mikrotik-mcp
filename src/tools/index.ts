@@ -20,6 +20,7 @@ import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
 import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
+import { parentalControlsTools } from "./parental-controls";
 import { dot1xServerTools } from "./dot1x-server";
 import { dot1xClientTools } from "./dot1x-client";
 import { firewallAuditTools } from "./firewall-audit";
@@ -253,6 +254,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Addressing & Routing",
     description: "DNS settings, static records, cache and regexp (`/ip dns`).",
     tools: dnsTools,
+  },
+  {
+    label: "Parental Controls",
+    slug: "parental-controls",
+    group: "Addressing & Routing",
+    description:
+      "Time-of-day internet policy per device address-list (scheduled drop) plus DNS content " +
+      "sinkholes, with preview-before-apply.",
+    tools: parentalControlsTools,
   },
   // ── IPv6 (`/ipv6`) ───────────────────────────────────────────────────────
   {

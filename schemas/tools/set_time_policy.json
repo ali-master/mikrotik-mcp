@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_time_policy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Policy id, e.g. 'kids-bedtime'"
+    },
+    "list": {
+      "default": "parental-devices",
+      "description": "Address-list of the affected devices",
+      "type": "string"
+    },
+    "addresses": {
+      "description": "Device IPs to add to the list",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "block_start": {
+      "default": "22:00",
+      "description": "Daily cut-off time (HH:MM)",
+      "type": "string"
+    },
+    "block_end": {
+      "default": "07:00",
+      "description": "Daily restore time (HH:MM)",
+      "type": "string"
+    },
+    "block_domains": {
+      "description": "Domains to always block via DNS",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview (default); true = install",
+      "type": "boolean"
+    }
+  },
+  "required": ["name", "list", "block_start", "block_end", "apply"],
+  "additionalProperties": false
+}

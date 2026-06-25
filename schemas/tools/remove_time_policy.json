@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_time_policy",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The policy id used when installing"
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}
