@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "setup_wan_failover",
+  "type": "object",
+  "properties": {
+    "primary_gateway": {
+      "type": "string",
+      "description": "Primary WAN gateway IP (or interface name)"
+    },
+    "backup_gateways": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "One or more backup WAN gateways, in failover order"
+    },
+    "check": {
+      "default": "ping",
+      "description": "Gateway health-check method",
+      "type": "string",
+      "enum": ["ping", "arp"]
+    },
+    "comment_prefix": {
+      "default": "wan-failover",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview only (default); true = execute",
+      "type": "boolean"
+    }
+  },
+  "required": ["primary_gateway", "backup_gateways", "check", "comment_prefix", "apply"],
+  "additionalProperties": false
+}

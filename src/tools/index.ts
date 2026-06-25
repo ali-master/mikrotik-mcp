@@ -71,6 +71,7 @@ import { qosArchitectTools } from "./qos-architect";
 import { queueTools } from "./queue";
 import { queueInterfaceTools } from "./queue-interface";
 import { radiusTools } from "./radius";
+import { multiwanTools } from "./multiwan";
 import { routeTools } from "./routes";
 import { routingBfdTools } from "./routing-bfd";
 import { routingBgpTools } from "./routing-bgp";
@@ -203,6 +204,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Addressing & Routing",
     description: "Static routes, routing table, route checks and cache (`/ip route`).",
     tools: routeTools,
+  },
+  {
+    label: "Multi-WAN",
+    slug: "multiwan",
+    group: "Addressing & Routing",
+    description:
+      "Resilient multi-WAN from intent: active-passive failover and ECMP load balancing with " +
+      "health-checked default routes and a preview-before-apply step.",
+    tools: multiwanTools,
   },
   {
     label: "DHCP",

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "setup_wan_loadbalance",
+  "type": "object",
+  "properties": {
+    "gateways": {
+      "minItems": 2,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Two or more WAN gateways to balance across"
+    },
+    "check": {
+      "default": "ping",
+      "description": "Gateway health-check method",
+      "type": "string",
+      "enum": ["ping", "arp"]
+    },
+    "comment": {
+      "default": "wan-ecmp",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview only (default); true = execute",
+      "type": "boolean"
+    }
+  },
+  "required": ["gateways", "check", "comment", "apply"],
+  "additionalProperties": false
+}

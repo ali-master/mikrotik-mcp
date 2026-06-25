@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 673,
+  "toolCount": 675,
   "tools": [
     {
       "name": "list_interfaces",
@@ -2535,6 +2535,92 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "setup_wan_failover",
+      "title": "Set Up Multi-WAN Failover",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Builds ACTIVE-PASSIVE multi-WAN failover by adding health-checked default routes with ascending distances (primary=1, each backup +1). RouterOS uses the lowest-distance reachable route; `check-gateway` withdraws a route when its gateway stops answering, so traffic fails over to the next WAN — and fails back automatically when the primary recovers. DEFAULTS TO A DRY RUN (`apply=false`) so you can review before changing default routing (which can cut your own access); set `apply=true` to execute. Does NOT remove existing 0.0.0.0/0 routes — clear conflicting ones first with the route tools. For load balancing instead of failover use setup_wan_loadbalance. Returns the plan or the resulting default routes.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "primary_gateway": {
+            "type": "string",
+            "description": "Primary WAN gateway IP (or interface name)"
+          },
+          "backup_gateways": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One or more backup WAN gateways, in failover order"
+          },
+          "check": {
+            "default": "ping",
+            "description": "Gateway health-check method",
+            "type": "string",
+            "enum": ["ping", "arp"]
+          },
+          "comment_prefix": {
+            "default": "wan-failover",
+            "type": "string"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview only (default); true = execute",
+            "type": "boolean"
+          }
+        },
+        "required": ["primary_gateway", "backup_gateways", "check", "comment_prefix", "apply"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "setup_wan_loadbalance",
+      "title": "Set Up Multi-WAN Load Balancing (ECMP)",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Builds ECMP (equal-cost multi-path) load balancing across multiple WANs by adding ONE default route whose `gateway` lists every WAN — RouterOS then spreads connections across the links (per-connection, so a single flow stays on one WAN). `check-gateway` drops a dead link from the set. DEFAULTS TO A DRY RUN (`apply=false`); set `apply=true` to execute. Does NOT remove existing 0.0.0.0/0 routes — clear conflicting ones first. ECMP is simple but balances by connection-hash, not by bandwidth; for sticky per-source balancing (PCC) use the firewall mangle + routing-table tools. For failover instead of balancing use setup_wan_failover. Returns the plan or the resulting default route.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "gateways": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Two or more WAN gateways to balance across"
+          },
+          "check": {
+            "default": "ping",
+            "description": "Gateway health-check method",
+            "type": "string",
+            "enum": ["ping", "arp"]
+          },
+          "comment": {
+            "default": "wan-ecmp",
+            "type": "string"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview only (default); true = execute",
+            "type": "boolean"
+          }
+        },
+        "required": ["gateways", "check", "comment", "apply"],
         "additionalProperties": false
       }
     },
