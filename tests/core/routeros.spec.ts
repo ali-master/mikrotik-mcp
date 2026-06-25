@@ -6,9 +6,11 @@ import { describe, expect, test } from "vite-plus/test";
 import {
   commandUnsupported,
   containsRawParserError,
+  extractCreatedId,
   indicatesFailure,
   placeBeforeError,
   portConflictError,
+  readBackUnavailable,
   splitHostPort,
 } from "../../src/core/routeros";
 
@@ -105,5 +107,40 @@ describe("portConflictError", () => {
   });
   test("returns undefined for unrelated errors", () => {
     expect(portConflictError("failure: already have such entry", 22)).toBeUndefined();
+  });
+});
+
+describe("extractCreatedId", () => {
+  test("pulls the *N hex id RouterOS echoes after add", () => {
+    expect(extractCreatedId("*1A")).toBe("*1A");
+    expect(extractCreatedId("*f")).toBe("*f");
+  });
+  test("ignores a trailing warning/whitespace and returns just the id", () => {
+    // The concrete trigger for the original bug: the raw add output, used
+    // verbatim as a `where .id=` key, yields "no such item".
+    expect(extractCreatedId("*1A\nwarning: rule may lock you out")).toBe("*1A");
+    expect(extractCreatedId("  *2b  ")).toBe("*2b");
+  });
+  test("accepts a bare ordinal id", () => {
+    expect(extractCreatedId("5")).toBe("5");
+  });
+  test("returns undefined when no id is present", () => {
+    expect(extractCreatedId("")).toBeUndefined();
+    expect(extractCreatedId("failure: something")).toBeUndefined();
+  });
+});
+
+describe("readBackUnavailable", () => {
+  test("flags the 'no such item (…; line N)' form isEmpty misses", () => {
+    expect(readBackUnavailable("no such item (/ip/firewall/filter/print; line 1)")).toBe(true);
+  });
+  test("flags empty / plain no-such-item / parser errors", () => {
+    expect(readBackUnavailable("")).toBe(true);
+    expect(readBackUnavailable("no such item")).toBe(true);
+    expect(readBackUnavailable("no such item (4)")).toBe(true);
+    expect(readBackUnavailable("syntax error (line 1 column 5)")).toBe(true);
+  });
+  test("returns false for a real record body", () => {
+    expect(readBackUnavailable(" 0  chain=input action=accept dst-port=443 .id=*1A")).toBe(false);
   });
 });

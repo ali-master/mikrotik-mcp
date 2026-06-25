@@ -3,7 +3,15 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  extractCreatedId,
+  readBackUnavailable,
+  Cmd,
+} from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -124,18 +132,24 @@ export const ipv6FirewallRawTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
-      if (result.trim()) {
-        const trimmed = result.trim();
-        if (trimmed.includes("*") || isDigits(trimmed)) {
-          const details = await executeMikrotikCommand(
-            `/ipv6 firewall raw print detail where .id=${trimmed}`,
-            ctx,
-          );
-          return details.trim()
-            ? `IPv6 firewall raw rule created successfully:\n\n${details}`
-            : `IPv6 firewall raw rule created with ID: ${result}`;
-        }
-        return `Failed to create IPv6 firewall raw rule: ${result}`;
+      const trimmed = result.trim();
+
+      if (looksLikeError(trimmed)) {
+        return `Failed to create IPv6 firewall raw rule: ${trimmed}`;
+      }
+
+      // RouterOS echoes the new rule's .id on success. Read it back by that id
+      // (extracted as a clean token); if the read-back can't return the record,
+      // still report success — the rule was created.
+      const createdId = extractCreatedId(trimmed);
+      if (createdId) {
+        const details = await executeMikrotikCommand(
+          `/ipv6 firewall raw print detail where .id=${createdId}`,
+          ctx,
+        );
+        return readBackUnavailable(details)
+          ? `IPv6 firewall raw rule created (id ${createdId}).`
+          : `IPv6 firewall raw rule created successfully:\n\n${details}`;
       }
 
       const count = await executeMikrotikCommand("/ipv6 firewall raw print detail count-only", ctx);

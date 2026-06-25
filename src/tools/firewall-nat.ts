@@ -9,6 +9,8 @@ import {
   looksLikeError,
   isEmpty,
   placeBeforeError,
+  extractCreatedId,
+  readBackUnavailable,
   Cmd,
 } from "../core/routeros";
 import type { ToolContext } from "../core/context";
@@ -169,23 +171,29 @@ export const firewallNatTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
-      if (result.trim()) {
-        const trimmed = result.trim();
-        // MikroTik returns the ID of the created item on success.
-        if (trimmed.includes("*") || isDigits(trimmed)) {
-          const details = await executeMikrotikCommand(
-            `/ip firewall nat print detail where .id=${trimmed}`,
-            ctx,
-          );
-          return details.trim()
-            ? `NAT rule created successfully:\n\n${details}`
-            : `NAT rule created with ID: ${result}`;
-        }
-        const hint = placeBeforeError(result, a.place_before);
-        return `Failed to create NAT rule: ${hint ?? result}`;
+      const trimmed = result.trim();
+
+      // A device error (e.g. a bad place-before) — surface it, never "created".
+      if (looksLikeError(trimmed)) {
+        const hint = placeBeforeError(trimmed, a.place_before);
+        return `Failed to create NAT rule: ${hint ?? trimmed}`;
       }
 
-      // No output might mean success — verify by fetching the last rule.
+      // RouterOS echoes the new rule's .id on success. Read it back by that id
+      // (extracted as a clean token); if the read-back can't return the record,
+      // still report success — the rule was created.
+      const createdId = extractCreatedId(trimmed);
+      if (createdId) {
+        const details = await executeMikrotikCommand(
+          `/ip firewall nat print detail where .id=${createdId}`,
+          ctx,
+        );
+        return readBackUnavailable(details)
+          ? `NAT rule created (id ${createdId}).`
+          : `NAT rule created successfully:\n\n${details}`;
+      }
+
+      // No id echoed — verify by fetching the last rule.
       const count = await executeMikrotikCommand("/ip firewall nat print detail count-only", ctx);
       const c = count.trim();
       if (isDigits(c) && Number.parseInt(c, 10) > 0) {

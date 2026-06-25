@@ -16,6 +16,8 @@ import {
   looksLikeError,
   isEmpty,
   placeBeforeError,
+  extractCreatedId,
+  readBackUnavailable,
   Cmd,
 } from "../core/routeros";
 import type { ToolContext } from "../core/context";
@@ -178,23 +180,30 @@ export const firewallFilterTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
-      if (result.trim()) {
-        const trimmed = result.trim();
-        // MikroTik returns the ID of the created item on success.
-        if (trimmed.includes("*") || isDigits(trimmed)) {
-          const details = await executeMikrotikCommand(
-            `/ip firewall filter print detail where .id=${trimmed}`,
-            ctx,
-          );
-          return details.trim()
-            ? `Firewall filter rule created successfully:\n\n${details}`
-            : `Firewall filter rule created with ID: ${result}`;
-        }
-        const hint = placeBeforeError(result, a.place_before);
-        return `Failed to create firewall filter rule: ${hint ?? result}`;
+      const trimmed = result.trim();
+
+      // A device error (e.g. a bad place-before) — surface it, never "created".
+      if (looksLikeError(trimmed)) {
+        const hint = placeBeforeError(trimmed, a.place_before);
+        return `Failed to create firewall filter rule: ${hint ?? trimmed}`;
       }
 
-      // No output might mean success — verify by fetching the last rule.
+      // RouterOS echoes the new rule's .id on success. Read it back by that id
+      // (extracted as a clean token so a trailing warning can't corrupt the
+      // lookup); if the read-back can't return the record, still report success
+      // — the rule was created.
+      const createdId = extractCreatedId(trimmed);
+      if (createdId) {
+        const details = await executeMikrotikCommand(
+          `/ip firewall filter print detail where .id=${createdId}`,
+          ctx,
+        );
+        return readBackUnavailable(details)
+          ? `Firewall filter rule created (id ${createdId}).`
+          : `Firewall filter rule created successfully:\n\n${details}`;
+      }
+
+      // No id echoed — verify by fetching the last rule.
       const count = await executeMikrotikCommand(
         "/ip firewall filter print detail count-only",
         ctx,

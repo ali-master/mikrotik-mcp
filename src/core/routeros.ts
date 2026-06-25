@@ -137,6 +137,31 @@ export function isEmpty(result: string): boolean {
 }
 
 /**
+ * Extract the internal `.id` RouterOS echoes after a successful `add`. ROS prints
+ * the new item's id — a `*` followed by hex (e.g. `*1A`), or a bare ordinal — but
+ * it may append a trailing warning or stray whitespace, so the raw `add` output
+ * must NOT be used verbatim as a `print … where .id=<x>` key (a polluted key
+ * yields "no such item"). Returns the first id token, or undefined when none.
+ */
+export function extractCreatedId(output: string): string | undefined {
+  const star = output.match(/\*[0-9A-Fa-f]+/);
+  if (star) return star[0];
+  const num = output.trim().match(/^\d+$/);
+  return num ? num[0] : undefined;
+}
+
+/**
+ * True when a post-create read-back didn't return a usable record — so a handler
+ * reports success from the `add`-echoed `.id` instead of splicing a device error
+ * into a "created successfully" message. Covers an empty result, every "no such
+ * item" variant (incl. the `no such item (…; line N)` form `isEmpty` misses), and
+ * any parser/value error.
+ */
+export function readBackUnavailable(details: string): boolean {
+  return isEmpty(details) || /no such item/i.test(details) || looksLikeError(details);
+}
+
+/**
  * Heuristic: did the device reject the command? Covers RouterOS console parser
  * and value errors that would otherwise be wrapped in a success message — value
  * failures (`failure:`), parser errors (`syntax error`, `bad command`,

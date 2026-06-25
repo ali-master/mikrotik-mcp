@@ -3,7 +3,15 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  quoteValue,
+  looksLikeError,
+  isEmpty,
+  extractCreatedId,
+  readBackUnavailable,
+  Cmd,
+} from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
@@ -167,18 +175,24 @@ export const switchRuleTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd, ctx);
 
-      if (result.trim()) {
-        const trimmed = result.trim();
-        if (trimmed.includes("*") || isDigits(trimmed)) {
-          const details = await executeMikrotikCommand(
-            `/interface ethernet switch rule print detail where .id=${trimmed}`,
-            ctx,
-          );
-          return details.trim()
-            ? `Switch rule added successfully:\n\n${details}`
-            : `Switch rule added with ID: ${result}`;
-        }
-        return `Failed to add switch rule: ${result}`;
+      const trimmed = result.trim();
+
+      if (looksLikeError(trimmed)) {
+        return `Failed to add switch rule: ${trimmed}`;
+      }
+
+      // RouterOS echoes the new rule's .id on success. Read it back by that id
+      // (extracted as a clean token); if the read-back can't return the record,
+      // still report success — the rule was added.
+      const createdId = extractCreatedId(trimmed);
+      if (createdId) {
+        const details = await executeMikrotikCommand(
+          `/interface ethernet switch rule print detail where .id=${createdId}`,
+          ctx,
+        );
+        return readBackUnavailable(details)
+          ? `Switch rule added (id ${createdId}).`
+          : `Switch rule added successfully:\n\n${details}`;
       }
 
       const count = await executeMikrotikCommand(
