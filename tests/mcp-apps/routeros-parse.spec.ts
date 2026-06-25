@@ -45,6 +45,14 @@ describe("parseKeyValues", () => {
   it("returns an empty object for empty input", () => {
     expect(parseKeyValues("")).toEqual({});
   });
+
+  it("tolerates CRLF line endings (RouterOS SSH exec channel)", () => {
+    const text = "  uptime: 1w2d3h\r\n  version: 7.16.1 (stable)\r\n  cpu-load: 5%\r\n";
+    const kv = parseKeyValues(text);
+    expect(kv.uptime).toBe("1w2d3h");
+    expect(kv.version).toBe("7.16.1 (stable)");
+    expect(kv["cpu-load"]).toBe("5%");
+  });
 });
 
 describe("parseLeadingNumber", () => {
@@ -273,6 +281,16 @@ describe("parseSystemResource", () => {
   it("returns null when the output carries no usable metric (empty/error)", () => {
     expect(parseSystemResource("")).toBeNull();
     expect(parseSystemResource("bad command name (line 1 column 9)")).toBeNull();
+  });
+  it("parses metrics from CRLF output (the dashboard health-probe regression)", () => {
+    const text =
+      "  uptime: 2d3h\r\n  version: 7.16.1 (stable)\r\n  free-memory: 184.6MiB\r\n" +
+      "  total-memory: 256.0MiB\r\n  cpu-load: 12%\r\n";
+    const r = parseSystemResource(text);
+    expect(r).not.toBeNull();
+    expect(r?.cpuLoad).toBe(12);
+    expect(r?.totalMemory).toBe(256 * 1024 ** 2);
+    expect(r?.version).toBe("7.16.1 (stable)");
   });
 });
 

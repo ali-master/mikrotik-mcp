@@ -18,7 +18,10 @@
  */
 export function parseKeyValues(text: string): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const line of text.split("\n")) {
+  // Split on `\r?\n`: RouterOS emits CRLF over the SSH exec channel, and a
+  // trailing `\r` would otherwise defeat the `(.*)$` anchor below (a non-
+  // multiline `$` won't match before a `\r`), yielding zero parsed keys.
+  for (const line of text.split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Za-z][\w-]*):\s?(.*)$/);
     if (!m) continue;
     const [, key, value] = m;
@@ -383,7 +386,10 @@ export function parseRecords(text: string): ParsedRecords {
   // Drop the `Flags:` legend and the v7 `Columns:` hint line — the latter is
   // uppercase and `=`-free, so the columnar header finder would otherwise
   // mistake it for the real header and slice every row at the wrong offsets.
-  const lines = text.split("\n").filter((l) => !/^\s*(Flags|Columns):/.test(l));
+  // Split on `\r?\n` so CRLF output (RouterOS over the SSH exec channel) leaves
+  // no trailing `\r` — a `\r` would defeat the `(.*)$` anchor in INDEX_LINE and
+  // hide every detail row.
+  const lines = text.split(/\r?\n/).filter((l) => !/^\s*(Flags|Columns):/.test(l));
   const hasKv = /[A-Za-z][\w.-]*=/.test(text);
 
   if (hasKv && lines.some((l) => INDEX_LINE.test(l))) {
