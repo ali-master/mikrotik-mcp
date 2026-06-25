@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_failover_drill",
+  "type": "object",
+  "properties": {
+    "target_type": {
+      "default": "interface",
+      "type": "string",
+      "enum": ["interface", "route"]
+    },
+    "target": {
+      "type": "string",
+      "description": "Interface name (e.g. 'ether1-wan') or, for route, a find expression / .id"
+    },
+    "verify_host": {
+      "type": "string",
+      "description": "Host to ping during the outage to confirm the backup path, e.g. '8.8.8.8'"
+    },
+    "ping_count": {
+      "default": 5,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "confirm": {
+      "default": false,
+      "description": "Must be true to actually run the drill",
+      "type": "boolean"
+    }
+  },
+  "required": ["target_type", "target", "verify_host", "ping_count", "confirm"],
+  "additionalProperties": false
+}

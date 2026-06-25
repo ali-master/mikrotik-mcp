@@ -89,6 +89,7 @@ import { routingRpkiTools } from "./routing-rpki";
 import { routingSettingsTools } from "./routing-settings";
 import { routingRuleTools } from "./routing-rule";
 import { routingTableTools } from "./routing-table";
+import { drDrillTools } from "./dr-drill";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
 import { threatFeedTools } from "./threat-feed";
@@ -869,6 +870,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "Transactional config window with auto-revert (Ctrl+X session).",
     tools: safeModeTools,
+  },
+  {
+    label: "DR Drill",
+    slug: "dr-drill",
+    group: "System & Ops",
+    description:
+      "Chaos engineering: rehearse a failure in Safe Mode (disable a WAN/tunnel/route), verify the " +
+      "backup path with a ping, then auto-revert — proving failover works.",
+    tools: drDrillTools,
   },
   {
     label: "Change Plan",
