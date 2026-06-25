@@ -31,7 +31,20 @@ Safety model — tools are annotated by risk:
 Before a batch of risky changes, consider enable_safe_mode: RouterOS then holds
 every change in memory and auto-reverts if the session drops, so a mistake that
 locks you out is undone automatically. commit_safe_mode persists; rollback
-discards. Prefer specific filters on list_* tools to keep output small.`;
+discards. Prefer specific filters on list_* tools to keep output small.
+
+Change workflow — ALWAYS take a restore point before a plan. Before calling
+plan_changes or apply_plan (or any batch of write/destructive tools), first call
+capture_config_snapshot to record the current configuration. These snapshots are
+captured with \`/export\` (a read-only print — it does NOT create a file on the
+router) and persisted to the MCP host's local database (~/.mikrotik-mcp/
+snapshots.db), so they add ZERO load to the MikroTik device's disk and leave
+nothing to clean up on the device. They survive device reboots/resets. After a
+change, use diff_config_snapshots (from=latest, to=live) to confirm exactly what
+changed, and if something is wrong, get_config_snapshot returns the prior
+\`/export\` text to restore from. Do NOT use create_backup/create_export for this
+pre-change restore point — those write files to the device's flash; prefer the
+local snapshot to keep the device's disk clean.`;
 
 const MULTI_DEVICE_INSTRUCTIONS = `
 

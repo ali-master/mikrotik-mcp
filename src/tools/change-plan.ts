@@ -42,7 +42,10 @@ export const changePlanTools: ToolModule = [
       "sequence (additive changes before destructive ones). Use this to understand what will " +
       "happen before committing; to execute the plan use apply_plan. Provide commands as an " +
       "array via `commands`, as a newline-delimited string via `script`, or both — they are " +
-      "merged. Returns a human-readable plan text and a structured plan object with per-step details.",
+      "merged. Before planning a change, FIRST call capture_config_snapshot to take a restore " +
+      "point — it stores a local `/export` on the MCP host (~/.mikrotik-mcp/snapshots.db) with " +
+      "zero footprint on the device's disk (no file is written to the router). " +
+      "Returns a human-readable plan text and a structured plan object with per-step details.",
     inputSchema: {
       commands: z.array(z.string()).optional().describe("Intended RouterOS CLI commands."),
       script: z
@@ -76,8 +79,11 @@ export const changePlanTools: ToolModule = [
       "sticking. Steps execute in the same safe order that plan_changes computes (additive before " +
       "destructive); if any step returns a RouterOS error the entire plan rolls back immediately. " +
       "Safe Mode requires SSH — not available on MAC-Telnet devices. For a no-device preview " +
-      "use plan_changes instead. Returns the plan summary, per-step execution log, unified diff, " +
-      "and commit/rollback outcome.",
+      "use plan_changes instead. ALWAYS call capture_config_snapshot BEFORE this tool to record " +
+      "a restore point — it stores a local `/export` on the MCP host (~/.mikrotik-mcp/snapshots.db), " +
+      "adding no load to the device's disk and leaving nothing to remove on the router; after the " +
+      "change, diff_config_snapshots (from=latest, to=live) confirms what changed. Returns the " +
+      "plan summary, per-step execution log, unified diff, and commit/rollback outcome.",
     inputSchema: {
       commands: z.array(z.string()).optional(),
       script: z.string().optional(),
