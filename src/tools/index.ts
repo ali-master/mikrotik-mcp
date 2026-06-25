@@ -34,6 +34,7 @@ import { interfaceTools } from "./interfaces";
 import { ipAddressTools } from "./ip-address";
 import { ipPoolTools } from "./ip-pool";
 import { ipServiceTools } from "./ip-service";
+import { ipCloudTools } from "./ip-cloud";
 import { ipv6AddressTools } from "./ipv6-address";
 import { ipv6DhcpClientTools } from "./ipv6-dhcp-client";
 import { ipv6DhcpRelayTools } from "./ipv6-dhcp-relay";
@@ -563,6 +564,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "Management service ports — ssh/www/api/telnet (`/ip service`).",
     tools: ipServiceTools,
+  },
+  {
+    label: "IP Cloud (DDNS)",
+    slug: "ip-cloud",
+    group: "Addressing & Routing",
+    description:
+      "RouterOS cloud DDNS — stable <serial>.sn.mynetname.net name that tracks the WAN IP, with " +
+      "force-update and advanced options (`/ip cloud`).",
+    tools: ipCloudTools,
   },
   {
     label: "802.1X — Server",

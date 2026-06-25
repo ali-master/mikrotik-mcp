@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_ip_cloud",
+  "type": "object",
+  "properties": {
+    "ddns_enabled": {
+      "description": "Enable (true) or disable (false) the DDNS name",
+      "type": "boolean"
+    },
+    "update_time": {
+      "description": "Also sync the router clock from the cloud",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

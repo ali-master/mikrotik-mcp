@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.6.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 696,
+  "toolCount": 700,
   "tools": [
     {
       "name": "list_interfaces",
@@ -11064,6 +11064,88 @@
           }
         },
         "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_ip_cloud",
+      "title": "Get IP Cloud (DDNS) Status",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reads the RouterOS cloud DDNS status (`/ip cloud print`) — whether `ddns-enabled` is on, the assigned `dns-name` (`<serial>.sn.mynetname.net`), the detected public IPv4/IPv6 address, the last `update-time`, and the service `status`/warnings. Use this to find the router's stable cloud hostname or check why DDNS isn't updating. To change it use set_ip_cloud; to push an update now use force_cloud_update. Returns the full cloud status block.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_ip_cloud",
+      "title": "Configure IP Cloud (DDNS)",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Configures RouterOS cloud DDNS (`/ip cloud set`). Enable/disable the dynamic DNS name with `ddns_enabled`, optionally also sync the router clock from the cloud with `update_time`. When enabled the router registers a `<serial>.sn.mynetname.net` name that follows its public IP. To read the resulting name/status use get_ip_cloud; to force an immediate refresh use force_cloud_update; for the local-vs-public address behaviour use set_ip_cloud_advanced. Returns the updated cloud status.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "ddns_enabled": {
+            "description": "Enable (true) or disable (false) the DDNS name",
+            "type": "boolean"
+          },
+          "update_time": {
+            "description": "Also sync the router clock from the cloud",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "force_cloud_update",
+      "title": "Force IP Cloud DDNS Update",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Forces an immediate cloud DDNS refresh (`/ip cloud force-update`) — pushes the router's current public IP to the cloud now instead of waiting for the next scheduled update. Use after a WAN IP change or to test connectivity to the cloud service. Requires DDNS to be enabled (see set_ip_cloud). Returns the cloud status after the update.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_ip_cloud_advanced",
+      "title": "Set IP Cloud Advanced Options",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Sets advanced cloud options (`/ip cloud advanced set`). `use_local_address=true` makes the cloud DDNS publish the router's LOCAL address instead of the detected public one (useful behind a private WAN / when you reach the router over a VPN). For the main DDNS toggle use set_ip_cloud. Returns the updated cloud status.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "use_local_address": {
+            "type": "boolean",
+            "description": "Publish the local address (true) instead of the public address (false)"
+          }
+        },
+        "required": ["use_local_address"],
         "additionalProperties": false
       }
     },
