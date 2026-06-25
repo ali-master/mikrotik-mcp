@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "build_guest_hotspot",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Interface/bridge the hotspot runs on, e.g. 'guest-bridge'"
+    },
+    "subnet": {
+      "default": "10.5.50.0/24",
+      "description": "Hotspot subnet",
+      "type": "string"
+    },
+    "gateway": {
+      "default": "10.5.50.1",
+      "description": "Router address in the hotspot subnet",
+      "type": "string"
+    },
+    "pool_range": {
+      "description": "DHCP/hotspot pool; defaults to .10–.254",
+      "type": "string"
+    },
+    "dns_name": {
+      "description": "Captive-portal hostname, e.g. 'guest.wifi'",
+      "type": "string"
+    },
+    "rate_limit": {
+      "default": "5M/5M",
+      "description": "Per-guest max-limit (rx/tx)",
+      "type": "string"
+    },
+    "walled_garden": {
+      "description": "Domains reachable before sign-in, e.g. ['*.stripe.com']",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview (default); true = build",
+      "type": "boolean"
+    }
+  },
+  "required": ["interface", "subnet", "gateway", "rate_limit", "apply"],
+  "additionalProperties": false
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 688,
+  "toolCount": 690,
   "tools": [
     {
       "name": "list_interfaces",
@@ -2939,6 +2939,105 @@
           }
         },
         "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "build_guest_hotspot",
+      "title": "Build Guest Hotspot (Captive Portal)",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Stands up a guest hotspot with a captive sign-in portal in one call: the gateway IP, an address pool, a DHCP server, the `/ip hotspot` server + profile (with a per-guest `rate_limit` bandwidth cap and optional `dns_name`), and a walled garden (the `walled_garden` domains reachable BEFORE sign-in, e.g. your payment/login pages). DEFAULTS TO A DRY RUN (`apply=false`) showing every command; set `apply=true` to build it. Generate printable guest codes with generate_hotspot_vouchers. Returns the plan or a build report.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Interface/bridge the hotspot runs on, e.g. 'guest-bridge'"
+          },
+          "subnet": {
+            "default": "10.5.50.0/24",
+            "description": "Hotspot subnet",
+            "type": "string"
+          },
+          "gateway": {
+            "default": "10.5.50.1",
+            "description": "Router address in the hotspot subnet",
+            "type": "string"
+          },
+          "pool_range": {
+            "description": "DHCP/hotspot pool; defaults to .10–.254",
+            "type": "string"
+          },
+          "dns_name": {
+            "description": "Captive-portal hostname, e.g. 'guest.wifi'",
+            "type": "string"
+          },
+          "rate_limit": {
+            "default": "5M/5M",
+            "description": "Per-guest max-limit (rx/tx)",
+            "type": "string"
+          },
+          "walled_garden": {
+            "description": "Domains reachable before sign-in, e.g. ['*.stripe.com']",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview (default); true = build",
+            "type": "boolean"
+          }
+        },
+        "required": ["interface", "subnet", "gateway", "rate_limit", "apply"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "generate_hotspot_vouchers",
+      "title": "Generate Hotspot Vouchers",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Creates `count` random guest login codes as `/ip hotspot user` entries (username = password = code), each with an optional uptime limit and hotspot user profile — the printable vouchers you hand to guests. DEFAULTS TO A DRY RUN (`apply=false`) that just shows the codes it would create; set `apply=true` to add them. Returns the generated codes.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "count": {
+            "default": 10,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "uptime_limit": {
+            "description": "Per-voucher uptime, e.g. '1h', '1d'",
+            "type": "string"
+          },
+          "profile": {
+            "description": "Hotspot user profile to assign",
+            "type": "string"
+          },
+          "code_prefix": {
+            "default": "g",
+            "description": "Prefix for the generated codes",
+            "type": "string"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview codes (default); true = create",
+            "type": "boolean"
+          }
+        },
+        "required": ["count", "code_prefix", "apply"],
         "additionalProperties": false
       }
     },

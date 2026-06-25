@@ -18,6 +18,7 @@ import { changePlanTools } from "./change-plan";
 import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
+import { hotspotBuilderTools } from "./hotspot-builder";
 import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
 import { parentalControlsTools } from "./parental-controls";
@@ -247,6 +248,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Addressing & Routing",
     description: "DHCP servers, networks and pools (`/ip dhcp-server`).",
     tools: dhcpTools,
+  },
+  {
+    label: "Hotspot Builder",
+    slug: "hotspot-builder",
+    group: "Addressing & Routing",
+    description:
+      "Stand up a guest hotspot with a captive portal (gateway, DHCP, /ip hotspot, per-guest cap, " +
+      "walled garden) and generate printable vouchers, with preview-before-apply.",
+    tools: hotspotBuilderTools,
   },
   {
     label: "DNS",

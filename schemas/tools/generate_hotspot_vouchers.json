@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "generate_hotspot_vouchers",
+  "type": "object",
+  "properties": {
+    "count": {
+      "default": 10,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 200
+    },
+    "uptime_limit": {
+      "description": "Per-voucher uptime, e.g. '1h', '1d'",
+      "type": "string"
+    },
+    "profile": {
+      "description": "Hotspot user profile to assign",
+      "type": "string"
+    },
+    "code_prefix": {
+      "default": "g",
+      "description": "Prefix for the generated codes",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview codes (default); true = create",
+      "type": "boolean"
+    }
+  },
+  "required": ["count", "code_prefix", "apply"],
+  "additionalProperties": false
+}
