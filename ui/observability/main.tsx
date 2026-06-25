@@ -207,7 +207,7 @@ function bytes(n: number): string {
   }
   return `${v.toFixed(i ? 1 : 0)} ${u[i]}`;
 }
-const clock = (ts: number): string => new Date(ts).toLocaleTimeString();
+const clock = (ts: number): string => new Date(ts).toLocaleTimeString(undefined, { hour12: false });
 const num = (n: number): string => n.toLocaleString();
 const sval = (v: unknown): string => {
   if (v == null) return "?";
@@ -2179,7 +2179,11 @@ function S3Manage(): ReactNode {
                   <tr key={o.key}>
                     <td>{o.key}</td>
                     <td className="num">{bytes(o.size)}</td>
-                    <td>{o.lastModified ? new Date(o.lastModified).toLocaleString() : "—"}</td>
+                    <td>
+                      {o.lastModified
+                        ? new Date(o.lastModified).toLocaleString(undefined, { hour12: false })
+                        : "—"}
+                    </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <button className="btn" onClick={() => download(o.key)}>
                         ⤓ Download
@@ -2480,7 +2484,7 @@ function BackupsView(): ReactNode {
                     <td>{b.name}</td>
                     <td>{b.device ?? "—"}</td>
                     <td className="num">{bytes(b.bytes)}</td>
-                    <td>{new Date(b.modified).toLocaleString()}</td>
+                    <td>{new Date(b.modified).toLocaleString(undefined, { hour12: false })}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <button className="btn" onClick={() => viewBody(b.name)}>
                         view
@@ -2651,7 +2655,9 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
           <div className="kv__k">title</div>
           <div className="kv__v">{event.title}</div>
           <div className="kv__k">time</div>
-          <div className="kv__v">{new Date(event.ts).toLocaleString()}</div>
+          <div className="kv__v">
+            {new Date(event.ts).toLocaleString(undefined, { hour12: false })}
+          </div>
           <div className="kv__k">device</div>
           <div className="kv__v">{event.device ?? "—"}</div>
           <div className="kv__k">transport</div>

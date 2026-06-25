@@ -26,7 +26,7 @@ import {
 
 /** A short HH:MM label for an epoch-ms timestamp. */
 const hhmm = (t: number): string =>
-  new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
 
 /** Themed tooltip card matching shadcn's ChartTooltipContent. */
 interface TooltipEntry {
