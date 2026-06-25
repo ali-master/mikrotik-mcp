@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "request_letsencrypt_certificate",
+  "type": "object",
+  "properties": {
+    "dns_name": {
+      "type": "string",
+      "description": "Public DNS name that resolves to this router, e.g. 'vpn.example.com'"
+    }
+  },
+  "required": ["dns_name"],
+  "additionalProperties": false
+}

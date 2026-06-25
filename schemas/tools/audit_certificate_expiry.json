@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "audit_certificate_expiry",
+  "type": "object",
+  "properties": {
+    "warn_within_days": {
+      "default": 30,
+      "description": "Flag certificates expiring within this many days as 'expiring soon'",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": ["warn_within_days"],
+  "additionalProperties": false
+}

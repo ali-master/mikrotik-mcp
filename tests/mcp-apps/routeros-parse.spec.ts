@@ -6,6 +6,8 @@ import {
   parseKeyValues,
   parseLeadingNumber,
   parseSize,
+  parseCertExpiry,
+  parseRouterosDate,
   parseSizeToBytes,
   parseSystemResource,
   parsePercent,
@@ -271,5 +273,29 @@ describe("parseSystemResource", () => {
   it("returns null when the output carries no usable metric (empty/error)", () => {
     expect(parseSystemResource("")).toBeNull();
     expect(parseSystemResource("bad command name (line 1 column 9)")).toBeNull();
+  });
+});
+
+describe("parseRouterosDate / parseCertExpiry", () => {
+  it("parses v7 ISO-ish and v6 month/day dates", () => {
+    expect(parseRouterosDate("2026-06-01 12:00:00")).toBe(Date.UTC(2026, 5, 1, 12, 0, 0));
+    expect(parseRouterosDate("2026-06-01")).toBe(Date.UTC(2026, 5, 1));
+    expect(parseRouterosDate("jun/01/2026 12:00:00")).toBe(Date.UTC(2026, 5, 1, 12, 0, 0));
+    expect(parseRouterosDate("not a date")).toBeNull();
+    expect(parseRouterosDate(undefined)).toBeNull();
+  });
+  it("computes days-left per certificate, including expired ones", () => {
+    const now = Date.UTC(2026, 0, 1);
+    const detail = [
+      ' 0 K   name="server" digest-algorithm=sha256',
+      "       invalid-before=2025-01-01 00:00:00 invalid-after=2026-01-31 00:00:00",
+      ' 1 K   name="old-ca" invalid-after=2025-12-01 00:00:00',
+      ' 2     name="unsigned-template" common-name="x"',
+    ].join("\n");
+    const certs = parseCertExpiry(detail, now);
+    const byName = Object.fromEntries(certs.map((c) => [c.name, c.daysLeft]));
+    expect(byName.server).toBe(30); // Jan 31 − Jan 1
+    expect(byName["old-ca"]).toBe(-31); // expired
+    expect(byName["unsigned-template"]).toBeNull(); // no invalid-after
   });
 });

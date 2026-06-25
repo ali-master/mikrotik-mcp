@@ -28,6 +28,79 @@ export function parseKeyValues(text: string): Record<string, string> {
   return out;
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+/**
+ * Parse a RouterOS date/time string to epoch ms, or `null` if unrecognized.
+ * Handles the v7 ISO-ish form (`2026-06-01 12:00:00`) and the v6 form
+ * (`jun/01/2026 12:00:00`); the time part is optional. Treated as UTC — fine for
+ * day-granularity work like certificate expiry.
+ */
+export function parseRouterosDate(s: string | undefined): number | null {
+  if (!s) return null;
+  const t = s.trim();
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) {
+    return Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0));
+  }
+  m = t.match(/^([A-Za-z]{3})\/(\d{1,2})\/(\d{4})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) {
+    const mon = MONTHS[m[1].toLowerCase()];
+    if (mon == null) return null;
+    return Date.UTC(+m[3], mon, +m[2], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0));
+  }
+  return null;
+}
+
+/** One certificate's expiry status, derived from `/certificate print detail`. */
+export interface CertExpiry {
+  name: string;
+  /** Raw `invalid-after` value as printed by the device. */
+  invalidAfter?: string;
+  /** Whole days until expiry (negative = already expired), or null if unparseable. */
+  daysLeft: number | null;
+}
+
+/**
+ * Extract per-certificate expiry from `/certificate print detail` output.
+ *
+ * Records are split on their leading index line; for each, the `name` and
+ * `invalid-after` are pulled out and `invalid-after` (which contains a space and
+ * so can't be tokenized as a plain `key=value`) is parsed to a day count from
+ * `nowMs`. Certificates without an `invalid-after` (e.g. unsigned templates)
+ * yield `daysLeft: null`.
+ */
+export function parseCertExpiry(detail: string, nowMs: number): CertExpiry[] {
+  const out: CertExpiry[] = [];
+  for (const chunk of detail.split(/\n(?=\s*\d+\s)/)) {
+    const nameM = chunk.match(/name="([^"]*)"/);
+    if (!nameM) continue;
+    const iaM = chunk.match(
+      /invalid-after=("?)(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}|[A-Za-z]{3}\/\d{1,2}\/\d{4}[ T]\d{2}:\d{2}:\d{2})\1/,
+    );
+    const expiresMs = iaM ? parseRouterosDate(iaM[2]) : null;
+    out.push({
+      name: nameM[1],
+      invalidAfter: iaM?.[2],
+      daysLeft: expiresMs == null ? null : Math.floor((expiresMs - nowMs) / 86_400_000),
+    });
+  }
+  return out;
+}
+
 /** Parse a RouterOS size string (`256.0MiB`, `1.2 GiB`, `12345`, `1280KiB`) to bytes. */
 export function parseSize(s: string | undefined): number | undefined {
   if (!s) return undefined;

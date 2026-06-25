@@ -13,6 +13,7 @@ import { localBackupTools } from "./local-backup";
 import { s3BackupTools } from "./s3-backup";
 import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
+import { certStewardTools } from "./cert-steward";
 import { changePlanTools } from "./change-plan";
 import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
@@ -459,6 +460,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "X.509 certificate management (`/certificate`).",
     tools: certificateTools,
+  },
+  {
+    label: "Certificate Steward",
+    slug: "cert-steward",
+    group: "Security",
+    description:
+      "Certificate lifecycle helpers: a one-call expiry audit and Let's Encrypt issuance/renewal " +
+      "via RouterOS's ACME client — so a TLS cert never silently lapses.",
+    tools: certStewardTools,
   },
   {
     label: "IP Services",
