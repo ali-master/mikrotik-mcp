@@ -100,6 +100,7 @@ import { systemTools } from "./system";
 import { tunnelTools } from "./tunnels";
 import { userManagerTools } from "./user-manager";
 import { userTools } from "./users";
+import { vlanDesignerTools } from "./vlan-designer";
 import { vlanTools } from "./vlan";
 import { wireguardMeshTools } from "./wireguard-mesh";
 import { wireguardTools } from "./wireguard";
@@ -132,6 +133,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Interfaces",
     description: "802.1Q VLAN interfaces (`/interface vlan`).",
     tools: vlanTools,
+  },
+  {
+    label: "VLAN Designer",
+    slug: "vlan-designer",
+    group: "Interfaces",
+    description:
+      "Stand up a complete isolated VLAN segment (interface, gateway, DHCP, internet, inter-VLAN " +
+      "isolation) from one intent, with preview-before-apply.",
+    tools: vlanDesignerTools,
   },
   {
     label: "Bridge",

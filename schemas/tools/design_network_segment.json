@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "design_network_segment",
+  "type": "object",
+  "properties": {
+    "vlan_id": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4094
+    },
+    "name": {
+      "type": "string",
+      "description": "Name for the VLAN interface, e.g. 'guest'"
+    },
+    "subnet": {
+      "type": "string",
+      "description": "CIDR for the segment, e.g. '192.168.30.0/24'"
+    },
+    "gateway": {
+      "type": "string",
+      "description": "Router's address in the segment, e.g. '192.168.30.1'"
+    },
+    "bridge": {
+      "default": "bridge",
+      "description": "Bridge to put the VLAN on",
+      "type": "string"
+    },
+    "tagged_ports": {
+      "description": "Comma-separated trunk/tagged ports (+ the bridge)",
+      "type": "string"
+    },
+    "untagged_ports": {
+      "description": "Comma-separated access/untagged ports",
+      "type": "string"
+    },
+    "dhcp": {
+      "default": true,
+      "description": "Create a DHCP server + pool for the segment",
+      "type": "boolean"
+    },
+    "dhcp_range": {
+      "description": "Pool range; defaults to .10–.254 of the subnet",
+      "type": "string"
+    },
+    "internet": {
+      "default": true,
+      "description": "Allow internet access via srcnat masquerade",
+      "type": "boolean"
+    },
+    "isolate_from": {
+      "description": "Subnets this segment must NOT reach, e.g. ['192.168.1.0/24']",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview (default); true = build",
+      "type": "boolean"
+    }
+  },
+  "required": ["vlan_id", "name", "subnet", "gateway", "bridge", "dhcp", "internet", "apply"],
+  "additionalProperties": false
+}
