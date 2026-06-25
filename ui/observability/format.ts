@@ -32,12 +32,15 @@ export const HEALTH_COLOR = {
   latency: "#f59e0b", // amber
 } as const;
 
+// Per-risk severity palette (safe → danger). Kept in sync with the `.risk-*`
+// pill colors in styles.css so a risk reads the same hue in the feed and the
+// "By risk" donut.
 export const RISK_COLOR: Record<Risk, string> = {
-  READ: "#d4d4d8",
-  WRITE: "#a1a1aa",
-  WRITE_IDEMPOTENT: "#e4e4e7",
-  DESTRUCTIVE: "#f87171",
-  DANGEROUS: "#ef4444",
+  READ: "#34d399", // emerald — read-only, safe
+  WRITE: "#3291ff", // blue — normal write
+  WRITE_IDEMPOTENT: "#2dd4bf", // teal — idempotent write
+  DESTRUCTIVE: "#f59e0b", // amber — removes/replaces config
+  DANGEROUS: "#ef4444", // red — can lock you out
 };
 
 export const WINDOWS: [string, number][] = [

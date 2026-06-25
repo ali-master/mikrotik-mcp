@@ -678,15 +678,22 @@ function App(): ReactNode {
             >
               <NavIcon name={v.id} />
               <span>{v.label}</span>
-              {v.id === "feed" && feed.length > 0 && (
-                <span className="nav__badge">{feed.length > 999 ? "999+" : feed.length}</span>
-              )}
+              {v.id === "feed" &&
+                feed.length > 0 && (
+                  // `key={feed.length}` remounts the badge on every change so the
+                  // CSS pop animation replays each time a new event arrives.
+                  <span key={feed.length} className="nav__badge">
+                    {feed.length > 999 ? "999+" : feed.length}
+                  </span>
+                )}
             </button>
           ))}
         </nav>
         <div className="nav__foot">
           <span
-            className={`hero__live${liveMode !== "off" ? " is-on" : ""}`}
+            className={`hero__live${liveMode !== "off" ? " is-on" : ""}${
+              liveMode === "ws" ? " is-ws" : liveMode === "sse" ? " is-sse" : ""
+            }`}
             title="Live transport: WebSocket (preferred) or SSE fallback"
           >
             <span className="dot" />

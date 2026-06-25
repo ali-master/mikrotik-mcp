@@ -237,12 +237,32 @@ body::after {
 }
 .nav__badge {
   margin-left: auto;
+  display: inline-block;
   font-family: var(--mt-mono);
   font-size: 10px;
   padding: 1px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--page-accent) 24%, transparent);
   color: var(--mt-text);
+  /* Replayed on every count change via a key-remount in the markup. */
+  animation: nav-badge-pop 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}
+@keyframes nav-badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.35);
+    background: color-mix(in srgb, var(--page-accent) 60%, transparent);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav__badge {
+    animation: none;
+  }
 }
 .nav__foot {
   display: flex;
@@ -521,24 +541,33 @@ body::after {
   background: var(--mt-bad);
   transition: background 0.3s;
 }
+/* Live transport colour: green when on the preferred WebSocket, amber on the
+   SSE fallback. Each mode sets --lc; the .is-on rules derive text/border/dot
+   from it (falling back to the neutral --mt-good if no mode class is present). */
+.hero__live.is-ws {
+  --lc: #34d399; /* emerald — WebSocket (preferred) */
+}
+.hero__live.is-sse {
+  --lc: #f59e0b; /* amber — SSE fallback (degraded) */
+}
 .hero__live.is-on {
   color: var(--mt-text);
-  border-color: color-mix(in srgb, var(--mt-good) 40%, var(--mt-border));
+  border-color: color-mix(in srgb, var(--lc, var(--mt-good)) 40%, var(--mt-border));
 }
 .hero__live.is-on .dot {
-  background: var(--mt-good);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-good) 22%, transparent);
+  background: var(--lc, var(--mt-good));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--lc, var(--mt-good)) 22%, transparent);
   animation: hero-pulse 1.8s ease-out infinite;
 }
 @keyframes hero-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 55%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--lc, var(--mt-good)) 55%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 9px color-mix(in srgb, var(--mt-good) 0%, transparent);
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--lc, var(--mt-good)) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mt-good) 0%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--lc, var(--mt-good)) 0%, transparent);
   }
 }
 
@@ -746,26 +775,28 @@ body::after {
   border-radius: 999px;
   font-family: var(--mt-mono);
   font-size: 10px;
-  border: 1px solid var(--mt-border);
+  /* Each .risk-<LEVEL> sets --rc; the pill derives its text, border and fill
+     tints from that single hue so a risk reads the same colour everywhere. */
+  color: var(--rc, var(--mt-text-dim));
+  border: 1px solid color-mix(in srgb, var(--rc, var(--mt-border)) 45%, var(--mt-border));
+  background: color-mix(in srgb, var(--rc, transparent) 12%, transparent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .risk-READ {
-  color: var(--mt-good);
-  border-color: color-mix(in srgb, var(--mt-good) 45%, var(--mt-border));
-  background: color-mix(in srgb, var(--mt-good) 10%, transparent);
+  --rc: #34d399; /* emerald — read-only, safe */
 }
-.risk-WRITE,
+.risk-WRITE {
+  --rc: #3291ff; /* blue — normal write */
+}
 .risk-WRITE_IDEMPOTENT {
-  color: var(--mt-warn);
-  border-color: color-mix(in srgb, var(--mt-warn) 45%, var(--mt-border));
-  background: color-mix(in srgb, var(--mt-warn) 10%, transparent);
+  --rc: #2dd4bf; /* teal — idempotent write */
 }
-.risk-DESTRUCTIVE,
+.risk-DESTRUCTIVE {
+  --rc: #f59e0b; /* amber — removes/replaces config */
+}
 .risk-DANGEROUS {
-  color: var(--mt-bad);
-  border-color: color-mix(in srgb, var(--mt-bad) 45%, var(--mt-border));
-  background: color-mix(in srgb, var(--mt-bad) 10%, transparent);
+  --rc: #ef4444; /* red — can lock you out */
 }
 
 /* ── Feed table ──────────────────────────────────────────────────────────── */
