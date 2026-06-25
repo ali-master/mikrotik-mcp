@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "forecast_link_saturation",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Interface to sample, e.g. 'ether1-wan'"
+    },
+    "capacity_mbps": {
+      "default": 1000,
+      "description": "Link rated speed in Mbit/s (e.g. 1000 for gig)",
+      "type": "number"
+    },
+    "monthly_growth_pct": {
+      "default": 10,
+      "description": "Assumed month-over-month traffic growth %",
+      "type": "number"
+    }
+  },
+  "required": ["interface", "capacity_mbps", "monthly_growth_pct"],
+  "additionalProperties": false
+}

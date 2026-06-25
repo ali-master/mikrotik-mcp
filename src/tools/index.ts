@@ -67,6 +67,7 @@ import { smsTools } from "./tool-sms";
 import { speedTestTools } from "./tool-speed-test";
 import { trafficGeneratorTools } from "./tool-traffic-generator";
 import { trafficMonitorTools } from "./tool-traffic-monitor";
+import { bandwidthForecastTools } from "./bandwidth-forecast";
 import { wolTools } from "./tool-wol";
 import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
@@ -819,6 +820,15 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Run scripts when interface traffic crosses a threshold (`/tool traffic-monitor`).",
     tools: trafficMonitorTools,
+  },
+  {
+    label: "Bandwidth Forecast",
+    slug: "bandwidth-forecast",
+    group: "Tools",
+    description:
+      "Sample an interface's throughput and project when it will saturate at an assumed growth rate " +
+      "(capacity planning).",
+    tools: bandwidthForecastTools,
   },
   {
     label: "Wake-on-LAN",
