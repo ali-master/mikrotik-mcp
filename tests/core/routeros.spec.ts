@@ -8,6 +8,7 @@ import {
   containsRawParserError,
   indicatesFailure,
   placeBeforeError,
+  portConflictError,
   splitHostPort,
 } from "../../src/core/routeros";
 
@@ -87,5 +88,22 @@ describe("placeBeforeError", () => {
   test("returns undefined when place_before was not supplied or the error is unrelated", () => {
     expect(placeBeforeError(err, undefined)).toBeUndefined();
     expect(placeBeforeError("failure: already have such entry", "*13")).toBeUndefined();
+  });
+});
+
+describe("portConflictError", () => {
+  const err =
+    "failure: this is configured elsewhere (/ip/service/set *0 = telnet) (/ip/service/set; line 1)";
+  test("names the conflicting service and suggests the fix", () => {
+    const msg = portConflictError(err, 1996);
+    expect(msg).toBeDefined();
+    expect(msg).toContain("port 1996");
+    expect(msg).toContain("'telnet'");
+  });
+  test("falls back gracefully without a port or named item", () => {
+    expect(portConflictError("failure: this is configured elsewhere")).toContain("that port");
+  });
+  test("returns undefined for unrelated errors", () => {
+    expect(portConflictError("failure: already have such entry", 22)).toBeUndefined();
   });
 });

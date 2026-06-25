@@ -183,6 +183,25 @@ export function placeBeforeError(result: string, placeBefore?: string): string |
 }
 
 /**
+ * When a change failed because a port is already used by another item, return
+ * actionable guidance naming the conflicting item; otherwise `undefined`.
+ *
+ * RouterOS rejects e.g. `/ip service set [find name=ssh] port=1996` with
+ * "failure: this is configured elsewhere (/ip/service/set *0 = telnet)" when port
+ * 1996 is already assigned to another service (here telnet) — two services can't
+ * share a port. The raw message is cryptic, so this extracts the conflicting
+ * item's name and explains the fix.
+ */
+export function portConflictError(result: string, port?: number): string | undefined {
+  if (!/configured elsewhere/i.test(result)) return undefined;
+  const other = result.match(/\*\d+\s*=\s*([A-Za-z][\w-]*)/)?.[1];
+  const which = port != null ? `port ${port}` : "that port";
+  return other
+    ? `${which} is already used by the '${other}' service — two services can't share a port. Pick a different port, or change/disable '${other}' first (disable_ip_service / set_ip_service).`
+    : `${which} is already in use elsewhere — two items can't share it. Pick a different port, or free it on the conflicting item first.`;
+}
+
+/**
  * True when RouterOS rejected the command *word* itself — i.e. the command path
  * does not exist on this RouterOS version (e.g. `/ip route cache`, removed in
  * v7) or was mistyped. Distinct from a value-level `failure:`; lets a tool give

@@ -10989,7 +10989,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Updates one or more attributes of a router management service (`/ip service set`) — port number, allowed source subnets (`address`, comma-separated CIDRs), TLS certificate name, or enabled/disabled state (`disabled: true/false`). Accepts a service name such as `ssh`, `winbox`, `api`, or `api-ssl`. To toggle only the enabled state use `enable_ip_service` or `disable_ip_service` instead. Returns updated service detail on success.",
+      "description": "Updates one or more attributes of a router management service (`/ip service set`) — port number, allowed source subnets (`address`, comma-separated CIDRs), TLS certificate name, or enabled/disabled state (`disabled: true/false`). Accepts a service name such as `ssh`, `winbox`, `api`, or `api-ssl`. Note: two services cannot share a port — if the chosen port is already used by another service the device rejects it (list_ip_services shows current ports). To toggle only the enabled state use `enable_ip_service` or `disable_ip_service` instead. Returns updated service detail on success.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

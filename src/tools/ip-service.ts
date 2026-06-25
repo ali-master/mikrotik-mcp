@@ -9,7 +9,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { looksLikeError, isEmpty, portConflictError, Cmd } from "../core/routeros";
 
 export const ipServiceTools: ToolModule = [
   defineTool({
@@ -51,7 +51,7 @@ export const ipServiceTools: ToolModule = [
     title: "Configure IP Management Service",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Updates one or more attributes of a router management service (`/ip service set`) — port number, allowed source subnets (`address`, comma-separated CIDRs), TLS certificate name, or enabled/disabled state (`disabled: true/false`). Accepts a service name such as `ssh`, `winbox`, `api`, or `api-ssl`. To toggle only the enabled state use `enable_ip_service` or `disable_ip_service` instead. Returns updated service detail on success.",
+      "Updates one or more attributes of a router management service (`/ip service set`) — port number, allowed source subnets (`address`, comma-separated CIDRs), TLS certificate name, or enabled/disabled state (`disabled: true/false`). Accepts a service name such as `ssh`, `winbox`, `api`, or `api-ssl`. Note: two services cannot share a port — if the chosen port is already used by another service the device rejects it (list_ip_services shows current ports). To toggle only the enabled state use `enable_ip_service` or `disable_ip_service` instead. Returns updated service detail on success.",
     inputSchema: {
       name: z.string().describe("Service name to update, e.g. 'ssh'"),
       port: z.number().int().optional().describe("Listening port"),
@@ -71,7 +71,10 @@ export const ipServiceTools: ToolModule = [
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
 
       const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to update IP service: ${result}`;
+      if (looksLikeError(result)) {
+        const hint = portConflictError(result, a.port);
+        return `Failed to update IP service '${a.name}': ${hint ?? result}`;
+      }
 
       const details = await executeMikrotikCommand(
         `/ip service print detail where name="${a.name}"`,
