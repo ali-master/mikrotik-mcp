@@ -1,0 +1,80 @@
+import type { ReactNode } from "react";
+import { MetricArea, RadialGauge } from "./charts";
+import { statusInfo } from "./connectivity";
+import { bytes } from "./format";
+import { Badge, Dot } from "./geist";
+import type { DeviceInfo } from "./types";
+
+// ── device system-health charts ─────────────────────────────────────────────
+/** A compact line+area sparkline over a series that may contain gaps (`null`). */
+const memHuman = (b?: number): string => (b == null ? "?" : bytes(b));
+
+/** One device's realtime system-health card: gauges + sparkline charts. */
+export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
+  const s = d.status;
+  const hist = d.history ?? [];
+  const probed = s.reachable === true || hist.length > 0;
+  if (!probed) {
+    return (
+      <div className="card health-card health-card--na">
+        <div className="health-card__hd">
+          <Dot color={statusInfo(s).color} />
+          <span className="dev-card__name">{d.name}</span>
+          {d.isDefault && <Badge type="accent">default</Badge>}
+        </div>
+        <p className="muted" style={{ margin: 0 }}>
+          {s.reachable === false
+            ? `Offline — ${s.error ?? "unreachable"}`
+            : d.mac
+              ? "Waiting for the first MAC-Telnet probe (these run every few minutes to avoid contending with tool calls)…"
+              : "Waiting for the first health probe…"}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="card health-card">
+      <div className="health-card__hd">
+        <Dot color={statusInfo(s).color} />
+        <span className="dev-card__name">{d.name}</span>
+        {d.isDefault && <Badge type="accent">default</Badge>}
+        <span style={{ flex: 1 }} />
+        <Badge type={s.version ? "success" : "default"}>{s.version ? `v${s.version}` : "—"}</Badge>
+      </div>
+      <div className="health-card__sub muted">
+        {s.boardName ?? "router"}
+        {s.architecture ? ` · ${s.architecture}` : ""}
+        {s.cpuCount ? ` · ${s.cpuCount} cpu` : ""}
+        {s.uptime ? ` · up ${s.uptime}` : ""}
+      </div>
+      <div className="health-card__gauges">
+        <RadialGauge value={s.cpuLoad} label="CPU" color="#ededed" />
+        <RadialGauge value={s.memUsedPct} label="MEM" color="#bdbdc4" />
+        <RadialGauge value={s.hddUsedPct} label="DISK" color="#8a8a92" />
+      </div>
+      <div className="health-card__charts">
+        <div className="health-chart">
+          <span className="health-chart__k">CPU load</span>
+          <MetricArea values={hist.map((h) => h.cpuLoad)} color="#ededed" maxValue={100} unit="%" />
+        </div>
+        <div className="health-chart">
+          <span className="health-chart__k">Memory used</span>
+          <MetricArea
+            values={hist.map((h) => h.memUsedPct)}
+            color="#bdbdc4"
+            maxValue={100}
+            unit="%"
+          />
+        </div>
+        <div className="health-chart">
+          <span className="health-chart__k">Probe latency</span>
+          <MetricArea values={hist.map((h) => h.latencyMs)} color="#bdbdc4" unit="ms" />
+        </div>
+      </div>
+      <div className="health-card__foot muted">
+        RAM {memHuman(s.totalMemory && s.freeMemory ? s.totalMemory - s.freeMemory : undefined)} /{" "}
+        {memHuman(s.totalMemory)} · free disk {memHuman(s.freeHdd)}
+      </div>
+    </div>
+  );
+}
