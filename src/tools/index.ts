@@ -24,6 +24,7 @@ import { dot1xServerTools } from "./dot1x-server";
 import { dot1xClientTools } from "./dot1x-client";
 import { firewallAuditTools } from "./firewall-audit";
 import { securityShieldTools } from "./security-shield";
+import { portKnockTools } from "./port-knock";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
 import { interfaceTools } from "./interfaces";
@@ -485,6 +486,15 @@ export const moduleCatalog: ModuleInfo[] = [
       "Harden the firewall against DDoS, SSH/Winbox brute-force, port scans, floods and spoofing " +
       "from a chosen preset/toggles, with anti-lockout, Safe-Mode apply and preview-before-apply.",
     tools: securityShieldTools,
+  },
+  {
+    label: "Port Knock",
+    slug: "port-knock",
+    group: "Security",
+    description:
+      "Hide management services behind a secret port-knock sequence (staged address-list ladder), " +
+      "with preview-before-apply.",
+    tools: portKnockTools,
   },
   {
     label: "Certificates",

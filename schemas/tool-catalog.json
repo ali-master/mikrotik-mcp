@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 680,
+  "toolCount": 681,
   "tools": [
     {
       "name": "list_interfaces",
@@ -10399,6 +10399,54 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "setup_port_knock",
+      "title": "Set Up Port-Knock Guardian",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Hides management services behind a secret port-knock `sequence`: a source must connect to the knock ports in order to be added to an allow-list, after which the `protect_ports` (SSH/Winbox/API, default 22,8291,8728) accept it — everyone else is dropped, so the ports are invisible to scanners. Generates the staged address-list ladder + accept/drop rules. DEFAULTS TO A DRY RUN (`apply=false`); set `apply=true` to install. WARNING: after applying, management is only reachable by knocking the exact sequence — make sure you can knock (and keep a console/trusted path). Rules are tagged 'port-knock:'. Returns the plan or a build report.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "minItems": 2,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "description": "Secret knock ports, in order, e.g. [7001, 8002, 9003]"
+          },
+          "protect_ports": {
+            "default": "22,8291,8728",
+            "description": "Management ports to hide",
+            "type": "string"
+          },
+          "open_timeout": {
+            "default": "1h",
+            "description": "How long access stays open after the knock",
+            "type": "string"
+          },
+          "stage_timeout": {
+            "default": "10s",
+            "description": "Allowed window between consecutive knocks",
+            "type": "string"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview (default); true = install",
+            "type": "boolean"
+          }
+        },
+        "required": ["sequence", "protect_ports", "open_timeout", "stage_timeout", "apply"],
         "additionalProperties": false
       }
     },

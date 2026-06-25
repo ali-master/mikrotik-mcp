@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "setup_port_knock",
+  "type": "object",
+  "properties": {
+    "sequence": {
+      "minItems": 2,
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 65535
+      },
+      "description": "Secret knock ports, in order, e.g. [7001, 8002, 9003]"
+    },
+    "protect_ports": {
+      "default": "22,8291,8728",
+      "description": "Management ports to hide",
+      "type": "string"
+    },
+    "open_timeout": {
+      "default": "1h",
+      "description": "How long access stays open after the knock",
+      "type": "string"
+    },
+    "stage_timeout": {
+      "default": "10s",
+      "description": "Allowed window between consecutive knocks",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview (default); true = install",
+      "type": "boolean"
+    }
+  },
+  "required": ["sequence", "protect_ports", "open_timeout", "stage_timeout", "apply"],
+  "additionalProperties": false
+}
