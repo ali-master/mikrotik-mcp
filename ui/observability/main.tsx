@@ -83,6 +83,37 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
+/** Valid view ids — used to validate a hash/stored route before trusting it. */
+const VIEW_IDS = new Set<ViewId>(VIEWS.map((v) => v.id));
+/** localStorage key remembering the last-visited page. */
+const VIEW_STORE_KEY = "mt-view";
+
+/** The bare view id in the URL hash (`#devices` / `#/devices` → `devices`). */
+function viewFromHash(): ViewId | null {
+  try {
+    const id = location.hash.replace(/^#\/?/, "") as ViewId;
+    return VIEW_IDS.has(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The page to show on load: the URL hash wins (so a refresh, bookmark, or shared
+ * link lands exactly where the user was), then the last-visited page persisted
+ * in localStorage, then Overview.
+ */
+function initialView(): ViewId {
+  const fromHash = viewFromHash();
+  if (fromHash) return fromHash;
+  try {
+    const stored = localStorage.getItem(VIEW_STORE_KEY) as ViewId | null;
+    if (stored && VIEW_IDS.has(stored)) return stored;
+  } catch {
+    /* storage unavailable — fall through to the default */
+  }
+  return "overview";
+}
 
 /**
  * Per-domain accent for each page. Drives the page's title gradient, the active
@@ -325,7 +356,38 @@ function App(): ReactNode {
   pausedRef.current = paused;
   const rootRef = useRef<HTMLDivElement | null>(null);
   useReveals(rootRef);
-  const [view, setView] = useState<ViewId>("overview");
+  // The active page is mirrored in the URL hash + localStorage so it survives a
+  // refresh and follows browser back/forward (see initialView / setView below).
+  const [view, setViewState] = useState<ViewId>(initialView);
+  const setView = useCallback((next: ViewId): void => {
+    setViewState(next);
+    try {
+      if (viewFromHash() !== next) location.hash = next;
+      localStorage.setItem(VIEW_STORE_KEY, next);
+    } catch {
+      /* storage/url unavailable — in-memory navigation still works */
+    }
+  }, []);
+  useEffect(() => {
+    // Normalise the URL on first load (e.g. when the view came from storage) and
+    // track back/forward + manual hash edits.
+    if (viewFromHash() !== view) {
+      try {
+        location.hash = view;
+      } catch {
+        /* ignore */
+      }
+    }
+    const onHashChange = (): void => {
+      const id = viewFromHash();
+      if (id) setView(id);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+    // Run once on mount: setView is stable and `view` is only read here for the
+    // initial URL normalisation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Per-page "About this page" help, remembered per view across reloads.
   const [helpOpen, setHelpOpen] = useState<Set<ViewId>>(() => {
     try {
