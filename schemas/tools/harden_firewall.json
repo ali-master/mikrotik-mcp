@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "harden_firewall",
+  "type": "object",
+  "properties": {
+    "preset": {
+      "default": "standard",
+      "description": "Bundle to apply; 'custom' uses only the `protections` toggles",
+      "type": "string",
+      "enum": ["basic", "standard", "paranoid", "custom"]
+    },
+    "protections": {
+      "description": "Per-protection on/off, overriding/extending the preset",
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "state_hygiene",
+          "ssh_bruteforce",
+          "ddos_conn_limit",
+          "syn_flood",
+          "icmp_limit",
+          "port_scan",
+          "anti_spoof",
+          "raw_drops",
+          "mgmt_lockdown"
+        ]
+      },
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "required": [
+        "state_hygiene",
+        "ssh_bruteforce",
+        "ddos_conn_limit",
+        "syn_flood",
+        "icmp_limit",
+        "port_scan",
+        "anti_spoof",
+        "raw_drops",
+        "mgmt_lockdown"
+      ]
+    },
+    "trusted_sources": {
+      "description": "Address or address-list name always accepted first (anti-lockout)",
+      "type": "string"
+    },
+    "wan_interface": {
+      "description": "WAN interface (required for anti_spoof)",
+      "type": "string"
+    },
+    "mgmt_ports": {
+      "default": "22,8291,8728",
+      "description": "Management TCP ports",
+      "type": "string"
+    },
+    "ssh_ports": {
+      "default": "22",
+      "description": "Ports watched by the brute-force ladder",
+      "type": "string"
+    },
+    "conn_limit": {
+      "default": 100,
+      "description": "Per-source TCP connection cap",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "syn_rate": {
+      "default": "200,50:packet",
+      "type": "string"
+    },
+    "icmp_rate": {
+      "default": "50,10:packet",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview only (default); true = apply",
+      "type": "boolean"
+    },
+    "safe_mode": {
+      "default": true,
+      "description": "Apply through Safe Mode (auto-revert on lockout)",
+      "type": "boolean"
+    },
+    "i_accept_lockout_risk": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "preset",
+    "mgmt_ports",
+    "ssh_ports",
+    "conn_limit",
+    "syn_rate",
+    "icmp_rate",
+    "apply",
+    "safe_mode",
+    "i_accept_lockout_risk"
+  ],
+  "additionalProperties": false
+}

@@ -23,6 +23,7 @@ import { dnsTools } from "./dns";
 import { dot1xServerTools } from "./dot1x-server";
 import { dot1xClientTools } from "./dot1x-client";
 import { firewallAuditTools } from "./firewall-audit";
+import { securityShieldTools } from "./security-shield";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
 import { interfaceTools } from "./interfaces";
@@ -465,6 +466,15 @@ export const moduleCatalog: ModuleInfo[] = [
       "Plain-language firewall audit: shadowed/unreachable rules, broad accepts, missing " +
       "default-drop, duplicates and dead rules, with a risk score (`firewall_audit`).",
     tools: firewallAuditTools,
+  },
+  {
+    label: "Security Shield",
+    slug: "security-shield",
+    group: "Security",
+    description:
+      "Harden the firewall against DDoS, SSH/Winbox brute-force, port scans, floods and spoofing " +
+      "from a chosen preset/toggles, with anti-lockout, Safe-Mode apply and preview-before-apply.",
+    tools: securityShieldTools,
   },
   {
     label: "Certificates",

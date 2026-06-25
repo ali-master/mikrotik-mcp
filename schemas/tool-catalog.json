@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 676,
+  "toolCount": 679,
   "tools": [
     {
       "name": "list_interfaces",
@@ -10178,6 +10178,153 @@
           }
         },
         "required": ["include_nat", "include_mangle"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_firewall",
+      "title": "Harden Firewall (Security Shield)",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Hardens the IPv4 firewall against common attacks by applying a chosen set of best-practice rules (DDoS/connection-rate, SSH/Winbox brute-force ladder, SYN-flood and ICMP rate limits, port-scan detection, anti-spoof/bogon, raw pre-conntrack drops, management lock-down). Pick a `preset` (basic · standard · paranoid) and/or toggle individual `protections`. DEFAULTS TO A DRY RUN (`apply=false`) that returns the exact commands grouped by protection. Applying defaults to SAFE MODE (`safe_mode=true`) so a rule that cuts your own access auto-reverts. Anti-lockout: set `trusted_sources` (an address or address-list always accepted first); input-drop protections are refused without it unless `i_accept_lockout_risk=true`. Every rule is tagged with a 'security-shield:' comment — audit with audit_firewall_hardening, undo with remove_firewall_hardening. Rules are appended; review order for an existing ruleset.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "preset": {
+            "default": "standard",
+            "description": "Bundle to apply; 'custom' uses only the `protections` toggles",
+            "type": "string",
+            "enum": ["basic", "standard", "paranoid", "custom"]
+          },
+          "protections": {
+            "description": "Per-protection on/off, overriding/extending the preset",
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "enum": [
+                "state_hygiene",
+                "ssh_bruteforce",
+                "ddos_conn_limit",
+                "syn_flood",
+                "icmp_limit",
+                "port_scan",
+                "anti_spoof",
+                "raw_drops",
+                "mgmt_lockdown"
+              ]
+            },
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "required": [
+              "state_hygiene",
+              "ssh_bruteforce",
+              "ddos_conn_limit",
+              "syn_flood",
+              "icmp_limit",
+              "port_scan",
+              "anti_spoof",
+              "raw_drops",
+              "mgmt_lockdown"
+            ]
+          },
+          "trusted_sources": {
+            "description": "Address or address-list name always accepted first (anti-lockout)",
+            "type": "string"
+          },
+          "wan_interface": {
+            "description": "WAN interface (required for anti_spoof)",
+            "type": "string"
+          },
+          "mgmt_ports": {
+            "default": "22,8291,8728",
+            "description": "Management TCP ports",
+            "type": "string"
+          },
+          "ssh_ports": {
+            "default": "22",
+            "description": "Ports watched by the brute-force ladder",
+            "type": "string"
+          },
+          "conn_limit": {
+            "default": 100,
+            "description": "Per-source TCP connection cap",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "syn_rate": {
+            "default": "200,50:packet",
+            "type": "string"
+          },
+          "icmp_rate": {
+            "default": "50,10:packet",
+            "type": "string"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview only (default); true = apply",
+            "type": "boolean"
+          },
+          "safe_mode": {
+            "default": true,
+            "description": "Apply through Safe Mode (auto-revert on lockout)",
+            "type": "boolean"
+          },
+          "i_accept_lockout_risk": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "preset",
+          "mgmt_ports",
+          "ssh_ports",
+          "conn_limit",
+          "syn_rate",
+          "icmp_rate",
+          "apply",
+          "safe_mode",
+          "i_accept_lockout_risk"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_firewall_hardening",
+      "title": "Audit Firewall Hardening",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reports which Security Shield protections are present on the firewall by scanning for the 'security-shield:' tagged rules (`/ip firewall filter` + `/ip firewall raw`), and notes the foundational checks (accept established/related, drop invalid) regardless of tag. Use to see coverage and gaps before/after harden_firewall. Complements the broader firewall-audit tools. Returns a per-protection present/absent summary.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_firewall_hardening",
+      "title": "Remove Firewall Hardening",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes every firewall rule that Security Shield installed — all `/ip firewall filter` and `/ip firewall raw` entries tagged with the 'security-shield:' comment (the shield's own address-lists are left, since they may be referenced elsewhere). Use to roll back harden_firewall. Does NOT touch rules you created by hand. Returns how many rules were removed.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
         "additionalProperties": false
       }
     },
