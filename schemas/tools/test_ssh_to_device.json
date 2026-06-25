@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "test_ssh_to_device",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

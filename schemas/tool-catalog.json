@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 693,
+  "toolCount": 696,
   "tools": [
     {
       "name": "list_interfaces",
@@ -17296,6 +17296,108 @@
           }
         },
         "required": ["host"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "test_ssh_to_device",
+      "title": "Test SSH to a Configured Device (from the MCP host)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Tests the SSH connection FROM THE MACHINE RUNNING THIS MCP SERVER to a CONFIGURED device, using that device's stored host/port/credentials. Use this to diagnose why a saved device is not responding — it confirms whether the MCP host can reach the device's SSH port AND authenticate, and reports the connect latency and identity. Targets the selected/default device (the `device` selector). NOTE: this opens a real SSH connection from the MCP host, not through the usual command channel, and is SSH-only (a MAC-Telnet device has no SSH). To test an UNSAVED host with ad-hoc credentials use test_ssh_to_host; to test SSH OUTBOUND from a router use test_ssh_from_device. Returns OK/failed with the reason.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "test_ssh_to_host",
+      "title": "Test SSH to Any Host (from the MCP host)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Tests an SSH connection FROM THE MACHINE RUNNING THIS MCP SERVER to an ARBITRARY host:port with the supplied credentials — a pre-flight check BEFORE adding a device to the config, or to verify reachability/credentials for any SSH host. Confirms TCP reachability AND authentication and reports the connect latency. Provide a `password` and/or a private-key path (`key_path`). NOTE: this opens a real SSH connection from the MCP host. For a device that is ALREADY configured use test_ssh_to_device; to test SSH outbound FROM a router use test_ssh_from_device. Returns OK/failed with the reason.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Target IP or hostname"
+          },
+          "port": {
+            "default": 22,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "description": "Password auth (omit if using a key)",
+            "type": "string"
+          },
+          "key_path": {
+            "description": "Path (on the MCP host) to a private key file",
+            "type": "string"
+          },
+          "key_passphrase": {
+            "type": "string"
+          },
+          "command": {
+            "default": "/system identity print",
+            "description": "Command to run once connected (a harmless RouterOS read by default)",
+            "type": "string"
+          }
+        },
+        "required": ["host", "port", "username", "command"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "test_ssh_from_device",
+      "title": "Test SSH Outbound From a RouterOS Device",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Tests SSH OUTBOUND FROM a RouterOS device to a remote host using the device's OWN SSH client (`/system ssh-exec`) — i.e. the connection is made BY the router, not by the MCP host. Use this to check whether a router can reach and log into another host over SSH (e.g. a jump path or another router). The router's user must be able to authenticate to the target NON-interactively (a stored key on the router) — a password-only target will prompt and time out. Runs the test `command` on the remote and returns its output. To test the MCP HOST's connection to a device instead, use test_ssh_to_device (configured) or test_ssh_to_host (ad-hoc). Returns the remote command output or the device's error.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Remote host the ROUTER should SSH to"
+          },
+          "port": {
+            "default": 22,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "user": {
+            "type": "string",
+            "description": "Username on the remote host"
+          },
+          "command": {
+            "default": "/system identity print",
+            "description": "Command to run on the remote host as the connectivity test",
+            "type": "string"
+          }
+        },
+        "required": ["host", "port", "user", "command"],
         "additionalProperties": false
       }
     },

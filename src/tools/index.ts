@@ -54,6 +54,7 @@ import { logTools } from "./logs";
 import { systemLoggingTools } from "./logging";
 import { neighborTools } from "./neighbor";
 import { networkToolTools } from "./network-tools";
+import { sshTestTools } from "./ssh-test";
 import { packetCaptureTools } from "./packet-capture";
 import { bandwidthServerTools } from "./tool-bandwidth-server";
 import { floodPingTools } from "./tool-flood-ping";
@@ -725,6 +726,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).",
     tools: networkToolTools,
+  },
+  {
+    label: "SSH Connectivity Tests",
+    slug: "ssh-test",
+    group: "System & Ops",
+    description:
+      "Test SSH from the MCP host to a configured device or any host, and outbound SSH from a device " +
+      "(`test_ssh_to_device` / `test_ssh_to_host` / `test_ssh_from_device`).",
+    tools: sshTestTools,
   },
   {
     label: "Neighbors / MNDP",

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "test_ssh_to_host",
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string",
+      "description": "Target IP or hostname"
+    },
+    "port": {
+      "default": 22,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "username": {
+      "type": "string"
+    },
+    "password": {
+      "description": "Password auth (omit if using a key)",
+      "type": "string"
+    },
+    "key_path": {
+      "description": "Path (on the MCP host) to a private key file",
+      "type": "string"
+    },
+    "key_passphrase": {
+      "type": "string"
+    },
+    "command": {
+      "default": "/system identity print",
+      "description": "Command to run once connected (a harmless RouterOS read by default)",
+      "type": "string"
+    }
+  },
+  "required": ["host", "port", "username", "command"],
+  "additionalProperties": false
+}
