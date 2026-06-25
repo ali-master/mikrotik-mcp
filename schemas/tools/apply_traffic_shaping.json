@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "apply_traffic_shaping",
+  "type": "object",
+  "properties": {
+    "classes": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Queue name, e.g. 'voip' or 'guest-cap'"
+          },
+          "target": {
+            "type": "string",
+            "description": "Target address/subnet this class applies to, e.g. '192.168.20.0/24'"
+          },
+          "max_limit": {
+            "type": "string",
+            "description": "RouterOS max-limit as 'upload/download', e.g. '10M/10M' (or a single value)"
+          },
+          "priority": {
+            "default": 8,
+            "description": "1 (highest) … 8 (lowest); lower number wins under contention",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "target", "max_limit", "priority"],
+        "additionalProperties": false
+      },
+      "description": "Shaping classes to create, in priority order"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview the commands only (default); true = create the queues",
+      "type": "boolean"
+    }
+  },
+  "required": ["classes", "apply"],
+  "additionalProperties": false
+}

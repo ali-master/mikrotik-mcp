@@ -67,6 +67,7 @@ import { openvpnTools } from "./openvpn";
 import { poeTools } from "./poe";
 import { pppTools } from "./ppp";
 import { pptpTools } from "./pptp";
+import { qosArchitectTools } from "./qos-architect";
 import { queueTools } from "./queue";
 import { queueInterfaceTools } from "./queue-interface";
 import { radiusTools } from "./radius";
@@ -574,6 +575,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "QoS",
     description: "Queue types, queue trees and simple queues (`/queue`).",
     tools: queueTools,
+  },
+  {
+    label: "QoS Architect",
+    slug: "qos-architect",
+    group: "QoS",
+    description:
+      "Build a traffic-shaping policy from structured classes in one call, with a preview-before-apply " +
+      "dry run (`/queue simple`).",
+    tools: qosArchitectTools,
   },
   {
     label: "Queues — Interface",
