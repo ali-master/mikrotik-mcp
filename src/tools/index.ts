@@ -91,6 +91,7 @@ import { routingRuleTools } from "./routing-rule";
 import { routingTableTools } from "./routing-table";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
+import { threatFeedTools } from "./threat-feed";
 import { sstpTools } from "./sstp";
 import { switchSettingsTools } from "./switch-settings";
 import { switchPortTools } from "./switch-port";
@@ -791,6 +792,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "Scheduled jobs and scripts (`/system scheduler`, `/system script`).",
     tools: schedulerTools,
+  },
+  {
+    label: "Threat Feed",
+    slug: "threat-feed",
+    group: "Security",
+    description:
+      "Subscribe to external threat-intel IP feeds: a scheduled fetch+import into a dynamic firewall " +
+      "address-list with an optional raw drop — a self-updating blocklist.",
+    tools: threatFeedTools,
   },
   {
     label: "Users",

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 681,
+  "toolCount": 683,
   "tools": [
     {
       "name": "list_interfaces",
@@ -18819,6 +18819,75 @@
         "properties": {
           "name": {
             "type": "string"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "subscribe_threat_feed",
+      "title": "Subscribe to Threat-Intel Feed",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Subscribes the router to an external threat-intelligence IP feed: installs a `/system script` that fetches `url` and imports it into the `address_list`, a `/system scheduler` that re-runs it every `interval`, and (when `drop=true`) a raw pre-conntrack drop for that list — a self-updating blocklist (e.g. Spamhaus DROP, tor exit nodes, your own deny list). `url` MUST point to a RouterOS `.rsc` file that populates the address-list. DEFAULTS TO A DRY RUN (`apply=false`); set `apply=true` to install. Script/scheduler/rule are named/tagged `threat-feed-<name>` so remove_threat_feed can undo them. Returns the plan or a build report.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Short feed id, e.g. 'spamhaus-drop'"
+          },
+          "url": {
+            "type": "string",
+            "description": "HTTPS URL of a RouterOS .rsc address-list file"
+          },
+          "address_list": {
+            "default": "threat-blocklist",
+            "description": "Address-list to populate",
+            "type": "string"
+          },
+          "interval": {
+            "default": "1h",
+            "description": "How often to refresh the feed",
+            "type": "string"
+          },
+          "drop": {
+            "default": true,
+            "description": "Also add a raw drop rule for the address-list",
+            "type": "boolean"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = preview (default); true = install",
+            "type": "boolean"
+          }
+        },
+        "required": ["name", "url", "address_list", "interval", "drop", "apply"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_threat_feed",
+      "title": "Remove Threat-Intel Feed",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes a threat feed installed by subscribe_threat_feed: deletes its `/system scheduler` and `/system script` (named `threat-feed-<name>`) and any raw drop rule tagged for it. Does NOT flush the address-list entries themselves. Returns what was removed.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The feed id used when subscribing"
           }
         },
         "required": ["name"],

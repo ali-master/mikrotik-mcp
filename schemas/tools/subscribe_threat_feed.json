@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "subscribe_threat_feed",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Short feed id, e.g. 'spamhaus-drop'"
+    },
+    "url": {
+      "type": "string",
+      "description": "HTTPS URL of a RouterOS .rsc address-list file"
+    },
+    "address_list": {
+      "default": "threat-blocklist",
+      "description": "Address-list to populate",
+      "type": "string"
+    },
+    "interval": {
+      "default": "1h",
+      "description": "How often to refresh the feed",
+      "type": "string"
+    },
+    "drop": {
+      "default": true,
+      "description": "Also add a raw drop rule for the address-list",
+      "type": "boolean"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview (default); true = install",
+      "type": "boolean"
+    }
+  },
+  "required": ["name", "url", "address_list", "interval", "drop", "apply"],
+  "additionalProperties": false
+}
