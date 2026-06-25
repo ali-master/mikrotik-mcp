@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "revoke_wireguard_user",
+  "type": "object",
+  "properties": {
+    "user": {
+      "type": "string",
+      "description": "The user label used at onboarding"
+    }
+  },
+  "required": ["user"],
+  "additionalProperties": false
+}

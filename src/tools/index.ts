@@ -110,6 +110,7 @@ import { userTools } from "./users";
 import { vlanDesignerTools } from "./vlan-designer";
 import { vlanTools } from "./vlan";
 import { wireguardMeshTools } from "./wireguard-mesh";
+import { vpnOnboardTools } from "./vpn-onboard";
 import { wireguardTools } from "./wireguard";
 import { wirelessTools } from "./wireless";
 import { wifiOptimizerTools } from "./wifi-optimizer";
@@ -594,6 +595,15 @@ export const moduleCatalog: ModuleInfo[] = [
       "Stand up a full-mesh or hub-spoke WireGuard VPN across several devices in one call — auto " +
       "key distribution, mesh addressing and peer wiring, with a preview-before-build step.",
     tools: wireguardMeshTools,
+  },
+  {
+    label: "VPN Onboarding",
+    slug: "vpn-onboard",
+    group: "VPN & Tunneling",
+    description:
+      "Onboard a WireGuard remote user in one step: generate the client keypair, add the peer, and " +
+      "return a ready-to-import client config; plus a revoke action.",
+    tools: vpnOnboardTools,
   },
   {
     label: "IPsec",

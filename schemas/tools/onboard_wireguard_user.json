@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "onboard_wireguard_user",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Existing WireGuard SERVER interface, e.g. 'wg-server'"
+    },
+    "user": {
+      "type": "string",
+      "description": "User/device label, e.g. 'alice-laptop'"
+    },
+    "address": {
+      "type": "string",
+      "description": "Tunnel IP to assign the client, e.g. '10.20.0.50'"
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "Server public endpoint host:port, e.g. 'vpn.example.com:13231'"
+    },
+    "dns": {
+      "description": "DNS for the client, e.g. '10.20.0.1'",
+      "type": "string"
+    },
+    "allowed_ips": {
+      "default": "0.0.0.0/0",
+      "description": "Client AllowedIPs: '0.0.0.0/0' full-tunnel, or a LAN subnet for split-tunnel",
+      "type": "string"
+    },
+    "keepalive": {
+      "default": "25",
+      "description": "PersistentKeepalive seconds",
+      "type": "string"
+    }
+  },
+  "required": ["interface", "user", "address", "endpoint", "allowed_ips", "keepalive"],
+  "additionalProperties": false
+}

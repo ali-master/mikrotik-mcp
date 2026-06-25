@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 691,
+  "toolCount": 693,
   "tools": [
     {
       "name": "list_interfaces",
@@ -11981,6 +11981,77 @@
           "persistent_keepalive",
           "apply"
         ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "onboard_wireguard_user",
+      "title": "Onboard WireGuard Remote User",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Generates a ready-to-use WireGuard remote-access profile for one user: creates a client keypair, adds the peer to the server `interface` (allowed-address = the client's tunnel IP), reads the server's public key, and returns a complete client .conf to paste into the WireGuard app or a QR generator. The peer is tagged `vpn-user: <user>` so revoke_wireguard_user can remove it. NOTE: the returned config contains the client PRIVATE key (required to connect) — handle it securely. `endpoint` is the server's public host:port; `allowed_ips` controls split vs full tunnel. SSH devices only. Returns the client config.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Existing WireGuard SERVER interface, e.g. 'wg-server'"
+          },
+          "user": {
+            "type": "string",
+            "description": "User/device label, e.g. 'alice-laptop'"
+          },
+          "address": {
+            "type": "string",
+            "description": "Tunnel IP to assign the client, e.g. '10.20.0.50'"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Server public endpoint host:port, e.g. 'vpn.example.com:13231'"
+          },
+          "dns": {
+            "description": "DNS for the client, e.g. '10.20.0.1'",
+            "type": "string"
+          },
+          "allowed_ips": {
+            "default": "0.0.0.0/0",
+            "description": "Client AllowedIPs: '0.0.0.0/0' full-tunnel, or a LAN subnet for split-tunnel",
+            "type": "string"
+          },
+          "keepalive": {
+            "default": "25",
+            "description": "PersistentKeepalive seconds",
+            "type": "string"
+          }
+        },
+        "required": ["interface", "user", "address", "endpoint", "allowed_ips", "keepalive"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "revoke_wireguard_user",
+      "title": "Revoke WireGuard Remote User",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Revokes a remote-access user created by onboard_wireguard_user: removes the WireGuard peer tagged `vpn-user: <user>` from the server, immediately cutting their access. Returns whether a peer was removed.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "The user label used at onboarding"
+          }
+        },
+        "required": ["user"],
         "additionalProperties": false
       }
     },
