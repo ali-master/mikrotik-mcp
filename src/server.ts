@@ -8,7 +8,7 @@ import { registerTools } from "./core/registry";
 import { registerUiResources } from "./core/ui-resources";
 import { listDevices, getConfig } from "./core/runtime";
 import { registerPrompts } from "./prompts";
-import { allToolModules } from "./tools";
+import { selectToolModules } from "./tools";
 import {
   VERSION,
   SERVER_NAME,
@@ -113,7 +113,11 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
       }
     });
 
-  const toolCount = registerTools(server, allToolModules, {
+  // Curate the tool surface to the configured scopes (default: the full catalog)
+  // so the client's tool-discovery search reliably surfaces every matching tool
+  // on a several-hundred-tool server.
+  const toolModules = selectToolModules(getConfig().tools);
+  const toolCount = registerTools(server, toolModules, {
     sendLog,
     deviceNames: names,
     readOnly,

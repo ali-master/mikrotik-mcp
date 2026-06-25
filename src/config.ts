@@ -164,6 +164,32 @@ export const DashboardConfigSchema = z.object({
 });
 export type DashboardConfig = z.infer<typeof DashboardConfigSchema>;
 
+/**
+ * Tool-surface curation. This server exposes several hundred tools across ~110
+ * modules; MCP clients discover tools by relevance search and only feed a capped
+ * candidate set to the model, so a query can crowd out simple read tools (e.g.
+ * `list_wireguard_*` losing to `build_wireguard_mesh`). Narrowing the surface to
+ * the scopes a deployment actually uses makes every matching tool surface
+ * reliably. Filtering is by module `slug` or `group` (see `moduleCatalog`).
+ *
+ * Semantics: when any allow-list (`enabledModules`/`enabledGroups`) is non-empty,
+ * ONLY modules matching it register; everything else is dropped. The deny-lists
+ * (`disabledModules`/`disabledGroups`) are then subtracted and take precedence —
+ * a module named in both an allow- and a deny-list is excluded. All matching is
+ * case-insensitive. Empty everywhere = the full surface (the default).
+ */
+export const ToolFilterSchema = z.object({
+  /** Module slugs to expose (allow-list). Empty = all modules. */
+  enabledModules: z.array(z.string()).default([]),
+  /** Module slugs to hide (deny-list, wins over enable). */
+  disabledModules: z.array(z.string()).default([]),
+  /** Module groups to expose (allow-list). Empty = all groups. */
+  enabledGroups: z.array(z.string()).default([]),
+  /** Module groups to hide (deny-list, wins over enable). */
+  disabledGroups: z.array(z.string()).default([]),
+});
+export type ToolFilter = z.infer<typeof ToolFilterSchema>;
+
 export const MikrotikConfigSchema = z.object({
   /** Named devices the server can reach. Always has at least one entry. */
   devices: z
@@ -183,6 +209,12 @@ export const MikrotikConfigSchema = z.object({
    * destructive tool from the surface entirely.
    */
   readOnly: z.boolean().default(false),
+  /**
+   * Tool-surface curation — expose only the scopes a deployment needs so the
+   * client's tool search reliably surfaces every matching tool (see
+   * {@link ToolFilterSchema}). Off by default (the full surface registers).
+   */
+  tools: ToolFilterSchema.default(() => ToolFilterSchema.parse({})),
   /**
    * Directory for the local backup vault (`/export` `.rsc` files on the MCP host).
    * Editable from the dashboard's Backups page and persisted here. Falls back to
@@ -236,6 +268,7 @@ function parseDevicesSource(
   defaultDevice?: string;
   s3?: Record<string, unknown>;
   dashboard?: Record<string, unknown>;
+  tools?: Record<string, unknown>;
 } {
   let json: unknown;
   try {
@@ -262,7 +295,11 @@ function parseDevicesSource(
     structured && obj.dashboard && typeof obj.dashboard === "object"
       ? (obj.dashboard as Record<string, unknown>)
       : undefined;
-  return { devices, defaultDevice, s3, dashboard };
+  const tools =
+    structured && obj.tools && typeof obj.tools === "object"
+      ? (obj.tools as Record<string, unknown>)
+      : undefined;
+  return { devices, defaultDevice, s3, dashboard, tools };
 }
 
 /**
@@ -324,6 +361,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   const devicesInline = flags.devices ?? env("MIKROTIK_DEVICES");
   let fileS3: Record<string, unknown> | undefined = {};
   let fileDashboard: Record<string, unknown> | undefined = {};
+  let fileTools: Record<string, unknown> | undefined;
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -333,6 +371,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     else if (!defaultDevice) defaultDevice = Object.keys(src.devices)[0];
     fileS3 = src.s3;
     fileDashboard = src.dashboard;
+    fileTools = src.tools;
   }
 
   // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
@@ -363,6 +402,25 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   const isTruthy = (v?: string): boolean => /^(1|true|yes|on)$/i.test(v ?? "");
   const readOnly = isTruthy(pick("read-only", "MIKROTIK_READ_ONLY"));
 
+  // Tool-surface curation. Env/flags carry comma-separated lists; the config-file
+  // `tools` block (arrays) overrides them. A list left undefined stays undefined
+  // so an empty file array isn't clobbered by an absent env var.
+  const csv = (v?: string): string[] | undefined =>
+    v === undefined
+      ? undefined
+      : v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+  const tools = {
+    enabledModules: csv(pick("tools-enabled-modules", "MIKROTIK_TOOLS__ENABLED_MODULES")),
+    disabledModules: csv(pick("tools-disabled-modules", "MIKROTIK_TOOLS__DISABLED_MODULES")),
+    enabledGroups: csv(pick("tools-enabled-groups", "MIKROTIK_TOOLS__ENABLED_GROUPS")),
+    disabledGroups: csv(pick("tools-disabled-groups", "MIKROTIK_TOOLS__DISABLED_GROUPS")),
+    // The config-file block overrides anything from env/flags.
+    ...fileTools,
+  };
+
   // Coerce a string flag/env to a boolean only when present; undefined lets zod
   // apply its schema default (so e.g. captureBody stays true unless overridden).
   const boolOpt = (v?: string): boolean | undefined => (v === undefined ? undefined : isTruthy(v));
@@ -392,6 +450,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     mcp,
     dashboard,
     readOnly,
+    tools,
     ...(hasS3 ? { s3 } : {}),
   };
 

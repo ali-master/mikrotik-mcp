@@ -73,6 +73,59 @@ publicly (e.g. a ChatGPT Apps connector) before authentication is in place. See
 
 The `__` (double underscore) in the env var names is the nested-key delimiter.
 
+## Tool surface (curation)
+
+The server exposes several hundred tools across ~110 modules. MCP clients
+discover tools by relevance search and only feed a **capped candidate set** to
+the model, so on a surface this large a query can crowd out simple read tools
+(e.g. `list_wireguard_*` losing to `build_wireguard_mesh`). If the model claims a
+tool "doesn't exist" or can't be found, that's almost always retrieval bloat, not
+a missing tool. Narrowing the surface to the scopes a deployment actually uses
+makes every matching tool surface reliably.
+
+Filter by module **slug** or **group** (see the module list in
+[Tools reference](./tools-reference.md)):
+
+| Setting         | CLI flag                   | Environment variable               | Default  |
+| --------------- | -------------------------- | ---------------------------------- | -------- |
+| Enable modules  | `--tools-enabled-modules`  | `MIKROTIK_TOOLS__ENABLED_MODULES`  | _(all)_  |
+| Disable modules | `--tools-disabled-modules` | `MIKROTIK_TOOLS__DISABLED_MODULES` | _(none)_ |
+| Enable groups   | `--tools-enabled-groups`   | `MIKROTIK_TOOLS__ENABLED_GROUPS`   | _(all)_  |
+| Disable groups  | `--tools-disabled-groups`  | `MIKROTIK_TOOLS__DISABLED_GROUPS`  | _(none)_ |
+
+Env/flag values are comma-separated lists; a JSON config file's `tools` block
+(arrays) overrides them. Matching is case-insensitive. **Semantics:** when any
+allow-list (`enabledModules`/`enabledGroups`) is non-empty, only matching modules
+register and everything else drops. The deny-lists are then subtracted and **win**
+over the allow-lists. Empty everywhere = the full surface (the default — zero
+behaviour change).
+
+Groups are: `Interfaces`, `Switch`, `Addressing & Routing`, `Dynamic Routing`,
+`IPv6`, `Security`, `QoS`, `VPN & Tunneling`, `AAA`, `Tools`, `System & Ops`,
+`MCP Apps`.
+
+```bash
+# Only expose addressing/routing + VPN scopes (smallest surface)
+mikrotik-mcp serve --tools-enabled-groups "Addressing & Routing,VPN & Tunneling"
+
+# Full surface minus the noisy diagnostic tools
+MIKROTIK_TOOLS__DISABLED_GROUPS="Tools" mikrotik-mcp serve
+```
+
+Or in a JSON config file:
+
+```json
+{
+  "tools": {
+    "enabledGroups": ["VPN & Tunneling", "Security"],
+    "disabledModules": ["wireguard-mesh"]
+  }
+}
+```
+
+> Read-only mode and tool curation compose: curation picks the modules, then
+> read-only drops every write/destructive tool from what remains.
+
 ## Logging
 
 | Setting       | Environment variable | Default | Values                           |

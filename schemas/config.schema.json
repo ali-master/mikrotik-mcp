@@ -227,10 +227,51 @@
       "default": false,
       "type": "boolean"
     },
+    "tools": {
+      "default": {
+        "enabledModules": [],
+        "disabledModules": [],
+        "enabledGroups": [],
+        "disabledGroups": []
+      },
+      "type": "object",
+      "properties": {
+        "enabledModules": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "disabledModules": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enabledGroups": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "disabledGroups": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["enabledModules", "disabledModules", "enabledGroups", "disabledGroups"],
+      "additionalProperties": false
+    },
     "backupDir": {
       "type": "string"
     }
   },
-  "required": ["devices", "defaultDevice", "mcp", "dashboard", "readOnly"],
+  "required": ["devices", "defaultDevice", "mcp", "dashboard", "readOnly", "tools"],
   "additionalProperties": false
 }

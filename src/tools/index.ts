@@ -992,3 +992,45 @@ export const moduleCatalog: ModuleInfo[] = [
 ];
 
 export const allToolModules: ToolModule[] = moduleCatalog.map((m) => m.tools);
+
+/** Shape of the tool-surface filter (mirrors `ToolFilter` in config.ts). */
+export interface ToolModuleFilter {
+  enabledModules?: string[];
+  disabledModules?: string[];
+  enabledGroups?: string[];
+  disabledGroups?: string[];
+}
+
+/**
+ * Select which modules register, given a {@link ToolModuleFilter}. Pure and
+ * order-preserving so it's trivially unit-testable.
+ *
+ * Rules (case-insensitive on slug and group):
+ *   • If any allow-list (`enabledModules`/`enabledGroups`) is non-empty, a module
+ *     must match it (by slug OR group) to survive — everything unmatched drops.
+ *   • The deny-lists are then subtracted and WIN: a module whose slug is in
+ *     `disabledModules` or whose group is in `disabledGroups` is excluded even if
+ *     it was allowed.
+ *   • Empty everywhere → the full catalog (the default, zero behaviour change).
+ */
+export function selectToolModules(
+  filter: ToolModuleFilter = {},
+  catalog: ModuleInfo[] = moduleCatalog,
+): ToolModule[] {
+  const lc = (xs?: string[]): Set<string> => new Set((xs ?? []).map((s) => s.toLowerCase()));
+  const enabledModules = lc(filter.enabledModules);
+  const disabledModules = lc(filter.disabledModules);
+  const enabledGroups = lc(filter.enabledGroups);
+  const disabledGroups = lc(filter.disabledGroups);
+  const hasAllow = enabledModules.size > 0 || enabledGroups.size > 0;
+
+  return catalog
+    .filter((m) => {
+      const slug = m.slug.toLowerCase();
+      const group = m.group.toLowerCase();
+      if (disabledModules.has(slug) || disabledGroups.has(group)) return false;
+      if (hasAllow && !(enabledModules.has(slug) || enabledGroups.has(group))) return false;
+      return true;
+    })
+    .map((m) => m.tools);
+}
