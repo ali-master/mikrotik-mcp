@@ -1226,6 +1226,46 @@ pre.body.json .j-bool {
 pre.body.json .j-null {
   color: #71717a; /* zinc-500 — null */
 }
+
+/* RouterOS device-OUTPUT highlighting — light, useful hues on the dark editor.
+   Distinct from JSON (teal IPs, purple MACs, status greens/reds) so the device
+   reply reads as its own thing, not config input. */
+pre.body.ros {
+  color: #c9c9d1; /* punctuation / plain columns */
+}
+pre.body.ros .ros-key {
+  color: #7dd3fc; /* sky-300 — the name before '=' */
+}
+pre.body.ros .ros-str {
+  color: #86efac; /* green-300 — quoted strings */
+}
+pre.body.ros .ros-num {
+  color: #fcd34d; /* amber-300 — numbers */
+}
+pre.body.ros .ros-ip {
+  color: #5eead4; /* teal-300 — IPv4 / CIDR */
+}
+pre.body.ros .ros-mac {
+  color: #c4b5fd; /* violet-300 — MAC addresses */
+}
+pre.body.ros .ros-good {
+  color: #4ade80; /* green-400 — running / enabled / yes */
+  font-weight: 500;
+}
+pre.body.ros .ros-bad {
+  color: #f87171; /* red-400 — disabled / invalid / failure */
+  font-weight: 500;
+}
+pre.body.ros .ros-bool {
+  color: #d8b4fe; /* purple-300 — yes/no/true/false (value, not health) */
+}
+pre.body.ros .ros-dim {
+  color: #8b8b94; /* zinc — dynamic / slave / default */
+}
+pre.body.ros .ros-comment {
+  color: #6b7280; /* zinc-500 — ;;; comments */
+  font-style: italic;
+}
 .muted {
   color: var(--mt-text-faint);
   font-family: var(--mt-mono);

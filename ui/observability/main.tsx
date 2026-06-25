@@ -1657,6 +1657,90 @@ function highlightJson(json: string): ReactNode[] {
   return parts;
 }
 
+// Tokenises RouterOS `print`-style device OUTPUT into light, useful coloured
+// spans: key=value columns, IPv4/CIDR, MAC, quoted strings, numbers, yes/no,
+// status words (running/disabled/…), `;;;` comments and error phrases.
+// Dependency-free and XSS-safe — React escapes every token's text; anything
+// unmatched stays plain. Case-insensitive so YES/Disabled colour too.
+const ROS_TOKEN = new RegExp(
+  [
+    /(;;;[^\n]*)/, // 1 comment (to end of line)
+    /("(?:\\.|[^"\\])*")/, // 2 quoted string
+    /([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})/, // 3 MAC address
+    /(\d{1,3}(?:\.\d{1,3}){3}(?:\/\d{1,2})?)/, // 4 IPv4 / CIDR
+    /([A-Za-z.][\w.-]*)(?==)/, // 5 key (the name before '=')
+    /\b(running|enabled|active|connected|established|reachable|bound|authorized|ok|up)\b/, // 6 good status
+    /\b(disabled|invalid|inactive|stopped|unreachable|timeout|failure|failed|error|rejected|expired|down)\b/, // 7 bad status
+    /\b(yes|no|true|false)\b/, // 8 boolean (neutral — value, not health)
+    /\b(dynamic|slave|builtin|default|passthrough|complete)\b/, // 9 dim keyword
+    /(-?\d+(?:\.\d+)?)/, // 10 number
+  ]
+    .map((r) => r.source)
+    .join("|"),
+  "gi",
+);
+
+/** Tokenise RouterOS device output into coloured `<span>`s (plain runs stay raw). */
+function highlightDeviceOutput(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let i = 0;
+  for (const m of text.matchAll(ROS_TOKEN)) {
+    const idx = m.index ?? 0;
+    if (idx > last) parts.push(text.slice(last, idx));
+    const tok = m[0];
+    let cls = "ros-num";
+    if (m[1] !== undefined) cls = "ros-comment";
+    else if (m[2] !== undefined) cls = "ros-str";
+    else if (m[3] !== undefined) cls = "ros-mac";
+    else if (m[4] !== undefined) cls = "ros-ip";
+    else if (m[5] !== undefined) cls = "ros-key";
+    else if (m[6] !== undefined) cls = "ros-good";
+    else if (m[7] !== undefined) cls = "ros-bad";
+    else if (m[8] !== undefined) cls = "ros-bool";
+    else if (m[9] !== undefined) cls = "ros-dim";
+    parts.push(
+      <span className={cls} key={i++}>
+        {tok}
+      </span>,
+    );
+    last = idx + tok.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+// INPUT JSON pretty-print preference — remembered across drawers and reloads.
+const PRETTY_INPUT_KEY = "mt-pretty-input";
+
+/** Read the persisted "pretty-print INPUT JSON" choice (defaults to on). */
+function loadPrettyInput(): boolean {
+  try {
+    return localStorage.getItem(PRETTY_INPUT_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+/** Persist the pretty-print choice. */
+function savePrettyInput(on: boolean): void {
+  try {
+    localStorage.setItem(PRETTY_INPUT_KEY, on ? "1" : "0");
+  } catch {
+    /* storage unavailable — the choice just won't persist */
+  }
+}
+
+/** Re-indent a JSON string when `pretty`; pass non-JSON through untouched. */
+function formatInputJson(raw: string, pretty: boolean): string {
+  if (!pretty) return raw;
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2);
+  } catch {
+    return raw;
+  }
+}
+
 // ── Packet Capture Studio ────────────────────────────────────────────────────
 const PROTO_COLOR: Record<string, string> = {
   TCP: "#e4e4e7",
@@ -2637,6 +2721,14 @@ function CopyButton({
 }
 
 function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => void }): ReactNode {
+  // Pretty-print INPUT JSON by default; the toggle is remembered across drawers.
+  const [prettyInput, setPrettyInput] = useState(loadPrettyInput);
+  const togglePretty = (): void =>
+    setPrettyInput((on) => {
+      const next = !on;
+      savePrettyInput(next);
+      return next;
+    });
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="sheet">
@@ -2693,9 +2785,28 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
             INPUT
           </h2>
           <span style={{ flex: 1 }} />
+          {event.input && (
+            <Button
+              type="secondary"
+              size="sm"
+              ghost
+              onClick={togglePretty}
+              title={
+                prettyInput
+                  ? "Showing pretty-printed JSON — click for raw"
+                  : "Showing raw JSON — click to pretty-print"
+              }
+            >
+              {prettyInput ? "✦ Pretty" : "{ } Raw"}
+            </Button>
+          )}
           <CopyButton text={event.input} title="Copy input JSON" />
         </div>
-        {event.input ? <JsonView value={event.input} /> : <pre className="body">—</pre>}
+        {event.input ? (
+          <JsonView value={formatInputJson(event.input, prettyInput)} />
+        ) : (
+          <pre className="body">—</pre>
+        )}
         <div className="sheet__hd">
           <h2 className="muted" style={{ margin: 0 }}>
             OUTPUT
@@ -2703,7 +2814,7 @@ function DetailDrawer({ event, onClose }: { event: ToolEvent; onClose: () => voi
           <span style={{ flex: 1 }} />
           <CopyButton text={event.output} title="Copy output" />
         </div>
-        <pre className="body">{event.output || "—"}</pre>
+        <pre className="body ros">{event.output ? highlightDeviceOutput(event.output) : "—"}</pre>
       </div>
     </div>
   );
