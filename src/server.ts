@@ -93,19 +93,7 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
       ],
     },
     {
-      capabilities: {
-        // Tools, prompts and resources are registered below. McpServer advertises
-        // `listChanged: true` for each at registration; this catalog is static so
-        // no list_changed notifications are actually emitted, but the SDK declares
-        // the capability either way.
-        tools: { listChanged: true },
-        prompts: { listChanged: true },
-        resources: { listChanged: true },
-        // Structured log notifications (`notifications/message`): every tool
-        // handler's ctx.info / ctx.error is forwarded to the client (wired via
-        // `sendLog` just below). The SDK honours the client's `logging/setLevel`.
-        logging: {},
-      },
+      capabilities: {},
       instructions,
     },
   );
