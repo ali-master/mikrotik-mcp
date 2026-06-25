@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.5.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 684,
+  "toolCount": 685,
   "tools": [
     {
       "name": "list_interfaces",
@@ -1155,6 +1155,38 @@
           }
         },
         "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "tune_wifi_channel",
+      "title": "Survey & Tune Wi-Fi Channel",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Runs an RF survey on a wireless radio (`/interface wireless frequency-monitor`, blocking for `duration`), finds the least-congested channel, and reports a before/after. DEFAULTS TO A DRY RUN (`apply=false`) — it surveys and recommends; set `apply=true` to set the radio to the best frequency (`/interface wireless set`). Targets the LEGACY wireless stack; for wifiwave2 (`/interface wifi`) tune via those tools. Returns the per-channel usage finding and the chosen frequency.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Wireless interface, e.g. 'wlan1'"
+          },
+          "duration": {
+            "default": "5",
+            "description": "Survey duration in seconds",
+            "type": "string"
+          },
+          "apply": {
+            "default": false,
+            "description": "false = survey & recommend (default); true = set it",
+            "type": "boolean"
+          }
+        },
+        "required": ["interface", "duration", "apply"],
         "additionalProperties": false
       }
     },

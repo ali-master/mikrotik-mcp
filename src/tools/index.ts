@@ -108,6 +108,7 @@ import { vlanTools } from "./vlan";
 import { wireguardMeshTools } from "./wireguard-mesh";
 import { wireguardTools } from "./wireguard";
 import { wirelessTools } from "./wireless";
+import { wifiOptimizerTools } from "./wifi-optimizer";
 
 export interface ModuleInfo {
   /** Display label used in docs. */
@@ -159,6 +160,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Interfaces",
     description: "Wireless interfaces, security profiles and access lists (legacy + wifiwave2).",
     tools: wirelessTools,
+  },
+  {
+    label: "Wi-Fi Optimizer",
+    slug: "wifi-optimizer",
+    group: "Interfaces",
+    description:
+      "Survey RF channel usage and tune a wireless radio to the least-congested frequency, with " +
+      "preview-before-apply (legacy `/interface wireless`).",
+    tools: wifiOptimizerTools,
   },
   {
     label: "PoE",

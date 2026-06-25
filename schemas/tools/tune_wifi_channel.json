@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tune_wifi_channel",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Wireless interface, e.g. 'wlan1'"
+    },
+    "duration": {
+      "default": "5",
+      "description": "Survey duration in seconds",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = survey & recommend (default); true = set it",
+      "type": "boolean"
+    }
+  },
+  "required": ["interface", "duration", "apply"],
+  "additionalProperties": false
+}
