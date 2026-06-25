@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "build_wireguard_mesh",
+  "type": "object",
+  "properties": {
+    "devices": {
+      "minItems": 2,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Configured device names to include in the mesh (2+)"
+    },
+    "address_prefix": {
+      "default": "10.20.0.0/24",
+      "description": "Mesh subnet; each device gets <prefix>.<index+1> on its WireGuard interface",
+      "type": "string"
+    },
+    "interface": {
+      "default": "wg-mesh",
+      "description": "WireGuard interface name to create/use",
+      "type": "string"
+    },
+    "listen_port": {
+      "default": 13231,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "topology": {
+      "default": "full-mesh",
+      "type": "string",
+      "enum": ["full-mesh", "hub-spoke"]
+    },
+    "hub": {
+      "description": "Hub device name (required when topology=hub-spoke)",
+      "type": "string"
+    },
+    "endpoints": {
+      "description": "Per-device public endpoint host override, e.g. {\"site-a\":\"a.example.com\"}",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "allowed_lans": {
+      "description": "Per-device LAN subnet to route through the tunnel, e.g. {\"site-a\":\"192.168.10.0/24\"}",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "persistent_keepalive": {
+      "default": "25s",
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview the plan (default); true = build",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "devices",
+    "address_prefix",
+    "interface",
+    "listen_port",
+    "topology",
+    "persistent_keepalive",
+    "apply"
+  ],
+  "additionalProperties": false
+}

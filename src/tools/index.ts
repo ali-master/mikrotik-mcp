@@ -100,6 +100,7 @@ import { tunnelTools } from "./tunnels";
 import { userManagerTools } from "./user-manager";
 import { userTools } from "./users";
 import { vlanTools } from "./vlan";
+import { wireguardMeshTools } from "./wireguard-mesh";
 import { wireguardTools } from "./wireguard";
 import { wirelessTools } from "./wireless";
 
@@ -511,6 +512,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "VPN & Tunneling",
     description: "WireGuard interfaces, peers and client-config generation.",
     tools: wireguardTools,
+  },
+  {
+    label: "WireGuard Mesh",
+    slug: "wireguard-mesh",
+    group: "VPN & Tunneling",
+    description:
+      "Stand up a full-mesh or hub-spoke WireGuard VPN across several devices in one call — auto " +
+      "key distribution, mesh addressing and peer wiring, with a preview-before-build step.",
+    tools: wireguardMeshTools,
   },
   {
     label: "IPsec",
