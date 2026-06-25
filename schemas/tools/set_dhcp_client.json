@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_dhcp_client",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "add_default_route": {
+      "type": "boolean"
+    },
+    "use_peer_dns": {
+      "type": "boolean"
+    },
+    "use_peer_ntp": {
+      "type": "boolean"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": ["interface"],
+  "additionalProperties": false
+}

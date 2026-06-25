@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_dhcp_clients",
+  "type": "object",
+  "properties": {
+    "interface_filter": {
+      "description": "Substring match on interface",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

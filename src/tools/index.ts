@@ -35,6 +35,7 @@ import { ipAddressTools } from "./ip-address";
 import { ipPoolTools } from "./ip-pool";
 import { ipServiceTools } from "./ip-service";
 import { ipCloudTools } from "./ip-cloud";
+import { ipDhcpClientTools } from "./ip-dhcp-client";
 import { ipv6AddressTools } from "./ipv6-address";
 import { ipv6DhcpClientTools } from "./ipv6-dhcp-client";
 import { ipv6DhcpRelayTools } from "./ipv6-dhcp-relay";
@@ -252,6 +253,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Addressing & Routing",
     description: "DHCP servers, networks and pools (`/ip dhcp-server`).",
     tools: dhcpTools,
+  },
+  {
+    label: "DHCP Client",
+    slug: "ip-dhcp-client",
+    group: "Addressing & Routing",
+    description:
+      "IPv4 DHCP client - obtain address/gateway/DNS on an interface (`/ip dhcp-client`).",
+    tools: ipDhcpClientTools,
   },
   {
     label: "Hotspot Builder",

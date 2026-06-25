@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_dhcp_client",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Interface to run the DHCP client on, e.g. 'ether1'"
+    },
+    "add_default_route": {
+      "default": true,
+      "description": "Install the received default gateway",
+      "type": "boolean"
+    },
+    "use_peer_dns": {
+      "default": true,
+      "type": "boolean"
+    },
+    "use_peer_ntp": {
+      "default": true,
+      "type": "boolean"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": ["interface", "add_default_route", "use_peer_dns", "use_peer_ntp", "disabled"],
+  "additionalProperties": false
+}

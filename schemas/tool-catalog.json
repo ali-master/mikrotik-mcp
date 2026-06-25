@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.6.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 700,
+  "toolCount": 706,
   "tools": [
     {
       "name": "list_interfaces",
@@ -2939,6 +2939,175 @@
           }
         },
         "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_dhcp_clients",
+      "title": "List DHCP Clients",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists IPv4 DHCP clients (`/ip dhcp-client print`) — each interface configured to obtain its address/gateway/DNS from an upstream DHCP server (typically a WAN port). Shows the bound address, status, and whether a default route / peer DNS is used. Optional `interface_filter`. For one client's detail use get_dhcp_client; to add one use add_dhcp_client.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface_filter": {
+            "description": "Substring match on interface",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_dhcp_client",
+      "title": "Get DHCP Client Detail",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Full detail for the DHCP client on an interface (`/ip dhcp-client print detail where interface=...`) — bound address, gateway, lease time, status, and options. Use list_dhcp_clients to find interfaces. Returns the detail block or a not-found message.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Interface name, e.g. 'ether1'"
+          }
+        },
+        "required": ["interface"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_dhcp_client",
+      "title": "Add DHCP Client",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Adds an IPv4 DHCP client on an interface (`/ip dhcp-client add`) so it obtains an address from an upstream DHCP server — the usual way to configure a WAN port. `add_default_route` installs the received gateway; `use_peer_dns`/`use_peer_ntp` adopt the server's DNS/NTP. Returns the created client's detail.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Interface to run the DHCP client on, e.g. 'ether1'"
+          },
+          "add_default_route": {
+            "default": true,
+            "description": "Install the received default gateway",
+            "type": "boolean"
+          },
+          "use_peer_dns": {
+            "default": true,
+            "type": "boolean"
+          },
+          "use_peer_ntp": {
+            "default": true,
+            "type": "boolean"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": ["interface", "add_default_route", "use_peer_dns", "use_peer_ntp", "disabled"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_dhcp_client",
+      "title": "Update DHCP Client",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates the DHCP client on an interface (`/ip dhcp-client set [find interface=...]`) — toggle `add_default_route`, `use_peer_dns`, `use_peer_ntp`, or `disabled`. No-ops if nothing is supplied. Returns the updated detail.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string"
+          },
+          "add_default_route": {
+            "type": "boolean"
+          },
+          "use_peer_dns": {
+            "type": "boolean"
+          },
+          "use_peer_ntp": {
+            "type": "boolean"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["interface"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "renew_dhcp_client",
+      "title": "Renew / Release DHCP Lease",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Renews or releases the DHCP lease on an interface (`/ip dhcp-client renew|release`). `release=true` drops the current lease; otherwise it renews — use to re-pull WAN settings after an upstream change. Returns the client status afterward.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string"
+          },
+          "release": {
+            "default": false,
+            "description": "true = release the lease; false = renew",
+            "type": "boolean"
+          }
+        },
+        "required": ["interface", "release"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_dhcp_client",
+      "title": "Remove DHCP Client",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Removes the DHCP client from an interface (`/ip dhcp-client remove [find interface=...]`) — the interface stops obtaining an address from DHCP (set a static address separately if needed). Confirms removal or reports not-found.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string"
+          }
+        },
+        "required": ["interface"],
         "additionalProperties": false
       }
     },

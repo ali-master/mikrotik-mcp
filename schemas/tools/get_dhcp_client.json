@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_dhcp_client",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string",
+      "description": "Interface name, e.g. 'ether1'"
+    }
+  },
+  "required": ["interface"],
+  "additionalProperties": false
+}

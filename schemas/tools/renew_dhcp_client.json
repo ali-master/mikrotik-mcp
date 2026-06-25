@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "renew_dhcp_client",
+  "type": "object",
+  "properties": {
+    "interface": {
+      "type": "string"
+    },
+    "release": {
+      "default": false,
+      "description": "true = release the lease; false = renew",
+      "type": "boolean"
+    }
+  },
+  "required": ["interface", "release"],
+  "additionalProperties": false
+}
