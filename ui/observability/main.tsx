@@ -447,9 +447,11 @@ function App(): ReactNode {
     useCallback((m: LiveMode) => setLiveMode(m), []),
   );
 
-  // Initial load.
+  // Initial load. Pull as many events as the live feed can hold (`FEED_CAP`) so a
+  // refresh restores the same depth the in-memory feed keeps — not a smaller
+  // slice that makes the count appear to shrink after every reload.
   useEffect(() => {
-    void api<{ events: ToolEvent[] }>("/api/events?limit=200")
+    void api<{ events: ToolEvent[] }>(`/api/events?limit=${FEED_CAP}`)
       .then((r) => setFeed(r.events))
       .catch(() => {});
   }, []);

@@ -37,4 +37,4 @@ export const WINDOWS: [string, number][] = [
   ["6h", 21_600_000],
   ["24h", 86_400_000],
 ];
-export const FEED_CAP = 500;
+export const FEED_CAP = 10_000;
