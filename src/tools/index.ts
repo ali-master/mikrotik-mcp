@@ -27,6 +27,7 @@ import { securityShieldTools } from "./security-shield";
 import { portKnockTools } from "./port-knock";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
+import { portForwardTools } from "./port-forward";
 import { interfaceTools } from "./interfaces";
 import { ipAddressTools } from "./ip-address";
 import { ipPoolTools } from "./ip-pool";
@@ -473,6 +474,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).",
     tools: firewallNatTools,
+  },
+  {
+    label: "Port Forward",
+    slug: "port-forward",
+    group: "Security",
+    description:
+      "Smart port-forward wizard: dst-nat + forward accept + hairpin NAT in one call, with " +
+      "preview-before-apply.",
+    tools: portForwardTools,
   },
   {
     label: "Address Lists",

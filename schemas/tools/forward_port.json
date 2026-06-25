@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "forward_port",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "default": "tcp",
+      "type": "string",
+      "enum": ["tcp", "udp"]
+    },
+    "external_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "internal_host": {
+      "type": "string",
+      "description": "LAN IP of the service, e.g. '192.168.1.10'"
+    },
+    "internal_port": {
+      "description": "Defaults to external_port",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "wan_interface": {
+      "description": "Restrict the forward to this WAN interface",
+      "type": "string"
+    },
+    "lan_subnet": {
+      "description": "LAN subnet for hairpin NAT, e.g. '192.168.1.0/24'",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "apply": {
+      "default": false,
+      "description": "false = preview (default); true = create",
+      "type": "boolean"
+    }
+  },
+  "required": ["protocol", "external_port", "internal_host", "apply"],
+  "additionalProperties": false
+}
