@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { MetricArea, RadialGauge } from "./charts";
 import { statusInfo } from "./connectivity";
-import { bytes } from "./format";
+import { bytes, HEALTH_COLOR } from "./format";
 import { Badge, Dot } from "./geist";
 import type { DeviceInfo } from "./types";
 
@@ -48,9 +48,9 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         {s.uptime ? ` · up ${s.uptime}` : ""}
       </div>
       <div className="health-card__gauges">
-        <RadialGauge value={s.cpuLoad} label="CPU" color="#ededed" />
-        <RadialGauge value={s.memUsedPct} label="MEM" color="#bdbdc4" />
-        <RadialGauge value={s.hddUsedPct} label="DISK" color="#8a8a92" />
+        <RadialGauge value={s.cpuLoad} label="CPU" color={HEALTH_COLOR.cpu} />
+        <RadialGauge value={s.memUsedPct} label="MEM" color={HEALTH_COLOR.mem} />
+        <RadialGauge value={s.hddUsedPct} label="DISK" color={HEALTH_COLOR.disk} />
       </div>
       <div className="health-card__charts">
         <div className="health-chart">
@@ -58,7 +58,7 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
           <MetricArea
             id={`${d.name}-cpu`}
             values={hist.map((h) => h.cpuLoad)}
-            color="#ededed"
+            color={HEALTH_COLOR.cpu}
             maxValue={100}
             unit="%"
           />
@@ -68,7 +68,7 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
           <MetricArea
             id={`${d.name}-mem`}
             values={hist.map((h) => h.memUsedPct)}
-            color="#bdbdc4"
+            color={HEALTH_COLOR.mem}
             maxValue={100}
             unit="%"
           />
@@ -78,7 +78,7 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
           <MetricArea
             id={`${d.name}-lat`}
             values={hist.map((h) => h.latencyMs)}
-            color="#bdbdc4"
+            color={HEALTH_COLOR.latency}
             unit="ms"
           />
         </div>

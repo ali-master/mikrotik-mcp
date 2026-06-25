@@ -22,6 +22,16 @@ export const sval = (v: unknown): string => {
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   return JSON.stringify(v);
 };
+/** Per-metric accent for the device system-health gauges & sparkline charts.
+ * Reuses the dashboard's accent vocabulary (blue `--page-accent`, teal
+ * `--page-accent-2`) plus violet/amber so each metric is distinct yet on-theme. */
+export const HEALTH_COLOR = {
+  cpu: "#3291ff", // blue
+  mem: "#a78bfa", // violet
+  disk: "#2dd4bf", // teal
+  latency: "#f59e0b", // amber
+} as const;
+
 export const RISK_COLOR: Record<Risk, string> = {
   READ: "#d4d4d8",
   WRITE: "#a1a1aa",
