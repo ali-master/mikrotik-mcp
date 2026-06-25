@@ -18,12 +18,13 @@ export const openvpnTools: ToolModule = [
     title: "Get OpenVPN Server Configuration",
     annotations: READ,
     description:
-      "Read the OpenVPN server settings (`/interface ovpn-server server print`) — the singleton" +
-      " inbound-server instance (enabled state, certificate, auth/cipher algorithms, port, protocol," +
-      " netmask, mode, max_mtu, default_profile, require_client_certificate). Use set_ovpn_server to" +
-      " modify these settings. For outbound OVPN tunnels to a remote server use list_ovpn_clients or" +
-      " get_ovpn_client. For other VPN tunnel types use create_l2tp_client, create_pptp_client, or" +
-      " create_sstp_client. Returns the full server parameter block or a not-found message.",
+      "`get_ovpn_server` — READ / get / show / inspect the OpenVPN (OVPN) server settings and status" +
+      " (`/interface ovpn-server server print`) — the singleton inbound-server instance: whether it is" +
+      " enabled/running, certificate, auth/cipher algorithms, port, protocol, netmask, mode, max_mtu," +
+      " default_profile, require_client_certificate. Use set_ovpn_server to modify these settings. For" +
+      " outbound OVPN tunnels to a remote server use list_ovpn_clients or get_ovpn_client. For other VPN" +
+      " tunnel types use create_l2tp_client, create_pptp_client, or create_sstp_client. Returns the full" +
+      " server parameter block or a not-found message.",
     async handler(_a, ctx) {
       ctx.info("Getting OpenVPN server configuration");
       const result = await executeMikrotikCommand("/interface ovpn-server server print", ctx);
@@ -167,11 +168,13 @@ export const openvpnTools: ToolModule = [
     title: "List OpenVPN Client Interfaces",
     annotations: READ,
     description:
-      "List all OpenVPN client interfaces (`/interface ovpn-client print`) configured on this" +
-      " router, optionally filtered by partial interface name (name_filter). Use this to enumerate" +
-      " existing OVPN uplinks and their connection status before calling get_ovpn_client," +
-      " enable_ovpn_client, disable_ovpn_client, or remove_ovpn_client. For inbound server" +
-      " settings use get_ovpn_server. For L2TP, PPTP, or SSTP tunnels use the respective tools." +
+      "`list_ovpn_clients` — READ / list / show / inspect / enumerate all OpenVPN (OVPN) client" +
+      " interfaces (`/interface ovpn-client print`) and whether each tunnel is running/connected," +
+      " optionally filtered by partial interface name (name_filter). Returns each client's name," +
+      " running status, remote server (connect-to), port, mode and user. Use this to read existing OVPN" +
+      " uplinks and their status before calling get_ovpn_client, enable_ovpn_client," +
+      " disable_ovpn_client, or remove_ovpn_client. For inbound server settings use get_ovpn_server." +
+      " For L2TP, PPTP, or SSTP tunnels use the respective tools." +
       " Returns a redacted table of all matching OVPN client interfaces.",
     inputSchema: {
       name_filter: z.string().optional().describe("Partial name match"),
@@ -196,11 +199,12 @@ export const openvpnTools: ToolModule = [
     title: "Get OpenVPN Client Interface Detail",
     annotations: READ,
     description:
-      "Fetch detailed settings for a specific OpenVPN client interface by name" +
-      " (`/interface ovpn-client print detail where name=...`). Use list_ovpn_clients first to" +
-      " enumerate available interface names. For the inbound OVPN server settings use" +
-      " get_ovpn_server. Returns the full interface detail with secrets redacted, or a not-found" +
-      " message if the name does not exist.",
+      "`get_ovpn_client` — READ / get / show / inspect one OpenVPN (OVPN) client interface's full" +
+      " detail and running status by name (`/interface ovpn-client print detail where name=...`):" +
+      " running/connected state, remote server (connect-to), port, mode, user, profile, certificate," +
+      " cipher and auth. Use list_ovpn_clients first to enumerate available interface names. For the" +
+      " inbound OVPN server settings use get_ovpn_server. Returns the full interface detail with" +
+      " secrets redacted, or a not-found message if the name does not exist.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting OpenVPN client details: name=${a.name}`);
