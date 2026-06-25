@@ -61,11 +61,12 @@ export const wireguardTools: ToolModule = [
     title: "List WireGuard Interfaces",
     annotations: READ,
     description:
-      "Lists WireGuard tunnel interfaces (`/interface wireguard print`). Returns each interface's" +
-      " name, listen-port, public-key, MTU, and running/disabled status." +
-      " Supports filtering by name substring (name_filter), disabled-only, or running-only." +
-      " For the peer table use list_wireguard_peers." +
-      " Use the name from this output with get_wireguard_interface or update_wireguard_interface.",
+      "`list_wireguard_interfaces` — READ / list / show / inspect all WireGuard tunnel interfaces" +
+      " (`/interface wireguard print`). The go-to tool to read the current WireGuard state on a" +
+      " device. Returns each interface's name, listen-port, public-key, MTU, and running/disabled" +
+      " status. Filter by name substring (name_filter), disabled-only, or running-only." +
+      " For one interface's full detail use get_wireguard_interface; for the peer table use" +
+      " list_wireguard_peers; for interfaces AND peers in one call use get_wireguard_status.",
     inputSchema: {
       name_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -93,10 +94,11 @@ export const wireguardTools: ToolModule = [
     title: "Get WireGuard Interface Details",
     annotations: READ,
     description:
-      "Retrieves full detail of a single WireGuard tunnel interface (`/interface wireguard print detail`)" +
-      " looked up by name. Returns listen-port, private-key, public-key, MTU, running state, and comment." +
-      " For the peer table use get_wireguard_peer." +
-      " Use list_wireguard_interfaces to discover available interface names.",
+      "`get_wireguard_interface` — READ / get / show the full detail of ONE WireGuard tunnel interface" +
+      " (`/interface wireguard print detail`) looked up by name. Returns listen-port, private-key," +
+      " public-key, MTU, running state, and comment. To list all interfaces use" +
+      " list_wireguard_interfaces; for that interface's peers use list_wireguard_peers; for" +
+      " interfaces AND peers in one call use get_wireguard_status.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
       ctx.info(`Getting WireGuard interface details: name=${a.name}`);
@@ -107,6 +109,42 @@ export const wireguardTools: ToolModule = [
       return isEmpty(result)
         ? `WireGuard interface '${a.name}' not found.`
         : `WIREGUARD INTERFACE DETAILS:\n\n${result}`;
+    },
+  }),
+
+  defineTool({
+    name: "get_wireguard_status",
+    title: "Get WireGuard Status (Interfaces + Peers)",
+    annotations: READ,
+    description:
+      "`get_wireguard_status` — READ the current WireGuard state on a device in ONE call: ALL tunnel" +
+      " interfaces AND ALL peers together. Use this FIRST to inspect / show / check WireGuard before" +
+      " changing anything (e.g. to read public keys, see which side initiates, or confirm the tunnel" +
+      " is up). Interfaces report name, listen-port, public-key, MTU and running state; peers report" +
+      " .id, interface, public-key, allowed-address, endpoint/current-endpoint, last-handshake time" +
+      " and rx/tx bytes. Combines list_wireguard_interfaces + list_wireguard_peers; optionally filter" +
+      " both to one interface with interface_filter.",
+    inputSchema: {
+      interface_filter: z
+        .string()
+        .optional()
+        .describe("Limit to one interface name, e.g. 'wg-mesh'"),
+    },
+    async handler(a, ctx) {
+      ctx.info("Reading WireGuard status (interfaces + peers)");
+      const ifFilters = a.interface_filter ? [`name="${a.interface_filter}"`] : [];
+      const peerFilters = a.interface_filter ? [`interface="${a.interface_filter}"`] : [];
+      const interfaces = await executeMikrotikCommand(
+        `/interface wireguard print${whereClause(ifFilters)}`,
+        ctx,
+      );
+      const peers = await executeMikrotikCommand(
+        `/interface wireguard peers print${whereClause(peerFilters)}`,
+        ctx,
+      );
+      const ifBlock = isEmpty(interfaces) ? "(none)" : interfaces;
+      const peerBlock = isEmpty(peers) ? "(none)" : peers;
+      return `WIREGUARD INTERFACES:\n\n${ifBlock}\n\nWIREGUARD PEERS:\n\n${peerBlock}`;
     },
   }),
 
@@ -290,12 +328,14 @@ export const wireguardTools: ToolModule = [
     title: "List WireGuard Peers",
     annotations: READ,
     description:
-      "Lists all WireGuard peer entries (`/interface wireguard peers print`)." +
-      " Returns each peer's .id, interface, public-key, allowed-address, endpoint, last-handshake time, and rx/tx byte counters." +
-      " Filter by interface name (interface_filter) or disabled-only." +
-      " For the interface table use list_wireguard_interfaces." +
-      " Use the .id from this output with get_wireguard_peer, update_wireguard_peer, remove_wireguard_peer," +
-      " enable_wireguard_peer, or disable_wireguard_peer.",
+      "`list_wireguard_peers` — READ / list / show / inspect all WireGuard peers" +
+      " (`/interface wireguard peers print`). Use this to read which peers are configured and" +
+      " whether the tunnel is up (handshake). Returns each peer's .id, interface, public-key," +
+      " allowed-address, endpoint/current-endpoint, last-handshake time, and rx/tx byte counters." +
+      " Filter by interface name (interface_filter) or disabled-only. For the interface table use" +
+      " list_wireguard_interfaces; for one peer's full detail use get_wireguard_peer; for interfaces" +
+      " AND peers in one call use get_wireguard_status. Use the .id from this output with" +
+      " update_wireguard_peer, remove_wireguard_peer, enable_wireguard_peer, or disable_wireguard_peer.",
     inputSchema: {
       interface_filter: z.string().optional(),
       disabled_only: z.boolean().default(false),
@@ -319,10 +359,11 @@ export const wireguardTools: ToolModule = [
     title: "Get WireGuard Peer Details",
     annotations: READ,
     description:
-      "Retrieves full detail of a single WireGuard peer (`/interface wireguard peers print detail`) by its .id." +
-      " Returns public-key, allowed-address, endpoint, preshared-key presence, last-handshake time, and rx/tx bytes." +
-      " For the interface table use get_wireguard_interface." +
-      " Use list_wireguard_peers to obtain peer .id values.\n\n" +
+      "`get_wireguard_peer` — READ / get / show the full detail of ONE WireGuard peer" +
+      " (`/interface wireguard peers print detail`) by its .id. Returns public-key, allowed-address," +
+      " endpoint/current-endpoint, preshared-key presence, last-handshake time, and rx/tx bytes." +
+      " To list all peers use list_wireguard_peers; for interfaces AND peers in one call use" +
+      " get_wireguard_status.\n\n" +
       "Notes:\n" +
       '  peer_id: the .id from list_wireguard_peers, format "*N" or "N" e.g. "*2"',
     inputSchema: {
