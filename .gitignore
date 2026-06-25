@@ -188,6 +188,8 @@ mikrotik-mcp-events.db
 mikrotik-mcp-events.db-journal
 mikrotik-mcp-events.db-wal
 mikrotik-mcp-events.db-shm
+# Exported event dumps (local debugging samples — never commit)
+mcp-events.json
 results/
 *.log
 
