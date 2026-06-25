@@ -3,7 +3,13 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import {
+  whereClause,
+  looksLikeError,
+  isEmpty,
+  containsRawParserError,
+  Cmd,
+} from "../core/routeros";
 import { redactSecrets } from "../utils";
 
 export const openvpnTools: ToolModule = [
@@ -54,23 +60,37 @@ export const openvpnTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info("Configuring OpenVPN server");
-      const cmd = new Cmd("/interface ovpn-server server set")
-        .bool("enabled", a.enabled)
-        .opt("certificate", a.certificate)
-        .opt("auth", a.auth)
-        .opt("cipher", a.cipher)
-        .opt("netmask", a.netmask)
-        .opt("mode", a.mode)
-        .opt("port", a.port)
-        .opt("protocol", a.protocol)
-        .opt("default-profile", a.default_profile)
-        .bool("require-client-certificate", a.require_client_certificate)
-        .opt("max-mtu", a.max_mtu)
+
+      // Everything except the enable/disable toggle is version-stable.
+      const params = () =>
+        new Cmd("/interface ovpn-server server set")
+          .opt("certificate", a.certificate)
+          .opt("auth", a.auth)
+          .opt("cipher", a.cipher)
+          .opt("netmask", a.netmask)
+          .opt("mode", a.mode)
+          .opt("port", a.port)
+          .opt("protocol", a.protocol)
+          .opt("default-profile", a.default_profile)
+          .bool("require-client-certificate", a.require_client_certificate)
+          .opt("max-mtu", a.max_mtu);
+
+      // RouterOS 7.17 replaced this menu's legacy `enabled` property with an
+      // (inverted) `disabled` one as part of multi-server support, so the old
+      // `enabled=yes` is rejected as a parser error on 7.17+. Send the modern
+      // `disabled` form first and fall back to `enabled` only when an older
+      // device's parser rejects it.
+      const cmd = params()
+        .bool("disabled", a.enabled === undefined ? undefined : !a.enabled)
         .build();
 
       if (cmd === "/interface ovpn-server server set") return "No updates specified.";
 
-      const result = await executeMikrotikCommand(cmd, ctx);
+      let result = await executeMikrotikCommand(cmd, ctx);
+      if (a.enabled !== undefined && containsRawParserError(result)) {
+        const legacy = params().bool("enabled", a.enabled).build();
+        result = await executeMikrotikCommand(legacy, ctx);
+      }
       if (looksLikeError(result)) return `Failed to configure OpenVPN server: ${result}`;
 
       const details = await executeMikrotikCommand("/interface ovpn-server server print", ctx);
