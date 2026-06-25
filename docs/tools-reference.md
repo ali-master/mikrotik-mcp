@@ -1,6 +1,6 @@
 # Tool Reference
 
-> **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v3.6.0. Do not edit by hand.
+> **Generated** from source by `scripts/gen-tool-docs.ts` (`bun run gen:docs`) for v3.7.0. Do not edit by hand.
 
 **706 tools** across **111 modules**. A `*` marks a required parameter.
 
