@@ -55,11 +55,18 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
       <div className="health-card__charts">
         <div className="health-chart">
           <span className="health-chart__k">CPU load</span>
-          <MetricArea values={hist.map((h) => h.cpuLoad)} color="#ededed" maxValue={100} unit="%" />
+          <MetricArea
+            id={`${d.name}-cpu`}
+            values={hist.map((h) => h.cpuLoad)}
+            color="#ededed"
+            maxValue={100}
+            unit="%"
+          />
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Memory used</span>
           <MetricArea
+            id={`${d.name}-mem`}
             values={hist.map((h) => h.memUsedPct)}
             color="#bdbdc4"
             maxValue={100}
@@ -68,7 +75,12 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         </div>
         <div className="health-chart">
           <span className="health-chart__k">Probe latency</span>
-          <MetricArea values={hist.map((h) => h.latencyMs)} color="#bdbdc4" unit="ms" />
+          <MetricArea
+            id={`${d.name}-lat`}
+            values={hist.map((h) => h.latencyMs)}
+            color="#bdbdc4"
+            unit="ms"
+          />
         </div>
       </div>
       <div className="health-card__foot muted">

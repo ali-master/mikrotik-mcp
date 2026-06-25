@@ -201,17 +201,39 @@ export function MetricArea({
   color,
   unit,
   maxValue,
+  id,
 }: {
   values: (number | null)[];
   color: string;
   unit?: string;
+  /** Upper clamp for the auto-scaled axis (e.g. 100 for a percentage). */
   maxValue?: number;
+  /** Unique key for this chart's gradient `<def>` (avoids duplicate SVG ids). */
+  id?: string;
 }): ReactNode {
   const nums = values.filter((v): v is number => v != null);
   if (nums.length === 0) return <div className="spark spark--empty">no samples yet</div>;
   const data = values.map((v, i) => ({ i, v }));
   const last = nums[nums.length - 1];
-  const gid = `ma-${color.replace(/[^a-z0-9]/gi, "")}`;
+  const gid = `ma-${(id ?? color).replace(/[^a-z0-9]/gi, "")}`;
+
+  // Auto-scale the Y axis to the data so small-but-real movement is visible: a
+  // fixed 0–100 axis crushes a 1–2% CPU load or a steady ~9% memory line into a
+  // flat strip at the bottom that reads as "nothing". A minimum window keeps a
+  // near-constant series (e.g. 9.19 vs 9.20%) calm instead of amplifying jitter
+  // into noise; padding adds breathing room; the result is clamped to
+  // [0, maxValue]. The absolute level is still shown by the value badge + gauge.
+  const lo0 = Math.min(...nums);
+  const hi0 = Math.max(...nums);
+  const minWindow = unit === "%" ? 10 : 0;
+  const grow = Math.max(0, minWindow - (hi0 - lo0)) / 2;
+  let lo = lo0 - grow;
+  let hi = hi0 + grow;
+  const pad = (hi - lo) * 0.15 || 1;
+  lo = Math.max(0, lo - pad);
+  hi = hi + pad;
+  if (maxValue != null) hi = Math.min(maxValue, hi);
+  if (hi <= lo) hi = lo + 1; // guard a degenerate domain so recharts still draws
   return (
     <div className="chart chart--spark">
       <span className="chart-spark__last" style={{ color }}>
@@ -226,7 +248,7 @@ export function MetricArea({
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <YAxis hide domain={[0, maxValue ?? "dataMax"]} />
+          <YAxis hide domain={[lo, hi]} />
           <Tooltip
             cursor={{ stroke: GRID }}
             content={({ active, payload }) => (
