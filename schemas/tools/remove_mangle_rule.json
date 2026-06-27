@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_mangle_rule",
+  "type": "object",
+  "properties": {
+    "rule_id": {
+      "type": "string"
+    }
+  },
+  "required": ["rule_id"],
+  "additionalProperties": false
+}

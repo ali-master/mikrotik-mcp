@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.8.0",
+  "version": "3.14.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 707,
+  "toolCount": 715,
   "tools": [
     {
       "name": "list_interfaces",
@@ -10445,6 +10445,404 @@
       }
     },
     {
+      "name": "create_mangle_rule",
+      "title": "Create IPv4 Firewall Mangle Rule",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Creates an IPv4 mangle rule (`/ip firewall mangle add`) — the packet-marking and header-modification table, used to mark connections/packets/routing (for policy routing, QoS and per-connection classification) or to change DSCP/TTL/MSS. For accept/drop decisions use create_filter_rule; for address translation use create_nat_rule; for IPv6 mangle use create_ipv6_mangle_rule. chain: prerouting/input/forward/output/postrouting. action: mark-connection/mark-packet/mark-routing/change-dscp/change-ttl/change-mss/add-src-to-address-list/add-dst-to-address-list/fasttrack-connection/route/set-priority/accept/etc. Set the matching new-*-mark field for mark-* actions and keep passthrough=true so later rules can also match the same packet; for add-*-to-address-list set address_list (and optionally address_list_timeout). place_before accepts a rule number or ID (*N) to control insertion position. Returns the created rule's detail including its `.id`.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": ["prerouting", "input", "forward", "output", "postrouting"]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "add-dst-to-address-list",
+              "add-src-to-address-list",
+              "change-dscp",
+              "change-mss",
+              "change-ttl",
+              "clear-df",
+              "drop",
+              "fasttrack-connection",
+              "jump",
+              "log",
+              "mark-connection",
+              "mark-packet",
+              "mark-routing",
+              "passthrough",
+              "return",
+              "route",
+              "set-priority",
+              "sniff-pc",
+              "sniff-tzsp"
+            ]
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "dst_address": {
+            "type": "string"
+          },
+          "src_port": {
+            "type": "string"
+          },
+          "dst_port": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "in_interface": {
+            "type": "string"
+          },
+          "out_interface": {
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "packet_mark": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "connection_state": {
+            "description": "e.g. \"new\", \"established,related\", \"invalid\"",
+            "type": "string"
+          },
+          "new_connection_mark": {
+            "type": "string"
+          },
+          "new_packet_mark": {
+            "type": "string"
+          },
+          "new_routing_mark": {
+            "type": "string"
+          },
+          "new_dscp": {
+            "description": "0-63, for change-dscp",
+            "type": "string"
+          },
+          "new_ttl": {
+            "description": "e.g. \"decrement\", \"increment\", or \"set:64\"",
+            "type": "string"
+          },
+          "new_mss": {
+            "description": "e.g. \"1440\" or \"clamp-to-pmtu\", for change-mss",
+            "type": "string"
+          },
+          "routing_table": {
+            "description": "Routing table for action=route",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "Target list name for add-src/dst-to-address-list",
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "description": "Entry timeout for add-*-to-address-list e.g. \"1h\", \"none\"",
+            "type": "string"
+          },
+          "passthrough": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          },
+          "log": {
+            "default": false,
+            "type": "boolean"
+          },
+          "log_prefix": {
+            "type": "string"
+          },
+          "place_before": {
+            "description": "Rule number or ID (*N) to insert before",
+            "type": "string"
+          }
+        },
+        "required": ["chain", "action", "disabled", "log"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_mangle_rules",
+      "title": "List IPv4 Firewall Mangle Rules",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists IPv4 mangle rules (`/ip firewall mangle print`) — returns all rules in the mangle table with their IDs, chains, actions, and match criteria. For IPv4 filter use list_filter_rules; for IPv4 NAT use list_nat_rules; for IPv6 mangle use list_ipv6_mangle_rules. Optionally filter by chain, action, connection-mark, packet-mark, disabled, invalid, or dynamic status. Rule `.id` values from this output are required by get_mangle_rule, update_mangle_rule, remove_mangle_rule, move_mangle_rule, enable_mangle_rule, and disable_mangle_rule.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chain_filter": {
+            "type": "string"
+          },
+          "action_filter": {
+            "type": "string"
+          },
+          "connection_mark_filter": {
+            "type": "string"
+          },
+          "packet_mark_filter": {
+            "type": "string"
+          },
+          "disabled_only": {
+            "default": false,
+            "type": "boolean"
+          },
+          "invalid_only": {
+            "default": false,
+            "type": "boolean"
+          },
+          "dynamic_only": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": ["disabled_only", "invalid_only", "dynamic_only"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_mangle_rule",
+      "title": "Get IPv4 Firewall Mangle Rule Details",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Retrieves full detail for a single IPv4 mangle rule (`/ip firewall mangle print detail where .id=`). Use when you need all fields of one specific rule rather than the full table listing. For the full list use list_mangle_rules; for IPv6 mangle use get_ipv6_mangle_rule. rule_id takes the `.id` value (e.g. \"*1\" or \"0\") returned by list_mangle_rules.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "description": "Rule ID from list output e.g. \"*1\" or \"0\""
+          }
+        },
+        "required": ["rule_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_mangle_rule",
+      "title": "Update IPv4 Firewall Mangle Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Updates fields on an existing IPv4 mangle rule (`/ip firewall mangle set`) — change chain, action, match criteria, mark values, DSCP, TTL, MSS, or flags without recreating the rule. To toggle enabled state only use enable_mangle_rule or disable_mangle_rule; for IPv6 mangle use update_ipv6_mangle_rule. rule_id takes the `.id` from list_mangle_rules. Pass \"\" (empty string) for an optional field to clear it. Returns the updated rule's full detail.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          },
+          "chain": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "src_address": {
+            "type": "string"
+          },
+          "dst_address": {
+            "type": "string"
+          },
+          "src_port": {
+            "type": "string"
+          },
+          "dst_port": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "in_interface": {
+            "type": "string"
+          },
+          "out_interface": {
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "packet_mark": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "connection_state": {
+            "type": "string"
+          },
+          "new_connection_mark": {
+            "type": "string"
+          },
+          "new_packet_mark": {
+            "type": "string"
+          },
+          "new_routing_mark": {
+            "type": "string"
+          },
+          "new_dscp": {
+            "type": "string"
+          },
+          "new_ttl": {
+            "type": "string"
+          },
+          "new_mss": {
+            "type": "string"
+          },
+          "routing_table": {
+            "type": "string"
+          },
+          "address_list": {
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "type": "string"
+          },
+          "passthrough": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "log": {
+            "type": "boolean"
+          },
+          "log_prefix": {
+            "type": "string"
+          }
+        },
+        "required": ["rule_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_mangle_rule",
+      "title": "Remove IPv4 Firewall Mangle Rule",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Permanently deletes an IPv4 mangle rule (`/ip firewall mangle remove`) — verifies the rule exists first, then removes it. To only deactivate without deleting use disable_mangle_rule; for IPv6 mangle use remove_ipv6_mangle_rule. rule_id takes the `.id` from list_mangle_rules. Returns confirmation on success or a not-found message if the ID is absent.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          }
+        },
+        "required": ["rule_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "move_mangle_rule",
+      "title": "Move IPv4 Firewall Mangle Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reorders an IPv4 mangle rule to a specific position (`/ip firewall mangle move`) — mangle rules are evaluated top-down, so position controls which rules fire first. For IPv4 filter reordering use move_filter_rule; for IPv6 mangle use move_ipv6_mangle_rule. rule_id takes the `.id` from list_mangle_rules; destination is the 0-based target index. Verifies the rule exists before moving.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "0-based target position index"
+          }
+        },
+        "required": ["rule_id", "destination"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enable_mangle_rule",
+      "title": "Enable IPv4 Firewall Mangle Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables a disabled IPv4 mangle rule (`/ip firewall mangle set disabled=no`) so it participates in packet processing again. To deactivate use disable_mangle_rule; to delete permanently use remove_mangle_rule; for IPv6 mangle use enable_ipv6_mangle_rule. rule_id takes the `.id` from list_mangle_rules. Returns the updated rule's detail.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          }
+        },
+        "required": ["rule_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "disable_mangle_rule",
+      "title": "Disable IPv4 Firewall Mangle Rule",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disables an active IPv4 mangle rule (`/ip firewall mangle set disabled=yes`) — the rule remains in the table but is skipped during packet processing. To re-enable use enable_mangle_rule; to delete permanently use remove_mangle_rule; for IPv6 mangle use disable_ipv6_mangle_rule. rule_id takes the `.id` from list_mangle_rules. Returns the updated rule's detail.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          }
+        },
+        "required": ["rule_id"],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "forward_port",
       "title": "Forward a Port (Smart Wizard)",
       "risk": "dangerous",
@@ -14072,7 +14470,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Read the OpenVPN server settings (`/interface ovpn-server server print`) — the singleton inbound-server instance (enabled state, certificate, auth/cipher algorithms, port, protocol, netmask, mode, max_mtu, default_profile, require_client_certificate). Use set_ovpn_server to modify these settings. For outbound OVPN tunnels to a remote server use list_ovpn_clients or get_ovpn_client. For other VPN tunnel types use create_l2tp_client, create_pptp_client, or create_sstp_client. Returns the full server parameter block or a not-found message.",
+      "description": "`get_ovpn_server` — READ / get / show / inspect the OpenVPN (OVPN) server settings and status (`/interface ovpn-server server print`) — the singleton inbound-server instance: whether it is enabled/running, certificate, auth/cipher algorithms, port, protocol, netmask, mode, max_mtu, default_profile, require_client_certificate. Use set_ovpn_server to modify these settings. For outbound OVPN tunnels to a remote server use list_ovpn_clients or get_ovpn_client. For other VPN tunnel types use create_l2tp_client, create_pptp_client, or create_sstp_client. Returns the full server parameter block or a not-found message.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -14221,7 +14619,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "List all OpenVPN client interfaces (`/interface ovpn-client print`) configured on this router, optionally filtered by partial interface name (name_filter). Use this to enumerate existing OVPN uplinks and their connection status before calling get_ovpn_client, enable_ovpn_client, disable_ovpn_client, or remove_ovpn_client. For inbound server settings use get_ovpn_server. For L2TP, PPTP, or SSTP tunnels use the respective tools. Returns a redacted table of all matching OVPN client interfaces.",
+      "description": "`list_ovpn_clients` — READ / list / show / inspect / enumerate all OpenVPN (OVPN) client interfaces (`/interface ovpn-client print`) and whether each tunnel is running/connected, optionally filtered by partial interface name (name_filter). Returns each client's name, running status, remote server (connect-to), port, mode and user. Use this to read existing OVPN uplinks and their status before calling get_ovpn_client, enable_ovpn_client, disable_ovpn_client, or remove_ovpn_client. For inbound server settings use get_ovpn_server. For L2TP, PPTP, or SSTP tunnels use the respective tools. Returns a redacted table of all matching OVPN client interfaces.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -14243,7 +14641,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Fetch detailed settings for a specific OpenVPN client interface by name (`/interface ovpn-client print detail where name=...`). Use list_ovpn_clients first to enumerate available interface names. For the inbound OVPN server settings use get_ovpn_server. Returns the full interface detail with secrets redacted, or a not-found message if the name does not exist.",
+      "description": "`get_ovpn_client` — READ / get / show / inspect one OpenVPN (OVPN) client interface's full detail and running status by name (`/interface ovpn-client print detail where name=...`): running/connected state, remote server (connect-to), port, mode, user, profile, certificate, cipher and auth. Use list_ovpn_clients first to enumerate available interface names. For the inbound OVPN server settings use get_ovpn_server. Returns the full interface detail with secrets redacted, or a not-found message if the name does not exist.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -21530,7 +21928,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Parses a set of intended RouterOS CLI commands locally — without contacting the device — and returns a risk-scored, lock-out-aware execution plan. Classifies each command as ADD/MODIFY/REMOVE/OTHER, calculates an overall risk score, emits warnings when commands would drop input-chain traffic or remove the management IP, and reorders steps into the safest sequence (additive changes before destructive ones). Use this to understand what will happen before committing; to execute the plan use apply_plan. Provide commands as an array via `commands`, as a newline-delimited string via `script`, or both — they are merged. Returns a human-readable plan text and a structured plan object with per-step details.",
+      "description": "Parses a set of intended RouterOS CLI commands locally — without contacting the device — and returns a risk-scored, lock-out-aware execution plan. Classifies each command as ADD/MODIFY/REMOVE/OTHER, calculates an overall risk score, emits warnings when commands would drop input-chain traffic or remove the management IP, and reorders steps into the safest sequence (additive changes before destructive ones). Use this to understand what will happen before committing; to execute the plan use apply_plan. Provide commands as an array via `commands`, as a newline-delimited string via `script`, or both — they are merged. Before planning a change, FIRST call capture_config_snapshot to take a restore point — it stores a local `/export` on the MCP host (~/.mikrotik-mcp/snapshots.db) with zero footprint on the device's disk (no file is written to the router). Returns a human-readable plan text and a structured plan object with per-step details.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -21558,7 +21956,7 @@
         "destructiveHint": true,
         "openWorldHint": false
       },
-      "description": "Executes intended RouterOS commands inside RouterOS Safe Mode (activated by Ctrl+X over an interactive SSH shell) and reports the exact unified diff of what changed, computed from `/export terse` snapshots captured before and after execution. With confirm=false (default) it applies all steps, captures the diff, then rolls everything back — a true dry-run that shows precisely what would change without persisting anything. With confirm=true it commits permanently, but ONLY after verifying the device still responds to `/system identity print` — a change that would lock you out auto-reverts instead of sticking. Steps execute in the same safe order that plan_changes computes (additive before destructive); if any step returns a RouterOS error the entire plan rolls back immediately. Safe Mode requires SSH — not available on MAC-Telnet devices. For a no-device preview use plan_changes instead. Returns the plan summary, per-step execution log, unified diff, and commit/rollback outcome.",
+      "description": "Executes intended RouterOS commands inside RouterOS Safe Mode (activated by Ctrl+X over an interactive SSH shell) and reports the exact unified diff of what changed, computed from `/export terse` snapshots captured before and after execution. With confirm=false (default) it applies all steps, captures the diff, then rolls everything back — a true dry-run that shows precisely what would change without persisting anything. With confirm=true it commits permanently, but ONLY after verifying the device still responds to `/system identity print` — a change that would lock you out auto-reverts instead of sticking. Steps execute in the same safe order that plan_changes computes (additive before destructive); if any step returns a RouterOS error the entire plan rolls back immediately. Safe Mode requires SSH — not available on MAC-Telnet devices. For a no-device preview use plan_changes instead. ALWAYS call capture_config_snapshot BEFORE this tool to record a restore point — it stores a local `/export` on the MCP host (~/.mikrotik-mcp/snapshots.db), adding no load to the device's disk and leaving nothing to remove on the router; after the change, diff_config_snapshots (from=latest, to=live) confirms what changed. Returns the plan summary, per-step execution log, unified diff, and commit/rollback outcome.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

@@ -29,6 +29,7 @@ import { securityShieldTools } from "./security-shield";
 import { portKnockTools } from "./port-knock";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
+import { firewallMangleTools } from "./firewall-mangle";
 import { portForwardTools } from "./port-forward";
 import { interfaceTools } from "./interfaces";
 import { ipAddressTools } from "./ip-address";
@@ -507,6 +508,14 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "NAT rules: src/dst-nat, masquerade, redirect (`/ip firewall nat`).",
     tools: firewallNatTools,
+  },
+  {
+    label: "Firewall — Mangle",
+    slug: "firewall-mangle",
+    group: "Security",
+    description:
+      "Mangle rules: connection/packet/routing marks, DSCP, TTL, MSS (`/ip firewall mangle`).",
+    tools: firewallMangleTools,
   },
   {
     label: "Port Forward",

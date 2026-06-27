@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_mangle_rule",
+  "type": "object",
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": ["prerouting", "input", "forward", "output", "postrouting"]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "accept",
+        "add-dst-to-address-list",
+        "add-src-to-address-list",
+        "change-dscp",
+        "change-mss",
+        "change-ttl",
+        "clear-df",
+        "drop",
+        "fasttrack-connection",
+        "jump",
+        "log",
+        "mark-connection",
+        "mark-packet",
+        "mark-routing",
+        "passthrough",
+        "return",
+        "route",
+        "set-priority",
+        "sniff-pc",
+        "sniff-tzsp"
+      ]
+    },
+    "src_address": {
+      "type": "string"
+    },
+    "dst_address": {
+      "type": "string"
+    },
+    "src_port": {
+      "type": "string"
+    },
+    "dst_port": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string"
+    },
+    "in_interface": {
+      "type": "string"
+    },
+    "out_interface": {
+      "type": "string"
+    },
+    "connection_mark": {
+      "type": "string"
+    },
+    "packet_mark": {
+      "type": "string"
+    },
+    "routing_mark": {
+      "type": "string"
+    },
+    "connection_state": {
+      "description": "e.g. \"new\", \"established,related\", \"invalid\"",
+      "type": "string"
+    },
+    "new_connection_mark": {
+      "type": "string"
+    },
+    "new_packet_mark": {
+      "type": "string"
+    },
+    "new_routing_mark": {
+      "type": "string"
+    },
+    "new_dscp": {
+      "description": "0-63, for change-dscp",
+      "type": "string"
+    },
+    "new_ttl": {
+      "description": "e.g. \"decrement\", \"increment\", or \"set:64\"",
+      "type": "string"
+    },
+    "new_mss": {
+      "description": "e.g. \"1440\" or \"clamp-to-pmtu\", for change-mss",
+      "type": "string"
+    },
+    "routing_table": {
+      "description": "Routing table for action=route",
+      "type": "string"
+    },
+    "address_list": {
+      "description": "Target list name for add-src/dst-to-address-list",
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "description": "Entry timeout for add-*-to-address-list e.g. \"1h\", \"none\"",
+      "type": "string"
+    },
+    "passthrough": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log": {
+      "default": false,
+      "type": "boolean"
+    },
+    "log_prefix": {
+      "type": "string"
+    },
+    "place_before": {
+      "description": "Rule number or ID (*N) to insert before",
+      "type": "string"
+    }
+  },
+  "required": ["chain", "action", "disabled", "log"],
+  "additionalProperties": false
+}
