@@ -8,6 +8,35 @@ import { yesno, looksLikeError, isEmpty, commandUnsupported, Cmd } from "../core
 const UNSUPPORTED =
   "Routing tables are not available on this device (requires RouterOS v7 with the routing package).";
 
+/**
+ * Render the `fib` token for `/routing table`. `fib` is a VALUE-LESS RouterOS
+ * property — the default `main` table prints as a bare `fib` flag, and writing
+ * `fib=yes`/`fib=no` makes the parser reject the command with
+ * "expected end of command". So: enable with a bare `fib`, and on `set` clear it
+ * with `!fib` (RouterOS's unset idiom). On `add`, a falsy fib is simply omitted
+ * (the table is then RIB-only). Returns `undefined` when nothing should be added.
+ */
+export function fibToken(fib: boolean | undefined, onSet = false): string | undefined {
+  if (fib === undefined) return undefined;
+  if (fib) return "fib";
+  return onSet ? "!fib" : undefined;
+}
+
+/** Build the `/routing table add` command (pure — unit-tested). */
+export function buildAddRoutingTableCommand(a: {
+  name: string;
+  fib: boolean;
+  comment?: string;
+  disabled: boolean;
+}): string {
+  return new Cmd("/routing table add")
+    .set("name", a.name)
+    .raw(fibToken(a.fib))
+    .opt("comment", a.comment)
+    .flag("disabled", a.disabled)
+    .build();
+}
+
 export const routingTableTools: ToolModule = [
   defineTool({
     name: "list_routing_tables",
@@ -78,12 +107,7 @@ export const routingTableTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Adding routing table: ${a.name}`);
-      const cmd = new Cmd("/routing table add")
-        .set("name", a.name)
-        .bool("fib", a.fib)
-        .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
-        .build();
+      const cmd = buildAddRoutingTableCommand(a);
 
       const result = await executeMikrotikCommand(cmd, ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
@@ -116,7 +140,7 @@ export const routingTableTools: ToolModule = [
       ctx.info(`Updating routing table: ${a.name}`);
       const base = `/routing table set [find name="${a.name}"]`;
       const cmd = new Cmd(base);
-      if (a.fib !== undefined) cmd.bool("fib", a.fib);
+      cmd.raw(fibToken(a.fib, true)); // value-less flag: `fib` / `!fib`, never `fib=yes`
       if (a.comment !== undefined) cmd.set("comment", a.comment);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
 
