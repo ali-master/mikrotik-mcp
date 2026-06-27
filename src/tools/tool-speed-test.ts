@@ -3,7 +3,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { looksLikeError, isEmpty, flattenLiveOutput, Cmd } from "../core/routeros";
 
 export const speedTestTools: ToolModule = [
   defineTool({
@@ -48,7 +48,11 @@ export const speedTestTools: ToolModule = [
         .opt("user", a.user)
         .opt("password", a.password)
         .build();
-      const result = await executeMikrotikCommand(cmd, ctx);
+      // speed-test runs a latency phase then a throughput phase; cap the read at
+      // duration + generous slack and flatten the live redraw so it can't hang.
+      const result = flattenLiveOutput(
+        await executeMikrotikCommand(cmd, ctx, { maxMs: a.duration * 1000 + 15_000 }),
+      );
       if (looksLikeError(result)) return `Failed to run speed test to ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No speed-test results for ${a.address}.`

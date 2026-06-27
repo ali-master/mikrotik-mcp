@@ -111,7 +111,7 @@ export class MikroTikSSHClient {
   }
 
   /** Run a single command on a fresh SSH channel and return its decoded output. */
-  run(command: string): Promise<string> {
+  run(command: string, opts: { maxMs?: number } = {}): Promise<string> {
     if (!this.client) {
       return Promise.reject(new Error("Not connected to MikroTik device"));
     }
@@ -126,12 +126,38 @@ export class MikroTikSSHClient {
         }
         const stdout: Buffer[] = [];
         const stderrBuf: Buffer[] = [];
+        let settled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const finish = (): void => {
+          if (settled) return;
+          settled = true;
+          if (timer) clearTimeout(timer);
+          const out = decodeOutput(Buffer.concat(stdout));
+          const error = decodeOutput(Buffer.concat(stderrBuf));
+          resolve(error && !out ? error : out);
+        };
+        // Interactive RouterOS commands (`/ping`, `/tool bandwidth-test`,
+        // `/tool speed-test`) stream a live counter and may never close the
+        // exec channel on their own — even when bounded by count/duration. The
+        // maxMs cap stops the command (Ctrl+C / channel close) and returns what
+        // streamed, so the tool can't hang forever.
+        if (opts.maxMs && opts.maxMs > 0) {
+          timer = setTimeout(() => {
+            try {
+              stream.signal("INT");
+            } catch {
+              /* RouterOS may not honour signals */
+            }
+            try {
+              stream.close();
+            } catch {
+              /* channel already closing */
+            }
+            finish();
+          }, opts.maxMs);
+        }
         stream
-          .on("close", () => {
-            const out = decodeOutput(Buffer.concat(stdout));
-            const error = decodeOutput(Buffer.concat(stderrBuf));
-            resolve(error && !out ? error : out);
-          })
+          .on("close", finish)
           .on("data", (d: Buffer) => stdout.push(d))
           .stderr.on("data", (d: Buffer) => stderrBuf.push(d));
       });

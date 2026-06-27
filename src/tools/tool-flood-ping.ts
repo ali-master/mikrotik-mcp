@@ -3,7 +3,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { looksLikeError, isEmpty, flattenLiveOutput, Cmd } from "../core/routeros";
 
 export const floodPingTools: ToolModule = [
   defineTool({
@@ -39,7 +39,9 @@ export const floodPingTools: ToolModule = [
         .opt("interface", a.interface)
         .opt("src-address", a.src_address)
         .build();
-      const result = await executeMikrotikCommand(cmd, ctx);
+      // Flood-ping is fast but high-volume; bound the read and flatten the live
+      // redraw so it always returns a summary instead of streaming/hanging.
+      const result = flattenLiveOutput(await executeMikrotikCommand(cmd, ctx, { maxMs: 30_000 }));
       if (looksLikeError(result)) return `Failed to flood-ping ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No response from ${a.address}.`

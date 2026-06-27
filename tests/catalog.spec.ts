@@ -8,6 +8,7 @@ import {
   Cmd,
   commandUnsupported,
   containsRawParserError,
+  flattenLiveOutput,
   looksLikeError,
   quoteValue,
   yesno,
@@ -99,6 +100,18 @@ describe("RouterOS command builder", () => {
     expect(quoteValue("line1\nline2")).toBe('"line1\\nline2"');
     expect(quoteValue("a\r\nb")).toBe('"a\\r\\nb"');
     expect(quoteValue("a\tb")).toBe('"a\\tb"');
+  });
+
+  test("flattenLiveOutput collapses \\r live redraws to the final value", () => {
+    // Interactive tools (ping / bandwidth-test) overwrite one line with \r.
+    expect(flattenLiveOutput("rx: 1Mbps\rrx: 50Mbps\rrx: 92Mbps")).toBe("rx: 92Mbps");
+    // Per-line: keep the last non-empty \r segment of each \n line.
+    expect(flattenLiveOutput("a1\ra2\nb1\rb2\r")).toBe("a2\nb2");
+    // Plain output is unchanged (sans trailing blank collapse).
+    expect(flattenLiveOutput("sent=4\nreceived=4\n\n\npacket-loss=0%")).toBe(
+      "sent=4\nreceived=4\n\npacket-loss=0%",
+    );
+    expect(flattenLiveOutput("")).toBe("");
   });
 
   test("Cmd builds add commands with optional/flag/bool fragments", () => {

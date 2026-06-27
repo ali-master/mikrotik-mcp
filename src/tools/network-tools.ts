@@ -9,7 +9,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { whereClause, looksLikeError, isEmpty, flattenLiveOutput, Cmd } from "../core/routeros";
 
 export const networkToolTools: ToolModule = [
   defineTool({
@@ -43,7 +43,10 @@ export const networkToolTools: ToolModule = [
         .opt("src-address", a.src_address)
         .opt("size", a.size)
         .build();
-      const result = await executeMikrotikCommand(cmd, ctx);
+      // Each echo takes ~1s; cap the read so an unreachable host can't hang.
+      const result = flattenLiveOutput(
+        await executeMikrotikCommand(cmd, ctx, { maxMs: a.count * 1500 + 6000 }),
+      );
       if (looksLikeError(result)) return `Failed to ping ${a.address}: ${result}`;
       return isEmpty(result) ? `No response from ${a.address}.` : `PING ${a.address}:\n\n${result}`;
     },
@@ -74,7 +77,11 @@ export const networkToolTools: ToolModule = [
         .set("count", a.count)
         .flag("use-dns", a.use_dns)
         .build();
-      const result = await executeMikrotikCommand(cmd, ctx);
+      // traceroute keeps probing per hop and rarely self-terminates over exec —
+      // cap the read generously, then flatten the live redraw.
+      const result = flattenLiveOutput(
+        await executeMikrotikCommand(cmd, ctx, { maxMs: 30_000 + a.count * 3000 }),
+      );
       if (looksLikeError(result)) return `Failed to traceroute ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No route information for ${a.address}.`
@@ -112,7 +119,12 @@ export const networkToolTools: ToolModule = [
         .opt("user", a.user)
         .opt("password", a.password)
         .build();
-      const result = await executeMikrotikCommand(cmd, ctx);
+      // bandwidth-test streams a live counter and may not close the channel even
+      // after `duration` — cap the read at duration + slack and flatten the
+      // redraw so the final throughput figures are returned, never a hang.
+      const result = flattenLiveOutput(
+        await executeMikrotikCommand(cmd, ctx, { maxMs: a.duration * 1000 + 12_000 }),
+      );
       if (looksLikeError(result)) return `Failed to run bandwidth test to ${a.address}: ${result}`;
       return isEmpty(result)
         ? `No bandwidth test results for ${a.address}.`

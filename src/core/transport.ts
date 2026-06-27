@@ -17,8 +17,13 @@ import { MikroTikSSHClient } from "../ssh/client";
 export interface DeviceClient {
   /** Establish the connection. Resolves true on success, false on failure. */
   connect(): Promise<boolean>;
-  /** Run one command and return its decoded output. */
-  run(command: string): Promise<string>;
+  /**
+   * Run one command and return its decoded output. `opts.maxMs` caps how long to
+   * wait for the channel to close before stopping the command and returning
+   * whatever streamed — needed for interactive tools (`/ping`, bandwidth-test)
+   * that never emit a clean close over a non-interactive channel.
+   */
+  run(command: string, opts?: { maxMs?: number }): Promise<string>;
   /** Close the connection. Safe to call multiple times. */
   disconnect(): void;
   /** Human-readable reason the last `connect()` failed, if it did. */

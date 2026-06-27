@@ -159,8 +159,12 @@ export class MikroTikMacTelnetClient {
     }
   }
 
-  /** Run a single command over the console and return its decoded output. */
-  async run(command: string): Promise<string> {
+  /**
+   * Run a single command over the console and return its decoded output.
+   * `_opts.maxMs` is accepted for interface parity with the SSH transport; the
+   * MAC-Telnet console enforces its own per-command timeout, so it is ignored.
+   */
+  async run(command: string, _opts: { maxMs?: number } = {}): Promise<string> {
     if (!this.console || !this.console.isReady) {
       throw new Error("Not connected to MikroTik device (MAC-Telnet)");
     }

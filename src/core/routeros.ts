@@ -147,6 +147,26 @@ export function isEmpty(result: string): boolean {
 }
 
 /**
+ * Collapse the carriage-return "live redraw" that interactive RouterOS tools
+ * (`/ping`, `/tool bandwidth-test`, `/tool speed-test`, `/tool flood-ping`)
+ * stream — they overwrite the same line with `\r` to show a running counter, so
+ * captured over a non-interactive channel it becomes one giant overwritten blob.
+ * Keeping the final segment of each line yields a readable result (the last,
+ * settled counter value plus the summary lines).
+ */
+export function flattenLiveOutput(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => {
+      const segs = line.split("\r").filter((s) => s.trim() !== "");
+      return segs.length ? segs[segs.length - 1] : "";
+    })
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Extract the internal `.id` RouterOS echoes after a successful `add`. ROS prints
  * the new item's id — a `*` followed by hex (e.g. `*1A`), or a bare ordinal — but
  * it may append a trailing warning or stray whitespace, so the raw `add` output
