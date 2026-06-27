@@ -30,10 +30,33 @@ async function updateMangleRule(
     protocol?: string;
     in_interface?: string;
     out_interface?: string;
+    in_interface_list?: string;
+    out_interface_list?: string;
+    src_address_list?: string;
+    dst_address_list?: string;
+    src_address_type?: string;
+    dst_address_type?: string;
     connection_mark?: string;
     packet_mark?: string;
     routing_mark?: string;
     connection_state?: string;
+    connection_nat_state?: string;
+    connection_type?: string;
+    connection_bytes?: string;
+    connection_limit?: string;
+    connection_rate?: string;
+    per_connection_classifier?: string;
+    tcp_flags?: string;
+    dscp?: string;
+    priority?: string;
+    packet_size?: string;
+    layer7_protocol?: string;
+    ipsec_policy?: string;
+    nth?: string;
+    random?: string;
+    time?: string;
+    hotspot?: string;
+    p2p?: string;
     new_connection_mark?: string;
     new_packet_mark?: string;
     new_routing_mark?: string;
@@ -69,10 +92,33 @@ async function updateMangleRule(
   put("protocol", a.protocol);
   put("in-interface", a.in_interface);
   put("out-interface", a.out_interface);
+  put("in-interface-list", a.in_interface_list);
+  put("out-interface-list", a.out_interface_list);
+  put("src-address-list", a.src_address_list);
+  put("dst-address-list", a.dst_address_list);
+  put("src-address-type", a.src_address_type);
+  put("dst-address-type", a.dst_address_type);
   put("connection-mark", a.connection_mark);
   put("packet-mark", a.packet_mark);
   put("routing-mark", a.routing_mark);
   put("connection-state", a.connection_state);
+  put("connection-nat-state", a.connection_nat_state);
+  put("connection-type", a.connection_type);
+  put("connection-bytes", a.connection_bytes);
+  put("connection-limit", a.connection_limit);
+  put("connection-rate", a.connection_rate);
+  put("per-connection-classifier", a.per_connection_classifier);
+  put("tcp-flags", a.tcp_flags);
+  put("dscp", a.dscp);
+  put("priority", a.priority);
+  put("packet-size", a.packet_size);
+  put("layer7-protocol", a.layer7_protocol);
+  put("ipsec-policy", a.ipsec_policy);
+  put("nth", a.nth);
+  put("random", a.random);
+  put("time", a.time);
+  put("hotspot", a.hotspot);
+  put("p2p", a.p2p);
   put("new-connection-mark", a.new_connection_mark);
   put("new-packet-mark", a.new_packet_mark);
   put("new-routing-mark", a.new_routing_mark);
@@ -116,6 +162,9 @@ export const firewallMangleTools: ToolModule = [
       "action: mark-connection/mark-packet/mark-routing/change-dscp/change-ttl/change-mss/add-src-to-address-list/add-dst-to-address-list/fasttrack-connection/route/set-priority/accept/etc. " +
       "Set the matching new-*-mark field for mark-* actions and keep passthrough=true so later rules can also match the same packet; " +
       "for add-*-to-address-list set address_list (and optionally address_list_timeout). " +
+      "Full match surface: address-lists (src_address_list/dst_address_list — negate with a leading '!', e.g. dst_address_list='!IR' to route traffic NOT bound for a list), " +
+      "interface-lists, per_connection_classifier (PCC load-balancing), connection_nat_state, tcp_flags, dscp, layer7_protocol, time, and more. " +
+      "Typical policy-routing rule: chain=prerouting, src_address=<lan>, dst_address_list='!IR', action=mark-routing, new_routing_mark=<table>, then a routing rule/route uses that table. " +
       "place_before accepts a rule number or ID (*N) to control insertion position. " +
       "Returns the created rule's detail including its `.id`.",
     inputSchema: {
@@ -147,15 +196,49 @@ export const firewallMangleTools: ToolModule = [
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
       protocol: z.string().optional(),
-      in_interface: z.string().optional(),
+      in_interface: z.string().optional().describe('Negatable, e.g. "!ether1"'),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional().describe('Interface list, negatable e.g. "!WAN"'),
+      out_interface_list: z.string().optional(),
+      // Address-list matches (the key gap for policy routing). Negate with a
+      // leading "!", e.g. dst_address_list="!IR" → "destination NOT in list IR".
+      src_address_list: z.string().optional().describe('Match src in a named list; negate "!name"'),
+      dst_address_list: z
+        .string()
+        .optional()
+        .describe('Match dst in a named list; negate "!name" (e.g. "!IR" routes foreign traffic)'),
+      src_address_type: z.string().optional().describe('e.g. "local", "unicast", "!local"'),
+      dst_address_type: z.string().optional(),
       connection_mark: z.string().optional(),
       packet_mark: z.string().optional(),
       routing_mark: z.string().optional(),
       connection_state: z
         .string()
         .optional()
-        .describe('e.g. "new", "established,related", "invalid"'),
+        .describe('e.g. "new", "established,related", "!invalid"'),
+      connection_nat_state: z.string().optional().describe('"srcnat" / "dstnat" / "!dstnat"'),
+      connection_type: z.string().optional().describe('Helper, e.g. "sip", "ftp"'),
+      connection_bytes: z.string().optional().describe('e.g. "1000000-0" (>1 MB connections)'),
+      connection_limit: z.string().optional().describe('e.g. "100,32"'),
+      connection_rate: z.string().optional().describe('e.g. "100k-1M"'),
+      per_connection_classifier: z
+        .string()
+        .optional()
+        .describe('PCC for load balancing, e.g. "both-addresses:2/0"'),
+      tcp_flags: z.string().optional().describe('RouterOS flag expression e.g. "syn,!ack"'),
+      dscp: z.string().optional().describe("Match incoming DSCP (0-63)"),
+      priority: z.string().optional().describe("Match packet/queue priority (0-63)"),
+      packet_size: z.string().optional().describe('e.g. "1500" or "0-500"'),
+      layer7_protocol: z
+        .string()
+        .optional()
+        .describe("Name of an /ip firewall layer7-protocol regex"),
+      ipsec_policy: z.string().optional().describe('e.g. "in,ipsec" or "out,none"'),
+      nth: z.string().optional().describe('e.g. "2,1" — every 2nd packet'),
+      random: z.string().optional().describe("Match a random N% of packets (1-99)"),
+      time: z.string().optional().describe('e.g. "8h-16h,mon,tue,wed,thu,fri"'),
+      hotspot: z.string().optional().describe('e.g. "auth", "!auth", "from-client"'),
+      p2p: z.string().optional(),
       new_connection_mark: z.string().optional(),
       new_packet_mark: z.string().optional(),
       new_routing_mark: z.string().optional(),
@@ -191,10 +274,33 @@ export const firewallMangleTools: ToolModule = [
         .opt("protocol", a.protocol)
         .opt("in-interface", a.in_interface)
         .opt("out-interface", a.out_interface)
+        .opt("in-interface-list", a.in_interface_list)
+        .opt("out-interface-list", a.out_interface_list)
+        .opt("src-address-list", a.src_address_list)
+        .opt("dst-address-list", a.dst_address_list)
+        .opt("src-address-type", a.src_address_type)
+        .opt("dst-address-type", a.dst_address_type)
         .opt("connection-mark", a.connection_mark)
         .opt("packet-mark", a.packet_mark)
         .opt("routing-mark", a.routing_mark)
         .opt("connection-state", a.connection_state)
+        .opt("connection-nat-state", a.connection_nat_state)
+        .opt("connection-type", a.connection_type)
+        .opt("connection-bytes", a.connection_bytes)
+        .opt("connection-limit", a.connection_limit)
+        .opt("connection-rate", a.connection_rate)
+        .opt("per-connection-classifier", a.per_connection_classifier)
+        .opt("tcp-flags", a.tcp_flags)
+        .opt("dscp", a.dscp)
+        .opt("priority", a.priority)
+        .opt("packet-size", a.packet_size)
+        .opt("layer7-protocol", a.layer7_protocol)
+        .opt("ipsec-policy", a.ipsec_policy)
+        .opt("nth", a.nth)
+        .opt("random", a.random)
+        .opt("time", a.time)
+        .opt("hotspot", a.hotspot)
+        .opt("p2p", a.p2p)
         .opt("new-connection-mark", a.new_connection_mark)
         .opt("new-packet-mark", a.new_packet_mark)
         .opt("new-routing-mark", a.new_routing_mark)
@@ -338,10 +444,33 @@ export const firewallMangleTools: ToolModule = [
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional(),
+      out_interface_list: z.string().optional(),
+      src_address_list: z.string().optional().describe('Negate with "!name" (e.g. "!IR")'),
+      dst_address_list: z.string().optional().describe('Negate with "!name" (e.g. "!IR")'),
+      src_address_type: z.string().optional(),
+      dst_address_type: z.string().optional(),
       connection_mark: z.string().optional(),
       packet_mark: z.string().optional(),
       routing_mark: z.string().optional(),
       connection_state: z.string().optional(),
+      connection_nat_state: z.string().optional(),
+      connection_type: z.string().optional(),
+      connection_bytes: z.string().optional(),
+      connection_limit: z.string().optional(),
+      connection_rate: z.string().optional(),
+      per_connection_classifier: z.string().optional(),
+      tcp_flags: z.string().optional(),
+      dscp: z.string().optional(),
+      priority: z.string().optional(),
+      packet_size: z.string().optional(),
+      layer7_protocol: z.string().optional(),
+      ipsec_policy: z.string().optional(),
+      nth: z.string().optional(),
+      random: z.string().optional(),
+      time: z.string().optional(),
+      hotspot: z.string().optional(),
+      p2p: z.string().optional(),
       new_connection_mark: z.string().optional(),
       new_packet_mark: z.string().optional(),
       new_routing_mark: z.string().optional(),

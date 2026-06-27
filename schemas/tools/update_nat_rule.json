@@ -33,6 +33,26 @@
     "out_interface": {
       "type": "string"
     },
+    "in_interface_list": {
+      "type": "string"
+    },
+    "out_interface_list": {
+      "type": "string"
+    },
+    "src_address_list": {
+      "description": "Negate with \"!name\"",
+      "type": "string"
+    },
+    "dst_address_list": {
+      "description": "Negate with \"!name\"",
+      "type": "string"
+    },
+    "connection_mark": {
+      "type": "string"
+    },
+    "connection_nat_state": {
+      "type": "string"
+    },
     "to_addresses": {
       "type": "string"
     },

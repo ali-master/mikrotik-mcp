@@ -30,6 +30,12 @@ async function updateNatRule(
     protocol?: string;
     in_interface?: string;
     out_interface?: string;
+    in_interface_list?: string;
+    out_interface_list?: string;
+    src_address_list?: string;
+    dst_address_list?: string;
+    connection_mark?: string;
+    connection_nat_state?: string;
     to_addresses?: string;
     to_ports?: string;
     comment?: string;
@@ -57,6 +63,12 @@ async function updateNatRule(
   put("protocol", a.protocol);
   put("in-interface", a.in_interface);
   put("out-interface", a.out_interface);
+  put("in-interface-list", a.in_interface_list);
+  put("out-interface-list", a.out_interface_list);
+  put("src-address-list", a.src_address_list);
+  put("dst-address-list", a.dst_address_list);
+  put("connection-mark", a.connection_mark);
+  put("connection-nat-state", a.connection_nat_state);
   put("to-addresses", a.to_addresses);
   put("to-ports", a.to_ports);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
@@ -99,8 +111,14 @@ export const firewallNatTools: ToolModule = [
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
       protocol: z.string().optional(),
-      in_interface: z.string().optional(),
+      in_interface: z.string().optional().describe('Negatable, e.g. "!ether1"'),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional().describe('Interface list, e.g. "WAN" or "!LAN"'),
+      out_interface_list: z.string().optional(),
+      src_address_list: z.string().optional().describe('Match src in a named list; negate "!name"'),
+      dst_address_list: z.string().optional().describe('Match dst in a named list; negate "!name"'),
+      connection_mark: z.string().optional(),
+      connection_nat_state: z.string().optional().describe('"srcnat" / "dstnat" / "!dstnat"'),
       to_addresses: z
         .string()
         .optional()
@@ -160,6 +178,12 @@ export const firewallNatTools: ToolModule = [
         .opt("protocol", a.protocol)
         .opt("in-interface", a.in_interface)
         .opt("out-interface", a.out_interface)
+        .opt("in-interface-list", a.in_interface_list)
+        .opt("out-interface-list", a.out_interface_list)
+        .opt("src-address-list", a.src_address_list)
+        .opt("dst-address-list", a.dst_address_list)
+        .opt("connection-mark", a.connection_mark)
+        .opt("connection-nat-state", a.connection_nat_state)
         .opt("to-addresses", a.to_addresses)
         .opt("to-ports", a.to_ports)
         .opt("comment", a.comment)
@@ -300,6 +324,12 @@ export const firewallNatTools: ToolModule = [
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional(),
+      out_interface_list: z.string().optional(),
+      src_address_list: z.string().optional().describe('Negate with "!name"'),
+      dst_address_list: z.string().optional().describe('Negate with "!name"'),
+      connection_mark: z.string().optional(),
+      connection_nat_state: z.string().optional(),
       to_addresses: z.string().optional(),
       to_ports: z.string().optional(),
       comment: z.string().optional(),

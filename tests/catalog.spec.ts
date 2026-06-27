@@ -68,6 +68,16 @@ describe("RouterOS command builder", () => {
     expect(quoteValue("My LAN")).toBe('"My LAN"');
   });
 
+  test("quoteValue keeps the `!` negation operator unquoted (firewall matches)", () => {
+    // Quoting would turn negation into a literal list/value name.
+    expect(quoteValue("!IR")).toBe("!IR");
+    expect(quoteValue("syn,!ack")).toBe("syn,!ack");
+    expect(quoteValue("!established,related")).toBe("!established,related");
+    expect(quoteValue("!ether1")).toBe("!ether1");
+    // …but a negation mixed with a real separator is still quoted (injection-safe).
+    expect(quoteValue("!IR; /system reset")).toBe('"!IR; /system reset"');
+  });
+
   test("quoteValue neutralises console-injection attempts", () => {
     // A semicolon would otherwise start a second RouterOS command.
     const malicious = "lan; /system reset-configuration";

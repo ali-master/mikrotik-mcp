@@ -26,9 +26,32 @@
       "type": "string"
     },
     "in_interface": {
+      "description": "Negatable, e.g. \"!ether1\"",
       "type": "string"
     },
     "out_interface": {
+      "type": "string"
+    },
+    "in_interface_list": {
+      "description": "Interface list, e.g. \"WAN\" or \"!LAN\"",
+      "type": "string"
+    },
+    "out_interface_list": {
+      "type": "string"
+    },
+    "src_address_list": {
+      "description": "Match src in a named list; negate \"!name\"",
+      "type": "string"
+    },
+    "dst_address_list": {
+      "description": "Match dst in a named list; negate \"!name\"",
+      "type": "string"
+    },
+    "connection_mark": {
+      "type": "string"
+    },
+    "connection_nat_state": {
+      "description": "\"srcnat\" / \"dstnat\" / \"!dstnat\"",
       "type": "string"
     },
     "to_addresses": {

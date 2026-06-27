@@ -11,8 +11,18 @@
  *      and escapes embedded quotes/backslashes — this is the injection boundary.
  */
 
-/** Characters that are safe to pass to the RouterOS console without quoting. */
-const BARE_SAFE = /^[\w.\-:/,*@]+$/;
+/**
+ * Characters that are safe to pass to the RouterOS console without quoting.
+ *
+ * `!` is included deliberately: it is RouterOS's negation operator in firewall
+ * match values (`dst-address-list=!IR`, `tcp-flags=syn,!ack`,
+ * `connection-state=!established`, `in-interface=!ether1`). It MUST stay
+ * unquoted — `"!IR"` is read as a list literally named `!IR`, not "not in IR" —
+ * and it is injection-safe (it is not a command/argument separator). Any value
+ * that also carries a real separator (`;`, whitespace, …) still fails this test
+ * and gets quoted, so the negation case is the only thing this enables.
+ */
+const BARE_SAFE = /^[\w.\-:/,*@!]+$/;
 
 /** Quote and escape a value for the RouterOS console if it isn't a bare token. */
 export function quoteValue(value: string | number | boolean): string {

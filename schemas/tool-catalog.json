@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.18.0",
+  "version": "3.19.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 721,
   "tools": [
@@ -10179,9 +10179,32 @@
             "type": "string"
           },
           "in_interface": {
+            "description": "Negatable, e.g. \"!ether1\"",
             "type": "string"
           },
           "out_interface": {
+            "type": "string"
+          },
+          "in_interface_list": {
+            "description": "Interface list, e.g. \"WAN\" or \"!LAN\"",
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_list": {
+            "description": "Match src in a named list; negate \"!name\"",
+            "type": "string"
+          },
+          "dst_address_list": {
+            "description": "Match dst in a named list; negate \"!name\"",
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "connection_nat_state": {
+            "description": "\"srcnat\" / \"dstnat\" / \"!dstnat\"",
             "type": "string"
           },
           "to_addresses": {
@@ -10327,6 +10350,26 @@
           "out_interface": {
             "type": "string"
           },
+          "in_interface_list": {
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_list": {
+            "description": "Negate with \"!name\"",
+            "type": "string"
+          },
+          "dst_address_list": {
+            "description": "Negate with \"!name\"",
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "connection_nat_state": {
+            "type": "string"
+          },
           "to_addresses": {
             "type": "string"
           },
@@ -10452,7 +10495,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Creates an IPv4 mangle rule (`/ip firewall mangle add`) — the packet-marking and header-modification table, used to mark connections/packets/routing (for policy routing, QoS and per-connection classification) or to change DSCP/TTL/MSS. For accept/drop decisions use create_filter_rule; for address translation use create_nat_rule; for IPv6 mangle use create_ipv6_mangle_rule. chain: prerouting/input/forward/output/postrouting. action: mark-connection/mark-packet/mark-routing/change-dscp/change-ttl/change-mss/add-src-to-address-list/add-dst-to-address-list/fasttrack-connection/route/set-priority/accept/etc. Set the matching new-*-mark field for mark-* actions and keep passthrough=true so later rules can also match the same packet; for add-*-to-address-list set address_list (and optionally address_list_timeout). place_before accepts a rule number or ID (*N) to control insertion position. Returns the created rule's detail including its `.id`.",
+      "description": "Creates an IPv4 mangle rule (`/ip firewall mangle add`) — the packet-marking and header-modification table, used to mark connections/packets/routing (for policy routing, QoS and per-connection classification) or to change DSCP/TTL/MSS. For accept/drop decisions use create_filter_rule; for address translation use create_nat_rule; for IPv6 mangle use create_ipv6_mangle_rule. chain: prerouting/input/forward/output/postrouting. action: mark-connection/mark-packet/mark-routing/change-dscp/change-ttl/change-mss/add-src-to-address-list/add-dst-to-address-list/fasttrack-connection/route/set-priority/accept/etc. Set the matching new-*-mark field for mark-* actions and keep passthrough=true so later rules can also match the same packet; for add-*-to-address-list set address_list (and optionally address_list_timeout). Full match surface: address-lists (src_address_list/dst_address_list — negate with a leading '!', e.g. dst_address_list='!IR' to route traffic NOT bound for a list), interface-lists, per_connection_classifier (PCC load-balancing), connection_nat_state, tcp_flags, dscp, layer7_protocol, time, and more. Typical policy-routing rule: chain=prerouting, src_address=<lan>, dst_address_list='!IR', action=mark-routing, new_routing_mark=<table>, then a routing rule/route uses that table. place_before accepts a rule number or ID (*N) to control insertion position. Returns the created rule's detail including its `.id`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -10502,9 +10545,32 @@
             "type": "string"
           },
           "in_interface": {
+            "description": "Negatable, e.g. \"!ether1\"",
             "type": "string"
           },
           "out_interface": {
+            "type": "string"
+          },
+          "in_interface_list": {
+            "description": "Interface list, negatable e.g. \"!WAN\"",
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_list": {
+            "description": "Match src in a named list; negate \"!name\"",
+            "type": "string"
+          },
+          "dst_address_list": {
+            "description": "Match dst in a named list; negate \"!name\" (e.g. \"!IR\" routes foreign traffic)",
+            "type": "string"
+          },
+          "src_address_type": {
+            "description": "e.g. \"local\", \"unicast\", \"!local\"",
+            "type": "string"
+          },
+          "dst_address_type": {
             "type": "string"
           },
           "connection_mark": {
@@ -10517,7 +10583,74 @@
             "type": "string"
           },
           "connection_state": {
-            "description": "e.g. \"new\", \"established,related\", \"invalid\"",
+            "description": "e.g. \"new\", \"established,related\", \"!invalid\"",
+            "type": "string"
+          },
+          "connection_nat_state": {
+            "description": "\"srcnat\" / \"dstnat\" / \"!dstnat\"",
+            "type": "string"
+          },
+          "connection_type": {
+            "description": "Helper, e.g. \"sip\", \"ftp\"",
+            "type": "string"
+          },
+          "connection_bytes": {
+            "description": "e.g. \"1000000-0\" (>1 MB connections)",
+            "type": "string"
+          },
+          "connection_limit": {
+            "description": "e.g. \"100,32\"",
+            "type": "string"
+          },
+          "connection_rate": {
+            "description": "e.g. \"100k-1M\"",
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "description": "PCC for load balancing, e.g. \"both-addresses:2/0\"",
+            "type": "string"
+          },
+          "tcp_flags": {
+            "description": "RouterOS flag expression e.g. \"syn,!ack\"",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "Match incoming DSCP (0-63)",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Match packet/queue priority (0-63)",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "e.g. \"1500\" or \"0-500\"",
+            "type": "string"
+          },
+          "layer7_protocol": {
+            "description": "Name of an /ip firewall layer7-protocol regex",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "e.g. \"in,ipsec\" or \"out,none\"",
+            "type": "string"
+          },
+          "nth": {
+            "description": "e.g. \"2,1\" — every 2nd packet",
+            "type": "string"
+          },
+          "random": {
+            "description": "Match a random N% of packets (1-99)",
+            "type": "string"
+          },
+          "time": {
+            "description": "e.g. \"8h-16h,mon,tue,wed,thu,fri\"",
+            "type": "string"
+          },
+          "hotspot": {
+            "description": "e.g. \"auth\", \"!auth\", \"from-client\"",
+            "type": "string"
+          },
+          "p2p": {
             "type": "string"
           },
           "new_connection_mark": {
@@ -10689,6 +10822,26 @@
           "out_interface": {
             "type": "string"
           },
+          "in_interface_list": {
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_list": {
+            "description": "Negate with \"!name\" (e.g. \"!IR\")",
+            "type": "string"
+          },
+          "dst_address_list": {
+            "description": "Negate with \"!name\" (e.g. \"!IR\")",
+            "type": "string"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
           "connection_mark": {
             "type": "string"
           },
@@ -10699,6 +10852,57 @@
             "type": "string"
           },
           "connection_state": {
+            "type": "string"
+          },
+          "connection_nat_state": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "connection_bytes": {
+            "type": "string"
+          },
+          "connection_limit": {
+            "type": "string"
+          },
+          "connection_rate": {
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "type": "string"
+          },
+          "tcp_flags": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "layer7_protocol": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "nth": {
+            "type": "string"
+          },
+          "random": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "hotspot": {
+            "type": "string"
+          },
+          "p2p": {
             "type": "string"
           },
           "new_connection_mark": {
