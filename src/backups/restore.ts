@@ -84,11 +84,21 @@ export async function restoreLocalBackup(
       );
     }
     const committed = await safe.commit();
+    if (!committed.ok) {
+      // Commit failed — the applied commands are still pending in Safe Mode and
+      // are NOT saved. Do not claim success; the session is left open for retry.
+      return {
+        ok: false,
+        applied,
+        committed: false,
+        message: `applied ${applied} command(s) but COMMIT FAILED — not saved: ${committed.message}`,
+      };
+    }
     return {
       ok: true,
       applied,
       committed: true,
-      message: `committed ${applied} command(s). ${committed}`,
+      message: `committed ${applied} command(s). ${committed.message}`,
     };
   } catch (e) {
     await safe.rollback();

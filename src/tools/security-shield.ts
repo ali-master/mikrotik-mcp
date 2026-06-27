@@ -425,7 +425,15 @@ export const securityShieldTools: ToolModule = [
         }
         done.push(cmd);
       }
-      if (useSafe) await mgr.commit();
+      if (useSafe) {
+        const c = await mgr.commit();
+        if (!c.ok) {
+          return (
+            `Applied ${done.length} rule(s) but Safe Mode COMMIT FAILED — changes are NOT saved ` +
+            `and will revert: ${c.message}`
+          );
+        }
+      }
       return `Security Shield applied — ${done.length} rule(s) across ${groups.length} protection(s)${useSafe ? " (committed via Safe Mode)" : ""}. Audit with audit_firewall_hardening; undo with remove_firewall_hardening.`;
     },
   }),

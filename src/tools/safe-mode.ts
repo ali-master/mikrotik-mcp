@@ -55,7 +55,7 @@ export const safeModeTools: ToolModule = [
     async handler(_a, ctx) {
       const device = resolveDeviceName(ctx.device);
       ctx.info(`[${device}] Committing safe mode changes`);
-      return getSafeModeManager(device).commit();
+      return (await getSafeModeManager(device).commit()).message;
     },
   }),
 

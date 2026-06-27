@@ -146,7 +146,17 @@ export const changePlanTools: ToolModule = [
           return `${header}\n\nABORTED: the device stopped responding after applying — changes rolled back to avoid a lock-out.`;
         }
         const committed = await safe.commit();
-        return `${header}\n\nCOMMITTED: changes are now permanent. ${committed}`;
+        if (!committed.ok) {
+          // Commit did NOT take — the changes are still pending in Safe Mode and
+          // will revert if the session drops. Report honestly; never claim
+          // "committed". The session is left open so the caller can retry
+          // commit_safe_mode or rollback_safe_mode.
+          return (
+            `${header}\n\nCOMMIT FAILED — changes are NOT saved (still pending in Safe Mode). ` +
+            `${committed.message}`
+          );
+        }
+        return `${header}\n\nCOMMITTED: changes are now permanent. ${committed.message}`;
       } catch (e) {
         await safe.rollback();
         const msg = e instanceof Error ? e.message : String(e);
