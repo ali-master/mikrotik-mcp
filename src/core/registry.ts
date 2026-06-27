@@ -52,8 +52,15 @@ function effectiveUi(def: { name: string; annotations: ToolAnnotations; ui?: UiL
 /** Options threaded into every tool registration. */
 export interface RegisterOptions {
   sendLog?: SendLog;
-  /** Configured device names; when more than one, a `device` selector is injected. */
+  /** Configured device KEYS; when more than one, a `device` selector is injected. */
   deviceNames?: string[];
+  /**
+   * Extra accepted values for the `device` selector — a device's free-text
+   * label (`description`, e.g. "Ali Home") so the AI can target it by the
+   * friendly name as well as its config key. Resolved back to the key by
+   * {@link resolveDeviceName}. Does NOT affect the single-vs-multi decision.
+   */
+  deviceAliases?: string[];
   /**
    * Read-only mode: register only tools annotated `readOnlyHint`. Used to
    * withhold every write/destructive tool from a publicly-exposed surface (e.g.
@@ -146,22 +153,29 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     inputSchema: def.inputSchema,
     ui: def.ui,
     register(server: McpServer, opts: RegisterOptions = {}) {
-      const { sendLog, deviceNames } = opts;
+      const { sendLog, deviceNames, deviceAliases } = opts;
+      // The single-vs-multi decision is keyed on the device COUNT, never the
+      // enum size — a lone device that happens to have a label must not gain a
+      // selector.
       const multiDevice = !!deviceNames && deviceNames.length > 1;
       // Resolve the view once: explicit `ui` or the auto `records` view for reads.
       const { ui, auto } = effectiveUi(def);
 
       // When more than one device is configured, every tool gains an optional
-      // `device` selector (a validated enum of the configured names) so the AI
-      // can target a specific router per call. Single-device setups are untouched.
+      // `device` selector (a validated enum) so the AI can target a specific
+      // router per call. The enum accepts both config keys AND friendly labels
+      // (descriptions); both resolve to a key in resolveDeviceName/getDevice.
+      // Single-device setups are untouched.
+      const selectorNames =
+        multiDevice && deviceNames ? [...new Set([...deviceNames, ...(deviceAliases ?? [])])] : [];
       const inputSchema = multiDevice
         ? {
             ...def.inputSchema,
             device: z
-              .enum(deviceNames as [string, ...string[]])
+              .enum(selectorNames as [string, ...string[]])
               .optional()
               .describe(
-                `Which configured MikroTik device to run this on. One of: ${deviceNames.join(", ")}. Omit to use the default device.`,
+                `Which configured MikroTik device to run this on. One of: ${selectorNames.join(", ")} (a config key or its label). Omit to use the default device.`,
               ),
           }
         : def.inputSchema;

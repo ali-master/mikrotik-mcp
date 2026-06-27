@@ -2,8 +2,14 @@
  * Multi-device configuration + resolution tests (offline).
  */
 import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
-import { loadConfig } from "../src/config";
-import { getDevice, listDevices, resolveDeviceName, setConfig } from "../src/core/runtime";
+import { loadConfig, MikrotikConfigSchema } from "../src/config";
+import {
+  deviceLabels,
+  getDevice,
+  listDevices,
+  resolveDeviceName,
+  setConfig,
+} from "../src/core/runtime";
 
 const SAVED = { ...process.env };
 afterEach(() => {
@@ -104,5 +110,37 @@ describe("device resolution", () => {
     expect(getDevice("site-b").host).toBe("10.0.0.2");
     expect(getDevice(undefined).host).toBe("10.0.0.1");
     expect(() => getDevice("ghost")).toThrow(/Unknown device 'ghost'/);
+  });
+});
+
+describe("targeting a device by its friendly label (description)", () => {
+  beforeEach(() => {
+    // Key "home" carries the label "Ali Home" — the name the AI naturally uses.
+    setConfig(
+      MikrotikConfigSchema.parse({
+        devices: {
+          mobin: { host: "10.0.0.1" },
+          home: { host: "10.0.0.2", description: "Ali Home" },
+        },
+        defaultDevice: "mobin",
+      }),
+    );
+  });
+
+  test("deviceLabels exposes distinct labels that aren't already keys", () => {
+    expect(deviceLabels()).toEqual(["Ali Home"]);
+  });
+
+  test("resolveDeviceName maps a label (any case) to its key", () => {
+    expect(resolveDeviceName("Ali Home")).toBe("home");
+    expect(resolveDeviceName("ali home")).toBe("home"); // case-insensitive
+    expect(resolveDeviceName("home")).toBe("home"); // key still works
+    expect(resolveDeviceName("mobin")).toBe("mobin");
+  });
+
+  test("getDevice resolves a label to its connection config", () => {
+    expect(getDevice("Ali Home").host).toBe("10.0.0.2");
+    // A name that's neither a key nor a label still throws.
+    expect(() => getDevice("Nonexistent")).toThrow(/Unknown device/);
   });
 });
