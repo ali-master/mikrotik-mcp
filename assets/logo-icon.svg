@@ -1,43 +1,52 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MikroTik MCP icon">
   <defs>
-    <linearGradient id="tile" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#8B5CF6"/>
-      <stop offset="0.55" stop-color="#6366F1"/>
+    <linearGradient id="tile" x1="20" y1="10" x2="235" y2="250" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A855F7"/>
+      <stop offset="0.5" stop-color="#6366F1"/>
       <stop offset="1" stop-color="#06B6D4"/>
     </linearGradient>
-    <linearGradient id="sheen" x1="40" y1="32" x2="160" y2="180" gradientUnits="userSpaceOnUse">
+    <radialGradient id="sheen" cx="0.5" cy="0.4" r="0.62">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
+    </radialGradient>
     <radialGradient id="node" cx="0.35" cy="0.3" r="0.85">
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#E5EDFF"/>
     </radialGradient>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0B1020" flood-opacity="0.25"/>
+    <filter id="soft" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="11" flood-color="#0B1020" flood-opacity="0.30"/>
     </filter>
+    <filter id="mark" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1E1B4B" flood-opacity="0.25"/>
+    </filter>
+    <clipPath id="sq">
+      <path d="M 492.00,256.00 L 491.68,334.04 L 490.73,361.35 L 489.14,381.37 L 486.91,397.63 L 484.01,411.43 L 480.45,423.42 L 476.20,433.97 L 471.23,443.31 L 465.50,451.62 L 458.99,458.99 L 451.62,465.50 L 443.31,471.23 L 433.97,476.20 L 423.42,480.45 L 411.43,484.01 L 397.63,486.91 L 381.37,489.14 L 361.35,490.73 L 334.04,491.68 L 256.00,492.00 L 177.96,491.68 L 150.65,490.73 L 130.63,489.14 L 114.37,486.91 L 100.57,484.01 L 88.58,480.45 L 78.03,476.20 L 68.69,471.23 L 60.38,465.50 L 53.01,458.99 L 46.50,451.62 L 40.77,443.31 L 35.80,433.97 L 31.55,423.42 L 27.99,411.43 L 25.09,397.63 L 22.86,381.37 L 21.27,361.35 L 20.32,334.04 L 20.00,256.00 L 20.32,177.96 L 21.27,150.65 L 22.86,130.63 L 25.09,114.37 L 27.99,100.57 L 31.55,88.58 L 35.80,78.03 L 40.77,68.69 L 46.50,60.38 L 53.01,53.01 L 60.38,46.50 L 68.69,40.77 L 78.03,35.80 L 88.58,31.55 L 100.57,27.99 L 114.37,25.09 L 130.63,22.86 L 150.65,21.27 L 177.96,20.32 L 256.00,20.00 L 334.04,20.32 L 361.35,21.27 L 381.37,22.86 L 397.63,25.09 L 411.43,27.99 L 423.42,31.55 L 433.97,35.80 L 443.31,40.77 L 451.62,46.50 L 458.99,53.01 L 465.50,60.38 L 471.23,68.69 L 476.20,78.03 L 480.45,88.58 L 484.01,100.57 L 486.91,114.37 L 489.14,130.63 L 490.73,150.65 L 491.68,177.96 L 492.00,256.00 Z"/>
+    </clipPath>
   </defs>
 
-  <!-- tile -->
-  <rect x="16" y="16" width="224" height="224" rx="54" fill="url(#tile)"/>
-  <rect x="16" y="16" width="224" height="224" rx="54" fill="url(#sheen)"/>
-
-  <!-- managed-network topology: a central hub routing to four nodes -->
-  <g stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.95" filter="url(#soft)">
-    <line x1="128" y1="128" x2="80" y2="74"/>
-    <line x1="128" y1="128" x2="182" y2="78"/>
-    <line x1="128" y1="128" x2="78" y2="184"/>
-    <line x1="128" y1="128" x2="184" y2="182"/>
-  </g>
-
+  <!-- squircle tile -->
   <g filter="url(#soft)">
-    <circle cx="128" cy="128" r="22" fill="url(#node)"/>
-    <circle cx="80" cy="74" r="13" fill="url(#node)"/>
-    <circle cx="182" cy="78" r="13" fill="url(#node)"/>
-    <circle cx="78" cy="184" r="13" fill="url(#node)"/>
-    <circle cx="184" cy="182" r="13" fill="url(#node)"/>
+    <g transform="scale(0.5)">
+      <path clip-path="url(#sq)" fill="url(#tile)" d="M0 0h512v512H0z"/>
+      <rect clip-path="url(#sq)" width="512" height="512" fill="url(#sheen)"/>
+      <path clip-path="url(#sq)" d="M0 0h512v512H0z" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="3"/>
+    </g>
   </g>
 
-  <!-- terminal chevron inside the hub: signals SSH / MCP tooling -->
-  <path d="M120 120.5 L127.5 128 L120 135.5" fill="none" stroke="#6366F1" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- managed-network topology: central hub routing to four nodes -->
+  <g transform="scale(0.5)" filter="url(#mark)">
+    <g stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.95">
+      <line x1="256" y1="256" x2="160" y2="148"/>
+      <line x1="256" y1="256" x2="364" y2="156"/>
+      <line x1="256" y1="256" x2="156" y2="368"/>
+      <line x1="256" y1="256" x2="368" y2="364"/>
+    </g>
+    <circle cx="256" cy="256" r="44" fill="url(#node)"/>
+    <circle cx="160" cy="148" r="26" fill="url(#node)"/>
+    <circle cx="364" cy="156" r="26" fill="url(#node)"/>
+    <circle cx="156" cy="368" r="26" fill="url(#node)"/>
+    <circle cx="368" cy="364" r="26" fill="url(#node)"/>
+    <!-- terminal chevron inside the hub: signals SSH / MCP tooling -->
+    <path d="M240 240 L256 256 L240 272" fill="none" stroke="#6366F1" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
