@@ -704,11 +704,17 @@ async function featureRoutes(req: Request, url: URL): Promise<Response | null> {
       device?: string;
       label?: string;
       show_sensitive?: boolean;
+      verbose?: boolean;
+      compact?: boolean;
+      terse?: boolean;
     };
     const ctx = createContext(undefined, b?.device);
     const r = await createLocalBackup(ctx, {
       label: b?.label,
       showSensitive: b?.show_sensitive === true,
+      verbose: b?.verbose === true,
+      compact: b?.compact === true,
+      terse: b?.terse === true,
     });
     return r.ok ? json(r) : json({ error: r.error ?? "export failed" }, 502);
   }

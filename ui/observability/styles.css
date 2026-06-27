@@ -1623,6 +1623,45 @@ pre.body.ros .ros-comment {
   padding: 5px 9px;
   width: min(48vw, 380px);
 }
+/* /export option toggles on the Backups page */
+.backup-opts {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.backup-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 11px var(--mt-mono);
+  color: var(--mt-text-dim);
+  background: var(--mt-surface-2);
+  border: 1px solid var(--mt-border);
+  border-radius: 100px;
+  padding: 5px 11px 5px 9px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color 0.18s,
+    color 0.18s,
+    background 0.18s;
+}
+.backup-opt input {
+  accent-color: var(--mt-accent);
+  cursor: pointer;
+  margin: 0;
+}
+.backup-opt[data-on] {
+  color: var(--mt-text);
+  border-color: color-mix(in srgb, var(--mt-accent) 55%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-accent) 12%, var(--mt-surface-2));
+}
+.backup-opt[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.backup-opt[data-disabled] input {
+  cursor: not-allowed;
+}
 .linkish {
   font: inherit;
   color: var(--mt-accent);

@@ -29,6 +29,14 @@ export function BackupsView(): ReactNode {
   const [device, setDevice] = useState("");
   const [body, setBody] = useState<{ name: string; content: string } | null>(null);
   const [dirEdit, setDirEdit] = useState<string | null>(null);
+  // /export options (mirror RouterOS flags) applied to "Create backup".
+  const [label, setLabel] = useState("");
+  const [opts, setOpts] = useState({
+    show_sensitive: false,
+    verbose: false,
+    compact: false,
+    terse: false,
+  });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(() => {
@@ -50,7 +58,15 @@ export function BackupsView(): ReactNode {
     setMsg("Capturing /export…");
     const r = await postJson<{ ok?: boolean; name?: string; bytes?: number; error?: string }>(
       "/api/backups/create",
-      { device: device || undefined },
+      {
+        device: device || undefined,
+        label: label.trim() || undefined,
+        show_sensitive: opts.show_sensitive,
+        // `compact` is meaningless when `verbose` is on — don't send both.
+        verbose: opts.verbose,
+        compact: opts.verbose ? false : opts.compact,
+        terse: opts.terse,
+      },
     ).catch((): { ok?: boolean; name?: string; bytes?: number; error?: string } => ({
       error: "request failed",
     }));
@@ -58,6 +74,7 @@ export function BackupsView(): ReactNode {
     setMsg(r.ok ? `Created ${r.name} (${r.bytes} bytes)` : `Create failed: ${r.error}`);
     if (r.ok) load();
   };
+  const toggle = (k: keyof typeof opts): void => setOpts((o) => ({ ...o, [k]: !o[k] }));
   const upload = async (file: File): Promise<void> => {
     const content = await file.text();
     const r = await post("/api/backups/upload", { name: file.name, content });
@@ -214,6 +231,42 @@ export function BackupsView(): ReactNode {
           <button className="btn" onClick={load}>
             ↻ Refresh
           </button>
+        </div>
+
+        {/* /export options applied to "Create backup" */}
+        <div className="toolbar backup-opts" style={{ marginBottom: 12, gap: 10 }}>
+          <input
+            className="backup-path-input"
+            style={{ maxWidth: 200 }}
+            value={label}
+            spellCheck={false}
+            placeholder="label (optional), e.g. pre-upgrade"
+            onChange={(e) => setLabel(e.target.value)}
+          />
+          {(
+            [
+              ["show_sensitive", "show-sensitive", "Include secrets (keys/passwords)"],
+              ["verbose", "verbose", "Include every parameter, even defaults"],
+              ["compact", "compact", "Only non-default values (ignored if verbose)"],
+              ["terse", "terse", "One machine-readable line per item"],
+            ] as const
+          ).map(([k, lbl, tip]) => (
+            <label
+              key={k}
+              className="backup-opt"
+              title={tip}
+              data-on={opts[k] ? "1" : undefined}
+              data-disabled={k === "compact" && opts.verbose ? "1" : undefined}
+            >
+              <input
+                type="checkbox"
+                checked={opts[k]}
+                disabled={k === "compact" && opts.verbose}
+                onChange={() => toggle(k)}
+              />
+              {lbl}
+            </label>
+          ))}
         </div>
 
         {restoreName && (

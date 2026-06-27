@@ -11,8 +11,23 @@
       "default": false,
       "description": "Include secrets (keys/passwords) in the export. Default false.",
       "type": "boolean"
+    },
+    "verbose": {
+      "default": false,
+      "description": "Include every parameter, even defaults (RouterOS `verbose`).",
+      "type": "boolean"
+    },
+    "compact": {
+      "default": false,
+      "description": "Export only non-default values (RouterOS `compact`; ignored if verbose).",
+      "type": "boolean"
+    },
+    "terse": {
+      "default": false,
+      "description": "One self-contained, machine-readable line per item (RouterOS `terse`).",
+      "type": "boolean"
     }
   },
-  "required": ["show_sensitive"],
+  "required": ["show_sensitive", "verbose", "compact", "terse"],
   "additionalProperties": false
 }

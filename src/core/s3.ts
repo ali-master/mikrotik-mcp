@@ -10,6 +10,7 @@
 import { S3Client } from "bun";
 import type { S3Config } from "../config";
 import { getConfig } from "./runtime";
+import { deviceSlug } from "./slug";
 
 export function getS3Config(): S3Config | undefined {
   return getConfig().s3;
@@ -54,7 +55,11 @@ function trimSlashes(s: string): string {
  * "folder" in the bucket. Returns "" only when neither prefix nor device apply.
  */
 export function s3DevicePrefix(device?: string): string {
-  const segments = [getS3Config()?.prefix ?? "", device ?? ""].map(trimSlashes).filter(Boolean);
+  // Slugify the device segment so a name like "Ali Home" becomes "Ali-Home"
+  // rather than embedding a raw space in the S3 key.
+  const segments = [getS3Config()?.prefix ?? "", device ? deviceSlug(device) : ""]
+    .map(trimSlashes)
+    .filter(Boolean);
   return segments.length ? `${segments.join("/")}/` : "";
 }
 

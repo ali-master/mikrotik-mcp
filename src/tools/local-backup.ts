@@ -30,13 +30,19 @@ export const localBackupTools: ToolModule = [
       "Captures the device's full configuration with `/export` and saves it as a timestamped " +
       "plain-text `.rsc` file in the MCP server's LOCAL backup vault (default " +
       "`~/.mikrotik-mcp/backups/`, override with the `MIKROTIK_BACKUP_DIR` env var) — NOT on the " +
-      "device and NOT in S3. The filename is `<device>_<date_time>.rsc` stamped in the device's " +
-      "local clock (24-hour; Jalali for the Tehran timezone, Gregorian otherwise). This is a " +
-      "host-side, human-readable, diffable copy you can restore later with restore_local_backup. " +
-      "Compare: create_backup makes a binary `/system backup` file ON the device; " +
-      "capture_config_snapshot stores an export in the local snapshot database; upload_backup_to_s3 " +
-      "pushes to S3. show_sensitive=true includes secrets (keys/passwords) in the export. " +
-      "Returns the saved filename, byte size and vault path.",
+      "device and NOT in S3. The filename is `<device-slug>_<date_time>.rsc` — the device name is " +
+      "slugified (spaces/underscores/etc → dash) — stamped in the device's local clock (24-hour; " +
+      "Jalali for the Tehran timezone, Gregorian otherwise). This is a host-side, human-readable, " +
+      "diffable copy you can restore later with restore_local_backup. Compare: create_backup makes " +
+      "a binary `/system backup` file ON the device; capture_config_snapshot stores an export in " +
+      "the local snapshot database; upload_backup_to_s3 pushes to S3. ALWAYS default to a FULL " +
+      "backup of the complete configuration: call this with no option flags (the bare `/export`) " +
+      "unless the user explicitly asks for less or more. Narrow it ONLY on request — set compact to " +
+      "drop default values, or use export_section for a single subsection. Broaden it ONLY on " +
+      "request — set verbose to include every parameter (even defaults), show_sensitive to include " +
+      "secrets (keys/passwords), or use create_backup for a binary full-system snapshot. terse just " +
+      "changes the text to one machine-readable line per item. Returns the saved filename, byte size " +
+      "and vault path.",
     inputSchema: {
       label: z
         .string()
@@ -46,9 +52,27 @@ export const localBackupTools: ToolModule = [
         .boolean()
         .default(false)
         .describe("Include secrets (keys/passwords) in the export. Default false."),
+      verbose: z
+        .boolean()
+        .default(false)
+        .describe("Include every parameter, even defaults (RouterOS `verbose`)."),
+      compact: z
+        .boolean()
+        .default(false)
+        .describe("Export only non-default values (RouterOS `compact`; ignored if verbose)."),
+      terse: z
+        .boolean()
+        .default(false)
+        .describe("One self-contained, machine-readable line per item (RouterOS `terse`)."),
     },
     async handler(a, ctx) {
-      const r = await createLocalBackup(ctx, { label: a.label, showSensitive: a.show_sensitive });
+      const r = await createLocalBackup(ctx, {
+        label: a.label,
+        showSensitive: a.show_sensitive,
+        verbose: a.verbose,
+        compact: a.compact,
+        terse: a.terse,
+      });
       if (!r.ok) return `Failed to capture export for a local backup: ${r.error}`;
       return (
         `Saved local backup '${r.name}' (${r.bytes} bytes) for device '${r.device}' to ` +

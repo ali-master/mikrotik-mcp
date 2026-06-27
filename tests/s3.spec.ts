@@ -104,6 +104,13 @@ describe("S3 helper", () => {
     expect(s3DevicePrefix("edge")).toBe("edge/");
   });
 
+  test("device names are slugified in the key (no raw spaces/underscores)", () => {
+    setConfig(MikrotikConfigSchema.parse({ s3: { bucket: "b", prefix: "mikrotik/" } }));
+    expect(s3DevicePrefix("Ali Home")).toBe("mikrotik/Ali-Home/");
+    expect(s3DevicePrefix("core_rtr.lab")).toBe("mikrotik/core-rtr-lab/");
+    expect(s3Key("daily.backup", "DC1/edge")).toBe("mikrotik/DC1-edge/daily.backup");
+  });
+
   test("s3Key is a no-op without a prefix or device", () => {
     setConfig(MikrotikConfigSchema.parse({ s3: { bucket: "b" } }));
     expect(s3Key("daily.backup")).toBe("daily.backup");

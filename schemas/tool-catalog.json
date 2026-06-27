@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.16.0",
+  "version": "3.18.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 721,
   "tools": [
@@ -21290,7 +21290,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Exports the complete device configuration to a `.rsc` plain-text script file (`/export file=<name>`), re-applicable via `import_configuration`. Unlike `create_backup`, the result is human-readable plain text — not a binary snapshot — and passwords are hidden by default (`hide_sensitive=true`). `file_format` changes only the file extension used when looking up the saved file — no `format=` flag is ever sent to RouterOS, so the content is always RouterOS script text regardless of the chosen extension; selecting `json` or `xml` will also cause the post-export file lookup to fail because RouterOS saves the file as `.rsc`. Use the `compact` boolean to omit default values, or `verbose` to include all parameters; `export_type` only controls where the `file=` argument is positioned in the command and does not independently drive compactness or verbosity. For a single subsection only use `export_section`. Returns file details of the created export file.",
+      "description": "Exports the complete device configuration to a `.rsc` plain-text script file (`/export file=<name>`), re-applicable via `import_configuration`. Unlike `create_backup`, the result is human-readable plain text — not a binary snapshot — and passwords are hidden by default (`hide_sensitive=true`). `file_format` changes only the file extension used when looking up the saved file — no `format=` flag is ever sent to RouterOS, so the content is always RouterOS script text regardless of the chosen extension; selecting `json` or `xml` will also cause the post-export file lookup to fail because RouterOS saves the file as `.rsc`. ALWAYS default to a FULL configuration export: leave `compact` and `verbose` off (the plain full export) unless the user explicitly asks for less or more. Set `compact` ONLY when the user wants a smaller diff that omits default values, or `verbose` ONLY when they want every parameter (including defaults). `export_type` only controls where the `file=` argument is positioned in the command and does not independently drive compactness or verbosity. For a single subsection only use `export_section`. Returns file details of the created export file.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -21830,7 +21830,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Captures the device's full configuration with `/export` and saves it as a timestamped plain-text `.rsc` file in the MCP server's LOCAL backup vault (default `~/.mikrotik-mcp/backups/`, override with the `MIKROTIK_BACKUP_DIR` env var) — NOT on the device and NOT in S3. The filename is `<device>_<date_time>.rsc` stamped in the device's local clock (24-hour; Jalali for the Tehran timezone, Gregorian otherwise). This is a host-side, human-readable, diffable copy you can restore later with restore_local_backup. Compare: create_backup makes a binary `/system backup` file ON the device; capture_config_snapshot stores an export in the local snapshot database; upload_backup_to_s3 pushes to S3. show_sensitive=true includes secrets (keys/passwords) in the export. Returns the saved filename, byte size and vault path.",
+      "description": "Captures the device's full configuration with `/export` and saves it as a timestamped plain-text `.rsc` file in the MCP server's LOCAL backup vault (default `~/.mikrotik-mcp/backups/`, override with the `MIKROTIK_BACKUP_DIR` env var) — NOT on the device and NOT in S3. The filename is `<device-slug>_<date_time>.rsc` — the device name is slugified (spaces/underscores/etc → dash) — stamped in the device's local clock (24-hour; Jalali for the Tehran timezone, Gregorian otherwise). This is a host-side, human-readable, diffable copy you can restore later with restore_local_backup. Compare: create_backup makes a binary `/system backup` file ON the device; capture_config_snapshot stores an export in the local snapshot database; upload_backup_to_s3 pushes to S3. ALWAYS default to a FULL backup of the complete configuration: call this with no option flags (the bare `/export`) unless the user explicitly asks for less or more. Narrow it ONLY on request — set compact to drop default values, or use export_section for a single subsection. Broaden it ONLY on request — set verbose to include every parameter (even defaults), show_sensitive to include secrets (keys/passwords), or use create_backup for a binary full-system snapshot. terse just changes the text to one machine-readable line per item. Returns the saved filename, byte size and vault path.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -21843,9 +21843,24 @@
             "default": false,
             "description": "Include secrets (keys/passwords) in the export. Default false.",
             "type": "boolean"
+          },
+          "verbose": {
+            "default": false,
+            "description": "Include every parameter, even defaults (RouterOS `verbose`).",
+            "type": "boolean"
+          },
+          "compact": {
+            "default": false,
+            "description": "Export only non-default values (RouterOS `compact`; ignored if verbose).",
+            "type": "boolean"
+          },
+          "terse": {
+            "default": false,
+            "description": "One self-contained, machine-readable line per item (RouterOS `terse`).",
+            "type": "boolean"
           }
         },
-        "required": ["show_sensitive"],
+        "required": ["show_sensitive", "verbose", "compact", "terse"],
         "additionalProperties": false
       }
     },

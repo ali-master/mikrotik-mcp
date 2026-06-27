@@ -100,11 +100,13 @@ export const backupTools: ToolModule = [
       " (`hide_sensitive=true`). `file_format` changes only the file extension used when looking up" +
       " the saved file — no `format=` flag is ever sent to RouterOS, so the content is always" +
       " RouterOS script text regardless of the chosen extension; selecting `json` or `xml` will also" +
-      " cause the post-export file lookup to fail because RouterOS saves the file as `.rsc`. Use the" +
-      " `compact` boolean to omit default values, or `verbose` to include all parameters;" +
-      " `export_type` only controls where the `file=` argument is positioned in the command and" +
-      " does not independently drive compactness or verbosity. For a single subsection only use" +
-      " `export_section`. Returns file details of the created export file.",
+      " cause the post-export file lookup to fail because RouterOS saves the file as `.rsc`." +
+      " ALWAYS default to a FULL configuration export: leave `compact` and `verbose` off (the plain" +
+      " full export) unless the user explicitly asks for less or more. Set `compact` ONLY when the" +
+      " user wants a smaller diff that omits default values, or `verbose` ONLY when they want every" +
+      " parameter (including defaults). `export_type` only controls where the `file=` argument is" +
+      " positioned in the command and does not independently drive compactness or verbosity. For a" +
+      " single subsection only use `export_section`. Returns file details of the created export file.",
     inputSchema: {
       name: z.string().optional(),
       file_format: z.enum(["rsc", "json", "xml"]).default("rsc"),
