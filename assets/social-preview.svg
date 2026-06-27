@@ -1,4 +1,4 @@
-<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MikroTik MCP — the complete MCP server for MikroTik RouterOS, 715 tools across 113 modules">
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MikroTik MCP — the complete MCP server for MikroTik RouterOS, +700 tools across +110 modules">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="640" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#1C1714"/>
@@ -61,7 +61,7 @@
 
   <!-- Wordmark + copy -->
   <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
-    <text x="470" y="214" font-size="22" font-weight="700" letter-spacing="3" fill="#D2724F">715&#160;TOOLS&#160;&#160;·&#160;&#160;113&#160;MODULES&#160;&#160;·&#160;&#160;SSH&#160;&#160;·&#160;&#160;SAFE&#160;MODE</text>
+    <text x="470" y="214" font-size="22" font-weight="700" letter-spacing="3" fill="#D2724F">+700&#160;TOOLS&#160;&#160;·&#160;&#160;+110&#160;MODULES&#160;&#160;·&#160;&#160;SSH&#160;&#160;·&#160;&#160;SAFE&#160;MODE</text>
     <text x="468" y="300" font-size="82" font-weight="800" letter-spacing="-1" fill="#F6F1E7">MikroTik <tspan fill="#E08763">MCP</tspan></text>
     <text x="470" y="360" font-size="29" font-weight="500" fill="#B9ABA0">The complete MCP server for MikroTik RouterOS.</text>
     <text x="470" y="398" font-size="29" font-weight="500" fill="#B9ABA0">Read &#38; configure every scope in natural language.</text>

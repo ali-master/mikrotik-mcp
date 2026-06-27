@@ -14,7 +14,7 @@
     />
     <meta name="author" content="Ali Torki" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#2dd4bf" />
+    <meta name="theme-color" content="#d2724f" />
     <meta name="color-scheme" content="dark" />
     <link rel="canonical" href="https://github.com/ali-master/mikrotik-mcp" />
     <link rel="icon" type="image/svg+xml" href="./logo-icon.svg" />
@@ -79,20 +79,23 @@
     />
     <style>
       :root {
-        --teal: #2dd4bf;
-        --sky: #38bdf8;
-        --cyan: #22d3ee;
-        --lime: #bef264;
-        --coral: #fb7185;
-        --amber: #fbbf24;
-        --bg: #04080d;
-        --bg-2: #07131f;
-        --ink: #eaf6f3;
-        --muted: #8493a3;
-        --faint: #4f6072;
-        --line: rgba(120, 200, 205, 0.14);
-        --glass: rgba(9, 22, 28, 0.5);
-        --grad: linear-gradient(115deg, var(--sky), var(--teal) 45%, var(--lime));
+        /* warm coral brand palette — matches the social-preview & logo assets */
+        --coral-l: #e08763;
+        --coral-d: #b9532f;
+        --teal: #d2724f; /* primary accent */
+        --sky: #e08763; /* light coral — gradient start */
+        --cyan: #e0875f; /* secondary warm accent — eyebrows, nodes, dots */
+        --lime: #a6c955; /* success / added lines */
+        --coral: #f2685a; /* danger / removed lines */
+        --amber: #f2a93b; /* warnings */
+        --bg: #120e0c;
+        --bg-2: #221913;
+        --ink: #f6f1e7;
+        --muted: #b9aba0;
+        --faint: #7c6a5e;
+        --line: rgba(210, 130, 95, 0.16);
+        --glass: rgba(28, 20, 15, 0.5);
+        --grad: linear-gradient(115deg, var(--coral-l), var(--teal) 48%, var(--coral-d));
         --ease: cubic-bezier(0.22, 1, 0.36, 1);
         --disp: "Space Grotesk", system-ui, sans-serif;
         --mono: "DM Mono", ui-monospace, monospace;
@@ -156,7 +159,7 @@
       .cursor {
         width: 38px;
         height: 38px;
-        border: 1px solid rgba(160, 170, 255, 0.6);
+        border: 1px solid rgba(230, 180, 150, 0.55);
         transition:
           width 0.3s var(--ease),
           height 0.3s var(--ease),
@@ -166,7 +169,7 @@
       .cursor.is-hover {
         width: 74px;
         height: 74px;
-        background: rgba(139, 92, 246, 0.16);
+        background: rgba(210, 114, 79, 0.18);
         border-color: transparent;
       }
       .cursor-dot {
@@ -188,7 +191,7 @@
         width: clamp(112px, 22vw, 168px);
         height: auto;
         overflow: visible;
-        filter: drop-shadow(0 10px 34px rgba(99, 102, 241, 0.5));
+        filter: drop-shadow(0 10px 34px rgba(185, 83, 47, 0.5));
       }
       #loader .pl-cap {
         position: absolute;
@@ -308,7 +311,7 @@
         font-size: 18px;
       }
       nav .brand b {
-        color: var(--sky);
+        color: var(-ink);
       }
       nav .links {
         display: flex;
@@ -408,7 +411,7 @@
       }
       .btn.primary {
         background: var(--grad);
-        color: #07091a;
+        color: #2a1207;
         border: none;
         font-weight: 600;
       }
@@ -433,9 +436,9 @@
       .term {
         border: 1px solid var(--line);
         border-radius: 18px;
-        background: linear-gradient(180deg, rgba(14, 18, 38, 0.86), rgba(8, 11, 26, 0.86));
+        background: linear-gradient(180deg, rgba(34, 24, 18, 0.86), rgba(20, 15, 11, 0.88));
         backdrop-filter: blur(16px);
-        box-shadow: 0 40px 120px -40px rgba(99, 102, 241, 0.5);
+        box-shadow: 0 40px 120px -40px rgba(185, 83, 47, 0.45);
         overflow: hidden;
         will-change: transform;
       }
@@ -450,7 +453,7 @@
         width: 11px;
         height: 11px;
         border-radius: 50%;
-        background: #2a3050;
+        background: #3a2c24;
       }
       .term-bar i:nth-child(1) {
         background: var(--coral);
@@ -542,7 +545,7 @@
         padding: 24px 0;
         overflow: hidden;
         white-space: nowrap;
-        background: rgba(10, 12, 26, 0.4);
+        background: rgba(26, 18, 13, 0.45);
       }
       .marquee .track {
         display: inline-flex;
@@ -554,7 +557,7 @@
         font-size: clamp(1.3rem, 3.6vw, 2.3rem);
         font-weight: 600;
         color: transparent;
-        -webkit-text-stroke: 1px rgba(160, 170, 255, 0.4);
+        -webkit-text-stroke: 1px rgba(214, 170, 150, 0.42);
       }
       .marquee span.fill {
         color: var(--ink);
@@ -710,7 +713,7 @@
         padding: 7px 10px;
         border-radius: 9px;
         border: 1px solid var(--line);
-        background: rgba(140, 150, 210, 0.05);
+        background: rgba(210, 150, 120, 0.06);
         will-change: transform;
       }
       .step .badge {
@@ -953,7 +956,7 @@
         font-size: clamp(3.6rem, 11vw, 8rem);
         line-height: 0.8;
         color: transparent;
-        -webkit-text-stroke: 1.5px rgba(160, 170, 255, 0.42);
+        -webkit-text-stroke: 1.5px rgba(214, 170, 150, 0.42);
       }
       .dmeta {
         position: relative;
@@ -992,7 +995,7 @@
         color: var(--ink);
         padding: 7px 12px;
         border-radius: 11px;
-        background: rgba(140, 150, 210, 0.08);
+        background: rgba(210, 150, 120, 0.08);
         border: 1px solid var(--line);
         will-change: transform;
         transition:
@@ -1037,7 +1040,7 @@
         inset: 0;
         background: radial-gradient(
           400px circle at var(--mx, 50%) var(--my, 0%),
-          rgba(139, 92, 246, 0.18),
+          rgba(210, 114, 79, 0.18),
           transparent 45%
         );
         opacity: 0;
@@ -1052,7 +1055,7 @@
         border-radius: 13px;
         display: grid;
         place-items: center;
-        background: rgba(139, 92, 246, 0.14);
+        background: rgba(210, 114, 79, 0.14);
         border: 1px solid var(--line);
         margin-bottom: 20px;
       }
@@ -1088,57 +1091,192 @@
         letter-spacing: 0.1em;
       }
 
-      /* pipeline */
+      /* ===== pipeline (vertical, animated) ===== */
       .pipeline {
         padding: 30px 0 150px;
       }
       .pipe-stage {
         position: relative;
-        height: 60vh;
+        min-height: 100vh;
         display: grid;
         place-items: center;
       }
-      .pipe-svg {
+      .pipe {
+        position: relative;
         width: 100%;
-        max-width: 980px;
+        max-width: 720px;
+        margin: 0 auto;
+        transform: translateY(-12vh);
+      }
+      /* the vertical rail every station threads through */
+      .pipe-rail {
+        position: absolute;
+        top: 14px;
+        bottom: 92px;
+        left: 35px;
+        width: 3px;
+        border-radius: 3px;
+        background: var(--line);
         overflow: visible;
       }
-      .pipe-svg .wire {
-        fill: none;
-        stroke: var(--line);
-        stroke-width: 2;
+      .pipe-rail-fill {
+        position: absolute;
+        inset: 0;
+        border-radius: 3px;
+        background: linear-gradient(180deg, var(--coral-l), var(--teal) 50%, var(--coral-d));
+        transform: scaleY(0);
+        transform-origin: top center;
+        box-shadow: 0 0 16px rgba(210, 114, 79, 0.5);
       }
-      .pipe-svg .flow {
-        fill: none;
-        stroke: url(#pg);
-        stroke-width: 3;
-        stroke-linecap: round;
+      .pipe-packet {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #ffe9d8;
+        transform: translate(-50%, -50%);
+        box-shadow:
+          0 0 0 5px rgba(224, 135, 99, 0.22),
+          0 0 26px 6px rgba(242, 168, 99, 0.85);
+        z-index: 4;
       }
-      .pipe-svg .node circle {
-        fill: var(--bg-2);
-        stroke: var(--line);
-        stroke-width: 1.5;
+      .pipe-stations {
+        position: relative;
+        display: flex;
+        flex-direction: column;
       }
-      .pipe-svg .node text {
-        fill: var(--ink);
+      .pstation {
+        position: relative;
+        display: grid;
+        grid-template-columns: 70px 1fr;
+        gap: 18px;
+        padding: 20px 0;
+        align-items: start;
+      }
+      .pdot {
+        position: relative;
+        z-index: 3;
+        width: 22px;
+        height: 22px;
+        margin: 4px auto 0;
+        border-radius: 50%;
+        background: var(--bg-2);
+        border: 2px solid var(--line);
+        display: grid;
+        place-items: center;
+        transition:
+          border-color 0.4s var(--ease),
+          background 0.4s var(--ease),
+          box-shadow 0.4s var(--ease),
+          transform 0.4s var(--ease);
+      }
+      .pdot span {
         font-family: var(--mono);
-        font-size: 12px;
-        text-anchor: middle;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--faint);
+        transition: color 0.4s;
       }
-      .pipe-svg .node .sub {
-        fill: var(--muted);
-        font-size: 9px;
+      .pcard {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--glass);
+        backdrop-filter: blur(12px);
+        padding: 18px 20px;
+        transition:
+          border-color 0.4s var(--ease),
+          transform 0.4s var(--ease),
+          box-shadow 0.4s var(--ease);
+        will-change: transform;
       }
-      .packet {
-        fill: var(--cyan);
-        filter: drop-shadow(0 0 10px var(--cyan));
+      .pkicker {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--faint);
+        transition: color 0.4s;
+      }
+      .pcard h3 {
+        font-family: var(--disp);
+        font-weight: 600;
+        font-size: 1.5rem;
+        letter-spacing: -0.01em;
+        margin: 7px 0 6px;
+      }
+      .pcard h3 .arrow {
+        color: var(--teal);
+        opacity: 0;
+        transform: translateX(-6px);
+        display: inline-block;
+        transition:
+          opacity 0.4s,
+          transform 0.4s;
+      }
+      .pcard p {
+        color: var(--muted);
+        font-size: 13.5px;
+        line-height: 1.6;
+      }
+      .pcard p b {
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .pchip {
+        display: inline-block;
+        margin-top: 14px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--cyan);
+        border: 1px solid var(--line);
+        border-radius: 100px;
+        padding: 4px 12px;
+        letter-spacing: 0.04em;
+      }
+      /* active state as the packet passes */
+      .pstation.is-on .pdot {
+        background: var(--teal);
+        border-color: transparent;
+        box-shadow:
+          0 0 0 4px rgba(210, 114, 79, 0.18),
+          0 0 22px 3px rgba(242, 168, 99, 0.7);
+        transform: scale(1.12);
+      }
+      .pstation.is-on .pdot span {
+        color: #2a1207;
+      }
+      .pstation.is-on .pkicker {
+        color: var(--cyan);
+      }
+      .pstation.is-on .pcard {
+        border-color: color-mix(in srgb, var(--teal) 55%, var(--line));
+        transform: translateX(6px);
+        box-shadow: -12px 18px 50px -28px rgba(210, 114, 79, 0.7);
+      }
+      .pstation.is-on .pcard h3 .arrow {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      @media (max-width: 560px) {
+        .pstation {
+          grid-template-columns: 54px 1fr;
+          gap: 12px;
+        }
+        .pipe-rail {
+          left: 27px;
+        }
       }
       .pipe-caption {
-        text-align: center;
-        margin-top: 26px;
+        position: relative;
+        margin-top: 18px;
+        margin-left: 88px;
         color: var(--muted);
         font-family: var(--mono);
         font-size: 13px;
+        min-height: 1.4em;
       }
       .pipe-caption b {
         color: var(--ink);
@@ -1215,70 +1353,79 @@
     <div class="progress"></div>
 
     <div id="loader">
-      <svg id="pl-logo" viewBox="0 0 256 256" fill="none" role="img" aria-label="MikroTik MCP">
+      <svg id="pl-logo" viewBox="0 0 512 512" fill="none" role="img" aria-label="MikroTik MCP">
         <defs>
           <linearGradient
-            id="pl-tile"
-            x1="32"
-            y1="24"
-            x2="224"
-            y2="232"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0" stop-color="#38BDF8" />
-            <stop offset="0.55" stop-color="#2DD4BF" />
-            <stop offset="1" stop-color="#BEF264" />
-          </linearGradient>
-          <linearGradient
-            id="pl-sheen"
+            id="pl-tile-grad"
             x1="40"
-            y1="32"
-            x2="160"
-            y2="180"
+            y1="20"
+            x2="470"
+            y2="500"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0" stop-color="#ffffff" stop-opacity="0.22" />
-            <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+            <stop offset="0" stop-color="#E08763" />
+            <stop offset="0.5" stop-color="#D2724F" />
+            <stop offset="1" stop-color="#B9532F" />
           </linearGradient>
-          <radialGradient id="pl-node" cx="0.35" cy="0.3" r="0.85">
-            <stop offset="0" stop-color="#ffffff" />
-            <stop offset="1" stop-color="#E5EDFF" />
+          <radialGradient id="pl-glow" cx="0.5" cy="0.42" r="0.62">
+            <stop offset="0" stop-color="#FBF7EF" stop-opacity="0.20" />
+            <stop offset="1" stop-color="#FBF7EF" stop-opacity="0" />
           </radialGradient>
+          <clipPath id="pl-sq">
+            <path
+              d="M 492.00,256.00 L 491.68,334.04 L 490.73,361.35 L 489.14,381.37 L 486.91,397.63 L 484.01,411.43 L 480.45,423.42 L 476.20,433.97 L 471.23,443.31 L 465.50,451.62 L 458.99,458.99 L 451.62,465.50 L 443.31,471.23 L 433.97,476.20 L 423.42,480.45 L 411.43,484.01 L 397.63,486.91 L 381.37,489.14 L 361.35,490.73 L 334.04,491.68 L 256.00,492.00 L 177.96,491.68 L 150.65,490.73 L 130.63,489.14 L 114.37,486.91 L 100.57,484.01 L 88.58,480.45 L 78.03,476.20 L 68.69,471.23 L 60.38,465.50 L 53.01,458.99 L 46.50,451.62 L 40.77,443.31 L 35.80,433.97 L 31.55,423.42 L 27.99,411.43 L 25.09,397.63 L 22.86,381.37 L 21.27,361.35 L 20.32,334.04 L 20.00,256.00 L 20.32,177.96 L 21.27,150.65 L 22.86,130.63 L 25.09,114.37 L 27.99,100.57 L 31.55,88.58 L 35.80,78.03 L 40.77,68.69 L 46.50,60.38 L 53.01,53.01 L 60.38,46.50 L 68.69,40.77 L 78.03,35.80 L 88.58,31.55 L 100.57,27.99 L 114.37,25.09 L 130.63,22.86 L 150.65,21.27 L 177.96,20.32 L 256.00,20.00 L 334.04,20.32 L 361.35,21.27 L 381.37,22.86 L 397.63,25.09 L 411.43,27.99 L 423.42,31.55 L 433.97,35.80 L 443.31,40.77 L 451.62,46.50 L 458.99,53.01 L 465.50,60.38 L 471.23,68.69 L 476.20,78.03 L 480.45,88.58 L 484.01,100.57 L 486.91,114.37 L 489.14,130.63 L 490.73,150.65 L 491.68,177.96 L 492.00,256.00 Z"
+            />
+          </clipPath>
         </defs>
-        <rect class="pl-tile" x="16" y="16" width="224" height="224" rx="54" fill="url(#pl-tile)" />
-        <rect
-          class="pl-tile"
-          x="16"
-          y="16"
-          width="224"
-          height="224"
-          rx="54"
-          fill="url(#pl-sheen)"
-        />
-        <g class="pl-links" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.95">
-          <line x1="128" y1="128" x2="80" y2="74" />
-          <line x1="128" y1="128" x2="182" y2="78" />
-          <line x1="128" y1="128" x2="78" y2="184" />
-          <line x1="128" y1="128" x2="184" y2="182" />
+        <g class="pl-tile">
+          <path clip-path="url(#pl-sq)" fill="url(#pl-tile-grad)" d="M0 0h512v512H0z" />
+          <rect clip-path="url(#pl-sq)" width="512" height="512" fill="url(#pl-glow)" />
+        </g>
+        <g
+          class="pl-links"
+          stroke="#F6F1E7"
+          stroke-width="15"
+          stroke-linecap="round"
+          opacity="0.96"
+        >
+          <line x1="240" y1="236" x2="140" y2="136" />
+          <line x1="240" y1="236" x2="340" y2="136" />
+          <line x1="240" y1="236" x2="140" y2="336" />
+          <line x1="240" y1="236" x2="340" y2="336" />
         </g>
         <g class="pl-nodes">
-          <circle class="pl-leaf" cx="80" cy="74" r="13" fill="url(#pl-node)" />
-          <circle class="pl-leaf" cx="182" cy="78" r="13" fill="url(#pl-node)" />
-          <circle class="pl-leaf" cx="78" cy="184" r="13" fill="url(#pl-node)" />
-          <circle class="pl-leaf" cx="184" cy="182" r="13" fill="url(#pl-node)" />
-          <circle class="pl-hub" cx="128" cy="128" r="22" fill="url(#pl-node)" />
+          <circle class="pl-leaf" cx="140" cy="136" r="25" fill="#F6F1E7" />
+          <circle class="pl-leaf" cx="340" cy="136" r="25" fill="#F6F1E7" />
+          <circle class="pl-leaf" cx="140" cy="336" r="25" fill="#F6F1E7" />
+          <circle class="pl-leaf" cx="340" cy="336" r="25" fill="#F6F1E7" />
+          <circle class="pl-hub" cx="240" cy="236" r="42" fill="#F6F1E7" />
         </g>
         <path
           class="pl-chevron"
-          d="M120 120.5 L127.5 128 L120 135.5"
+          d="M225 221 L240 236 L225 251"
           fill="none"
-          stroke="#2DD4BF"
-          stroke-width="4.5"
+          stroke="#B9532F"
+          stroke-width="8"
           stroke-linecap="round"
           stroke-linejoin="round"
         />
+        <g class="pl-badge" transform="translate(326 400)">
+          <rect width="122" height="54" rx="18" fill="#F6F1E7" />
+          <text
+            x="61"
+            y="37"
+            text-anchor="middle"
+            font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+            font-size="28"
+            font-weight="800"
+            letter-spacing="1.5"
+            fill="#B9532F"
+          >
+            MCP
+          </text>
+        </g>
       </svg>
-      <div class="pl-cap">MikroTik · MCP · v3.14.0</div>
+      <div class="pl-cap">MikroTik · MCP · <span data-version>v3.15.0</span></div>
       <div class="pl-bar"></div>
     </div>
 
@@ -1292,7 +1439,7 @@
         <a href="https://github.com/ali-master/mikrotik-mcp" data-hover>GitHub ↗</a>
       </div>
       <a class="ver" href="https://github.com/ali-master/mikrotik-mcp/releases" data-hover
-        >v3.14.0</a
+        ><span data-version>v3.15.0</span></a
       >
     </nav>
 
@@ -1306,14 +1453,15 @@
           <span class="line"><span class="w">with&nbsp;words.</span></span>
         </h1>
         <p class="sub">
-          <b>706 risk-annotated tools</b> across <b>111 modules</b> turn one — or a whole fleet — of
+          <b><span data-dyn-text="tools">715</span> risk-annotated tools</b> across
+          <b><span data-dyn-text="modules">112</span> modules</b> turn one — or a whole fleet — of
           MikroTik devices into something your AI can read, configure and secure in plain language.
           Now with a <b>change-plan dry-run engine</b>, <b>live packet capture</b>, a
           <b>firewall auditor</b> and <b>config snapshots</b>.
         </p>
         <div class="cta-row">
           <a class="btn primary" href="#workflows" data-hover data-magnetic>
-            <span class="lbl">See what's new in 2.5</span>
+            <span class="lbl">See what's new in v<span data-version-bare>3.15.0</span></span>
           </a>
           <a
             class="btn ghost"
@@ -1350,13 +1498,13 @@
     <!-- STATS -->
     <section class="wrap stats" id="tools">
       <div class="stat">
-        <div class="num" data-count="706" data-suffix="+">
+        <div class="num" data-count="715" data-suffix="+" data-dyn-count="tools">
           <span>0</span><span class="suffix"></span>
         </div>
         <div class="lbl">tools exposed</div>
       </div>
       <div class="stat">
-        <div class="num" data-count="92"><span>0</span></div>
+        <div class="num" data-count="112" data-dyn-count="modules"><span>0</span></div>
         <div class="lbl">RouterOS modules</div>
       </div>
       <div class="stat">
@@ -1369,10 +1517,10 @@
       </div>
     </section>
 
-    <!-- WORKFLOWS (NEW in 2.5) -->
+    <!-- WORKFLOWS (NEW in 3.15.0) -->
     <section class="wrap" id="workflows">
       <div class="head">
-        <span class="eyebrow">New in 3.14.0</span>
+        <span class="eyebrow">New in <span data-version-bare>3.15.0</span></span>
         <h2 data-reveal>
           Beyond the catalog: workflows that <span class="ital">think</span> before they touch the
           wire.
@@ -1484,8 +1632,8 @@
             <svg class="radar" viewBox="0 0 220 120" aria-hidden="true">
               <defs>
                 <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0" stop-color="#22d3ee" stop-opacity="0.5" />
-                  <stop offset="1" stop-color="#22d3ee" stop-opacity="0" />
+                  <stop offset="0" stop-color="#d2724f" stop-opacity="0.5" />
+                  <stop offset="1" stop-color="#d2724f" stop-opacity="0" />
                 </linearGradient>
               </defs>
               <circle class="ring" cx="110" cy="60" r="50" />
@@ -1520,7 +1668,12 @@
     <section class="domains" id="surface" aria-label="Tools and modules by domain">
       <div class="domains-intro wrap">
         <span class="eyebrow">The surface</span>
-        <h2>706 tools. 111 modules.<br /><span class="ital">Thirteen domains.</span></h2>
+        <h2>
+          <span data-dyn-text="tools">715</span> tools.
+          <span data-dyn-text="modules">112</span> modules.<br /><span class="ital"
+            >Thirteen domains.</span
+          >
+        </h2>
         <p class="domains-hint">Scroll to traverse <span class="arrow">→</span></p>
       </div>
       <div class="dviewport">
@@ -1619,43 +1772,63 @@
         <h2 data-reveal>How one natural-language request reaches the wire.</h2>
       </div>
       <div class="pipe-stage">
-        <div style="width: 100%">
-          <svg class="pipe-svg" viewBox="0 0 980 220">
-            <defs>
-              <linearGradient id="pg" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="#38bdf8" />
-                <stop offset="0.5" stop-color="#2dd4bf" />
-                <stop offset="1" stop-color="#bef264" />
-              </linearGradient>
-            </defs>
-            <path class="wire" d="M70 110 H910" />
-            <path class="flow" d="M70 110 H910" />
-            <g class="node" transform="translate(70,110)">
-              <circle r="30" />
-              <text y="-44">LLM</text>
-              <text class="sub" y="4">prompt</text>
-            </g>
-            <g class="node" transform="translate(350,110)">
-              <circle r="30" />
-              <text y="-44">registry</text>
-              <text class="sub" y="0">risk</text>
-              <text class="sub" y="12">gate</text>
-            </g>
-            <g class="node" transform="translate(630,110)">
-              <circle r="30" />
-              <text y="-44">Cmd</text>
-              <text class="sub" y="0">quote</text>
-              <text class="sub" y="12">+ build</text>
-            </g>
-            <g class="node" transform="translate(910,110)">
-              <circle r="30" />
-              <text y="-44">RouterOS</text>
-              <text class="sub" y="4">SSH / MAC</text>
-            </g>
-            <circle class="packet" r="7" cx="70" cy="110" />
-          </svg>
+        <div class="pipe wrap">
+          <div class="pipe-rail">
+            <div class="pipe-rail-fill" id="railFill"></div>
+            <div class="pipe-packet" id="pipePacket"></div>
+          </div>
+          <div class="pipe-stations" id="pipeStations">
+            <article class="pstation" data-stage="0">
+              <div class="pdot"><span>01</span></div>
+              <div class="pcard">
+                <div class="pkicker">Intent</div>
+                <h3>LLM <span class="arrow">→</span></h3>
+                <p>
+                  Picks a tool by its <b>description</b> — “block SSH from the WAN” becomes a single
+                  typed call.
+                </p>
+                <span class="pchip">prompt</span>
+              </div>
+            </article>
+            <article class="pstation" data-stage="1">
+              <div class="pdot"><span>02</span></div>
+              <div class="pcard">
+                <div class="pkicker">Gate</div>
+                <h3>registry <span class="arrow">→</span></h3>
+                <p>
+                  Auto-injects the <b>device</b>, then validates against a
+                  <b>five-tier risk preset</b> before anything runs.
+                </p>
+                <span class="pchip">risk · gate</span>
+              </div>
+            </article>
+            <article class="pstation" data-stage="2">
+              <div class="pdot"><span>03</span></div>
+              <div class="pcard">
+                <div class="pkicker">Build</div>
+                <h3>Cmd <span class="arrow">→</span></h3>
+                <p>
+                  A typed builder + <b>quoteValue</b> escape every argument — control chars and
+                  newlines never reach the channel raw.
+                </p>
+                <span class="pchip">quote · build</span>
+              </div>
+            </article>
+            <article class="pstation" data-stage="3">
+              <div class="pdot"><span>04</span></div>
+              <div class="pcard">
+                <div class="pkicker">Wire</div>
+                <h3>RouterOS <span class="arrow">→</span></h3>
+                <p>
+                  One choke point — <b>executeMikrotikCommand</b> — funnels it to the device,
+                  Safe-Mode aware.
+                </p>
+                <span class="pchip">SSH · MAC-Telnet</span>
+              </div>
+            </article>
+          </div>
           <div class="pipe-caption" id="pipeCap">
-            <b>tool call</b> · validated against a five-tier risk preset
+            <b>tool call</b> · the model picks a tool by its description
           </div>
         </div>
       </div>
@@ -1663,7 +1836,9 @@
 
     <!-- OUTRO -->
     <section class="wrap outro">
-      <span class="eyebrow" style="justify-content: center">v3.14.0 · MIT</span>
+      <span class="eyebrow" style="justify-content: center"
+        ><span data-version>v3.15.0</span> · MIT</span
+      >
       <h2 data-reveal-html>Configuration<br /><span class="grad">as conversation.</span></h2>
       <p>
         Point any MCP client at your MikroTik and start talking. Bun ≥ 1.3 · RouterOS 6.x ∴ 7.x ·
@@ -1697,7 +1872,7 @@
           title="@usex/mikrotik-mcp"
           ><b>@usex/mikrotik-mcp</b></a
         >
-        · v3.14.0</span
+        · <span data-version>v3.15.0</span></span
       >
       <span
         >∴
@@ -1718,6 +1893,62 @@
     <script>
       gsap.registerPlugin(ScrollTrigger);
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      /* ---------- live version + tool/module counts from GitHub (fall back to hardcoded) ---------- */
+      const REPO = "ali-master/mikrotik-mcp";
+      (async function loadLatestVersion() {
+        const setAll = (tag) => {
+          const v = /^v/i.test(tag) ? tag : "v" + tag;
+          const bare = v.replace(/^v/i, "");
+          document.querySelectorAll("[data-version]").forEach((el) => (el.textContent = v));
+          document.querySelectorAll("[data-version-bare]").forEach((el) => (el.textContent = bare));
+        };
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
+            headers: { Accept: "application/vnd.github+json" },
+          });
+          if (!res.ok) return; // keep the hardcoded fallback already in the DOM
+          const tag = (await res.json()).tag_name;
+          if (tag) setAll(tag);
+        } catch {
+          /* offline / rate-limited — the hardcoded version stays */
+        }
+      })();
+
+      // Tool & module counts come straight from the generated docs header
+      // ("**715 tools** across **112 modules**"). A Range request grabs just the
+      // first bytes so we never download the whole (large) reference file.
+      (async function loadLiveCounts() {
+        const applyCounts = (counts) => {
+          document.querySelectorAll("[data-dyn-text]").forEach((el) => {
+            const v = counts[el.dataset.dynText];
+            if (v != null) el.textContent = v;
+          });
+          document.querySelectorAll("[data-dyn-count]").forEach((el) => {
+            const v = counts[el.dataset.dynCount];
+            if (v == null) return;
+            el.dataset.count = v; // counter animation will count up to the live value
+            const num = el.children[0];
+            if (num && num.textContent !== "0") num.textContent = v; // already animated → set directly
+          });
+        };
+        try {
+          const res = await fetch(
+            `https://raw.githubusercontent.com/${REPO}/master/docs/tools-reference.md`,
+            { headers: { Range: "bytes=0-800" } },
+          );
+          if (!res.ok && res.status !== 206) return; // keep hardcoded fallback
+          const head = await res.text();
+          const m = head.match(/\*\*([\d,]+)\s*tools\*\*\s*across\s*\*\*([\d,]+)\s*modules\*\*/i);
+          if (!m) return;
+          applyCounts({
+            tools: parseInt(m[1].replace(/,/g, ""), 10),
+            modules: parseInt(m[2].replace(/,/g, ""), 10),
+          });
+        } catch {
+          /* offline / rate-limited — the hardcoded counts stay */
+        }
+      })();
 
       function splitChars(el) {
         const text = el.textContent;
@@ -1751,6 +1982,7 @@
         gsap.set(chev, { strokeDasharray: cl, strokeDashoffset: cl });
         gsap.set("#pl-logo .pl-tile", { scale: 0.55, opacity: 0, transformOrigin: "center" });
         gsap.set("#pl-logo .pl-hub, #pl-logo .pl-leaf", { scale: 0, transformOrigin: "center" });
+        gsap.set("#pl-logo .pl-badge", { scale: 0, opacity: 0, transformOrigin: "387px 427px" });
         tl.to("#pl-logo .pl-tile", { scale: 1, opacity: 1, duration: 0.6, ease: "back.out(1.5)" })
           .to("#pl-logo .pl-hub", { scale: 1, duration: 0.5, ease: "back.out(2.2)" }, "-=0.25")
           .to(
@@ -1767,6 +1999,11 @@
             "#pl-logo .pl-chevron",
             { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" },
             "-=0.15",
+          )
+          .to(
+            "#pl-logo .pl-badge",
+            { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(2.4)" },
+            "-=0.1",
           )
           .from(".pl-cap", { opacity: 0, y: 8, duration: 0.4 }, "-=0.3");
         gsap.to("#pl-logo", {
@@ -2096,9 +2333,9 @@
             const dels = steps.filter((s) => s.dataset.grp === "2");
             gsap.fromTo(
               dels,
-              { backgroundColor: "rgba(251,113,133,0.18)" },
+              { backgroundColor: "rgba(242,104,90,0.18)" },
               {
-                backgroundColor: "rgba(140,150,210,0.05)",
+                backgroundColor: "rgba(210,150,120,0.06)",
                 duration: 1.4,
                 delay: 0.7,
                 ease: "power2.out",
@@ -2113,12 +2350,12 @@
         const host = document.getElementById("pktStream");
         if (!host) return;
         const protos = [
-          ["TCP", "#22d3ee"],
-          ["UDP", "#bef264"],
-          ["ICMP", "#fbbf24"],
-          ["TCP", "#22d3ee"],
-          ["ARP", "#2dd4bf"],
-          ["UDP", "#bef264"],
+          ["TCP", "#e0875f"],
+          ["UDP", "#a6c955"],
+          ["ICMP", "#f2a93b"],
+          ["TCP", "#e0875f"],
+          ["ARP", "#b9532f"],
+          ["UDP", "#a6c955"],
         ];
         const ips = ["10.0.0.1", "10.0.0.8", "8.8.8.8", "192.168.88.10", "1.1.1.1", "10.0.0.20"];
         const pick = (a, i) => a[i % a.length];
@@ -2415,7 +2652,7 @@
       ];
       const dtrack = document.querySelector(".dtrack");
       if (dtrack) {
-        const accents = ["#38bdf8", "#2dd4bf", "#bef264"];
+        const accents = ["#e08763", "#d2724f", "#b9532f"];
         DOMAINS.forEach((d, i) => {
           const slide = make("article", "dslide");
           slide.style.setProperty("--accent", accents[i % accents.length]);
@@ -2481,53 +2718,71 @@
         }
       }
 
-      /* ---------- pinned pipeline scrub ---------- */
-      const flow = document.querySelector(".pipe-svg .flow");
-      const len = flow.getTotalLength();
-      gsap.set(flow, { strokeDasharray: len, strokeDashoffset: len });
-      const packet = document.querySelector(".packet");
-      const cap = document.getElementById("pipeCap");
-      const captions = [
-        ["tool call", " · the model picks a tool by its description"],
-        ["risk gate", " · validated against a five-tier preset"],
-        ["Cmd build", " · quoteValue escapes every argument"],
-        ["on the wire", " · executeMikrotikCommand over SSH or MAC-Telnet"],
-      ];
-      function setCaption(arr) {
-        cap.textContent = "";
-        const b = document.createElement("b");
-        b.textContent = arr[0];
-        cap.append(b, document.createTextNode(arr[1]));
-      }
-      const pipeTl = gsap.timeline({
-        scrollTrigger: {
+      /* ---------- vertical pipeline: packet descends, stations light up ---------- */
+      (function pipeline() {
+        const railFill = document.getElementById("railFill");
+        const packet = document.getElementById("pipePacket");
+        const rail = document.querySelector(".pipe-rail");
+        const stations = gsap.utils.toArray("#pipeStations .pstation");
+        const cap = document.getElementById("pipeCap");
+        if (!railFill || !packet || !stations.length) return;
+
+        const captions = [
+          ["tool call", " · the model picks a tool by its description"],
+          ["risk gate", " · validated against a five-tier risk preset"],
+          ["Cmd build", " · quoteValue escapes every argument — no string concat"],
+          ["on the wire", " · executeMikrotikCommand over SSH or MAC-Telnet"],
+        ];
+        function setCaption(i) {
+          if (cap.dataset.idx == i) return;
+          cap.dataset.idx = i;
+          cap.textContent = "";
+          const b = document.createElement("b");
+          b.textContent = captions[i][0];
+          cap.append(b, document.createTextNode(captions[i][1]));
+          gsap.fromTo(cap, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35 });
+        }
+        setCaption(0);
+
+        // dot centre offsets (fraction of the rail) so the packet snaps through each node
+        function dotFractions() {
+          const railBox = rail.getBoundingClientRect();
+          return stations.map((s) => {
+            const dot = s.querySelector(".pdot").getBoundingClientRect();
+            return (dot.top + dot.height / 2 - railBox.top) / railBox.height;
+          });
+        }
+
+        const update = (p) => {
+          railFill.style.transform = `scaleY(${p})`;
+          packet.style.top = `${p * 100}%`;
+          const fr = dotFractions();
+          let active = 0;
+          for (let i = 0; i < fr.length; i++) if (p >= fr[i] - 0.04) active = i;
+          stations.forEach((s, i) => s.classList.toggle("is-on", i <= active && p > 0.01));
+          setCaption(active);
+        };
+
+        ScrollTrigger.create({
           trigger: ".pipeline",
           start: "top top",
-          end: "+=2200",
+          end: "+=2400",
           pin: ".pipe-stage",
           scrub: 1,
-        },
-      });
-      pipeTl
-        .to(flow, { strokeDashoffset: 0, ease: "none" }, 0)
-        .to(
-          packet,
-          {
-            attr: { cx: 910 },
-            ease: "none",
-            onUpdate: function () {
-              const p = this.progress();
-              const idx = Math.min(captions.length - 1, Math.floor(p * captions.length));
-              if (cap.dataset.idx != idx) {
-                cap.dataset.idx = idx;
-                setCaption(captions[idx]);
-                gsap.fromTo(cap, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 });
-              }
-            },
-          },
-          0,
-        )
-        .to(".pipe-svg .node circle", { stroke: "#22d3ee", stagger: 0.2, duration: 0.3 }, 0);
+          onUpdate: (self) => update(self.progress),
+          onRefresh: (self) => update(self.progress),
+        });
+
+        // gentle idle bob on the packet so it feels alive even when still
+        if (!reduce)
+          gsap.to(packet, {
+            boxShadow: "0 0 0 7px rgba(224,135,99,0.12), 0 0 34px 9px rgba(242,168,99,0.95)",
+            duration: 1.1,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+          });
+      })();
 
       /* ---------- scroll cue fade ---------- */
       gsap.to(".scroll-cue", { opacity: 0, scrollTrigger: { start: 80, end: 300, scrub: true } });
