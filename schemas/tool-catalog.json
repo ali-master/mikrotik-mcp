@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.15.0",
+  "version": "3.16.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 715,
+  "toolCount": 721,
   "tools": [
     {
       "name": "list_interfaces",
@@ -14536,6 +14536,235 @@
             "maximum": 9007199254740991
           }
         },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_ovpn_server",
+      "title": "Add Named OpenVPN Server",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Add a named inbound OpenVPN server instance (`/interface ovpn-server server add`) — the RouterOS 7.17+ multi-server model, where several OVPN servers can run side by side, each on its own port/certificate/profile. Provide a unique name; port defaults to 1194. Supports protocol (tcp/udp), ip or ethernet mode, certificate, auth/cipher algorithm lists, netmask, max_mtu, default_profile, mac_address (ethernet mode) and require_client_certificate. For the legacy single-server (selector-less) menu on older RouterOS use set_ovpn_server. To remove a named server use remove_ovpn_server; to list them use list_ovpn_servers. For outbound tunnels use create_ovpn_client. Returns the created server's detail including its name.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name for the new OpenVPN server instance"
+          },
+          "port": {
+            "default": 1194,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "protocol": {
+            "type": "string",
+            "enum": ["tcp", "udp"]
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["ip", "ethernet"]
+          },
+          "netmask": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mac_address": {
+            "description": "Server MAC for ethernet mode",
+            "type": "string"
+          },
+          "certificate": {
+            "type": "string"
+          },
+          "auth": {
+            "description": "Comma-separated, e.g. 'sha256,sha1'",
+            "type": "string"
+          },
+          "cipher": {
+            "description": "Comma-separated, e.g. 'aes256-cbc,aes256-gcm'",
+            "type": "string"
+          },
+          "max_mtu": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "default_profile": {
+            "type": "string"
+          },
+          "require_client_certificate": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": ["name", "port", "disabled"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_ovpn_servers",
+      "title": "List Named OpenVPN Servers",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "`list_ovpn_servers` — READ / list / show / inspect all named OpenVPN server instances (`/interface ovpn-server server print detail`) on the RouterOS 7.17+ multi-server model, optionally filtered by partial name (name_filter). Returns each server's name, port, protocol, certificate, profile and disabled state. Pass a name_filter to fetch one server's full detail (this doubles as get-by-name). The `.id`/name values feed update_ovpn_server, remove_ovpn_server, enable_ovpn_server and disable_ovpn_server. For the legacy single-server menu use get_ovpn_server; for outbound tunnels use list_ovpn_clients.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial name match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_ovpn_server",
+      "title": "Update Named OpenVPN Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Modify a named OpenVPN server instance (`/interface ovpn-server server set [find name=...]`) on the RouterOS 7.17+ multi-server model — change port, protocol, mode, certificate, auth/cipher, netmask, max_mtu, default_profile, mac_address, comment or require_client_certificate without recreating it. To toggle only the enabled state use enable_ovpn_server / disable_ovpn_server. To create a server use add_ovpn_server; to remove one use remove_ovpn_server. For the legacy single-server menu use set_ovpn_server. Returns the updated server's detail.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Existing OpenVPN server instance name"
+          },
+          "port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "protocol": {
+            "type": "string",
+            "enum": ["tcp", "udp"]
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["ip", "ethernet"]
+          },
+          "netmask": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mac_address": {
+            "type": "string"
+          },
+          "certificate": {
+            "type": "string"
+          },
+          "auth": {
+            "type": "string"
+          },
+          "cipher": {
+            "type": "string"
+          },
+          "max_mtu": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "default_profile": {
+            "type": "string"
+          },
+          "require_client_certificate": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_ovpn_server",
+      "title": "Remove Named OpenVPN Server",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Permanently delete a named OpenVPN server instance (`/interface ovpn-server server remove [find name=...]`) on the RouterOS 7.17+ multi-server model — verifies existence with a count-only check before deleting. Use list_ovpn_servers to confirm the name. To stop a server without deleting it use disable_ovpn_server. This does not touch the legacy single-server menu (use set_ovpn_server with enabled=false for that) or any OVPN clients. Returns a success or not-found message.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enable_ovpn_server",
+      "title": "Enable Named OpenVPN Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enable a disabled named OpenVPN server instance (`/interface ovpn-server server enable [find name=...]`) on the RouterOS 7.17+ multi-server model, so it starts accepting clients. Use list_ovpn_servers to confirm the name. To deactivate use disable_ovpn_server; to delete use remove_ovpn_server. For the legacy single-server menu use set_ovpn_server with enabled=true. Returns a success or error message.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "disable_ovpn_server",
+      "title": "Disable Named OpenVPN Server",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disable an active named OpenVPN server instance (`/interface ovpn-server server disable [find name=...]`) on the RouterOS 7.17+ multi-server model, stopping it without deleting its configuration. Use list_ovpn_servers to confirm the name. To re-activate use enable_ovpn_server; to delete use remove_ovpn_server. For the legacy single-server menu use set_ovpn_server with enabled=false. Returns a success or error message.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"],
         "additionalProperties": false
       }
     },

@@ -99,6 +99,257 @@ export const openvpnTools: ToolModule = [
     },
   }),
 
+  // ── Multi-server model (RouterOS 7.17+) ───────────────────────────────────
+  // 7.17 turned `/interface ovpn-server server` from a single selector-less
+  // entry into a list of NAMED server instances. These tools manage those named
+  // instances; the legacy get_ovpn_server/set_ovpn_server above still drive the
+  // selector-less form on older devices and single-server setups.
+
+  defineTool({
+    name: "add_ovpn_server",
+    title: "Add Named OpenVPN Server",
+    annotations: WRITE,
+    description:
+      "Add a named inbound OpenVPN server instance (`/interface ovpn-server server add`) — the" +
+      " RouterOS 7.17+ multi-server model, where several OVPN servers can run side by side, each on" +
+      " its own port/certificate/profile. Provide a unique name; port defaults to 1194. Supports" +
+      " protocol (tcp/udp), ip or ethernet mode, certificate, auth/cipher algorithm lists, netmask," +
+      " max_mtu, default_profile, mac_address (ethernet mode) and require_client_certificate. For the" +
+      " legacy single-server (selector-less) menu on older RouterOS use set_ovpn_server. To remove a" +
+      " named server use remove_ovpn_server; to list them use list_ovpn_servers. For outbound tunnels" +
+      " use create_ovpn_client. Returns the created server's detail including its name.",
+    inputSchema: {
+      name: z.string().describe("Unique name for the new OpenVPN server instance"),
+      port: z.number().int().default(1194),
+      protocol: z.enum(["tcp", "udp"]).optional(),
+      mode: z.enum(["ip", "ethernet"]).optional(),
+      netmask: z.number().int().optional(),
+      mac_address: z.string().optional().describe("Server MAC for ethernet mode"),
+      certificate: z.string().optional(),
+      auth: z.string().optional().describe("Comma-separated, e.g. 'sha256,sha1'"),
+      cipher: z.string().optional().describe("Comma-separated, e.g. 'aes256-cbc,aes256-gcm'"),
+      max_mtu: z.number().int().optional(),
+      default_profile: z.string().optional(),
+      require_client_certificate: z.boolean().optional(),
+      comment: z.string().optional(),
+      disabled: z.boolean().default(false),
+    },
+    async handler(a, ctx) {
+      ctx.info(`Adding OpenVPN server: name=${a.name}`);
+      const cmd = new Cmd("/interface ovpn-server server add")
+        .set("name", a.name)
+        .opt("port", a.port)
+        .opt("protocol", a.protocol)
+        .opt("mode", a.mode)
+        .opt("netmask", a.netmask)
+        .opt("mac-address", a.mac_address)
+        .opt("certificate", a.certificate)
+        .opt("auth", a.auth)
+        .opt("cipher", a.cipher)
+        .opt("max-mtu", a.max_mtu)
+        .opt("default-profile", a.default_profile)
+        .bool("require-client-certificate", a.require_client_certificate)
+        .opt("comment", a.comment)
+        .flag("disabled", a.disabled)
+        .build();
+
+      const result = await executeMikrotikCommand(cmd, ctx);
+      if (containsRawParserError(result)) {
+        return (
+          "Failed to add OpenVPN server: this RouterOS build does not support named OpenVPN" +
+          " server instances (the multi-server model requires RouterOS 7.17+). Use set_ovpn_server" +
+          ` to configure the single legacy server instead.\n\n${result}`
+        );
+      }
+      if (looksLikeError(result)) return `Failed to add OpenVPN server: ${result}`;
+
+      const details = await executeMikrotikCommand(
+        `/interface ovpn-server server print detail where name="${a.name}"`,
+        ctx,
+      );
+      return details.trim()
+        ? `OpenVPN server '${a.name}' added successfully:\n\n${details}`
+        : "OpenVPN server creation completed but unable to verify.";
+    },
+  }),
+
+  defineTool({
+    name: "list_ovpn_servers",
+    title: "List Named OpenVPN Servers",
+    annotations: READ,
+    description:
+      "`list_ovpn_servers` — READ / list / show / inspect all named OpenVPN server instances" +
+      " (`/interface ovpn-server server print detail`) on the RouterOS 7.17+ multi-server model," +
+      " optionally filtered by partial name (name_filter). Returns each server's name, port, protocol," +
+      " certificate, profile and disabled state. Pass a name_filter to fetch one server's full detail" +
+      " (this doubles as get-by-name). The `.id`/name values feed update_ovpn_server," +
+      " remove_ovpn_server, enable_ovpn_server and disable_ovpn_server. For the legacy single-server" +
+      " menu use get_ovpn_server; for outbound tunnels use list_ovpn_clients.",
+    inputSchema: {
+      name_filter: z.string().optional().describe("Partial name match"),
+    },
+    async handler(a, ctx) {
+      ctx.info("Listing OpenVPN servers");
+      const filters: string[] = [];
+      if (a.name_filter) filters.push(`name~"${a.name_filter}"`);
+      const result = await executeMikrotikCommand(
+        `/interface ovpn-server server print detail${whereClause(filters)}`,
+        ctx,
+      );
+      return isEmpty(result)
+        ? "No named OpenVPN servers found (the device may use the legacy single-server menu — try get_ovpn_server)."
+        : `OPENVPN SERVERS:\n\n${result}`;
+    },
+  }),
+
+  defineTool({
+    name: "update_ovpn_server",
+    title: "Update Named OpenVPN Server",
+    annotations: WRITE_IDEMPOTENT,
+    description:
+      "Modify a named OpenVPN server instance (`/interface ovpn-server server set [find name=...]`) on" +
+      " the RouterOS 7.17+ multi-server model — change port, protocol, mode, certificate, auth/cipher," +
+      " netmask, max_mtu, default_profile, mac_address, comment or require_client_certificate without" +
+      " recreating it. To toggle only the enabled state use enable_ovpn_server / disable_ovpn_server." +
+      " To create a server use add_ovpn_server; to remove one use remove_ovpn_server. For the legacy" +
+      " single-server menu use set_ovpn_server. Returns the updated server's detail.",
+    inputSchema: {
+      name: z.string().describe("Existing OpenVPN server instance name"),
+      port: z.number().int().optional(),
+      protocol: z.enum(["tcp", "udp"]).optional(),
+      mode: z.enum(["ip", "ethernet"]).optional(),
+      netmask: z.number().int().optional(),
+      mac_address: z.string().optional(),
+      certificate: z.string().optional(),
+      auth: z.string().optional(),
+      cipher: z.string().optional(),
+      max_mtu: z.number().int().optional(),
+      default_profile: z.string().optional(),
+      require_client_certificate: z.boolean().optional(),
+      comment: z.string().optional(),
+    },
+    async handler(a, ctx) {
+      ctx.info(`Updating OpenVPN server: name=${a.name}`);
+      const base = `/interface ovpn-server server set [find name="${a.name}"]`;
+      const cmd = new Cmd(base)
+        .opt("port", a.port)
+        .opt("protocol", a.protocol)
+        .opt("mode", a.mode)
+        .opt("netmask", a.netmask)
+        .opt("mac-address", a.mac_address)
+        .opt("certificate", a.certificate)
+        .opt("auth", a.auth)
+        .opt("cipher", a.cipher)
+        .opt("max-mtu", a.max_mtu)
+        .opt("default-profile", a.default_profile)
+        .bool("require-client-certificate", a.require_client_certificate)
+        .opt("comment", a.comment)
+        .build();
+
+      if (cmd === base) return "No updates specified.";
+
+      const count = await executeMikrotikCommand(
+        `/interface ovpn-server server print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (count.trim() === "0") return `OpenVPN server '${a.name}' not found.`;
+
+      const result = await executeMikrotikCommand(cmd, ctx);
+      if (looksLikeError(result)) return `Failed to update OpenVPN server: ${result}`;
+
+      const details = await executeMikrotikCommand(
+        `/interface ovpn-server server print detail where name="${a.name}"`,
+        ctx,
+      );
+      return `OpenVPN server '${a.name}' updated successfully:\n\n${details}`;
+    },
+  }),
+
+  defineTool({
+    name: "remove_ovpn_server",
+    title: "Remove Named OpenVPN Server",
+    annotations: DESTRUCTIVE,
+    description:
+      "Permanently delete a named OpenVPN server instance (`/interface ovpn-server server remove" +
+      " [find name=...]`) on the RouterOS 7.17+ multi-server model — verifies existence with a" +
+      " count-only check before deleting. Use list_ovpn_servers to confirm the name. To stop a server" +
+      " without deleting it use disable_ovpn_server. This does not touch the legacy single-server menu" +
+      " (use set_ovpn_server with enabled=false for that) or any OVPN clients. Returns a success or" +
+      " not-found message.",
+    inputSchema: { name: z.string() },
+    async handler(a, ctx) {
+      ctx.info(`Removing OpenVPN server: name=${a.name}`);
+      const count = await executeMikrotikCommand(
+        `/interface ovpn-server server print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (count.trim() === "0") return `OpenVPN server '${a.name}' not found.`;
+
+      const result = await executeMikrotikCommand(
+        `/interface ovpn-server server remove [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result)) return `Failed to remove OpenVPN server: ${result}`;
+      return `OpenVPN server '${a.name}' removed successfully.`;
+    },
+  }),
+
+  defineTool({
+    name: "enable_ovpn_server",
+    title: "Enable Named OpenVPN Server",
+    annotations: WRITE_IDEMPOTENT,
+    description:
+      "Enable a disabled named OpenVPN server instance (`/interface ovpn-server server enable" +
+      " [find name=...]`) on the RouterOS 7.17+ multi-server model, so it starts accepting clients." +
+      " Use list_ovpn_servers to confirm the name. To deactivate use disable_ovpn_server; to delete" +
+      " use remove_ovpn_server. For the legacy single-server menu use set_ovpn_server with" +
+      " enabled=true. Returns a success or error message.",
+    inputSchema: { name: z.string() },
+    async handler(a, ctx) {
+      ctx.info(`Enabling OpenVPN server: name=${a.name}`);
+      const count = await executeMikrotikCommand(
+        `/interface ovpn-server server print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (count.trim() === "0") return `OpenVPN server '${a.name}' not found.`;
+
+      const result = await executeMikrotikCommand(
+        `/interface ovpn-server server enable [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result)) return `Failed to enable OpenVPN server: ${result}`;
+      return `OpenVPN server '${a.name}' enabled successfully.`;
+    },
+  }),
+
+  defineTool({
+    name: "disable_ovpn_server",
+    title: "Disable Named OpenVPN Server",
+    annotations: WRITE_IDEMPOTENT,
+    description:
+      "Disable an active named OpenVPN server instance (`/interface ovpn-server server disable" +
+      " [find name=...]`) on the RouterOS 7.17+ multi-server model, stopping it without deleting its" +
+      " configuration. Use list_ovpn_servers to confirm the name. To re-activate use" +
+      " enable_ovpn_server; to delete use remove_ovpn_server. For the legacy single-server menu use" +
+      " set_ovpn_server with enabled=false. Returns a success or error message.",
+    inputSchema: { name: z.string() },
+    async handler(a, ctx) {
+      ctx.info(`Disabling OpenVPN server: name=${a.name}`);
+      const count = await executeMikrotikCommand(
+        `/interface ovpn-server server print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (count.trim() === "0") return `OpenVPN server '${a.name}' not found.`;
+
+      const result = await executeMikrotikCommand(
+        `/interface ovpn-server server disable [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result)) return `Failed to disable OpenVPN server: ${result}`;
+      return `OpenVPN server '${a.name}' disabled successfully.`;
+    },
+  }),
+
   defineTool({
     name: "create_ovpn_client",
     title: "Create OpenVPN Client Interface",

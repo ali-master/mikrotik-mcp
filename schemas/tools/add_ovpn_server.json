@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_ovpn_server",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique name for the new OpenVPN server instance"
+    },
+    "port": {
+      "default": 1194,
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["tcp", "udp"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["ip", "ethernet"]
+    },
+    "netmask": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mac_address": {
+      "description": "Server MAC for ethernet mode",
+      "type": "string"
+    },
+    "certificate": {
+      "type": "string"
+    },
+    "auth": {
+      "description": "Comma-separated, e.g. 'sha256,sha1'",
+      "type": "string"
+    },
+    "cipher": {
+      "description": "Comma-separated, e.g. 'aes256-cbc,aes256-gcm'",
+      "type": "string"
+    },
+    "max_mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "default_profile": {
+      "type": "string"
+    },
+    "require_client_certificate": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": ["name", "port", "disabled"],
+  "additionalProperties": false
+}

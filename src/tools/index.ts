@@ -674,7 +674,8 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "OpenVPN",
     slug: "openvpn",
     group: "VPN & Tunneling",
-    description: "OpenVPN server + clients (`/interface ovpn-*`).",
+    description:
+      "OpenVPN servers — legacy single + RouterOS 7.17 multi-server — and clients (`/interface ovpn-*`).",
     tools: openvpnTools,
   },
   {

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_ovpn_server",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Existing OpenVPN server instance name"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["tcp", "udp"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["ip", "ethernet"]
+    },
+    "netmask": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mac_address": {
+      "type": "string"
+    },
+    "certificate": {
+      "type": "string"
+    },
+    "auth": {
+      "type": "string"
+    },
+    "cipher": {
+      "type": "string"
+    },
+    "max_mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "default_profile": {
+      "type": "string"
+    },
+    "require_client_certificate": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}
