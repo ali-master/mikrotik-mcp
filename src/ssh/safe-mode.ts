@@ -22,6 +22,10 @@ import { getDevice } from "../core/runtime";
 // eslint-disable-next-line regexp/no-super-linear-backtracking
 const PROMPT_RE = /\[.+?@.+?\] (?:<SAFE> )?> ?$/m;
 
+/** Matches ONLY the normal (non-`<SAFE>`) RouterOS prompt. */
+// eslint-disable-next-line regexp/no-super-linear-backtracking
+const NORMAL_PROMPT_RE = /\[.+?@.+?\] > ?$/m;
+
 /** Strip ANSI/VT escape sequences RouterOS emits on interactive shells. */
 const ANSI_RE =
   // oxlint-disable-next-line no-control-regex
@@ -45,6 +49,28 @@ const CTRL_X = "\x18";
 export function isSafeModeActivated(response: string): boolean {
   if (response.includes("<SAFE>")) return true;
   return /safe mode[^\n]*\b(?:success|taken|enabled|active)\b/i.test(response);
+}
+
+/**
+ * True when output confirms Safe Mode has been RELEASED — i.e. the shell has
+ * settled back on a normal prompt with no `<SAFE>` marker on its last line.
+ *
+ * This is the commit-side counterpart of {@link isSafeModeActivated} and the
+ * crux of a correctness fix: after the commit Ctrl+X, RouterOS may briefly
+ * redraw the lingering `<SAFE>` prompt before it actually exits Safe Mode.
+ * Tearing the channel down on that lingering prompt drops the connection
+ * mid-commit, which RouterOS treats as a session loss and AUTO-REVERTS — so the
+ * "committed" changes silently roll back. We must wait until the LAST prompt
+ * line is the normal one before closing.
+ */
+export function isSafeModeReleased(response: string): boolean {
+  const lines = response
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((l) => l.trimEnd())
+    .filter(Boolean);
+  const last = lines.at(-1) ?? "";
+  return NORMAL_PROMPT_RE.test(last) && !last.includes("<SAFE>");
 }
 
 export class SafeModeManager {
@@ -110,7 +136,11 @@ export class SafeModeManager {
       }
 
       this.channel.write(CTRL_X);
-      const response = await this.readUntilPrompt(10_000);
+      // Wait specifically for the activation signal, not just any prompt: right
+      // after Ctrl+X RouterOS can echo a redraw of the still-normal prompt
+      // before the `<SAFE>` marker appears, which would otherwise be misread as
+      // "did not activate". Fall back to the timeout buffer either way.
+      const response = await this.readUntilPrompt(10_000, (c) => isSafeModeActivated(c));
       // Activation is confirmed EITHER by the prompt switching to the `<SAFE>`
       // marker (the usual case) OR by RouterOS printing a textual confirmation
       // — some versions/terminal types emit "Taking Safe Mode session...
@@ -147,11 +177,23 @@ export class SafeModeManager {
     return this.lock(async () => {
       if (!this.active || !this.channel) return "Safe mode is not active. Nothing to commit.";
       this.channel.write(CTRL_X);
-      const response = await this.readUntilPrompt(15_000);
+      // CRITICAL: wait until Safe Mode is actually RELEASED (the prompt returns
+      // to normal, no `<SAFE>`) before tearing down. Closing the channel while
+      // still in `<SAFE>` would look like a dropped session to RouterOS and
+      // auto-revert the changes we are trying to commit. Only mark inactive and
+      // clean up once release is confirmed.
+      const response = await this.readUntilPrompt(15_000, (c) => isSafeModeReleased(c));
+      if (!isSafeModeReleased(response)) {
+        // Did not see a normal prompt in time — do NOT claim success. Keep the
+        // session open so the caller can retry commit rather than risk a
+        // close-triggered revert masquerading as a successful commit.
+        return (
+          "Commit may not have completed: the device did not return to a normal prompt " +
+          `after exiting Safe Mode. Session left open — retry commit_safe_mode. Response: ${response.slice(-200)}`
+        );
+      }
       this.cleanup();
-      return response.includes("<SAFE>")
-        ? `Commit attempted. Response: ${response.slice(0, 200)}`
-        : "Changes committed successfully. Safe mode DISABLED.";
+      return "Changes committed successfully. Safe mode DISABLED.";
     });
   }
 
@@ -173,7 +215,16 @@ export class SafeModeManager {
 
   // ── internals ────────────────────────────────────────────────────────────
 
-  private readUntilPrompt(timeoutMs = 15_000): Promise<string> {
+  /**
+   * Read from the channel until `isDone(cleaned)` is satisfied or the timeout
+   * elapses. Defaults to "any RouterOS prompt appeared". Mode transitions pass a
+   * stricter predicate so they wait for the prompt that reflects the NEW state
+   * (safe-mode marker present/absent), not merely the first prompt-shaped line.
+   */
+  private readUntilPrompt(
+    timeoutMs = 15_000,
+    isDone: (cleaned: string) => boolean = (c) => PROMPT_RE.test(c),
+  ): Promise<string> {
     const channel = this.channel;
     if (!channel) return Promise.resolve("");
     return new Promise((resolve) => {
@@ -184,7 +235,7 @@ export class SafeModeManager {
       function onData(chunk: Buffer): void {
         buf += decodeOutput(chunk);
         const cleaned = stripAnsi(buf);
-        if (PROMPT_RE.test(cleaned)) finish(cleaned);
+        if (isDone(cleaned)) finish(cleaned);
       }
       function finish(result: string): void {
         clearTimeout(timer);
