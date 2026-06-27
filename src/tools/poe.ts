@@ -9,9 +9,18 @@ import { looksLikeError, isEmpty, commandUnsupported } from "../core/routeros";
  * Devices without PoE-out hardware have no `/interface ethernet poe` menu, so
  * RouterOS answers with `bad command name poe`. Treat that as "no PoE hardware"
  * rather than wrapping the parser error in a success message.
+ *
+ * The message disambiguates PoE-OUT from PoE-IN: a device that is *powered* over
+ * Ethernet (PoE-IN) but cannot *supply* power to others still has no
+ * `/interface ethernet poe` menu — that is expected, not a fault — and its
+ * PoE-IN status lives under `/system health`, surfaced by `get_system_health`.
  */
 const NO_POE =
-  "This device does not have PoE-out hardware — the /interface ethernet poe menu is not available.";
+  "This device has no PoE-OUT hardware, so the `/interface ethernet poe` menu " +
+  "(used to SUPPLY power to other devices) is not available — this is normal, not an error. " +
+  "Note: PoE-OUT (this router powering other devices) is different from PoE-IN (this router being " +
+  "powered over Ethernet). If your device is PoE-powered, read its PoE-IN voltage/state with " +
+  "get_system_health (`/system health`), not the PoE tools.";
 
 export const poeTools: ToolModule = [
   defineTool({
