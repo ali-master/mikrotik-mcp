@@ -4,7 +4,7 @@
  * and both must count as activated.
  */
 import { describe, expect, test } from "vite-plus/test";
-import { isSafeModeActivated, isSafeModeReleased } from "../../src/ssh/safe-mode";
+import { classifyPrompt, isSafeModeActivated, isSafeModeReleased } from "../../src/ssh/safe-mode";
 
 describe("isSafeModeActivated", () => {
   test("accepts the <SAFE> prompt marker", () => {
@@ -37,5 +37,25 @@ describe("isSafeModeReleased", () => {
   });
   test("false on empty / no prompt", () => {
     expect(isSafeModeReleased("")).toBe(false);
+  });
+});
+
+describe("classifyPrompt — commit-side mode detection", () => {
+  test("'released' on a settled normal prompt", () => {
+    expect(classifyPrompt("[admin@MikroTik] > ")).toBe("released");
+    expect(classifyPrompt("\r\n[Safe mode released]\r\n[admin@MikroTik] > ")).toBe("released");
+  });
+  test("'safe' while the prompt still shows <SAFE> (commit not taken → retry, don't loop)", () => {
+    expect(classifyPrompt("[admin@MikroTik] <SAFE> > ")).toBe("safe");
+    // A transient normal line followed by a settled <SAFE> prompt is still 'safe'.
+    expect(classifyPrompt("[admin@MikroTik] > \r\n[admin@MikroTik] <SAFE> > ")).toBe("safe");
+  });
+  test("'unknown' when no prompt was captured (timed out / wedged — never claim success)", () => {
+    expect(classifyPrompt("")).toBe("unknown");
+    expect(classifyPrompt("...some banner with no prompt...")).toBe("unknown");
+  });
+  test("settles on the LAST prompt after a Ctrl+X then Enter nudge", () => {
+    // Ctrl+X redraws <SAFE>, Enter then renders the real post-commit prompt.
+    expect(classifyPrompt("[admin@MikroTik] <SAFE> > \r\n[admin@MikroTik] > ")).toBe("released");
   });
 });

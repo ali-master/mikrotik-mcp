@@ -22,10 +22,6 @@ import { getDevice } from "../core/runtime";
 // eslint-disable-next-line regexp/no-super-linear-backtracking
 const PROMPT_RE = /\[.+?@.+?\] (?:<SAFE> )?> ?$/m;
 
-/** Matches ONLY the normal (non-`<SAFE>`) RouterOS prompt. */
-// eslint-disable-next-line regexp/no-super-linear-backtracking
-const NORMAL_PROMPT_RE = /\[.+?@.+?\] > ?$/m;
-
 /** Strip ANSI/VT escape sequences RouterOS emits on interactive shells. */
 const ANSI_RE =
   // oxlint-disable-next-line no-control-regex
@@ -51,26 +47,40 @@ export function isSafeModeActivated(response: string): boolean {
   return /safe mode[^\n]*\b(?:success|taken|enabled|active)\b/i.test(response);
 }
 
-/**
- * True when output confirms Safe Mode has been RELEASED — i.e. the shell has
- * settled back on a normal prompt with no `<SAFE>` marker on its last line.
- *
- * This is the commit-side counterpart of {@link isSafeModeActivated} and the
- * crux of a correctness fix: after the commit Ctrl+X, RouterOS may briefly
- * redraw the lingering `<SAFE>` prompt before it actually exits Safe Mode.
- * Tearing the channel down on that lingering prompt drops the connection
- * mid-commit, which RouterOS treats as a session loss and AUTO-REVERTS — so the
- * "committed" changes silently roll back. We must wait until the LAST prompt
- * line is the normal one before closing.
- */
-export function isSafeModeReleased(response: string): boolean {
+/** The last non-empty, CR-stripped, right-trimmed line of a response buffer. */
+function lastNonEmptyLine(response: string): string {
   const lines = response
     .replace(/\r/g, "")
     .split("\n")
     .map((l) => l.trimEnd())
     .filter(Boolean);
-  const last = lines.at(-1) ?? "";
-  return NORMAL_PROMPT_RE.test(last) && !last.includes("<SAFE>");
+  return lines.at(-1) ?? "";
+}
+
+/**
+ * Classify the shell's CURRENT mode from its settled output, by looking at the
+ * last prompt line:
+ *   • `"safe"`     — a `<SAFE>` prompt: Safe Mode is still active.
+ *   • `"released"` — a normal prompt with no `<SAFE>`: Safe Mode has exited.
+ *   • `"unknown"`  — no recognisable prompt (timed out / wedged): caller must
+ *     not assume either state (closing on a false "released" would be safe, but
+ *     reporting a false "committed" would be a lie; reporting a false "safe"
+ *     would loop).
+ *
+ * This drives the commit logic, which presses Enter to force a deterministic
+ * redraw and then reads the settled prompt — far more reliable than hoping
+ * RouterOS spontaneously redraws after the commit Ctrl+X (it often doesn't on a
+ * `dumb` terminal).
+ */
+export function classifyPrompt(response: string): "safe" | "released" | "unknown" {
+  const last = lastNonEmptyLine(response);
+  if (!PROMPT_RE.test(last)) return "unknown";
+  return last.includes("<SAFE>") ? "safe" : "released";
+}
+
+/** True when output confirms Safe Mode has been RELEASED (normal prompt). */
+export function isSafeModeReleased(response: string): boolean {
+  return classifyPrompt(response) === "released";
 }
 
 export class SafeModeManager {
@@ -176,24 +186,54 @@ export class SafeModeManager {
   commit(): Promise<string> {
     return this.lock(async () => {
       if (!this.active || !this.channel) return "Safe mode is not active. Nothing to commit.";
-      this.channel.write(CTRL_X);
-      // CRITICAL: wait until Safe Mode is actually RELEASED (the prompt returns
-      // to normal, no `<SAFE>`) before tearing down. Closing the channel while
-      // still in `<SAFE>` would look like a dropped session to RouterOS and
-      // auto-revert the changes we are trying to commit. Only mark inactive and
-      // clean up once release is confirmed.
-      const response = await this.readUntilPrompt(15_000, (c) => isSafeModeReleased(c));
-      if (!isSafeModeReleased(response)) {
-        // Did not see a normal prompt in time — do NOT claim success. Keep the
-        // session open so the caller can retry commit rather than risk a
-        // close-triggered revert masquerading as a successful commit.
+
+      // PROBE FIRST. A previous commit may have actually succeeded on the device
+      // even though detection timed out (leaving us `active`). Pressing Enter and
+      // reading the settled prompt tells us the TRUE current mode. If the device
+      // is already in normal mode, the changes are committed — report success
+      // instead of sending another Ctrl+X (which would RE-ENTER Safe Mode and
+      // start the flaky loop the caller saw).
+      this.channel.write("\n");
+      const probe = await this.readSettledPrompt();
+      const before = classifyPrompt(probe);
+      if (before === "released") {
+        this.cleanup();
+        return "Safe mode already exited — your changes are committed. Safe mode DISABLED.";
+      }
+      if (before === "unknown") {
         return (
-          "Commit may not have completed: the device did not return to a normal prompt " +
-          `after exiting Safe Mode. Session left open — retry commit_safe_mode. Response: ${response.slice(-200)}`
+          "Could not read a prompt to determine Safe Mode state. The session is left open so " +
+          "nothing is reverted — call get_safe_mode_status, retry commit_safe_mode, or " +
+          `rollback_safe_mode. Last output: ${probe.slice(-160)}`
         );
       }
-      this.cleanup();
-      return "Changes committed successfully. Safe mode DISABLED.";
+
+      // Confirmed still in Safe Mode → commit (Ctrl+X), then NUDGE with Enter so
+      // RouterOS renders a fresh prompt reflecting the post-commit state. Reading
+      // until the output settles avoids mistaking a transient `<SAFE>` redraw for
+      // the final state. We only tear the channel down once release is confirmed
+      // (closing while still `<SAFE>` would look like a dropped session and
+      // auto-revert the very changes we are committing).
+      this.channel.write(CTRL_X);
+      this.channel.write("\n");
+      const after = await this.readSettledPrompt();
+      switch (classifyPrompt(after)) {
+        case "released":
+          this.cleanup();
+          return "Changes committed successfully. Safe mode DISABLED.";
+        case "safe":
+          return (
+            "Commit not completed — the device is still in Safe Mode. Your changes remain held " +
+            "in memory (not reverted); call commit_safe_mode again to retry, or rollback_safe_mode " +
+            "to discard them."
+          );
+        default:
+          return (
+            "Commit status unclear — no prompt seen after exiting Safe Mode. The session is left " +
+            "open so nothing is reverted; verify with get_safe_mode_status or retry commit_safe_mode. " +
+            `Last output: ${after.slice(-160)}`
+          );
+      }
     });
   }
 
@@ -245,6 +285,40 @@ export class SafeModeManager {
         resolve(result);
       }
       timer = setTimeout(() => finish(stripAnsi(buf)), timeoutMs);
+      channel.on("data", onData);
+    });
+  }
+
+  /**
+   * Read until the output SETTLES: once any prompt is visible, wait for a quiet
+   * gap (`quietMs` with no new bytes) before resolving, or give up at `maxMs`.
+   * Used by commit, where Ctrl+X + Enter can emit a transient `<SAFE>` redraw
+   * followed by the real post-commit prompt — settling on the LAST prompt after
+   * a quiet period is what makes mode detection reliable.
+   */
+  private readSettledPrompt(quietMs = 450, maxMs = 8_000): Promise<string> {
+    const channel = this.channel;
+    if (!channel) return Promise.resolve("");
+    return new Promise((resolve) => {
+      let buf = "";
+      let quiet: ReturnType<typeof setTimeout> | undefined;
+      let hard: ReturnType<typeof setTimeout>;
+      function done(): void {
+        clearTimeout(hard);
+        if (quiet) clearTimeout(quiet);
+        channel!.removeListener("data", onData);
+        resolve(stripAnsi(buf));
+      }
+      function onData(chunk: Buffer): void {
+        buf += decodeOutput(chunk);
+        // Arm/refresh the quiet timer only once a prompt is on screen, so we
+        // settle on the final prompt rather than the first byte of output.
+        if (PROMPT_RE.test(lastNonEmptyLine(stripAnsi(buf)))) {
+          if (quiet) clearTimeout(quiet);
+          quiet = setTimeout(done, quietMs);
+        }
+      }
+      hard = setTimeout(done, maxMs);
       channel.on("data", onData);
     });
   }
