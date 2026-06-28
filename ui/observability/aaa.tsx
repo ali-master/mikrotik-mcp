@@ -731,8 +731,9 @@ function UsageTab({ device }: { device: string }): ReactNode {
 
       {users && users.length === 0 ? (
         <Note type="secondary" label="No data yet">
-          No User Manager sessions have been recorded yet. The dashboard ingests sessions every 10
-          minutes and keeps them forever, so usage and the heatmap fill in over time.
+          No User Manager sessions have been recorded yet. The dashboard ingests sessions on a
+          configurable interval (1 minute by default — change it under the Settings tab) and keeps
+          them forever, so usage and the heatmap fill in over time.
         </Note>
       ) : (
         user && (
@@ -760,6 +761,100 @@ function UsageTab({ device }: { device: string }): ReactNode {
       )}
     </div>
   );
+}
+
+/**
+ * Usage-sampling cadence — how often the dashboard snapshots client traffic and
+ * ingests User Manager sessions into the local usage database. Dashboard-level
+ * (not a device command), so it has its own GET/POST `/api/usage/sampler` route.
+ */
+function SamplerSettings(): ReactNode {
+  const [minutes, setMinutes] = useState("");
+  const [current, setCurrent] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(async (): Promise<void> => {
+    try {
+      const r = await api<{ intervalMs: number }>("/api/usage/sampler");
+      setCurrent(r.intervalMs);
+    } catch {
+      setCurrent(null);
+    }
+  }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const save = async (): Promise<void> => {
+    const mins = Number(minutes);
+    if (!Number.isFinite(mins) || mins <= 0) {
+      setMsg("Enter a positive number of minutes.");
+      return;
+    }
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await postJson<{ intervalMs: number }>("/api/usage/sampler", {
+        intervalMs: Math.round(mins * 60_000),
+      });
+      setCurrent(r.intervalMs);
+      setMinutes("");
+      setMsg(`Now sampling every ${fmtInterval(r.intervalMs)}.`);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="aaa-card">
+      <div className="aaa-form-title">Usage sampling</div>
+      <div className="aaa-current muted">
+        How often client traffic + User Manager sessions are recorded into the usage history.
+        Current: {current == null ? "…" : fmtInterval(current)} · default 1 minute · range 30s–6h.
+      </div>
+      <div className="aaa-form-grid">
+        <label className="aaa-field">
+          <span className="aaa-field-label">Interval (minutes)</span>
+          <Input
+            type="number"
+            step="0.5"
+            min="0.5"
+            placeholder={current ? String(current / 60_000) : "1"}
+            value={minutes}
+            onChange={(e) => setMinutes(e.target.value)}
+          />
+        </label>
+      </div>
+      <div className="aaa-form-actions">
+        <Button size="sm" type="accent" loading={busy} onClick={() => void save()}>
+          Save
+        </Button>
+        {[1, 5, 10, 30].map((m) => (
+          <Button
+            key={m}
+            size="sm"
+            ghost
+            onClick={() => {
+              setMinutes(String(m));
+            }}
+          >
+            {m}m
+          </Button>
+        ))}
+        {msg && <span className="muted">{msg}</span>}
+      </div>
+    </div>
+  );
+}
+
+/** Human label for a sampling interval in ms (`45s`, `1 min`, `2.5 min`). */
+function fmtInterval(ms: number): string {
+  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
+  const m = ms / 60_000;
+  return `${Number.isInteger(m) ? m : m.toFixed(1)} min`;
 }
 
 /** RADIUS client + User Manager (built-in RADIUS server) management. */
@@ -847,6 +942,7 @@ export function AaaView(): ReactNode {
                 return { available: o.available !== false, row: o.settings ?? {} };
               }}
             />
+            <SamplerSettings />
           </div>
         )}
       </Panel>

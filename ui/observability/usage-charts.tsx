@@ -9,8 +9,8 @@
  * Both fetch their own data from a passed `endpoint` and render hand-rolled SVG
  * (no chart dependency, so the bundle still inlines to one self-contained HTML).
  */
-import { useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { api } from "./api";
 import { bytes } from "./format";
 
@@ -43,6 +43,16 @@ const dayKey = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 function todayUtc(): number {
   const n = new Date();
   return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
+}
+/** Friendly full date for a `YYYY-MM-DD` UTC day, e.g. "Mon, Jan 6 2026". */
+function fmtFullDate(day: string): string {
+  return new Date(`${day}T00:00:00Z`).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 // ── per-day download/upload area chart ───────────────────────────────────────
@@ -92,8 +102,8 @@ export function UsageHistoryChart({
   if (!hasData) {
     return (
       <div className="muted usage-chart__empty">
-        No usage recorded yet. The dashboard samples every 10 minutes — history fills in over time
-        (kept ~3 months).
+        No usage recorded yet. The dashboard samples on a configurable interval (1 minute by default
+        — see the RADIUS &amp; UM Settings tab); history fills in over time (kept ~3 months).
       </div>
     );
   }
@@ -121,7 +131,13 @@ export function UsageHistoryChart({
           · peak/day {bytes(max)} · last {days} days
         </span>
       </div>
-      <svg className="usage-chart__svg" viewBox={`0 0 ${W} ${H}`} xmlns={SVG_NS} role="img">
+      <svg
+        className="usage-chart__svg"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        xmlns={SVG_NS}
+        role="img"
+      >
         <polygon className="rx area" points={area((d) => d.rx)} />
         <polygon className="tx area" points={area((d) => d.tx)} />
         <polyline className="rx line" points={path((d) => d.rx)} />
@@ -145,8 +161,18 @@ interface Cell {
   ms: number;
 }
 
+interface Tip {
+  left: number;
+  top: number;
+  day: string;
+  count: number;
+  lvl: number;
+}
+
 export function Heatmap({ endpoint, label }: { endpoint: string; label?: string }): ReactNode {
   const [data, setData] = useState<HeatmapPayload | null>(null);
+  const [tip, setTip] = useState<Tip | null>(null);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -201,13 +227,29 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
   const topPad = 16;
   const H = topPad + 7 * (CELL + GAP);
 
+  // Position the custom tooltip above the hovered cell, in coordinates local to
+  // the wrapper (so it survives the grid being horizontally scrolled).
+  const onEnter = (e: ReactMouseEvent<SVGRectElement>, c: Cell): void => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const cell = e.currentTarget.getBoundingClientRect();
+    const box = wrap.getBoundingClientRect();
+    setTip({
+      left: cell.left - box.left + cell.width / 2,
+      top: cell.top - box.top,
+      day: c.day,
+      count: c.count,
+      lvl: level(c.count),
+    });
+  };
+
   return (
-    <div className="heatmap">
+    <div className="heatmap" ref={wrapRef}>
       <div className="heatmap__hd">
         <span className="heatmap__title">{label ?? "Connections"}</span>
         <span className="muted">{data ? `${data.total} total` : "…"}</span>
       </div>
-      <div className="heatmap__scroll">
+      <div className="heatmap__scroll" onMouseLeave={() => setTip(null)}>
         <svg
           className="heatmap__svg"
           viewBox={`0 0 ${leftPad + gridW} ${H}`}
@@ -239,20 +281,32 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
           {cells.map((c) => (
             <rect
               key={c.day}
-              className={`heatmap__cell lvl${level(c.count)}`}
+              className={`heatmap__cell lvl${level(c.count)}${
+                tip?.day === c.day ? " is-hover" : ""
+              }`}
               x={leftPad + c.col * (CELL + GAP)}
               y={topPad + c.row * (CELL + GAP)}
               width={CELL}
               height={CELL}
               rx={2}
-            >
-              <title>
-                {c.day}: {c.count} connection{c.count === 1 ? "" : "s"}
-              </title>
-            </rect>
+              onMouseEnter={(e) => onEnter(e, c)}
+            />
           ))}
         </svg>
       </div>
+      {tip && (
+        <div className="heatmap__tip" style={{ left: tip.left, top: tip.top }} role="tooltip">
+          <div className="heatmap__tip-head">
+            <span className={`heatmap__swatch lvl${tip.lvl}`} />
+            <b>
+              {tip.count === 0
+                ? "No connections"
+                : `${tip.count} connection${tip.count === 1 ? "" : "s"}`}
+            </b>
+          </div>
+          <div className="heatmap__tip-date">{fmtFullDate(tip.day)}</div>
+        </div>
+      )}
       <div className="heatmap__legend muted">
         Less
         {[0, 1, 2, 3, 4].map((l) => (

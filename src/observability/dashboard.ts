@@ -103,7 +103,12 @@ import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
 import { openUsageStore } from "./usage-store";
 import type { UsageStore } from "./usage-store";
-import { startUsageSampler, stopUsageSampler } from "./usage-sampler";
+import {
+  getUsageSamplerInterval,
+  setUsageSamplerInterval,
+  startUsageSampler,
+  stopUsageSampler,
+} from "./usage-sampler";
 import { computeStats } from "./stats";
 import { buildTopology } from "./topology";
 import { capture, DEFAULT_TZSP_PORT } from "./capture";
@@ -690,9 +695,21 @@ function daysParam(url: URL, fallback: number, max: number): number {
  *   • `GET /api/usage/heatmap`  — per-day connection counts (GitHub-style), for
  *     one user or all, since N days ago.
  */
-function usageRoutes(req: Request, url: URL): Response | null {
+async function usageRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith("/api/usage")) return null;
+
+  // Sampling-interval control (dashboard-level, not a device command).
+  if (p === "/api/usage/sampler") {
+    if (req.method === "GET") return json({ intervalMs: getUsageSamplerInterval() });
+    if (req.method === "POST") {
+      const b = (await readJson(req)) as { intervalMs?: number };
+      const applied = setUsageSamplerInterval(Number(b?.intervalMs));
+      return json({ intervalMs: applied });
+    }
+    return null;
+  }
+
   if (req.method !== "GET") return null;
   if (!usageStore) return json({ error: "usage store not active" }, 503);
 
@@ -1071,7 +1088,7 @@ export async function runDashboard(
       const aaaResp = await aaaRoutes(req, url);
       if (aaaResp) return aaaResp;
 
-      const usageResp = usageRoutes(req, url);
+      const usageResp = await usageRoutes(req, url);
       if (usageResp) return usageResp;
 
       const featureResp = await featureRoutes(req, url);

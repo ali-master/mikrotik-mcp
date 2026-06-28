@@ -33,8 +33,21 @@ const SERVER_TAG = "mikrotik-mcp";
 /** Keep ~3 months of client snapshots; sessions are kept forever by the store. */
 export const USAGE_RETENTION_MS = 93 * 24 * 60 * 60 * 1000;
 
+/** Default sampling cadence and the bounds the Settings tab is clamped to. */
+export const DEFAULT_USAGE_INTERVAL_MS = 60_000; // 1 minute
+export const MIN_USAGE_INTERVAL_MS = 30_000; // never hammer the router faster than 30s
+export const MAX_USAGE_INTERVAL_MS = 6 * 60 * 60_000; // 6 hours
+
 let timer: ReturnType<typeof setInterval> | null = null;
 let inFlight = false;
+let currentStore: UsageStore | null = null;
+let currentIntervalMs = DEFAULT_USAGE_INTERVAL_MS;
+
+/** Clamp a requested interval into the supported range. */
+function clampInterval(ms: number): number {
+  if (!Number.isFinite(ms)) return DEFAULT_USAGE_INTERVAL_MS;
+  return Math.max(MIN_USAGE_INTERVAL_MS, Math.min(MAX_USAGE_INTERVAL_MS, Math.round(ms)));
+}
 
 /** Bytes from a RouterOS size/number field (`"12345"` or `"1.2MiB"`). */
 function bytesOf(v: string | undefined): number {
@@ -115,9 +128,30 @@ export async function sampleUsageOnce(store: UsageStore): Promise<void> {
 }
 
 /** Start periodic sampling (one immediate pass, then every `intervalMs`). */
-export function startUsageSampler(store: UsageStore, intervalMs = 10 * 60_000): void {
+export function startUsageSampler(store: UsageStore, intervalMs = DEFAULT_USAGE_INTERVAL_MS): void {
+  currentStore = store;
+  currentIntervalMs = clampInterval(intervalMs);
   void sampleUsageOnce(store);
-  timer = setInterval(() => void sampleUsageOnce(store), intervalMs);
+  timer = setInterval(() => void sampleUsageOnce(store), currentIntervalMs);
+}
+
+/** The active sampling interval in milliseconds. */
+export function getUsageSamplerInterval(): number {
+  return currentIntervalMs;
+}
+
+/**
+ * Change the sampling cadence at runtime (restarting the timer with the new,
+ * clamped interval). Returns the interval actually applied.
+ */
+export function setUsageSamplerInterval(intervalMs: number): number {
+  currentIntervalMs = clampInterval(intervalMs);
+  if (timer) clearInterval(timer);
+  if (currentStore) {
+    const store = currentStore;
+    timer = setInterval(() => void sampleUsageOnce(store), currentIntervalMs);
+  }
+  return currentIntervalMs;
 }
 
 /** Stop periodic sampling. */
@@ -126,4 +160,5 @@ export function stopUsageSampler(): void {
     clearInterval(timer);
     timer = null;
   }
+  currentStore = null;
 }
