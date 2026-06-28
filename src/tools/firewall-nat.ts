@@ -36,6 +36,42 @@ async function updateNatRule(
     dst_address_list?: string;
     connection_mark?: string;
     connection_nat_state?: string;
+    connection_state?: string;
+    connection_type?: string;
+    connection_bytes?: string;
+    connection_limit?: string;
+    connection_rate?: string;
+    port?: string;
+    src_mac_address?: string;
+    packet_mark?: string;
+    routing_mark?: string;
+    src_address_type?: string;
+    dst_address_type?: string;
+    in_bridge_port?: string;
+    out_bridge_port?: string;
+    in_bridge_port_list?: string;
+    out_bridge_port_list?: string;
+    icmp_options?: string;
+    ipsec_policy?: string;
+    layer7_protocol?: string;
+    content?: string;
+    dscp?: string;
+    priority?: string;
+    tcp_flags?: string;
+    tcp_mss?: string;
+    packet_size?: string;
+    limit?: string;
+    nth?: string;
+    psd?: string;
+    random?: string;
+    per_connection_classifier?: string;
+    time?: string;
+    ttl?: string;
+    hotspot?: string;
+    jump_target?: string;
+    address_list?: string;
+    address_list_timeout?: string;
+    fragment?: boolean;
     to_addresses?: string;
     to_ports?: string;
     comment?: string;
@@ -69,6 +105,42 @@ async function updateNatRule(
   put("dst-address-list", a.dst_address_list);
   put("connection-mark", a.connection_mark);
   put("connection-nat-state", a.connection_nat_state);
+  put("connection-state", a.connection_state);
+  put("connection-type", a.connection_type);
+  put("connection-bytes", a.connection_bytes);
+  put("connection-limit", a.connection_limit);
+  put("connection-rate", a.connection_rate);
+  put("port", a.port);
+  put("src-mac-address", a.src_mac_address);
+  put("packet-mark", a.packet_mark);
+  put("routing-mark", a.routing_mark);
+  put("src-address-type", a.src_address_type);
+  put("dst-address-type", a.dst_address_type);
+  put("in-bridge-port", a.in_bridge_port);
+  put("out-bridge-port", a.out_bridge_port);
+  put("in-bridge-port-list", a.in_bridge_port_list);
+  put("out-bridge-port-list", a.out_bridge_port_list);
+  put("icmp-options", a.icmp_options);
+  put("ipsec-policy", a.ipsec_policy);
+  put("layer7-protocol", a.layer7_protocol);
+  put("content", a.content);
+  put("dscp", a.dscp);
+  put("priority", a.priority);
+  put("tcp-flags", a.tcp_flags);
+  put("tcp-mss", a.tcp_mss);
+  put("packet-size", a.packet_size);
+  put("limit", a.limit);
+  put("nth", a.nth);
+  put("psd", a.psd);
+  put("random", a.random);
+  put("per-connection-classifier", a.per_connection_classifier);
+  put("time", a.time);
+  put("ttl", a.ttl);
+  put("hotspot", a.hotspot);
+  put("jump-target", a.jump_target);
+  put("address-list", a.address_list);
+  put("address-list-timeout", a.address_list_timeout);
+  if (a.fragment !== undefined) updates.push(`fragment=${a.fragment ? "yes" : "no"}`);
   put("to-addresses", a.to_addresses);
   put("to-ports", a.to_ports);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
@@ -119,6 +191,60 @@ export const firewallNatTools: ToolModule = [
       dst_address_list: z.string().optional().describe('Match dst in a named list; negate "!name"'),
       connection_mark: z.string().optional(),
       connection_nat_state: z.string().optional().describe('"srcnat" / "dstnat" / "!dstnat"'),
+      connection_state: z
+        .string()
+        .optional()
+        .describe('Match conn state, e.g. "new" / "established,related" / "!invalid"'),
+      connection_type: z
+        .string()
+        .optional()
+        .describe('Match helper-detected conn type, e.g. "ftp" / "sip"'),
+      connection_bytes: z.string().optional().describe('Total conn bytes range, e.g. "1000000-"'),
+      connection_limit: z.string().optional().describe('Per-address conn limit, e.g. "100,32"'),
+      connection_rate: z.string().optional().describe('Conn rate range, e.g. "0-100k"'),
+      port: z.string().optional().describe("Match src OR dst port (any protocol with ports)"),
+      src_mac_address: z.string().optional().describe('Source MAC, negate "!AA:BB:.."'),
+      packet_mark: z.string().optional().describe("Match a packet mark set in mangle"),
+      routing_mark: z.string().optional().describe("Match a routing mark set in mangle"),
+      src_address_type: z.string().optional().describe('"unicast" / "local" / "broadcast" / etc.'),
+      dst_address_type: z.string().optional().describe('"unicast" / "local" / "broadcast" / etc.'),
+      in_bridge_port: z.string().optional().describe("Ingress bridge port (bridge-filtered)"),
+      out_bridge_port: z.string().optional().describe("Egress bridge port (bridge-filtered)"),
+      in_bridge_port_list: z.string().optional().describe("Ingress bridge port list"),
+      out_bridge_port_list: z.string().optional().describe("Egress bridge port list"),
+      icmp_options: z.string().optional().describe('ICMP type:code, e.g. "8:0"'),
+      ipsec_policy: z.string().optional().describe('e.g. "in,ipsec" / "out,none"'),
+      layer7_protocol: z.string().optional().describe("Name of an /ip firewall layer7-protocol"),
+      content: z.string().optional().describe("Match a literal string in the packet payload"),
+      dscp: z.string().optional().describe("DSCP value 0-63"),
+      priority: z.string().optional().describe("Match packet priority (queue/VLAN)"),
+      tcp_flags: z.string().optional().describe('e.g. "syn,!ack"'),
+      tcp_mss: z.string().optional().describe('TCP MSS range, e.g. "1440-1500"'),
+      packet_size: z.string().optional().describe('Packet size range, e.g. "1500" or "0-500"'),
+      limit: z.string().optional().describe('Rate limit, e.g. "10,5:packet"'),
+      nth: z.string().optional().describe('Every Nth packet, e.g. "2,0"'),
+      psd: z.string().optional().describe("Port-scan detection params"),
+      random: z
+        .string()
+        .optional()
+        .describe("Match packet randomly with given probability % (1-99)"),
+      per_connection_classifier: z
+        .string()
+        .optional()
+        .describe('PCC classifier, e.g. "both-addresses:2/0"'),
+      time: z.string().optional().describe('Time/day matcher, e.g. "8h-16h,mon,tue,wed,thu,fri"'),
+      ttl: z.string().optional().describe('IP TTL matcher, e.g. "equal:64"'),
+      hotspot: z.string().optional().describe('Hotspot state, e.g. "auth" / "!auth"'),
+      jump_target: z.string().optional().describe("Target chain name when action=jump"),
+      address_list: z
+        .string()
+        .optional()
+        .describe("List name for action=add-src-to-address-list / add-dst-to-address-list"),
+      address_list_timeout: z
+        .string()
+        .optional()
+        .describe('Timeout for the address-list entry, e.g. "1h" or "none"'),
+      fragment: z.boolean().optional().describe("Match non-first IP fragments"),
       to_addresses: z
         .string()
         .optional()
@@ -184,6 +310,42 @@ export const firewallNatTools: ToolModule = [
         .opt("dst-address-list", a.dst_address_list)
         .opt("connection-mark", a.connection_mark)
         .opt("connection-nat-state", a.connection_nat_state)
+        .opt("connection-state", a.connection_state)
+        .opt("connection-type", a.connection_type)
+        .opt("connection-bytes", a.connection_bytes)
+        .opt("connection-limit", a.connection_limit)
+        .opt("connection-rate", a.connection_rate)
+        .opt("port", a.port)
+        .opt("src-mac-address", a.src_mac_address)
+        .opt("packet-mark", a.packet_mark)
+        .opt("routing-mark", a.routing_mark)
+        .opt("src-address-type", a.src_address_type)
+        .opt("dst-address-type", a.dst_address_type)
+        .opt("in-bridge-port", a.in_bridge_port)
+        .opt("out-bridge-port", a.out_bridge_port)
+        .opt("in-bridge-port-list", a.in_bridge_port_list)
+        .opt("out-bridge-port-list", a.out_bridge_port_list)
+        .opt("icmp-options", a.icmp_options)
+        .opt("ipsec-policy", a.ipsec_policy)
+        .opt("layer7-protocol", a.layer7_protocol)
+        .opt("content", a.content)
+        .opt("dscp", a.dscp)
+        .opt("priority", a.priority)
+        .opt("tcp-flags", a.tcp_flags)
+        .opt("tcp-mss", a.tcp_mss)
+        .opt("packet-size", a.packet_size)
+        .opt("limit", a.limit)
+        .opt("nth", a.nth)
+        .opt("psd", a.psd)
+        .opt("random", a.random)
+        .opt("per-connection-classifier", a.per_connection_classifier)
+        .opt("time", a.time)
+        .opt("ttl", a.ttl)
+        .opt("hotspot", a.hotspot)
+        .opt("jump-target", a.jump_target)
+        .opt("address-list", a.address_list)
+        .opt("address-list-timeout", a.address_list_timeout)
+        .bool("fragment", a.fragment)
         .opt("to-addresses", a.to_addresses)
         .opt("to-ports", a.to_ports)
         .opt("comment", a.comment)
@@ -330,6 +492,42 @@ export const firewallNatTools: ToolModule = [
       dst_address_list: z.string().optional().describe('Negate with "!name"'),
       connection_mark: z.string().optional(),
       connection_nat_state: z.string().optional(),
+      connection_state: z.string().optional(),
+      connection_type: z.string().optional(),
+      connection_bytes: z.string().optional(),
+      connection_limit: z.string().optional(),
+      connection_rate: z.string().optional(),
+      port: z.string().optional(),
+      src_mac_address: z.string().optional(),
+      packet_mark: z.string().optional(),
+      routing_mark: z.string().optional(),
+      src_address_type: z.string().optional(),
+      dst_address_type: z.string().optional(),
+      in_bridge_port: z.string().optional(),
+      out_bridge_port: z.string().optional(),
+      in_bridge_port_list: z.string().optional(),
+      out_bridge_port_list: z.string().optional(),
+      icmp_options: z.string().optional(),
+      ipsec_policy: z.string().optional(),
+      layer7_protocol: z.string().optional(),
+      content: z.string().optional(),
+      dscp: z.string().optional(),
+      priority: z.string().optional(),
+      tcp_flags: z.string().optional(),
+      tcp_mss: z.string().optional(),
+      packet_size: z.string().optional(),
+      limit: z.string().optional(),
+      nth: z.string().optional(),
+      psd: z.string().optional(),
+      random: z.string().optional(),
+      per_connection_classifier: z.string().optional(),
+      time: z.string().optional(),
+      ttl: z.string().optional(),
+      hotspot: z.string().optional(),
+      jump_target: z.string().optional(),
+      address_list: z.string().optional(),
+      address_list_timeout: z.string().optional(),
+      fragment: z.boolean().optional(),
       to_addresses: z.string().optional(),
       to_ports: z.string().optional(),
       comment: z.string().optional(),

@@ -27,7 +27,9 @@ async function updateMangleRule(
     dst_address?: string;
     src_port?: string;
     dst_port?: string;
+    port?: string;
     protocol?: string;
+    src_mac_address?: string;
     in_interface?: string;
     out_interface?: string;
     in_interface_list?: string;
@@ -50,6 +52,15 @@ async function updateMangleRule(
     dscp?: string;
     priority?: string;
     packet_size?: string;
+    ttl?: string;
+    tcp_mss?: string;
+    fragment?: boolean;
+    icmp_options?: string;
+    ipv4_options?: string;
+    limit?: string;
+    dst_limit?: string;
+    content?: string;
+    psd?: string;
     layer7_protocol?: string;
     ipsec_policy?: string;
     nth?: string;
@@ -63,7 +74,12 @@ async function updateMangleRule(
     new_dscp?: string;
     new_ttl?: string;
     new_mss?: string;
+    new_priority?: string;
     routing_table?: string;
+    route_dst?: string;
+    jump_target?: string;
+    sniff_target?: string;
+    sniff_target_port?: string;
     address_list?: string;
     address_list_timeout?: string;
     passthrough?: boolean;
@@ -89,7 +105,9 @@ async function updateMangleRule(
   put("dst-address", a.dst_address);
   put("src-port", a.src_port);
   put("dst-port", a.dst_port);
+  put("port", a.port);
   put("protocol", a.protocol);
+  put("src-mac-address", a.src_mac_address);
   put("in-interface", a.in_interface);
   put("out-interface", a.out_interface);
   put("in-interface-list", a.in_interface_list);
@@ -112,6 +130,15 @@ async function updateMangleRule(
   put("dscp", a.dscp);
   put("priority", a.priority);
   put("packet-size", a.packet_size);
+  put("ttl", a.ttl);
+  put("tcp-mss", a.tcp_mss);
+  if (a.fragment !== undefined) updates.push(`fragment=${a.fragment ? "yes" : "no"}`);
+  put("icmp-options", a.icmp_options);
+  put("ipv4-options", a.ipv4_options);
+  put("limit", a.limit);
+  put("dst-limit", a.dst_limit);
+  put("content", a.content);
+  put("psd", a.psd);
   put("layer7-protocol", a.layer7_protocol);
   put("ipsec-policy", a.ipsec_policy);
   put("nth", a.nth);
@@ -125,7 +152,12 @@ async function updateMangleRule(
   put("new-dscp", a.new_dscp);
   put("new-ttl", a.new_ttl);
   put("new-mss", a.new_mss);
+  put("new-priority", a.new_priority);
   put("routing-table", a.routing_table);
+  put("route-dst", a.route_dst);
+  put("jump-target", a.jump_target);
+  put("sniff-target", a.sniff_target);
+  put("sniff-target-port", a.sniff_target_port);
   put("address-list", a.address_list);
   put("address-list-timeout", a.address_list_timeout);
   if (a.passthrough !== undefined) updates.push(`passthrough=${a.passthrough ? "yes" : "no"}`);
@@ -195,7 +227,9 @@ export const firewallMangleTools: ToolModule = [
       dst_address: z.string().optional(),
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
+      port: z.string().optional().describe("Match if src OR dst port matches (with protocol)"),
       protocol: z.string().optional(),
+      src_mac_address: z.string().optional().describe('Source MAC, negatable e.g. "!00:11:..."'),
       in_interface: z.string().optional().describe('Negatable, e.g. "!ether1"'),
       out_interface: z.string().optional(),
       in_interface_list: z.string().optional().describe('Interface list, negatable e.g. "!WAN"'),
@@ -229,6 +263,21 @@ export const firewallMangleTools: ToolModule = [
       dscp: z.string().optional().describe("Match incoming DSCP (0-63)"),
       priority: z.string().optional().describe("Match packet/queue priority (0-63)"),
       packet_size: z.string().optional().describe('e.g. "1500" or "0-500"'),
+      ttl: z.string().optional().describe('Match TTL, e.g. "equal:64", "less-than:10"'),
+      tcp_mss: z.string().optional().describe('Match TCP MSS, e.g. "1400-1500" or "!1460"'),
+      fragment: z.boolean().optional().describe("Match second and further fragments"),
+      icmp_options: z.string().optional().describe('Match ICMP type:code, e.g. "8:0"'),
+      ipv4_options: z
+        .string()
+        .optional()
+        .describe('e.g. "any", "loose-source-routing", "record-route"'),
+      limit: z.string().optional().describe('Rate limit matcher, e.g. "50,5:packet"'),
+      dst_limit: z
+        .string()
+        .optional()
+        .describe('Per-destination rate matcher, e.g. "50,5,dst-address/1m"'),
+      content: z.string().optional().describe("Match packets containing this text"),
+      psd: z.string().optional().describe('Port scan detection, e.g. "21,3s,3,1"'),
       layer7_protocol: z
         .string()
         .optional()
@@ -245,7 +294,15 @@ export const firewallMangleTools: ToolModule = [
       new_dscp: z.string().optional().describe("0-63, for change-dscp"),
       new_ttl: z.string().optional().describe('e.g. "decrement", "increment", or "set:64"'),
       new_mss: z.string().optional().describe('e.g. "1440" or "clamp-to-pmtu", for change-mss'),
+      new_priority: z
+        .string()
+        .optional()
+        .describe('Priority for action=set-priority, e.g. "4", "from-dscp", "from-ingress"'),
       routing_table: z.string().optional().describe("Routing table for action=route"),
+      route_dst: z.string().optional().describe("Gateway IP for action=route"),
+      jump_target: z.string().optional().describe("Target chain name for action=jump"),
+      sniff_target: z.string().optional().describe("Collector IP for action=sniff-tzsp/sniff-pc"),
+      sniff_target_port: z.string().optional().describe("Collector UDP port for action=sniff-tzsp"),
       address_list: z
         .string()
         .optional()
@@ -271,7 +328,9 @@ export const firewallMangleTools: ToolModule = [
         .opt("dst-address", a.dst_address)
         .opt("src-port", a.src_port)
         .opt("dst-port", a.dst_port)
+        .opt("port", a.port)
         .opt("protocol", a.protocol)
+        .opt("src-mac-address", a.src_mac_address)
         .opt("in-interface", a.in_interface)
         .opt("out-interface", a.out_interface)
         .opt("in-interface-list", a.in_interface_list)
@@ -294,6 +353,15 @@ export const firewallMangleTools: ToolModule = [
         .opt("dscp", a.dscp)
         .opt("priority", a.priority)
         .opt("packet-size", a.packet_size)
+        .opt("ttl", a.ttl)
+        .opt("tcp-mss", a.tcp_mss)
+        .bool("fragment", a.fragment)
+        .opt("icmp-options", a.icmp_options)
+        .opt("ipv4-options", a.ipv4_options)
+        .opt("limit", a.limit)
+        .opt("dst-limit", a.dst_limit)
+        .opt("content", a.content)
+        .opt("psd", a.psd)
         .opt("layer7-protocol", a.layer7_protocol)
         .opt("ipsec-policy", a.ipsec_policy)
         .opt("nth", a.nth)
@@ -307,7 +375,12 @@ export const firewallMangleTools: ToolModule = [
         .opt("new-dscp", a.new_dscp)
         .opt("new-ttl", a.new_ttl)
         .opt("new-mss", a.new_mss)
+        .opt("new-priority", a.new_priority)
         .opt("routing-table", a.routing_table)
+        .opt("route-dst", a.route_dst)
+        .opt("jump-target", a.jump_target)
+        .opt("sniff-target", a.sniff_target)
+        .opt("sniff-target-port", a.sniff_target_port)
         .opt("address-list", a.address_list)
         .opt("address-list-timeout", a.address_list_timeout)
         .bool("passthrough", a.passthrough)
@@ -441,7 +514,9 @@ export const firewallMangleTools: ToolModule = [
       dst_address: z.string().optional(),
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
+      port: z.string().optional(),
       protocol: z.string().optional(),
+      src_mac_address: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
       in_interface_list: z.string().optional(),
@@ -464,6 +539,15 @@ export const firewallMangleTools: ToolModule = [
       dscp: z.string().optional(),
       priority: z.string().optional(),
       packet_size: z.string().optional(),
+      ttl: z.string().optional(),
+      tcp_mss: z.string().optional(),
+      fragment: z.boolean().optional(),
+      icmp_options: z.string().optional(),
+      ipv4_options: z.string().optional(),
+      limit: z.string().optional(),
+      dst_limit: z.string().optional(),
+      content: z.string().optional(),
+      psd: z.string().optional(),
       layer7_protocol: z.string().optional(),
       ipsec_policy: z.string().optional(),
       nth: z.string().optional(),
@@ -477,7 +561,12 @@ export const firewallMangleTools: ToolModule = [
       new_dscp: z.string().optional(),
       new_ttl: z.string().optional(),
       new_mss: z.string().optional(),
+      new_priority: z.string().optional(),
       routing_table: z.string().optional(),
+      route_dst: z.string().optional(),
+      jump_target: z.string().optional(),
+      sniff_target: z.string().optional(),
+      sniff_target_port: z.string().optional(),
       address_list: z.string().optional(),
       address_list_timeout: z.string().optional(),
       passthrough: z.boolean().optional(),

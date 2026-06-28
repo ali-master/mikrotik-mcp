@@ -37,6 +37,36 @@ async function updateFilterRule(
     hop_limit?: string;
     limit?: string;
     tcp_flags?: string;
+    port?: string;
+    icmp_options?: string;
+    connection_mark?: string;
+    connection_type?: string;
+    connection_bytes?: string;
+    connection_limit?: string;
+    connection_rate?: string;
+    packet_mark?: string;
+    routing_mark?: string;
+    packet_size?: string;
+    dscp?: string;
+    ingress_priority?: string;
+    priority?: string;
+    src_mac_address?: string;
+    src_address_type?: string;
+    dst_address_type?: string;
+    tcp_mss?: string;
+    headers?: string;
+    tls_host?: string;
+    content?: string;
+    nth?: string;
+    random?: string;
+    time?: string;
+    dst_limit?: string;
+    ipsec_policy?: string;
+    per_connection_classifier?: string;
+    jump_target?: string;
+    reject_with?: string;
+    address_list?: string;
+    address_list_timeout?: string;
     comment?: string;
     disabled?: boolean;
     log?: boolean;
@@ -70,6 +100,36 @@ async function updateFilterRule(
   put("hop-limit", a.hop_limit);
   put("limit", a.limit);
   put("tcp-flags", a.tcp_flags);
+  put("port", a.port);
+  put("icmp-options", a.icmp_options);
+  put("connection-mark", a.connection_mark);
+  put("connection-type", a.connection_type);
+  put("connection-bytes", a.connection_bytes);
+  put("connection-limit", a.connection_limit);
+  put("connection-rate", a.connection_rate);
+  put("packet-mark", a.packet_mark);
+  put("routing-mark", a.routing_mark);
+  put("packet-size", a.packet_size);
+  put("dscp", a.dscp);
+  put("ingress-priority", a.ingress_priority);
+  put("priority", a.priority);
+  put("src-mac-address", a.src_mac_address);
+  put("src-address-type", a.src_address_type);
+  put("dst-address-type", a.dst_address_type);
+  put("tcp-mss", a.tcp_mss);
+  put("headers", a.headers);
+  put("tls-host", a.tls_host);
+  put("content", a.content);
+  put("nth", a.nth);
+  put("random", a.random);
+  put("time", a.time);
+  put("dst-limit", a.dst_limit);
+  put("ipsec-policy", a.ipsec_policy);
+  put("per-connection-classifier", a.per_connection_classifier);
+  put("jump-target", a.jump_target);
+  put("reject-with", a.reject_with);
+  put("address-list", a.address_list);
+  put("address-list-timeout", a.address_list_timeout);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
   if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
@@ -116,6 +176,8 @@ export const ipv6FirewallFilterTools: ToolModule = [
         "return",
         "tarpit",
         "fasttrack-connection",
+        "add-src-to-address-list",
+        "add-dst-to-address-list",
       ]),
       src_address: z.string().optional(),
       dst_address: z.string().optional(),
@@ -135,6 +197,69 @@ export const ipv6FirewallFilterTools: ToolModule = [
       hop_limit: z.string().optional().describe('Hop-limit expression e.g. "equal:1" or "less:64"'),
       limit: z.string().optional().describe('RouterOS rate/burst string e.g. "10,5:packet"'),
       tcp_flags: z.string().optional().describe('RouterOS flag expression e.g. "syn,!ack"'),
+      port: z.string().optional().describe("Match src or dst port (any protocol with ports)"),
+      icmp_options: z.string().optional().describe('ICMPv6 type:code e.g. "128:0"'),
+      connection_mark: z.string().optional().describe("Match packets with this connection mark"),
+      connection_type: z
+        .string()
+        .optional()
+        .describe('Match connection helper type e.g. "ftp", "sip"'),
+      connection_bytes: z
+        .string()
+        .optional()
+        .describe('Match total connection bytes range e.g. "1000000-"'),
+      connection_limit: z
+        .string()
+        .optional()
+        .describe('Limit connections per address e.g. "100,128"'),
+      connection_rate: z.string().optional().describe('Match connection data rate e.g. "100k-"'),
+      packet_mark: z.string().optional().describe("Match packets with this packet mark"),
+      routing_mark: z.string().optional().describe("Match packets with this routing mark"),
+      packet_size: z.string().optional().describe('Match packet size range e.g. "1400-1500"'),
+      dscp: z.string().optional().describe("Match DSCP (0-63)"),
+      ingress_priority: z.string().optional().describe("Match ingress priority (0-63)"),
+      priority: z.string().optional().describe("Match priority set by mangle (0-63)"),
+      src_mac_address: z.string().optional().describe("Match source MAC address"),
+      src_address_type: z
+        .string()
+        .optional()
+        .describe('Match src address type e.g. "unicast", "multicast"'),
+      dst_address_type: z
+        .string()
+        .optional()
+        .describe('Match dst address type e.g. "unicast", "multicast"'),
+      tcp_mss: z.string().optional().describe('Match TCP MSS value/range e.g. "1300-1536"'),
+      headers: z.string().optional().describe("Match IPv6 extension headers present in the packet"),
+      tls_host: z.string().optional().describe("Match TLS SNI host (glob pattern)"),
+      content: z.string().optional().describe("Match packets containing this text"),
+      nth: z.string().optional().describe('Match every Nth packet e.g. "2,0"'),
+      random: z.string().optional().describe("Randomly match a percentage of packets (1-99)"),
+      time: z.string().optional().describe('Match by time/day e.g. "8h-16h,mon,tue"'),
+      dst_limit: z
+        .string()
+        .optional()
+        .describe('Per-destination rate limit e.g. "10,5,dst-address"'),
+      ipsec_policy: z
+        .string()
+        .optional()
+        .describe('Match IPsec policy e.g. "in,ipsec" or "out,none"'),
+      per_connection_classifier: z
+        .string()
+        .optional()
+        .describe('Hash connections into buckets e.g. "both-addresses:2/0"'),
+      jump_target: z.string().optional().describe("Target chain name when action=jump"),
+      reject_with: z
+        .string()
+        .optional()
+        .describe('ICMPv6 reject response when action=reject e.g. "icmp-admin-prohibited"'),
+      address_list: z
+        .string()
+        .optional()
+        .describe("Address-list name when action=add-src/dst-to-address-list"),
+      address_list_timeout: z
+        .string()
+        .optional()
+        .describe('Timeout for the added address-list entry e.g. "1d" or "none"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
@@ -165,6 +290,36 @@ export const ipv6FirewallFilterTools: ToolModule = [
         .opt("hop-limit", a.hop_limit)
         .opt("limit", a.limit)
         .opt("tcp-flags", a.tcp_flags)
+        .opt("port", a.port)
+        .opt("icmp-options", a.icmp_options)
+        .opt("connection-mark", a.connection_mark)
+        .opt("connection-type", a.connection_type)
+        .opt("connection-bytes", a.connection_bytes)
+        .opt("connection-limit", a.connection_limit)
+        .opt("connection-rate", a.connection_rate)
+        .opt("packet-mark", a.packet_mark)
+        .opt("routing-mark", a.routing_mark)
+        .opt("packet-size", a.packet_size)
+        .opt("dscp", a.dscp)
+        .opt("ingress-priority", a.ingress_priority)
+        .opt("priority", a.priority)
+        .opt("src-mac-address", a.src_mac_address)
+        .opt("src-address-type", a.src_address_type)
+        .opt("dst-address-type", a.dst_address_type)
+        .opt("tcp-mss", a.tcp_mss)
+        .opt("headers", a.headers)
+        .opt("tls-host", a.tls_host)
+        .opt("content", a.content)
+        .opt("nth", a.nth)
+        .opt("random", a.random)
+        .opt("time", a.time)
+        .opt("dst-limit", a.dst_limit)
+        .opt("ipsec-policy", a.ipsec_policy)
+        .opt("per-connection-classifier", a.per_connection_classifier)
+        .opt("jump-target", a.jump_target)
+        .opt("reject-with", a.reject_with)
+        .opt("address-list", a.address_list)
+        .opt("address-list-timeout", a.address_list_timeout)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .flag("log", a.log)
@@ -311,6 +466,36 @@ export const ipv6FirewallFilterTools: ToolModule = [
       hop_limit: z.string().optional(),
       limit: z.string().optional(),
       tcp_flags: z.string().optional(),
+      port: z.string().optional(),
+      icmp_options: z.string().optional(),
+      connection_mark: z.string().optional(),
+      connection_type: z.string().optional(),
+      connection_bytes: z.string().optional(),
+      connection_limit: z.string().optional(),
+      connection_rate: z.string().optional(),
+      packet_mark: z.string().optional(),
+      routing_mark: z.string().optional(),
+      packet_size: z.string().optional(),
+      dscp: z.string().optional(),
+      ingress_priority: z.string().optional(),
+      priority: z.string().optional(),
+      src_mac_address: z.string().optional(),
+      src_address_type: z.string().optional(),
+      dst_address_type: z.string().optional(),
+      tcp_mss: z.string().optional(),
+      headers: z.string().optional(),
+      tls_host: z.string().optional(),
+      content: z.string().optional(),
+      nth: z.string().optional(),
+      random: z.string().optional(),
+      time: z.string().optional(),
+      dst_limit: z.string().optional(),
+      ipsec_policy: z.string().optional(),
+      per_connection_classifier: z.string().optional(),
+      jump_target: z.string().optional(),
+      reject_with: z.string().optional(),
+      address_list: z.string().optional(),
+      address_list_timeout: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
       log: z.boolean().optional(),

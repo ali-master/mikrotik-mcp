@@ -43,6 +43,37 @@ async function updateFilterRule(
     dst_address_list?: string;
     limit?: string;
     tcp_flags?: string;
+    src_mac_address?: string;
+    in_interface_list?: string;
+    out_interface_list?: string;
+    port?: string;
+    connection_mark?: string;
+    packet_mark?: string;
+    routing_mark?: string;
+    connection_type?: string;
+    connection_bytes?: string;
+    connection_limit?: string;
+    connection_rate?: string;
+    content?: string;
+    dscp?: string;
+    layer7_protocol?: string;
+    packet_size?: string;
+    ipsec_policy?: string;
+    ttl?: string;
+    nth?: string;
+    time?: string;
+    random?: string;
+    tcp_mss?: string;
+    fragment?: boolean;
+    src_address_type?: string;
+    dst_address_type?: string;
+    hotspot?: string;
+    icmp_options?: string;
+    priority?: string;
+    jump_target?: string;
+    reject_with?: string;
+    address_list?: string;
+    address_list_timeout?: string;
     comment?: string;
     disabled?: boolean;
     log?: boolean;
@@ -74,6 +105,37 @@ async function updateFilterRule(
   put("dst-address-list", a.dst_address_list);
   put("limit", a.limit);
   put("tcp-flags", a.tcp_flags);
+  put("src-mac-address", a.src_mac_address);
+  put("in-interface-list", a.in_interface_list);
+  put("out-interface-list", a.out_interface_list);
+  put("port", a.port);
+  put("connection-mark", a.connection_mark);
+  put("packet-mark", a.packet_mark);
+  put("routing-mark", a.routing_mark);
+  put("connection-type", a.connection_type);
+  put("connection-bytes", a.connection_bytes);
+  put("connection-limit", a.connection_limit);
+  put("connection-rate", a.connection_rate);
+  put("content", a.content);
+  put("dscp", a.dscp);
+  put("layer7-protocol", a.layer7_protocol);
+  put("packet-size", a.packet_size);
+  put("ipsec-policy", a.ipsec_policy);
+  put("ttl", a.ttl);
+  put("nth", a.nth);
+  put("time", a.time);
+  put("random", a.random);
+  put("tcp-mss", a.tcp_mss);
+  put("src-address-type", a.src_address_type);
+  put("dst-address-type", a.dst_address_type);
+  put("hotspot", a.hotspot);
+  put("icmp-options", a.icmp_options);
+  put("priority", a.priority);
+  put("jump-target", a.jump_target);
+  put("reject-with", a.reject_with);
+  put("address-list", a.address_list);
+  put("address-list-timeout", a.address_list_timeout);
+  if (a.fragment !== undefined) updates.push(`fragment=${a.fragment ? "yes" : "no"}`);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
   if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
@@ -139,6 +201,61 @@ export const firewallFilterTools: ToolModule = [
       dst_address_list: z.string().optional(),
       limit: z.string().optional().describe('RouterOS rate/burst string e.g. "10,5:packet"'),
       tcp_flags: z.string().optional().describe('RouterOS flag expression e.g. "syn,!ack"'),
+      src_mac_address: z
+        .string()
+        .optional()
+        .describe('Source MAC, supports ! and mask e.g. "00:11:..."'),
+      in_interface_list: z.string().optional().describe("Match by inbound interface list name"),
+      out_interface_list: z.string().optional().describe("Match by outbound interface list name"),
+      port: z.string().optional().describe("Match src OR dst port(s) (protocol-agnostic)"),
+      connection_mark: z.string().optional().describe("Match packets with this connection mark"),
+      packet_mark: z.string().optional().describe("Match packets with this packet mark"),
+      routing_mark: z.string().optional().describe("Match packets with this routing mark"),
+      connection_type: z.string().optional().describe('Conntrack helper type e.g. "ftp,sip"'),
+      connection_bytes: z.string().optional().describe('Total conn bytes range e.g. "1000000-0"'),
+      connection_limit: z.string().optional().describe('Per-address conn limit e.g. "100,32"'),
+      connection_rate: z.string().optional().describe('Connection rate range e.g. "0-100k"'),
+      content: z.string().optional().describe("Match a literal string in the packet payload"),
+      dscp: z.string().optional().describe("Match DSCP/TOS value 0-63"),
+      layer7_protocol: z.string().optional().describe("Match a /ip firewall layer7-protocol name"),
+      packet_size: z.string().optional().describe('Packet size or range in bytes e.g. "0-1500"'),
+      ipsec_policy: z
+        .string()
+        .optional()
+        .describe('IPsec policy match e.g. "in,ipsec" or "out,none"'),
+      ttl: z.string().optional().describe('TTL match e.g. "equal:64" or "less-than:5"'),
+      nth: z.string().optional().describe('Match every Nth packet e.g. "2,1"'),
+      time: z.string().optional().describe('Time/day match e.g. "8h-16h,mon,tue,wed"'),
+      random: z
+        .string()
+        .optional()
+        .describe("Match a packet randomly with given probability (1-99)"),
+      tcp_mss: z.string().optional().describe('TCP MSS match e.g. "1300-1536" or "!1460"'),
+      fragment: z.boolean().optional().describe("Match non-first IP fragments"),
+      src_address_type: z
+        .string()
+        .optional()
+        .describe('Source address type e.g. "unicast","local"'),
+      dst_address_type: z
+        .string()
+        .optional()
+        .describe('Dest address type e.g. "broadcast","multicast"'),
+      hotspot: z
+        .string()
+        .optional()
+        .describe('Hotspot match e.g. "auth","from-client","local-dst"'),
+      icmp_options: z.string().optional().describe('ICMP type:code match e.g. "8:0"'),
+      priority: z.string().optional().describe("Match packets by priority (0-63) set internally"),
+      jump_target: z.string().optional().describe("Target chain name when action=jump"),
+      reject_with: z.string().optional().describe("ICMP/TCP reject response when action=reject"),
+      address_list: z
+        .string()
+        .optional()
+        .describe("List name for add-src-to-address-list / add-dst-to-address-list actions"),
+      address_list_timeout: z
+        .string()
+        .optional()
+        .describe('Timeout for the address-list entry e.g. "1d" or "none"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
@@ -171,6 +288,37 @@ export const firewallFilterTools: ToolModule = [
         .opt("dst-address-list", a.dst_address_list)
         .opt("limit", a.limit)
         .opt("tcp-flags", a.tcp_flags)
+        .opt("src-mac-address", a.src_mac_address)
+        .opt("in-interface-list", a.in_interface_list)
+        .opt("out-interface-list", a.out_interface_list)
+        .opt("port", a.port)
+        .opt("connection-mark", a.connection_mark)
+        .opt("packet-mark", a.packet_mark)
+        .opt("routing-mark", a.routing_mark)
+        .opt("connection-type", a.connection_type)
+        .opt("connection-bytes", a.connection_bytes)
+        .opt("connection-limit", a.connection_limit)
+        .opt("connection-rate", a.connection_rate)
+        .opt("content", a.content)
+        .opt("dscp", a.dscp)
+        .opt("layer7-protocol", a.layer7_protocol)
+        .opt("packet-size", a.packet_size)
+        .opt("ipsec-policy", a.ipsec_policy)
+        .opt("ttl", a.ttl)
+        .opt("nth", a.nth)
+        .opt("time", a.time)
+        .opt("random", a.random)
+        .opt("tcp-mss", a.tcp_mss)
+        .bool("fragment", a.fragment)
+        .opt("src-address-type", a.src_address_type)
+        .opt("dst-address-type", a.dst_address_type)
+        .opt("hotspot", a.hotspot)
+        .opt("icmp-options", a.icmp_options)
+        .opt("priority", a.priority)
+        .opt("jump-target", a.jump_target)
+        .opt("reject-with", a.reject_with)
+        .opt("address-list", a.address_list)
+        .opt("address-list-timeout", a.address_list_timeout)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .flag("log", a.log)
@@ -324,6 +472,37 @@ export const firewallFilterTools: ToolModule = [
       dst_address_list: z.string().optional(),
       limit: z.string().optional(),
       tcp_flags: z.string().optional(),
+      src_mac_address: z.string().optional(),
+      in_interface_list: z.string().optional(),
+      out_interface_list: z.string().optional(),
+      port: z.string().optional(),
+      connection_mark: z.string().optional(),
+      packet_mark: z.string().optional(),
+      routing_mark: z.string().optional(),
+      connection_type: z.string().optional(),
+      connection_bytes: z.string().optional(),
+      connection_limit: z.string().optional(),
+      connection_rate: z.string().optional(),
+      content: z.string().optional(),
+      dscp: z.string().optional(),
+      layer7_protocol: z.string().optional(),
+      packet_size: z.string().optional(),
+      ipsec_policy: z.string().optional(),
+      ttl: z.string().optional(),
+      nth: z.string().optional(),
+      time: z.string().optional(),
+      random: z.string().optional(),
+      tcp_mss: z.string().optional(),
+      fragment: z.boolean().optional(),
+      src_address_type: z.string().optional(),
+      dst_address_type: z.string().optional(),
+      hotspot: z.string().optional(),
+      icmp_options: z.string().optional(),
+      priority: z.string().optional(),
+      jump_target: z.string().optional(),
+      reject_with: z.string().optional(),
+      address_list: z.string().optional(),
+      address_list_timeout: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
       log: z.boolean().optional(),

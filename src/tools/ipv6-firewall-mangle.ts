@@ -28,6 +28,36 @@ async function updateMangleRule(
     protocol?: string;
     in_interface?: string;
     out_interface?: string;
+    in_interface_list?: string;
+    out_interface_list?: string;
+    src_address_list?: string;
+    dst_address_list?: string;
+    src_address_type?: string;
+    dst_address_type?: string;
+    src_mac_address?: string;
+    port?: string;
+    connection_state?: string;
+    connection_type?: string;
+    connection_bytes?: string;
+    connection_limit?: string;
+    connection_rate?: string;
+    per_connection_classifier?: string;
+    tcp_flags?: string;
+    tcp_mss?: string;
+    icmp_options?: string;
+    packet_size?: string;
+    dscp?: string;
+    priority?: string;
+    ingress_priority?: string;
+    ipsec_policy?: string;
+    nth?: string;
+    random?: string;
+    time?: string;
+    hop_limit?: string;
+    content?: string;
+    headers?: string;
+    limit?: string;
+    dst_limit?: string;
     connection_mark?: string;
     packet_mark?: string;
     routing_mark?: string;
@@ -36,6 +66,11 @@ async function updateMangleRule(
     new_routing_mark?: string;
     new_dscp?: string;
     new_hop_limit?: string;
+    new_mss?: string;
+    new_priority?: string;
+    jump_target?: string;
+    sniff_target?: string;
+    sniff_target_port?: string;
     passthrough?: boolean;
     comment?: string;
     disabled?: boolean;
@@ -61,6 +96,36 @@ async function updateMangleRule(
   put("protocol", a.protocol);
   put("in-interface", a.in_interface);
   put("out-interface", a.out_interface);
+  put("in-interface-list", a.in_interface_list);
+  put("out-interface-list", a.out_interface_list);
+  put("src-address-list", a.src_address_list);
+  put("dst-address-list", a.dst_address_list);
+  put("src-address-type", a.src_address_type);
+  put("dst-address-type", a.dst_address_type);
+  put("src-mac-address", a.src_mac_address);
+  put("port", a.port);
+  put("connection-state", a.connection_state);
+  put("connection-type", a.connection_type);
+  put("connection-bytes", a.connection_bytes);
+  put("connection-limit", a.connection_limit);
+  put("connection-rate", a.connection_rate);
+  put("per-connection-classifier", a.per_connection_classifier);
+  put("tcp-flags", a.tcp_flags);
+  put("tcp-mss", a.tcp_mss);
+  put("icmp-options", a.icmp_options);
+  put("packet-size", a.packet_size);
+  put("dscp", a.dscp);
+  put("priority", a.priority);
+  put("ingress-priority", a.ingress_priority);
+  put("ipsec-policy", a.ipsec_policy);
+  put("nth", a.nth);
+  put("random", a.random);
+  put("time", a.time);
+  put("hop-limit", a.hop_limit);
+  put("content", a.content);
+  put("headers", a.headers);
+  put("limit", a.limit);
+  put("dst-limit", a.dst_limit);
   put("connection-mark", a.connection_mark);
   put("packet-mark", a.packet_mark);
   put("routing-mark", a.routing_mark);
@@ -69,6 +134,11 @@ async function updateMangleRule(
   put("new-routing-mark", a.new_routing_mark);
   put("new-dscp", a.new_dscp);
   put("new-hop-limit", a.new_hop_limit);
+  put("new-mss", a.new_mss);
+  put("new-priority", a.new_priority);
+  put("jump-target", a.jump_target);
+  put("sniff-target", a.sniff_target);
+  put("sniff-target-port", a.sniff_target_port);
   if (a.passthrough !== undefined) updates.push(`passthrough=${a.passthrough ? "yes" : "no"}`);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
   if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
@@ -128,16 +198,60 @@ export const ipv6FirewallMangleTools: ToolModule = [
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
       protocol: z.string().optional(),
-      in_interface: z.string().optional(),
+      in_interface: z.string().optional().describe('Negatable, e.g. "!ether1"'),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional().describe('Interface list, negatable e.g. "!WAN"'),
+      out_interface_list: z.string().optional(),
+      src_address_list: z.string().optional().describe('Match src in a named list; negate "!name"'),
+      dst_address_list: z.string().optional().describe('Match dst in a named list; negate "!name"'),
+      src_address_type: z.string().optional().describe('e.g. "unicast", "local", "!local"'),
+      dst_address_type: z.string().optional(),
+      src_mac_address: z.string().optional().describe('Source MAC, negatable e.g. "!00:11:..."'),
+      port: z.string().optional().describe("Match if src OR dst port matches (with protocol)"),
+      connection_state: z
+        .string()
+        .optional()
+        .describe('e.g. "new", "established,related", "!invalid"'),
+      connection_type: z.string().optional().describe('Helper, e.g. "sip", "ftp"'),
+      connection_bytes: z.string().optional().describe('e.g. "1000000-0" (>1 MB connections)'),
+      connection_limit: z.string().optional().describe('e.g. "100,128"'),
+      connection_rate: z.string().optional().describe('e.g. "100k-1M"'),
+      per_connection_classifier: z
+        .string()
+        .optional()
+        .describe('PCC for load balancing, e.g. "both-addresses:2/0"'),
+      tcp_flags: z.string().optional().describe('RouterOS flag expression e.g. "syn,!ack"'),
+      tcp_mss: z.string().optional().describe('Match TCP MSS, e.g. "1400-1500" or "!1460"'),
+      icmp_options: z.string().optional().describe('Match ICMPv6 type:code, e.g. "128:0"'),
+      packet_size: z.string().optional().describe('e.g. "1500" or "0-500"'),
+      dscp: z.string().optional().describe("Match incoming DSCP (0-63)"),
+      priority: z.string().optional().describe("Match packet/queue priority (0-63)"),
+      ingress_priority: z.string().optional().describe("Match ingress (VLAN/MPLS) priority (0-63)"),
+      ipsec_policy: z.string().optional().describe('e.g. "in,ipsec" or "out,none"'),
+      nth: z.string().optional().describe('e.g. "2,1" — every 2nd packet'),
+      random: z.string().optional().describe("Match a random N% of packets (1-99)"),
+      time: z.string().optional().describe('e.g. "8h-16h,mon,tue,wed,thu,fri"'),
+      hop_limit: z.string().optional().describe('Match hop-limit, e.g. "equal:64", "less-than:10"'),
+      content: z.string().optional().describe("Match packets containing this text"),
+      headers: z.string().optional().describe('Match IPv6 extension headers, e.g. "hop:contains"'),
+      limit: z.string().optional().describe('Rate limit matcher, e.g. "50,5:packet"'),
+      dst_limit: z
+        .string()
+        .optional()
+        .describe('Per-destination rate matcher, e.g. "50,5,dst-address/1m"'),
       connection_mark: z.string().optional(),
       packet_mark: z.string().optional(),
       routing_mark: z.string().optional(),
       new_connection_mark: z.string().optional(),
       new_packet_mark: z.string().optional(),
       new_routing_mark: z.string().optional(),
-      new_dscp: z.string().optional(),
+      new_dscp: z.string().optional().describe("0-63, for change-dscp"),
       new_hop_limit: z.string().optional().describe('e.g. "decrement", "increment", or "set:64"'),
+      new_mss: z.string().optional().describe('e.g. "1440" or "clamp-to-pmtu", for change-mss'),
+      new_priority: z.string().optional().describe('e.g. "4" or "from-dscp", for set-priority'),
+      jump_target: z.string().optional().describe("Target chain name for action=jump"),
+      sniff_target: z.string().optional().describe("TZSP collector IP for action=sniff-tzsp"),
+      sniff_target_port: z.string().optional().describe("TZSP collector UDP port for sniff-tzsp"),
       passthrough: z.boolean().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -158,6 +272,36 @@ export const ipv6FirewallMangleTools: ToolModule = [
         .opt("protocol", a.protocol)
         .opt("in-interface", a.in_interface)
         .opt("out-interface", a.out_interface)
+        .opt("in-interface-list", a.in_interface_list)
+        .opt("out-interface-list", a.out_interface_list)
+        .opt("src-address-list", a.src_address_list)
+        .opt("dst-address-list", a.dst_address_list)
+        .opt("src-address-type", a.src_address_type)
+        .opt("dst-address-type", a.dst_address_type)
+        .opt("src-mac-address", a.src_mac_address)
+        .opt("port", a.port)
+        .opt("connection-state", a.connection_state)
+        .opt("connection-type", a.connection_type)
+        .opt("connection-bytes", a.connection_bytes)
+        .opt("connection-limit", a.connection_limit)
+        .opt("connection-rate", a.connection_rate)
+        .opt("per-connection-classifier", a.per_connection_classifier)
+        .opt("tcp-flags", a.tcp_flags)
+        .opt("tcp-mss", a.tcp_mss)
+        .opt("icmp-options", a.icmp_options)
+        .opt("packet-size", a.packet_size)
+        .opt("dscp", a.dscp)
+        .opt("priority", a.priority)
+        .opt("ingress-priority", a.ingress_priority)
+        .opt("ipsec-policy", a.ipsec_policy)
+        .opt("nth", a.nth)
+        .opt("random", a.random)
+        .opt("time", a.time)
+        .opt("hop-limit", a.hop_limit)
+        .opt("content", a.content)
+        .opt("headers", a.headers)
+        .opt("limit", a.limit)
+        .opt("dst-limit", a.dst_limit)
         .opt("connection-mark", a.connection_mark)
         .opt("packet-mark", a.packet_mark)
         .opt("routing-mark", a.routing_mark)
@@ -166,6 +310,11 @@ export const ipv6FirewallMangleTools: ToolModule = [
         .opt("new-routing-mark", a.new_routing_mark)
         .opt("new-dscp", a.new_dscp)
         .opt("new-hop-limit", a.new_hop_limit)
+        .opt("new-mss", a.new_mss)
+        .opt("new-priority", a.new_priority)
+        .opt("jump-target", a.jump_target)
+        .opt("sniff-target", a.sniff_target)
+        .opt("sniff-target-port", a.sniff_target_port)
         .bool("passthrough", a.passthrough)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
@@ -297,6 +446,36 @@ export const ipv6FirewallMangleTools: ToolModule = [
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional(),
+      out_interface_list: z.string().optional(),
+      src_address_list: z.string().optional().describe('Negate with "!name"'),
+      dst_address_list: z.string().optional().describe('Negate with "!name"'),
+      src_address_type: z.string().optional(),
+      dst_address_type: z.string().optional(),
+      src_mac_address: z.string().optional(),
+      port: z.string().optional(),
+      connection_state: z.string().optional(),
+      connection_type: z.string().optional(),
+      connection_bytes: z.string().optional(),
+      connection_limit: z.string().optional(),
+      connection_rate: z.string().optional(),
+      per_connection_classifier: z.string().optional(),
+      tcp_flags: z.string().optional(),
+      tcp_mss: z.string().optional(),
+      icmp_options: z.string().optional(),
+      packet_size: z.string().optional(),
+      dscp: z.string().optional(),
+      priority: z.string().optional(),
+      ingress_priority: z.string().optional(),
+      ipsec_policy: z.string().optional(),
+      nth: z.string().optional(),
+      random: z.string().optional(),
+      time: z.string().optional(),
+      hop_limit: z.string().optional(),
+      content: z.string().optional(),
+      headers: z.string().optional(),
+      limit: z.string().optional(),
+      dst_limit: z.string().optional(),
       connection_mark: z.string().optional(),
       packet_mark: z.string().optional(),
       routing_mark: z.string().optional(),
@@ -305,6 +484,11 @@ export const ipv6FirewallMangleTools: ToolModule = [
       new_routing_mark: z.string().optional(),
       new_dscp: z.string().optional(),
       new_hop_limit: z.string().optional(),
+      new_mss: z.string().optional(),
+      new_priority: z.string().optional(),
+      jump_target: z.string().optional(),
+      sniff_target: z.string().optional(),
+      sniff_target_port: z.string().optional(),
       passthrough: z.boolean().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),

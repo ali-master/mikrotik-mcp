@@ -25,11 +25,24 @@ async function updateRawRule(
     dst_address?: string;
     src_port?: string;
     dst_port?: string;
+    port?: string;
     protocol?: string;
     in_interface?: string;
     out_interface?: string;
+    in_interface_list?: string;
+    out_interface_list?: string;
     src_address_list?: string;
     dst_address_list?: string;
+    src_address_type?: string;
+    dst_address_type?: string;
+    src_mac_address?: string;
+    hop_limit?: string;
+    tcp_flags?: string;
+    tcp_mss?: string;
+    packet_size?: string;
+    dscp?: string;
+    ipsec_policy?: string;
+    limit?: string;
     comment?: string;
     disabled?: boolean;
     log?: boolean;
@@ -51,11 +64,24 @@ async function updateRawRule(
   put("dst-address", a.dst_address);
   put("src-port", a.src_port);
   put("dst-port", a.dst_port);
+  put("port", a.port);
   put("protocol", a.protocol);
   put("in-interface", a.in_interface);
   put("out-interface", a.out_interface);
+  put("in-interface-list", a.in_interface_list);
+  put("out-interface-list", a.out_interface_list);
   put("src-address-list", a.src_address_list);
   put("dst-address-list", a.dst_address_list);
+  put("src-address-type", a.src_address_type);
+  put("dst-address-type", a.dst_address_type);
+  put("src-mac-address", a.src_mac_address);
+  put("hop-limit", a.hop_limit);
+  put("tcp-flags", a.tcp_flags);
+  put("tcp-mss", a.tcp_mss);
+  put("packet-size", a.packet_size);
+  put("dscp", a.dscp);
+  put("ipsec-policy", a.ipsec_policy);
+  put("limit", a.limit);
   if (a.comment !== undefined) updates.push(`comment=${quoteValue(a.comment)}`);
   if (a.disabled !== undefined) updates.push(`disabled=${a.disabled ? "yes" : "no"}`);
   if (a.log !== undefined) {
@@ -97,11 +123,33 @@ export const ipv6FirewallRawTools: ToolModule = [
       dst_address: z.string().optional(),
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
+      port: z.string().optional().describe("Match src or dst port (any direction)"),
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional().describe("Match inbound interface list name"),
+      out_interface_list: z.string().optional().describe("Match outbound interface list name"),
       src_address_list: z.string().optional(),
       dst_address_list: z.string().optional(),
+      src_address_type: z
+        .string()
+        .optional()
+        .describe('Source address type e.g. "unicast", "local", "multicast"'),
+      dst_address_type: z
+        .string()
+        .optional()
+        .describe('Destination address type e.g. "unicast", "local", "multicast"'),
+      src_mac_address: z.string().optional().describe("Match source MAC address"),
+      hop_limit: z.string().optional().describe('Hop-limit expression e.g. "equal:1" or "less:64"'),
+      tcp_flags: z.string().optional().describe('TCP flag expression e.g. "syn,!ack"'),
+      tcp_mss: z.string().optional().describe('TCP MSS value or range e.g. "1400-1500"'),
+      packet_size: z.string().optional().describe('Packet size or range in bytes e.g. "0-500"'),
+      dscp: z.string().optional().describe("DSCP value 0-63"),
+      ipsec_policy: z
+        .string()
+        .optional()
+        .describe('IPsec policy match e.g. "in,ipsec" or "out,none"'),
+      limit: z.string().optional().describe('Rate/burst string e.g. "10,5:packet"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       log: z.boolean().default(false),
@@ -118,11 +166,24 @@ export const ipv6FirewallRawTools: ToolModule = [
         .opt("dst-address", a.dst_address)
         .opt("src-port", a.src_port)
         .opt("dst-port", a.dst_port)
+        .opt("port", a.port)
         .opt("protocol", a.protocol)
         .opt("in-interface", a.in_interface)
         .opt("out-interface", a.out_interface)
+        .opt("in-interface-list", a.in_interface_list)
+        .opt("out-interface-list", a.out_interface_list)
         .opt("src-address-list", a.src_address_list)
         .opt("dst-address-list", a.dst_address_list)
+        .opt("src-address-type", a.src_address_type)
+        .opt("dst-address-type", a.dst_address_type)
+        .opt("src-mac-address", a.src_mac_address)
+        .opt("hop-limit", a.hop_limit)
+        .opt("tcp-flags", a.tcp_flags)
+        .opt("tcp-mss", a.tcp_mss)
+        .opt("packet-size", a.packet_size)
+        .opt("dscp", a.dscp)
+        .opt("ipsec-policy", a.ipsec_policy)
+        .opt("limit", a.limit)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .flag("log", a.log)
@@ -254,11 +315,24 @@ export const ipv6FirewallRawTools: ToolModule = [
       dst_address: z.string().optional(),
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
+      port: z.string().optional(),
       protocol: z.string().optional(),
       in_interface: z.string().optional(),
       out_interface: z.string().optional(),
+      in_interface_list: z.string().optional(),
+      out_interface_list: z.string().optional(),
       src_address_list: z.string().optional(),
       dst_address_list: z.string().optional(),
+      src_address_type: z.string().optional(),
+      dst_address_type: z.string().optional(),
+      src_mac_address: z.string().optional(),
+      hop_limit: z.string().optional(),
+      tcp_flags: z.string().optional(),
+      tcp_mss: z.string().optional(),
+      packet_size: z.string().optional(),
+      dscp: z.string().optional(),
+      ipsec_policy: z.string().optional(),
+      limit: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
       log: z.boolean().optional(),
