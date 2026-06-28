@@ -50,11 +50,14 @@ export const containerTools: ToolModule = [
     title: "List Containers",
     annotations: READ,
     description:
-      "List all OCI containers on the device (`/container print`) with their status (running/stopped/" +
-      "extracting), image tag, name, VETH interface, and root-dir. Use to discover containers and the " +
-      "`name`/`tag` other container tools take. Optionally filter by partial `name_filter`, `tag_filter`, or " +
-      "`status_filter` (running/stopped). Set `detail=true` for the full property block. For one container " +
-      "use get_container; container stdout/stderr is in the log (`/log` topics~container) when logging=yes.",
+      "List every OCI container on the device (`/container print`) with its status, image tag, name, VETH " +
+      "interface and root-dir — the starting point for any container work and the way to POLL the lifecycle, " +
+      "which is asynchronous: status moves extracting → stopped (ready to start) → running. Use this to find " +
+      "the `name`/`tag` the other tools take, to confirm an add has finished extracting before start_container, " +
+      "and to confirm a stop has completed before remove_container. Filter by partial `name_filter`, " +
+      "`tag_filter`, or `status_filter` (e.g. 'running', 'stopped'); set `detail=true` for the full property " +
+      "block. For one container use get_container. A container's stdout/stderr is in the system log " +
+      '(`/log print where topics~"container"`) when it was created with logging=yes.',
     inputSchema: {
       name_filter: z.string().optional().describe("Partial container name match"),
       tag_filter: z.string().optional().describe("Partial image tag match"),
@@ -104,15 +107,22 @@ export const containerTools: ToolModule = [
     title: "Add Container",
     annotations: WRITE,
     description:
-      "Create an OCI container (`/container add`). Supply EITHER `remote_image` (pull from the configured " +
-      "registry, e.g. 'library/alpine:latest') OR `file` (a local Docker-v1 tar already on the device). " +
-      "`interface` is the VETH that connects it to RouterOS networking; `root_dir` is its filesystem location " +
-      "(use external disk, e.g. 'disk1/myapp'). Set inline `env` ('K=v,K2=v2') and `mount` " +
-      "('src=disk1/data,dst=/data') — or reference named lists via `envlists`/`mountlists` " +
-      "(add_container_env / add_container_mount). Override `cmd`/`entrypoint`/`workdir`, set `hostname`/`dns`, " +
-      "enable `logging` and `start_on_boot`, and cap resources with `memory_high`/`cpu_list`. Strongly set " +
-      "`name` so the lifecycle tools can find it. Image pull/extract is asynchronous — poll with " +
-      "list_containers until status is 'stopped', then start_container.",
+      "Create an OCI container (`/container add`). " +
+      "PREREQUISITES, in order: (1) the `container` package installed + device-mode `container=yes`; " +
+      "(2) an external disk for storage (containers should never run on internal flash); " +
+      "(3) for `remote_image`, a registry URL + on-disk `tmpdir` set via set_container_config; " +
+      "(4) a VETH for networking — create it first with `/interface veth add name=veth1 " +
+      "address=172.17.0.2/24 gateway=172.17.0.1`, then bridge it and add a srcnat masquerade rule for " +
+      "internet (and a dst-nat to publish a port). " +
+      "Then create the container: supply EITHER `remote_image` (registry pull, e.g. 'library/alpine:latest') " +
+      "OR `file` (a local image tar on the device — must be a SINGLE-LAYER, UNCOMPRESSED Docker-v1 tar). " +
+      "Set `interface` to the VETH and `root_dir` to a path on the external disk (e.g. 'disk1/myapp'). " +
+      "Attach config via inline `env` ('K=v,K2=v2') / `mount` ('src=disk1/data,dst=/data'), or reference " +
+      "named lists with `envlists`/`mountlists` (add_container_env / add_container_mount). Override " +
+      "`cmd`/`entrypoint`/`workdir`; set `hostname`/`dns`; enable `logging`/`start_on_boot`; cap " +
+      "`memory_high`/`cpu_list`. ALWAYS set `name` so the lifecycle tools can find it. " +
+      "The image pull/extract is ASYNCHRONOUS: this returns immediately, then poll list_containers until " +
+      "status becomes 'stopped' (extraction done) before calling start_container.",
     inputSchema: {
       name: z.string().optional().describe("Container name (recommended for management)"),
       remote_image: z.string().optional().describe("Registry image, e.g. 'library/alpine:latest'"),
@@ -183,10 +193,12 @@ export const containerTools: ToolModule = [
     title: "Update Container",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Modify an existing container's properties (`/container set [find …]`) without recreating it — change " +
-      "`start_on_boot`, `logging`, `cmd`/`entrypoint`/`workdir`, `hostname`/`dns`, `interface`, `root_dir`, " +
-      "inline `env`/`mount` or `envlists`/`mountlists`, resource caps, or `comment`. Identify by `name` or " +
-      "`tag`. Some changes only take effect after a stop/start. To create a container use add_container.",
+      "Modify an existing container's properties in place (`/container set [find …]`) without recreating it — " +
+      "change `start_on_boot`, `logging`, `cmd`/`entrypoint`/`workdir`, `hostname`/`dns`, `interface`, " +
+      "`root_dir`, inline `env`/`mount` or `envlists`/`mountlists`, resource caps, or `comment`. Identify by " +
+      "`name` or `tag`. Best practice: stop the container first (stop_container) before changing runtime " +
+      "properties like interface, env, mounts or cmd — they take effect on the next start_container, not " +
+      "live. To create a new container use add_container; to change the image, remove and re-add.",
     inputSchema: {
       ...IDENTITY,
       interface: z.string().optional(),
@@ -332,10 +344,13 @@ export const containerTools: ToolModule = [
     title: "Set Container Global Config",
     annotations: WRITE_IDEMPOTENT,
     description:
-      "Configure the global container settings (`/container config set`) — set the `registry_url` (e.g. " +
-      "'https://registry-1.docker.io') and `tmpdir` (on external disk, e.g. 'disk1/pull') so remote images " +
-      "can be pulled, the `layer_dir`, the `ram_high` cap, and optional registry `username`/`password` for " +
-      "private registries. This is a router-wide singleton. To read it use get_container_config.",
+      "Configure the global container settings (`/container config set`) — the router-wide singleton that " +
+      "MUST be set before pulling any `remote_image` with add_container. Set `registry_url` (Docker Hub is " +
+      "'https://registry-1.docker.io') and `tmpdir` to a path on an EXTERNAL disk (e.g. 'disk1/pull') — pulls " +
+      "and extraction need real space and IOPS, never internal flash. Optionally set `layer_dir`, a `ram_high` " +
+      "cap, and `username`/`password` for a private registry (credentials are redacted from output). The " +
+      "router also needs working DNS + internet to reach the registry. To read the current values use " +
+      "get_container_config.",
     inputSchema: {
       registry_url: z.string().optional().describe("Image registry URL"),
       tmpdir: z.string().optional().describe("Pull/extract temp dir, e.g. 'disk1/pull'"),
@@ -396,9 +411,11 @@ export const containerTools: ToolModule = [
     annotations: WRITE,
     description:
       "Add an environment variable to a named list (`/container envs add list= key= value=`). Group related " +
-      "variables under the same `list` name, then reference it from a container via `envlists` (add_container " +
-      "or update_container). Inline `env` on add_container is an alternative for self-contained setups. " +
-      "Values may be secrets and are redacted from output.",
+      "variables under the same `list` name, then point a container at the group with `envlists=<list>` " +
+      "(add_container or update_container) — a container that is already running must be restarted to pick up " +
+      "env changes. Named lists are reusable across containers; for a one-off, self-contained setup the inline " +
+      "`env` on add_container is simpler. The grouping `list=` property requires RouterOS 7.20+. Values may be " +
+      "secrets and are redacted from output.",
     inputSchema: {
       list: z.string().describe("Env-list (group) name, e.g. 'MYAPP'"),
       key: z.string().describe("Variable name, e.g. 'TZ'"),
@@ -475,10 +492,12 @@ export const containerTools: ToolModule = [
     title: "Add Container Mount",
     annotations: WRITE,
     description:
-      "Create a named volume mount (`/container mounts add name= src= dst=`) — maps a host path `src` (place " +
-      "it on external disk, e.g. 'disk1/appdata') to a path `dst` inside the container (e.g. '/data'). " +
-      "Reference it from a container via `mountlists` (add_container or update_container). Inline `mount` on " +
-      "add_container is the alternative for self-contained setups.",
+      "Create a named volume mount (`/container mounts add name= src= dst=`) — persists container data on the " +
+      "host so it survives restarts/recreation. Maps a host source `src` (put it on an EXTERNAL disk, e.g. " +
+      "'disk1/appdata', never internal flash) to a path `dst` inside the container (e.g. '/data'). Point a " +
+      "container at it with `mountlists=<name>` (add_container or update_container); a running container must " +
+      "be restarted to apply mount changes. For a one-off, the inline `mount` on add_container is simpler. " +
+      "Named mounts and `mountlists` require RouterOS 7.21+.",
     inputSchema: {
       name: z.string().describe("Mount name, e.g. 'appdata'"),
       src: z.string().describe("Host source path, e.g. 'disk1/appdata'"),
