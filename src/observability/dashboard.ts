@@ -46,6 +46,17 @@ import {
   writeBackup,
 } from "../backups/vault";
 import { createContext } from "../core/context";
+import {
+  allowDevice,
+  blockDevice,
+  devicesView,
+  fetchDevices,
+  makeDeviceStatic,
+  removeDeviceLease,
+  sampleDeviceTraffic,
+  setDeviceIp,
+  setDeviceLabel,
+} from "../tools/connected-devices";
 import { normalizeExport } from "../snapshots/format";
 import { openSnapshotStore } from "../snapshots/store";
 import type { SnapshotStore } from "../snapshots/store";
@@ -499,6 +510,67 @@ async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
   return null;
 }
 
+// ── Connected Clients API ────────────────────────────────────────────────────
+/**
+ * Routes for the Clients page — LAN devices on a router, not the routers
+ * themselves. Each handler builds a {@link createContext} for the requested
+ * device and calls the SAME exported operations the connected-device MCP tools
+ * wrap, so a block/allow/pin from the web page and from chat run identical
+ * RouterOS commands. Mutations return the operation result plus a refreshed
+ * device `view` so the page can adopt the new state without a second request.
+ */
+async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+  if (!p.startsWith("/api/clients")) return null;
+
+  const deviceFromQuery = (): string | undefined => url.searchParams.get("device") ?? undefined;
+
+  if (p === "/api/clients" && req.method === "GET") {
+    const ctx = createContext(undefined, deviceFromQuery());
+    return json(devicesView(await fetchDevices(ctx)));
+  }
+
+  if (p === "/api/clients/traffic" && req.method === "GET") {
+    const ip = url.searchParams.get("ip");
+    if (!ip) return json({ error: "ip required" }, 400);
+    const ctx = createContext(undefined, deviceFromQuery());
+    return json(await sampleDeviceTraffic(ctx, ip));
+  }
+
+  // Mutations: each takes { mac, device?, ... } and returns { ok, message, view? }.
+  if (req.method === "POST") {
+    const b = (await readJson(req)) as {
+      mac?: string;
+      device?: string;
+      ip?: string;
+      label?: string;
+      comment?: string;
+    };
+    if (!b?.mac) return json({ error: "mac required" }, 400);
+    const ctx = createContext(undefined, b.device);
+
+    const run = async (op: Promise<{ ok: boolean; message: string }>): Promise<Response> => {
+      const r = await op;
+      return json({ ...r, view: r.ok ? devicesView(await fetchDevices(ctx)) : undefined });
+    };
+
+    if (p === "/api/clients/block") return run(blockDevice(ctx, b.mac, b.comment));
+    if (p === "/api/clients/allow") return run(allowDevice(ctx, b.mac));
+    if (p === "/api/clients/pin") return run(makeDeviceStatic(ctx, b.mac));
+    if (p === "/api/clients/remove") return run(removeDeviceLease(ctx, b.mac));
+    if (p === "/api/clients/set-ip") {
+      if (!b.ip) return json({ error: "ip required" }, 400);
+      return run(setDeviceIp(ctx, b.mac, b.ip));
+    }
+    if (p === "/api/clients/label") {
+      if (typeof b.label !== "string") return json({ error: "label required" }, 400);
+      return run(setDeviceLabel(ctx, b.mac, b.label));
+    }
+  }
+
+  return null;
+}
+
 // Lazily open the config-snapshot store (shared with the snapshot tools), so the
 // SQLite handle isn't created unless the Snapshots page is actually used.
 let snapStorePromise: Promise<SnapshotStore> | null = null;
@@ -820,6 +892,9 @@ export async function runDashboard(
 
       const captureResp = await captureRoutes(req, url);
       if (captureResp) return captureResp;
+
+      const clientsResp = await clientsRoutes(req, url);
+      if (clientsResp) return clientsResp;
 
       const featureResp = await featureRoutes(req, url);
       if (featureResp) return featureResp;

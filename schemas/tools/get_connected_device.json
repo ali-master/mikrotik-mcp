@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_connected_device",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "description": "Device MAC address",
+      "type": "string"
+    },
+    "ip": {
+      "description": "Device IP address (used if mac is omitted)",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

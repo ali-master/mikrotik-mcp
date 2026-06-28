@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.23.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 721,
+  "toolCount": 730,
   "tools": [
     {
       "name": "list_interfaces",
@@ -13694,6 +13694,240 @@
           }
         },
         "required": ["entry_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_connected_devices",
+      "title": "List Connected Devices",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Show every device on the network as a unified table — merges `/ip dhcp-server lease` (IP, MAC, host-name, status), `/ip arp` (interface, reachability) and lease flags. For each device returns its IP, MAC, hostname, interface, lease status (bound/waiting), whether its IP is STATIC (pinned), whether it is BLOCKED, last-seen activity and comment/label. In an MCP App host this renders an interactive table with per-device Download/Upload charts and one-click block/allow + make-static. Use make_device_static to pin a device's IP, block_device/allow_device to deny/permit network access, set_device_ip to change the reserved IP, set_device_label to name it, and get_device_traffic for live ↓/↑ rate. Filter with status_filter, name_filter (host/comment), static_only or blocked_only.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Match host-name or comment (substring)",
+            "type": "string"
+          },
+          "status_filter": {
+            "description": "e.g. \"bound\", \"waiting\", \"arp-only\"",
+            "type": "string"
+          },
+          "static_only": {
+            "default": false,
+            "description": "Only devices with a pinned/static IP",
+            "type": "boolean"
+          },
+          "blocked_only": {
+            "default": false,
+            "description": "Only blocked devices",
+            "type": "boolean"
+          }
+        },
+        "required": ["static_only", "blocked_only"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_connected_device",
+      "title": "Get Connected Device Detail",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Full detail for one device by MAC (preferred) or IP — its DHCP lease record (`/ip dhcp-server lease print detail`) plus its ARP entry (interface, reachability). Use list_connected_devices to find the MAC/IP; use get_device_traffic for live throughput.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "description": "Device MAC address",
+            "type": "string"
+          },
+          "ip": {
+            "description": "Device IP address (used if mac is omitted)",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_device_traffic",
+      "title": "Get Device Live Traffic (Download/Upload)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Live download/upload throughput for one device, sampled for the connected-devices charts. Reads a matching `/queue simple` entry's stats (rate + cumulative bytes) when one targets the device's IP; otherwise reports source='none' (RouterOS does not track per-device bytes for a wired client without a queue — create_simple_queue with target=<ip> to enable tracking). Returns rx/tx bits-per-second and cumulative bytes so the MCP App can plot the ↓/↑ chart over time.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "Device IP address"
+          }
+        },
+        "required": ["ip"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "make_device_static",
+      "title": "Pin a Device's IP (Make Lease Static)",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Pin a device's current IP so it always gets the same address (`/ip dhcp-server lease make-static`) — converts its dynamic DHCP lease to a static reservation bound to its MAC. Use this to 'fix' a device's IP. To then change the reserved IP use set_device_ip. Identify the device by MAC.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Device MAC address"
+          }
+        },
+        "required": ["mac"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_device_ip",
+      "title": "Set a Device's Reserved IP",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Change the IP reserved for a device (`/ip dhcp-server lease set address=`). If the device's lease is still dynamic it is made static first so the address sticks. Identify the device by MAC. The new IP must be within the DHCP server's network. Use make_device_static to pin the current IP without changing it.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Device MAC address"
+          },
+          "ip": {
+            "type": "string",
+            "description": "New reserved IP address"
+          }
+        },
+        "required": ["mac", "ip"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_device_label",
+      "title": "Label a Device",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Set a friendly label/comment on a device's DHCP lease (`/ip dhcp-server lease set comment=`) so it is easy to recognise in list_connected_devices (e.g. \"Ali phone\", \"Living-room TV\"). Identify by MAC.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Device MAC address"
+          },
+          "label": {
+            "type": "string",
+            "description": "Friendly name, e.g. \"Ali phone\". Pass \"\" to clear."
+          }
+        },
+        "required": ["mac", "label"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "block_device",
+      "title": "Block a Device (Deny Network Access)",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Deny a device all network access by its MAC — installs tagged `/ip firewall filter` drop rules in the forward chain (traffic through the router: internet + inter-VLAN) and the input chain (access to the router itself), and sets its DHCP lease block-access=yes. Blocking by MAC survives the device changing IP. Idempotent: re-blocking an already-blocked device is a no-op. Reverse with allow_device. Identify by MAC.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Device MAC address to block"
+          },
+          "comment": {
+            "description": "Optional reason, appended to the rule label",
+            "type": "string"
+          }
+        },
+        "required": ["mac"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "allow_device",
+      "title": "Allow a Device (Restore Network Access)",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Restore network access for a previously blocked device — removes the tagged `mcp-blocked` drop rules for its MAC from `/ip firewall filter` and clears its DHCP lease block-access. Reverses block_device. Identify by MAC.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Device MAC address to unblock"
+          }
+        },
+        "required": ["mac"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_device_lease",
+      "title": "Remove a Device's DHCP Lease",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Delete a device's DHCP lease (`/ip dhcp-server lease remove`) — forgets a static reservation or clears a stale dynamic lease. Does NOT block the device (use block_device for that). Identify by MAC. Verifies the lease exists first.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "mac": {
+            "type": "string",
+            "description": "Device MAC address"
+          }
+        },
+        "required": ["mac"],
         "additionalProperties": false
       }
     },

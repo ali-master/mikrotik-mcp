@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "block_device",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "description": "Device MAC address to block"
+    },
+    "comment": {
+      "description": "Optional reason, appended to the rule label",
+      "type": "string"
+    }
+  },
+  "required": ["mac"],
+  "additionalProperties": false
+}

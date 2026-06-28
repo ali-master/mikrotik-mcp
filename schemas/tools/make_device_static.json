@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "make_device_static",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "description": "Device MAC address"
+    }
+  },
+  "required": ["mac"],
+  "additionalProperties": false
+}

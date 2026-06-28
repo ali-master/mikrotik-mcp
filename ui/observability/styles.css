@@ -2760,3 +2760,157 @@ pre.body.ros .ros-comment {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* ── Clients (connected LAN devices) ──────────────────────────────────────── */
+.clients-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.clients-toolbar .geist-input {
+  width: 200px;
+}
+.clients-counts {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.clients-error {
+  margin-bottom: 10px;
+}
+.clients-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.clients-row {
+  display: grid;
+  grid-template-columns: 120px 1.3fr 150px 80px 130px minmax(280px, auto);
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--mt-radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+}
+.clients-row--head {
+  cursor: default;
+  color: var(--mt-text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.clients-row:not(.clients-row--head):hover {
+  background: var(--mt-surface-2);
+}
+.clients-row.is-selected {
+  background: color-mix(in srgb, var(--page-accent) 14%, var(--mt-surface-2));
+}
+.clients-row.is-blocked .clients-ip,
+.clients-row.is-blocked .clients-name {
+  color: var(--mt-text-faint);
+  text-decoration: line-through;
+}
+.clients-ip,
+.clients-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clients-mac {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--mt-text-dim);
+}
+.clients-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+.clients-actions,
+.clients-actions-h {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.clients-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mt-border);
+}
+.clients-detail__hd {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.clients-detail__title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.clients-rates {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.clients-rates .rate {
+  font-weight: 600;
+}
+.clients-rates .rate.rx {
+  color: var(--lime);
+}
+.clients-rates .rate.tx {
+  color: var(--amber);
+}
+.clients-chart {
+  width: 100%;
+  max-width: 520px;
+  height: 150px;
+  display: block;
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+}
+.clients-chart .line {
+  fill: none;
+  stroke-width: 2;
+}
+.clients-chart .rx.line {
+  stroke: var(--lime);
+}
+.clients-chart .tx.line {
+  stroke: var(--amber);
+}
+.clients-chart .rx.area {
+  fill: color-mix(in srgb, var(--lime) 18%, transparent);
+  stroke: none;
+}
+.clients-chart .tx.area {
+  fill: color-mix(in srgb, var(--amber) 14%, transparent);
+  stroke: none;
+}
+.clients-totals {
+  margin-top: 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.clients-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  background: var(--mt-surface-2);
+  flex-wrap: wrap;
+}
+.clients-edit__label {
+  font-size: 13px;
+  color: var(--mt-text-dim);
+}
+.clients-edit .geist-input {
+  width: 220px;
+}

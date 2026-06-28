@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "allow_device",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "description": "Device MAC address to unblock"
+    }
+  },
+  "required": ["mac"],
+  "additionalProperties": false
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_device_label",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "description": "Device MAC address"
+    },
+    "label": {
+      "type": "string",
+      "description": "Friendly name, e.g. \"Ali phone\". Pass \"\" to clear."
+    }
+  },
+  "required": ["mac", "label"],
+  "additionalProperties": false
+}

@@ -7,6 +7,7 @@
 import type { ToolModule } from "../core/registry";
 
 import { addressListTools } from "./address-list";
+import { connectedDeviceTools } from "./connected-devices";
 import { appViewTools } from "./app-views";
 import { backupTools } from "./backup";
 import { localBackupTools } from "./local-backup";
@@ -532,6 +533,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "Firewall address-lists (`/ip firewall address-list`).",
     tools: addressListTools,
+  },
+  {
+    label: "Connected Devices",
+    slug: "connected-devices",
+    group: "Security",
+    description:
+      "Manage devices on the network: unified list (DHCP lease + ARP), live traffic, " +
+      "block/allow by MAC, pin/change IP, and labels.",
+    tools: connectedDeviceTools,
   },
   {
     label: "Firewall — Audit",

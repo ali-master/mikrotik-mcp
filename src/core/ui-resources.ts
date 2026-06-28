@@ -66,6 +66,13 @@ export const UI_VIEWS: UiView[] = [
       "Prioritised firewall findings (shadowed/broad/missing-drop/duplicate/dead) with a risk " +
       "score and one-click fixes.",
   },
+  {
+    id: "connected-devices",
+    name: "MikroTik Connected Devices",
+    description:
+      "Devices on the network with per-device Download/Upload charts, uptime/status, and one-click " +
+      "block/allow and pin-IP.",
+  },
 ];
 
 /** Placeholder served when a view's HTML hasn't been built yet. */

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_connected_devices",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "description": "Match host-name or comment (substring)",
+      "type": "string"
+    },
+    "status_filter": {
+      "description": "e.g. \"bound\", \"waiting\", \"arp-only\"",
+      "type": "string"
+    },
+    "static_only": {
+      "default": false,
+      "description": "Only devices with a pinned/static IP",
+      "type": "boolean"
+    },
+    "blocked_only": {
+      "default": false,
+      "description": "Only blocked devices",
+      "type": "boolean"
+    }
+  },
+  "required": ["static_only", "blocked_only"],
+  "additionalProperties": false
+}

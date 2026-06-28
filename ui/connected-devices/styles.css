@@ -1,0 +1,220 @@
+:root {
+  --bg: #0b0d10;
+  --surface: #14181d;
+  --surface-2: #1b2027;
+  --border: #2a313a;
+  --text: #e8eaed;
+  --text-dim: #9aa0a6;
+  --accent: #7c9cff;
+  --rx: #4ade80; /* download (green) */
+  --tx: #f59e0b; /* upload (amber) */
+  --danger: #f2685a;
+  --ok: #4ade80;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --surface-2: #eef1f4;
+    --border: #d8dee4;
+    --text: #1c2024;
+    --text-dim: #5b6470;
+    --accent: #3b5bdb;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    13px/1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.muted {
+  color: var(--text-dim);
+}
+.loading {
+  padding: 24px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.toolbar .title {
+  font-weight: 600;
+  font-size: 15px;
+}
+.toolbar .counts {
+  font-size: 12px;
+}
+.btn {
+  margin-left: auto;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.toolbar .btn {
+  margin-left: auto;
+}
+.btn:hover {
+  border-color: var(--accent);
+}
+.btn.is-busy {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.table {
+  padding: 6px 8px 14px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 110px 1.4fr 150px 90px 110px 150px;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.row.header {
+  cursor: default;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.row:not(.header):hover {
+  background: var(--surface);
+}
+.row.is-selected {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+}
+.row.is-blocked .name,
+.row.is-blocked .ip {
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+.cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell.mac {
+  font-family: ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.badge {
+  display: inline-block;
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 100px;
+  margin-right: 4px;
+}
+.badge.static {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+}
+.badge.blocked {
+  background: color-mix(in srgb, var(--danger) 22%, transparent);
+  color: var(--danger);
+}
+.cell.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.cell.actions .btn {
+  margin: 0;
+  padding: 3px 9px;
+  font-size: 12px;
+}
+.btn.danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  color: var(--danger);
+}
+.btn.ok {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+  color: var(--ok);
+}
+
+.detail {
+  border-top: 1px solid var(--border);
+  padding: 14px;
+}
+.detail-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.detail-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.note {
+  font-size: 12px;
+  max-width: 460px;
+}
+.rates {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.rate {
+  font-weight: 600;
+}
+.rate.rx {
+  color: var(--rx);
+}
+.rate.tx {
+  color: var(--tx);
+}
+.traffic-chart {
+  width: 100%;
+  max-width: 460px;
+  height: 140px;
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.traffic-chart .line {
+  fill: none;
+  stroke-width: 2;
+}
+.traffic-chart .rx.line {
+  stroke: var(--rx);
+}
+.traffic-chart .tx.line {
+  stroke: var(--tx);
+}
+.traffic-chart .rx.area {
+  fill: color-mix(in srgb, var(--rx) 18%, transparent);
+  stroke: none;
+}
+.traffic-chart .tx.area {
+  fill: color-mix(in srgb, var(--tx) 14%, transparent);
+  stroke: none;
+}
+.totals {
+  margin-top: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

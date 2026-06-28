@@ -19,6 +19,7 @@ import { HBars, Panel, StatCard } from "./atoms";
 import { BackupsView } from "./backups";
 import { ChangePlanView } from "./change-plan";
 import { ActivityChart, RiskDonut } from "./charts";
+import { ClientsView } from "./clients";
 import { ConfigHistoryPanel, FieldGuidePanel } from "./config-panels";
 import { ConfigStudio } from "./config-studio";
 import { ConnectivityGraph, DeviceCard } from "./connectivity";
@@ -63,6 +64,7 @@ function download(name: string, text: string, mime: string): void {
 type ViewId =
   | "overview"
   | "devices"
+  | "clients"
   | "topology"
   | "packets"
   | "snapshots"
@@ -74,6 +76,7 @@ type ViewId =
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
   { id: "devices", label: "Devices", sub: "Connectivity radar & system health" },
+  { id: "clients", label: "Clients", sub: "Connected LAN devices — usage, block/allow, pin IP" },
   { id: "topology", label: "Topology", sub: "Layer-2 neighbours via MNDP / CDP / LLDP" },
   { id: "packets", label: "Packets", sub: "Live TZSP capture & decode" },
   { id: "snapshots", label: "Snapshots", sub: "Config history & time-travel diff" },
@@ -128,6 +131,7 @@ const MONO_ACCENT: [string, string] = ["#ededed", "#a1a1a1"];
 const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   overview: MONO_ACCENT,
   devices: MONO_ACCENT,
+  clients: MONO_ACCENT,
   topology: MONO_ACCENT,
   packets: MONO_ACCENT,
   snapshots: MONO_ACCENT,
@@ -158,6 +162,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Each device gets a stable colour so you can track it across the connectivity radar.",
       "Health (CPU/Mem/Disk) is probed periodically; MAC-Telnet devices are probed on a slower cadence.",
       "Latency tiers are colour-coded green → amber → red; a grey node is currently unreachable.",
+    ],
+  },
+  clients: {
+    what: "The LAN devices connected to a router — merged from its DHCP leases and ARP table — with live Download/Upload charts, and one-click controls to block/allow a device, pin (reserve) its IP, change that IP, or relabel it.",
+    tips: [
+      "Pick the router (top-right) to inspect its connected devices; filter by IP, MAC or name.",
+      "Click a device to open its live ↓/↑ traffic chart — needs a simple queue targeting its IP.",
+      "Block/allow is enforced by MAC, so it survives the device changing IP; “Pin IP” makes its lease static.",
     ],
   },
   topology: {
@@ -262,6 +274,13 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <rect x="3" y="4" width="18" height="7" rx="2" />
         <rect x="3" y="13" width="18" height="7" rx="2" />
         <path d="M7 7.5h.01M7 16.5h.01" />
+      </>
+    ),
+    clients: (
+      <>
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+        <path d="M16 7.5a2.5 2.5 0 0 1 0 5M17.5 19a4.5 4.5 0 0 0-2-3.6" />
       </>
     ),
     topology: (
@@ -939,6 +958,9 @@ function App(): ReactNode {
               </Note>
             </div>
           ))}
+
+        {/* ── Clients ── */}
+        {view === "clients" && <ClientsView />}
 
         {/* ── Topology ── */}
         {view === "topology" &&

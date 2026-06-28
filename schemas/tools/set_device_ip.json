@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_device_ip",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "description": "Device MAC address"
+    },
+    "ip": {
+      "type": "string",
+      "description": "New reserved IP address"
+    }
+  },
+  "required": ["mac", "ip"],
+  "additionalProperties": false
+}
