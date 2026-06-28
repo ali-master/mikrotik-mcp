@@ -3,6 +3,8 @@
  * registered. Transports (stdio / streamable-http) wrap the result.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import type { SendLog } from "./core/context";
 import { registerTools } from "./core/registry";
 import { registerUiResources } from "./core/ui-resources";
@@ -133,5 +135,45 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
   // MCP App views (`ui://…`) — interactive dashboards rendered inline by hosts
   // that support the Apps extension (Claude, ChatGPT). Plain clients ignore them.
   const uiViewCount = registerUiResources(server);
+  // Optionally paginate `tools/list` so a very large catalog (several hundred
+  // tools) ships in client-friendly pages WITHOUT disabling any tool.
+  installToolPagination(server, getConfig().mcp.toolPageSize);
   return { server, toolCount, promptCount, uiViewCount, readOnly };
+}
+
+/**
+ * Deliver the full tool catalog in cursor-paginated pages. A no-op when
+ * `pageSize <= 0` (the entire catalog ships in one `tools/list` response — the
+ * default, unchanged behaviour). When set, EVERY tool is still served — just
+ * split across pages so clients that choke on one huge response can load them
+ * all. The SDK's own handler computes the normalised list once (the tool set is
+ * fixed after startup); we cache it and slice per cursor.
+ */
+function installToolPagination(server: McpServer, pageSize: number): void {
+  if (pageSize <= 0) return;
+  const low = server.server as unknown as {
+    _requestHandlers?: Map<string, (req: unknown, extra: unknown) => Promise<ListToolsResult>>;
+  };
+  const sdkHandler = low._requestHandlers?.get("tools/list");
+  if (typeof sdkHandler !== "function") return;
+
+  let cache: ListToolsResult["tools"] | null = null;
+  server.server.setRequestHandler(
+    ListToolsRequestSchema,
+    async (request, extra): Promise<ListToolsResult> => {
+      // The full, schema-normalised catalog is fixed after startup — compute it
+      // once via the SDK's own handler, then serve cursor-delimited slices.
+      if (!cache) cache = (await sdkHandler(request, extra)).tools ?? [];
+      const total = cache.length;
+      const cursor = request.params?.cursor;
+      let start = 0;
+      if (typeof cursor === "string") {
+        const n = Number.parseInt(cursor, 10);
+        start = Number.isFinite(n) && n > 0 ? Math.min(n, total) : 0;
+      }
+      const tools = cache.slice(start, start + pageSize);
+      const end = start + tools.length;
+      return end < total ? { tools, nextCursor: String(end) } : { tools };
+    },
+  );
 }

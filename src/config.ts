@@ -64,6 +64,13 @@ export const McpServerSettingsSchema = z.object({
    * Required for the ChatGPT Apps connector (its preflight needs CORS).
    */
   corsOrigins: z.string().default(""),
+  /**
+   * Page size for `tools/list`. `0` (default) sends every tool in one response —
+   * the current behaviour. A positive value delivers the SAME full catalog in
+   * cursor-paginated pages (MCP-standard) so clients that struggle with a very
+   * large single response can still load EVERY tool. No tool is ever disabled.
+   */
+  toolPageSize: z.coerce.number().int().min(0).default(0),
 });
 export type McpServerSettings = z.infer<typeof McpServerSettingsSchema>;
 
@@ -396,6 +403,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     allowedHosts: pick("mcp-allowed-hosts", "MIKROTIK_MCP__ALLOWED_HOSTS"),
     allowedOrigins: pick("mcp-allowed-origins", "MIKROTIK_MCP__ALLOWED_ORIGINS"),
     corsOrigins: pick("mcp-cors-origins", "MIKROTIK_MCP__CORS_ORIGINS"),
+    toolPageSize: pick("tool-page-size", "MIKROTIK_MCP__TOOL_PAGE_SIZE"),
   };
 
   // Read-only mode (boolean flag/env). A bare `--read-only` parses to "true".

@@ -86,7 +86,8 @@
         "port": 8000,
         "allowedHosts": "",
         "allowedOrigins": "",
-        "corsOrigins": ""
+        "corsOrigins": "",
+        "toolPageSize": 0
       },
       "type": "object",
       "properties": {
@@ -116,9 +117,23 @@
         "corsOrigins": {
           "default": "",
           "type": "string"
+        },
+        "toolPageSize": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         }
       },
-      "required": ["transport", "host", "port", "allowedHosts", "allowedOrigins", "corsOrigins"],
+      "required": [
+        "transport",
+        "host",
+        "port",
+        "allowedHosts",
+        "allowedOrigins",
+        "corsOrigins",
+        "toolPageSize"
+      ],
       "additionalProperties": false
     },
     "s3": {
