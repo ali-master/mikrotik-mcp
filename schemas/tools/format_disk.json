@@ -3,24 +3,36 @@
   "title": "format_disk",
   "type": "object",
   "properties": {
-    "name": {
+    "slot": {
       "type": "string",
-      "description": "Disk name to format, e.g. 'disk1'"
+      "description": "Disk slot to format, e.g. 'usb1'"
     },
     "file_system": {
-      "description": "File system to create",
+      "description": "Filesystem to create (RouterOS can format these)",
       "type": "string",
-      "enum": ["ext4", "fat32", "exfat", "ntfs"]
+      "enum": ["ext4", "exfat", "fat32", "ntfs"]
     },
     "label": {
       "description": "Volume label",
       "type": "string"
     },
+    "partition_size": {
+      "description": "Format only this much as a partition, e.g. '10G' (omit = whole drive)",
+      "type": "string"
+    },
+    "encryption": {
+      "description": "Encryption algorithm to enable, e.g. 'aes-cbc' (RouterOS value)",
+      "type": "string"
+    },
+    "encryption_password": {
+      "description": "Passphrase when encryption is set",
+      "type": "string"
+    },
     "confirm": {
       "type": "boolean",
-      "description": "Must be true to actually erase the disk"
+      "description": "Must be true to actually ERASE the disk"
     }
   },
-  "required": ["name", "confirm"],
+  "required": ["slot", "confirm"],
   "additionalProperties": false
 }

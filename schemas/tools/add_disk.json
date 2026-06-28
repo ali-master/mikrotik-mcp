@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_disk",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "Virtual disk type: 'raid', 'rsync', 'tmpfs', 'encrypted', …"
+    },
+    "slot": {
+      "description": "Name/slot for the new virtual disk",
+      "type": "string"
+    },
+    "raid_type": {
+      "description": "For type=raid, e.g. 'raid1', 'raid5'",
+      "type": "string"
+    },
+    "tmpfs_max_size": {
+      "description": "For type=tmpfs, e.g. '256M'",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "properties": {
+      "description": "Extra RouterOS attribute=value pairs for this disk type",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["type"],
+  "additionalProperties": false
+}

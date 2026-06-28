@@ -2,6 +2,25 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "list_disks",
   "type": "object",
-  "properties": {},
+  "properties": {
+    "slot_filter": {
+      "description": "Partial slot match, e.g. 'usb'",
+      "type": "string"
+    },
+    "type_filter": {
+      "description": "Partial type match, e.g. 'raid', 'partition'",
+      "type": "string"
+    },
+    "interface_filter": {
+      "description": "Partial interface match, e.g. 'nvme', 'usb'",
+      "type": "string"
+    },
+    "detail": {
+      "default": false,
+      "description": "Show the full per-disk property block",
+      "type": "boolean"
+    }
+  },
+  "required": ["detail"],
   "additionalProperties": false
 }

@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "get_disk",
+  "title": "eject_disk",
   "type": "object",
   "properties": {
     "slot": {
       "type": "string",
-      "description": "Disk slot, e.g. 'nvme1', 'usb1'"
+      "description": "Disk slot to eject, e.g. 'usb1'"
     }
   },
   "required": ["slot"],

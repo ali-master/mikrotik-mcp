@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "get_disk",
+  "title": "remove_disk",
   "type": "object",
   "properties": {
     "slot": {
       "type": "string",
-      "description": "Disk slot, e.g. 'nvme1', 'usb1'"
+      "description": "Virtual disk slot to remove"
     }
   },
   "required": ["slot"],

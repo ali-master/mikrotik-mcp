@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_disk",
+  "type": "object",
+  "properties": {
+    "slot": {
+      "type": "string",
+      "description": "Disk slot to modify"
+    },
+    "label": {
+      "description": "Volume / disk label",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "raid_master": {
+      "description": "Slot of the RAID disk to make this a member of",
+      "type": "string"
+    },
+    "parent": {
+      "description": "Parent disk slot to attach under",
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": ["slot"],
+  "additionalProperties": false
+}

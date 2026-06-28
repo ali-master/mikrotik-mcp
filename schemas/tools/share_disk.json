@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "share_disk",
+  "type": "object",
+  "properties": {
+    "slot": {
+      "type": "string",
+      "description": "Disk slot to share"
+    },
+    "smb_sharing": {
+      "description": "Enable/disable SMB (CIFS) sharing",
+      "type": "boolean"
+    },
+    "smb_share_name": {
+      "description": "SMB share name shown to clients",
+      "type": "string"
+    },
+    "smb_users": {
+      "description": "Comma-separated SMB users allowed to access the share",
+      "type": "string"
+    },
+    "nfs_sharing": {
+      "description": "Enable/disable NFS sharing",
+      "type": "boolean"
+    }
+  },
+  "required": ["slot"],
+  "additionalProperties": false
+}

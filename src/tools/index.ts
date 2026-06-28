@@ -980,7 +980,9 @@ export const moduleCatalog: ModuleInfo[] = [
     label: "Disk",
     slug: "disk",
     group: "System & Ops",
-    description: "Storage devices: list/get disks and format-drive (`/disk`).",
+    description:
+      "Storage management (`/disk`): list/get disks, format (filesystem/partition/encryption), label & " +
+      "state, RAID/rsync/RAM virtual disks, SMB/NFS sharing, and eject.",
     tools: diskTools,
   },
   {
