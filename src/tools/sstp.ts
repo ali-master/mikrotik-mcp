@@ -43,6 +43,16 @@ export const sstpTools: ToolModule = [
       port: z.number().int().optional(),
       tls_version: z.enum(["any", "only-1.2"]).optional(),
       verify_client_certificate: z.boolean().optional(),
+      pfs: z.boolean().optional().describe("Enable Perfect Forward Secrecy"),
+      force_aes: z.boolean().optional().describe("Require clients to use AES ciphers"),
+      max_mtu: z.number().int().optional().describe("Maximum transmission unit"),
+      max_mru: z.number().int().optional().describe("Maximum receive unit"),
+      mrru: z.number().int().optional().describe("Max receive reconstructed unit for MP"),
+      keepalive_timeout: z
+        .number()
+        .int()
+        .optional()
+        .describe("Seconds before an idle connection is considered down"),
     },
     async handler(a, ctx) {
       ctx.info("Configuring SSTP server");
@@ -54,6 +64,12 @@ export const sstpTools: ToolModule = [
         .opt("port", a.port)
         .opt("tls-version", a.tls_version)
         .bool("verify-client-certificate", a.verify_client_certificate)
+        .bool("pfs", a.pfs)
+        .bool("force-aes", a.force_aes)
+        .opt("max-mtu", a.max_mtu)
+        .opt("max-mru", a.max_mru)
+        .opt("mrru", a.mrru)
+        .opt("keepalive-timeout", a.keepalive_timeout)
         .build();
 
       if (cmd === "/interface sstp-server server set") return "No updates specified.";
@@ -90,7 +106,27 @@ export const sstpTools: ToolModule = [
       profile: z.string().optional(),
       certificate: z.string().optional().describe("Client TLS certificate name"),
       verify_server_certificate: z.boolean().optional(),
+      authentication: z.string().optional().describe("Comma-separated, e.g. 'mschap2,mschap1'"),
+      tls_version: z.enum(["any", "only-1.2"]).optional(),
+      pfs: z.boolean().optional().describe("Enable Perfect Forward Secrecy"),
       add_default_route: z.boolean().optional(),
+      default_route_distance: z
+        .number()
+        .int()
+        .optional()
+        .describe("Distance of the auto-added default route"),
+      dial_on_demand: z
+        .boolean()
+        .optional()
+        .describe("Connect only when traffic is sent over the tunnel"),
+      max_mtu: z.number().int().optional().describe("Maximum transmission unit"),
+      max_mru: z.number().int().optional().describe("Maximum receive unit"),
+      mrru: z.number().int().optional().describe("Max receive reconstructed unit for MP"),
+      keepalive_timeout: z
+        .number()
+        .int()
+        .optional()
+        .describe("Seconds before an idle connection is considered down"),
       http_proxy: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -110,7 +146,16 @@ export const sstpTools: ToolModule = [
         .opt("profile", a.profile)
         .opt("certificate", a.certificate)
         .bool("verify-server-certificate", a.verify_server_certificate)
+        .opt("authentication", a.authentication)
+        .opt("tls-version", a.tls_version)
+        .bool("pfs", a.pfs)
         .bool("add-default-route", a.add_default_route)
+        .opt("default-route-distance", a.default_route_distance)
+        .bool("dial-on-demand", a.dial_on_demand)
+        .opt("max-mtu", a.max_mtu)
+        .opt("max-mru", a.max_mru)
+        .opt("mrru", a.mrru)
+        .opt("keepalive-timeout", a.keepalive_timeout)
         .opt("http-proxy", a.http_proxy)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)

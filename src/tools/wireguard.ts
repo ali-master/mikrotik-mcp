@@ -291,6 +291,36 @@ export const wireguardTools: ToolModule = [
       endpoint_port: z.number().int().optional(),
       preshared_key: z.string().optional(),
       persistent_keepalive: z.string().optional().describe('seconds as string e.g. "25"'),
+      name: z.string().optional().describe("optional peer name label"),
+      private_key: z
+        .string()
+        .optional()
+        .describe("peer's private key (lets the router generate this peer's client config)"),
+      responder: z
+        .boolean()
+        .optional()
+        .describe("only respond to handshakes, never initiate (for road-warrior clients)"),
+      client_address: z
+        .string()
+        .optional()
+        .describe("client tunnel address(es) for the generated client config"),
+      client_dns: z
+        .string()
+        .optional()
+        .describe("DNS server(s) written into the generated client config"),
+      client_endpoint: z
+        .string()
+        .optional()
+        .describe("server endpoint host[:port] written into the generated client config"),
+      client_keepalive: z
+        .string()
+        .optional()
+        .describe('client persistent-keepalive for the generated config e.g. "25s"'),
+      client_listen_port: z
+        .number()
+        .int()
+        .optional()
+        .describe("listen-port written into the generated client config"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -306,6 +336,14 @@ export const wireguardTools: ToolModule = [
         .opt("endpoint-port", a.endpoint_port)
         .opt("preshared-key", a.preshared_key)
         .opt("persistent-keepalive", a.persistent_keepalive)
+        .opt("name", a.name)
+        .opt("private-key", a.private_key)
+        .bool("responder", a.responder)
+        .opt("client-address", a.client_address)
+        .opt("client-dns", a.client_dns)
+        .opt("client-endpoint", a.client_endpoint)
+        .opt("client-keepalive", a.client_keepalive)
+        .opt("client-listen-port", a.client_listen_port)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -403,6 +441,33 @@ export const wireguardTools: ToolModule = [
       endpoint_port: z.number().int().optional(),
       preshared_key: z.string().optional(),
       persistent_keepalive: z.string().optional(),
+      name: z.string().optional().describe("optional peer name label"),
+      private_key: z
+        .string()
+        .optional()
+        .describe("peer's private key (lets the router generate this peer's client config)"),
+      responder: z.boolean().optional().describe("only respond to handshakes, never initiate"),
+      client_address: z
+        .string()
+        .optional()
+        .describe("client tunnel address(es) for the generated client config"),
+      client_dns: z
+        .string()
+        .optional()
+        .describe("DNS server(s) written into the generated client config"),
+      client_endpoint: z
+        .string()
+        .optional()
+        .describe("server endpoint host[:port] written into the generated client config"),
+      client_keepalive: z
+        .string()
+        .optional()
+        .describe('client persistent-keepalive for the generated config e.g. "25s"'),
+      client_listen_port: z
+        .number()
+        .int()
+        .optional()
+        .describe("listen-port written into the generated client config"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -435,6 +500,32 @@ export const wireguardTools: ToolModule = [
             ? `persistent-keepalive=${a.persistent_keepalive}`
             : null,
         )
+        .opt("name", a.name)
+        .opt("private-key", a.private_key)
+        .bool("responder", a.responder)
+        .raw(
+          a.client_address !== undefined
+            ? a.client_address === ""
+              ? "!client-address"
+              : `client-address=${quoteValue(a.client_address)}`
+            : null,
+        )
+        .raw(
+          a.client_dns !== undefined
+            ? a.client_dns === ""
+              ? "!client-dns"
+              : `client-dns=${quoteValue(a.client_dns)}`
+            : null,
+        )
+        .raw(
+          a.client_endpoint !== undefined
+            ? a.client_endpoint === ""
+              ? "!client-endpoint"
+              : `client-endpoint=${quoteValue(a.client_endpoint)}`
+            : null,
+        )
+        .opt("client-keepalive", a.client_keepalive)
+        .opt("client-listen-port", a.client_listen_port)
         .raw(a.comment !== undefined ? `comment=${quoteValue(a.comment)}` : null)
         .bool("disabled", a.disabled)
         .build();

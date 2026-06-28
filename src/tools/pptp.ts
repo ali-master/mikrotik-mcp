@@ -50,6 +50,11 @@ export const pptpTools: ToolModule = [
       authentication: z.string().optional().describe("Comma-separated, e.g. 'mschap2,mschap1'"),
       max_mtu: z.number().int().optional(),
       max_mru: z.number().int().optional(),
+      mrru: z.string().optional().describe("Max packet size for MP reassembly, or 'disabled'"),
+      keepalive_timeout: z
+        .string()
+        .optional()
+        .describe("Keepalive timeout in seconds, or 'disabled'"),
     },
     async handler(a, ctx) {
       ctx.info("Configuring PPTP server");
@@ -59,6 +64,8 @@ export const pptpTools: ToolModule = [
         .opt("authentication", a.authentication)
         .opt("max-mtu", a.max_mtu)
         .opt("max-mru", a.max_mru)
+        .opt("mrru", a.mrru)
+        .opt("keepalive-timeout", a.keepalive_timeout)
         .build();
 
       if (cmd.trim() === "/interface pptp-server server set") return "No updates specified.";
@@ -91,6 +98,26 @@ export const pptpTools: ToolModule = [
       password: z.string().describe("Password for authentication"),
       profile: z.string().optional(),
       add_default_route: z.boolean().optional(),
+      default_route_distance: z
+        .number()
+        .int()
+        .optional()
+        .describe("Distance for the default route installed via this tunnel"),
+      allow: z
+        .string()
+        .optional()
+        .describe("Allowed auth protocols, comma-separated, e.g. 'mschap2,mschap1'"),
+      dial_on_demand: z
+        .boolean()
+        .optional()
+        .describe("Connect only when outbound traffic is generated"),
+      max_mtu: z.number().int().optional(),
+      max_mru: z.number().int().optional(),
+      mrru: z.string().optional().describe("Max packet size for MP reassembly, or 'disabled'"),
+      keepalive_timeout: z
+        .string()
+        .optional()
+        .describe("Keepalive timeout in seconds, or 'disabled'"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -103,6 +130,13 @@ export const pptpTools: ToolModule = [
         .set("password", a.password)
         .opt("profile", a.profile)
         .bool("add-default-route", a.add_default_route)
+        .opt("default-route-distance", a.default_route_distance)
+        .opt("allow", a.allow)
+        .bool("dial-on-demand", a.dial_on_demand)
+        .opt("max-mtu", a.max_mtu)
+        .opt("max-mru", a.max_mru)
+        .opt("mrru", a.mrru)
+        .opt("keepalive-timeout", a.keepalive_timeout)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();

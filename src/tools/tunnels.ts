@@ -12,6 +12,8 @@ import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const DontFragment = z.enum(["inherit", "no"]);
+const Arp = z.enum(["disabled", "enabled", "local-proxy-arp", "proxy-arp", "reply-only"]);
+const VtepsIpVersion = z.enum(["ipv4", "ipv6"]);
 
 export const tunnelTools: ToolModule = [
   // ── GRE — `/interface gre` ────────────────────────────────────────────────
@@ -34,6 +36,12 @@ export const tunnelTools: ToolModule = [
       keepalive: z.string().optional().describe("Keepalive interval/retries, e.g. '10s,3'"),
       dont_fragment: DontFragment.optional().describe("Don't-fragment behavior"),
       clamp_tcp_mss: z.boolean().optional().describe("Clamp TCP MSS to the tunnel MTU"),
+      allow_fast_path: z.boolean().optional().describe("Allow FastPath processing for this tunnel"),
+      ipsec_secret: z
+        .string()
+        .optional()
+        .describe("Pre-shared key to auto-create an IPsec policy securing the tunnel"),
+      dscp: z.string().optional().describe("DSCP for encapsulated packets: 'inherit' or 0-63"),
       mtu: z.number().int().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -47,6 +55,9 @@ export const tunnelTools: ToolModule = [
         .opt("keepalive", a.keepalive)
         .opt("dont-fragment", a.dont_fragment)
         .bool("clamp-tcp-mss", a.clamp_tcp_mss)
+        .bool("allow-fast-path", a.allow_fast_path)
+        .opt("ipsec-secret", a.ipsec_secret)
+        .opt("dscp", a.dscp)
         .opt("mtu", a.mtu)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
@@ -161,6 +172,14 @@ export const tunnelTools: ToolModule = [
       remote_address: z.string().describe("Remote endpoint IP address"),
       local_address: z.string().optional().describe("Local endpoint IP address"),
       keepalive: z.string().optional().describe("Keepalive interval/retries, e.g. '10s,3'"),
+      dont_fragment: DontFragment.optional().describe("Don't-fragment behavior"),
+      clamp_tcp_mss: z.boolean().optional().describe("Clamp TCP MSS to the tunnel MTU"),
+      allow_fast_path: z.boolean().optional().describe("Allow FastPath processing for this tunnel"),
+      ipsec_secret: z
+        .string()
+        .optional()
+        .describe("Pre-shared key to auto-create an IPsec policy securing the tunnel"),
+      dscp: z.string().optional().describe("DSCP for encapsulated packets: 'inherit' or 0-63"),
       mtu: z.number().int().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -172,6 +191,11 @@ export const tunnelTools: ToolModule = [
         .set("remote-address", a.remote_address)
         .opt("local-address", a.local_address)
         .opt("keepalive", a.keepalive)
+        .opt("dont-fragment", a.dont_fragment)
+        .bool("clamp-tcp-mss", a.clamp_tcp_mss)
+        .bool("allow-fast-path", a.allow_fast_path)
+        .opt("ipsec-secret", a.ipsec_secret)
+        .opt("dscp", a.dscp)
         .opt("mtu", a.mtu)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
@@ -288,6 +312,17 @@ export const tunnelTools: ToolModule = [
       tunnel_id: z.number().int().describe("Unique tunnel ID, must match on both peers"),
       local_address: z.string().optional().describe("Local endpoint IP address"),
       keepalive: z.string().optional().describe("Keepalive interval/retries, e.g. '10s,3'"),
+      dont_fragment: DontFragment.optional().describe("Don't-fragment behavior"),
+      clamp_tcp_mss: z.boolean().optional().describe("Clamp TCP MSS to the tunnel MTU"),
+      allow_fast_path: z.boolean().optional().describe("Allow FastPath processing for this tunnel"),
+      ipsec_secret: z
+        .string()
+        .optional()
+        .describe("Pre-shared key to auto-create an IPsec policy securing the tunnel"),
+      dscp: z.string().optional().describe("DSCP for encapsulated packets: 'inherit' or 0-63"),
+      mac_address: z.string().optional().describe("MAC address of the EoIP interface"),
+      arp: Arp.optional().describe("Address Resolution Protocol mode for the interface"),
+      arp_timeout: z.string().optional().describe("ARP entry timeout, e.g. '30s' or 'auto'"),
       mtu: z.number().int().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -302,6 +337,14 @@ export const tunnelTools: ToolModule = [
         .set("tunnel-id", a.tunnel_id)
         .opt("local-address", a.local_address)
         .opt("keepalive", a.keepalive)
+        .opt("dont-fragment", a.dont_fragment)
+        .bool("clamp-tcp-mss", a.clamp_tcp_mss)
+        .bool("allow-fast-path", a.allow_fast_path)
+        .opt("ipsec-secret", a.ipsec_secret)
+        .opt("dscp", a.dscp)
+        .opt("mac-address", a.mac_address)
+        .opt("arp", a.arp)
+        .opt("arp-timeout", a.arp_timeout)
         .opt("mtu", a.mtu)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
@@ -417,6 +460,19 @@ export const tunnelTools: ToolModule = [
       port: z.number().int().default(8472).describe("UDP port (default 8472)"),
       local_address: z.string().optional().describe("Local source IP address"),
       interface: z.string().optional().describe("Source interface"),
+      group: z
+        .string()
+        .optional()
+        .describe("Multicast group address for broadcast/unknown-unicast flooding"),
+      vteps_ip_version: VtepsIpVersion.optional().describe("IP version used for VTEP addressing"),
+      mac_address: z.string().optional().describe("MAC address of the VXLAN interface"),
+      arp: Arp.optional().describe("Address Resolution Protocol mode for the interface"),
+      arp_timeout: z.string().optional().describe("ARP entry timeout, e.g. '30s' or 'auto'"),
+      max_fdb_size: z.number().int().optional().describe("Maximum forwarding database (FDB) size"),
+      allow_fast_path: z
+        .boolean()
+        .optional()
+        .describe("Allow FastPath processing for this interface"),
       mtu: z.number().int().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -429,6 +485,13 @@ export const tunnelTools: ToolModule = [
         .opt("port", a.port)
         .opt("local-address", a.local_address)
         .opt("interface", a.interface)
+        .opt("group", a.group)
+        .opt("vteps-ip-version", a.vteps_ip_version)
+        .opt("mac-address", a.mac_address)
+        .opt("arp", a.arp)
+        .opt("arp-timeout", a.arp_timeout)
+        .opt("max-fdb-size", a.max_fdb_size)
+        .bool("allow-fast-path", a.allow_fast_path)
         .opt("mtu", a.mtu)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)

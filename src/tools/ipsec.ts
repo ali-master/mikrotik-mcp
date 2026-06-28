@@ -29,6 +29,7 @@ export const ipsecTools: ToolModule = [
       dh_group: z.string().default("modp2048").describe("Diffie-Hellman group, e.g. 'modp2048'"),
       enc_algorithm: z.string().optional().describe("Encryption algorithm, e.g. 'aes-256'"),
       hash_algorithm: z.string().default("sha256").describe("Hash algorithm, e.g. 'sha256'"),
+      prf_algorithm: z.string().optional().describe("PRF algorithm, e.g. 'auto' or 'sha256'"),
       lifetime: z.string().optional().describe("Phase-1 lifetime, e.g. '1d'"),
       nat_traversal: z.boolean().optional().describe("Enable NAT-T"),
       dpd_interval: z.string().optional().describe("Dead peer detection interval, e.g. '2m'"),
@@ -41,6 +42,7 @@ export const ipsecTools: ToolModule = [
         .opt("dh-group", a.dh_group)
         .opt("enc-algorithm", a.enc_algorithm)
         .opt("hash-algorithm", a.hash_algorithm)
+        .opt("prf-algorithm", a.prf_algorithm)
         .opt("lifetime", a.lifetime)
         .bool("nat-traversal", a.nat_traversal)
         .opt("dpd-interval", a.dpd_interval)
@@ -126,6 +128,7 @@ export const ipsecTools: ToolModule = [
       dh_group: z.string().optional(),
       enc_algorithm: z.string().optional(),
       hash_algorithm: z.string().optional(),
+      prf_algorithm: z.string().optional(),
       lifetime: z.string().optional(),
       nat_traversal: z.boolean().optional(),
       dpd_interval: z.string().optional(),
@@ -139,6 +142,7 @@ export const ipsecTools: ToolModule = [
         .opt("dh-group", a.dh_group)
         .opt("enc-algorithm", a.enc_algorithm)
         .opt("hash-algorithm", a.hash_algorithm)
+        .opt("prf-algorithm", a.prf_algorithm)
         .opt("lifetime", a.lifetime)
         .bool("nat-traversal", a.nat_traversal)
         .opt("dpd-interval", a.dpd_interval)
@@ -214,6 +218,7 @@ export const ipsecTools: ToolModule = [
         .default("ike2")
         .describe("IKE exchange mode"),
       local_address: z.string().optional(),
+      port: z.number().int().optional().describe("UDP port for IKE negotiation (default 500)"),
       passive: z.boolean().optional().describe("Passive (responder only)"),
       send_initial_contact: z.boolean().optional(),
       comment: z.string().optional(),
@@ -227,6 +232,7 @@ export const ipsecTools: ToolModule = [
         .opt("profile", a.profile)
         .opt("exchange-mode", a.exchange_mode)
         .opt("local-address", a.local_address)
+        .opt("port", a.port)
         .bool("passive", a.passive)
         .bool("send-initial-contact", a.send_initial_contact)
         .opt("comment", a.comment)
@@ -315,6 +321,7 @@ export const ipsecTools: ToolModule = [
       profile: z.string().optional(),
       exchange_mode: z.enum(["main", "aggressive", "ike2"]).optional(),
       local_address: z.string().optional(),
+      port: z.number().int().optional(),
       passive: z.boolean().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
@@ -328,6 +335,7 @@ export const ipsecTools: ToolModule = [
         .opt("profile", a.profile)
         .opt("exchange-mode", a.exchange_mode)
         .opt("local-address", a.local_address)
+        .opt("port", a.port)
         .bool("passive", a.passive)
         .opt("comment", a.comment)
         .bool("disabled", a.disabled)
@@ -401,11 +409,25 @@ export const ipsecTools: ToolModule = [
       secret: z.string().optional().describe("Pre-shared key secret"),
       my_id: z.string().optional(),
       remote_id: z.string().optional(),
+      match_by: z
+        .enum(["remote-id", "certificate"])
+        .optional()
+        .describe("How the remote peer is matched to this identity"),
       generate_policy: z.enum(["no", "port-override", "port-strict"]).optional(),
       mode_config: z.string().optional(),
       policy_template_group: z.string().optional(),
       certificate: z.string().optional(),
+      remote_certificate: z
+        .string()
+        .optional()
+        .describe("Remote peer's certificate name (rsa/digital-signature auth)"),
+      eap_methods: z.string().optional().describe("EAP method(s), e.g. 'eap-tls' (eap auth)"),
+      notrack_chain: z
+        .string()
+        .optional()
+        .describe("Raw firewall chain to bypass connection tracking for matched traffic"),
       comment: z.string().optional(),
+      disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
       ctx.info(`Creating IPsec identity: peer=${a.peer}`);
@@ -415,11 +437,16 @@ export const ipsecTools: ToolModule = [
         .opt("secret", a.secret)
         .opt("my-id", a.my_id)
         .opt("remote-id", a.remote_id)
+        .opt("match-by", a.match_by)
         .opt("generate-policy", a.generate_policy)
         .opt("mode-config", a.mode_config)
         .opt("policy-template-group", a.policy_template_group)
         .opt("certificate", a.certificate)
+        .opt("remote-certificate", a.remote_certificate)
+        .opt("eap-methods", a.eap_methods)
+        .opt("notrack-chain", a.notrack_chain)
         .opt("comment", a.comment)
+        .flag("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
@@ -521,6 +548,7 @@ export const ipsecTools: ToolModule = [
         .describe("Encryption algorithms, e.g. 'aes-256-cbc'"),
       pfs_group: z.string().default("modp2048").describe("PFS group, e.g. 'modp2048'"),
       lifetime: z.string().optional().describe("Phase-2 lifetime, e.g. '30m'"),
+      disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
       ctx.info(`Creating IPsec proposal: name=${a.name}`);
@@ -530,6 +558,7 @@ export const ipsecTools: ToolModule = [
         .opt("enc-algorithms", a.enc_algorithms)
         .opt("pfs-group", a.pfs_group)
         .opt("lifetime", a.lifetime)
+        .flag("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
@@ -612,6 +641,7 @@ export const ipsecTools: ToolModule = [
       enc_algorithms: z.string().optional(),
       pfs_group: z.string().optional(),
       lifetime: z.string().optional(),
+      disabled: z.boolean().optional(),
     },
     async handler(a, ctx) {
       ctx.info(`Updating IPsec proposal: name=${a.name}`);
@@ -622,6 +652,7 @@ export const ipsecTools: ToolModule = [
         .opt("enc-algorithms", a.enc_algorithms)
         .opt("pfs-group", a.pfs_group)
         .opt("lifetime", a.lifetime)
+        .bool("disabled", a.disabled)
         .build();
 
       if (cmd === base) return "No updates specified.";
@@ -685,7 +716,9 @@ export const ipsecTools: ToolModule = [
     inputSchema: {
       peer: z.string().optional().describe("Peer name this policy applies to"),
       src_address: z.string().optional().describe("Source subnet, e.g. '10.0.0.0/24'"),
+      src_port: z.number().int().optional().describe("Source port to match (0 = any)"),
       dst_address: z.string().optional().describe("Destination subnet, e.g. '10.0.1.0/24'"),
+      dst_port: z.number().int().optional().describe("Destination port to match (0 = any)"),
       protocol: z.string().optional(),
       action: z.enum(["encrypt", "discard", "none"]).default("encrypt"),
       level: z.enum(["require", "unique", "use"]).optional(),
@@ -693,15 +726,20 @@ export const ipsecTools: ToolModule = [
       tunnel: z.boolean().default(true).describe("Tunnel mode (vs transport)"),
       sa_src_address: z.string().optional(),
       sa_dst_address: z.string().optional(),
+      priority: z.number().int().optional().describe("Policy ordering priority"),
       template: z.boolean().optional().describe("Policy template (for dynamic policies)"),
+      group: z.string().optional().describe("Policy template group (when template=true)"),
       comment: z.string().optional(),
+      disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
       ctx.info(`Creating IPsec policy: peer=${a.peer ?? "(none)"}`);
       const cmd = new Cmd("/ip ipsec policy add")
         .opt("peer", a.peer)
         .opt("src-address", a.src_address)
+        .opt("src-port", a.src_port)
         .opt("dst-address", a.dst_address)
+        .opt("dst-port", a.dst_port)
         .opt("protocol", a.protocol)
         .opt("action", a.action)
         .opt("level", a.level)
@@ -709,8 +747,11 @@ export const ipsecTools: ToolModule = [
         .bool("tunnel", a.tunnel)
         .opt("sa-src-address", a.sa_src_address)
         .opt("sa-dst-address", a.sa_dst_address)
+        .opt("priority", a.priority)
         .bool("template", a.template)
+        .opt("group", a.group)
         .opt("comment", a.comment)
+        .flag("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);

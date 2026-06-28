@@ -8,6 +8,7 @@ import { redactSecrets } from "../utils";
 
 const UseIpsecServer = z.enum(["yes", "no", "required"]);
 const UseIpsecClient = z.enum(["yes", "no"]);
+const CallerIdType = z.enum(["ip-address", "number"]);
 
 export const l2tpTools: ToolModule = [
   // ── SERVER `/interface l2tp-server server` ────────────────────────────────
@@ -48,6 +49,22 @@ export const l2tpTools: ToolModule = [
       ipsec_secret: z.string().optional().describe("Pre-shared key for L2TP/IPsec"),
       max_mtu: z.number().int().optional(),
       max_mru: z.number().int().optional(),
+      mrru: z
+        .number()
+        .int()
+        .optional()
+        .describe("Max receive reconstructed unit for MRRU (multilink)"),
+      keepalive_timeout: z
+        .number()
+        .int()
+        .optional()
+        .describe("Seconds before an idle tunnel is considered down"),
+      max_sessions: z.number().int().optional().describe("Maximum simultaneous client sessions"),
+      one_session_per_host: z
+        .boolean()
+        .optional()
+        .describe("Allow only one active session per host"),
+      caller_id_type: CallerIdType.optional().describe("Caller ID format: ip-address or number"),
     },
     async handler(a, ctx) {
       ctx.info("Configuring L2TP server");
@@ -59,6 +76,11 @@ export const l2tpTools: ToolModule = [
         .opt("ipsec-secret", a.ipsec_secret)
         .opt("max-mtu", a.max_mtu)
         .opt("max-mru", a.max_mru)
+        .opt("mrru", a.mrru)
+        .opt("keepalive-timeout", a.keepalive_timeout)
+        .opt("max-sessions", a.max_sessions)
+        .bool("one-session-per-host", a.one_session_per_host)
+        .opt("caller-id-type", a.caller_id_type)
         .build();
 
       if (cmd.trim() === "/interface l2tp-server server set") return "No updates specified.";
@@ -89,8 +111,31 @@ export const l2tpTools: ToolModule = [
       password: z.string().describe("Password for authentication"),
       profile: z.string().default("default-encryption"),
       add_default_route: z.boolean().optional(),
+      default_route_distance: z
+        .number()
+        .int()
+        .optional()
+        .describe("Distance of the auto-added default route"),
       use_ipsec: UseIpsecClient.optional(),
       ipsec_secret: z.string().optional().describe("Pre-shared key for L2TP/IPsec"),
+      allow: z
+        .string()
+        .optional()
+        .describe("Allowed auth protocols, comma-separated (pap,chap,mschap1,mschap2)"),
+      use_peer_dns: z.boolean().optional().describe("Use DNS servers offered by the remote peer"),
+      dial_on_demand: z.boolean().optional().describe("Connect only when traffic is present"),
+      keepalive_timeout: z
+        .number()
+        .int()
+        .optional()
+        .describe("Seconds before an idle tunnel is considered down"),
+      max_mtu: z.number().int().optional().describe("Maximum transmission unit"),
+      max_mru: z.number().int().optional().describe("Maximum receive unit"),
+      mrru: z
+        .number()
+        .int()
+        .optional()
+        .describe("Max receive reconstructed unit for MRRU (multilink)"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -103,8 +148,16 @@ export const l2tpTools: ToolModule = [
         .set("password", a.password)
         .opt("profile", a.profile)
         .bool("add-default-route", a.add_default_route)
+        .opt("default-route-distance", a.default_route_distance)
         .opt("use-ipsec", a.use_ipsec)
         .opt("ipsec-secret", a.ipsec_secret)
+        .opt("allow", a.allow)
+        .bool("use-peer-dns", a.use_peer_dns)
+        .bool("dial-on-demand", a.dial_on_demand)
+        .opt("keepalive-timeout", a.keepalive_timeout)
+        .opt("max-mtu", a.max_mtu)
+        .opt("max-mru", a.max_mru)
+        .opt("mrru", a.mrru)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();

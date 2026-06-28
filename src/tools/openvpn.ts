@@ -55,6 +55,7 @@ export const openvpnTools: ToolModule = [
       mode: z.enum(["ip", "ethernet"]).optional(),
       port: z.number().int().optional(),
       protocol: z.enum(["tcp", "udp"]).optional(),
+      tls_version: z.enum(["any", "only-1.2"]).optional().describe("Accepted TLS version"),
       default_profile: z.string().optional(),
       require_client_certificate: z.boolean().optional(),
       max_mtu: z.number().int().optional(),
@@ -72,6 +73,7 @@ export const openvpnTools: ToolModule = [
           .opt("mode", a.mode)
           .opt("port", a.port)
           .opt("protocol", a.protocol)
+          .opt("tls-version", a.tls_version)
           .opt("default-profile", a.default_profile)
           .bool("require-client-certificate", a.require_client_certificate)
           .opt("max-mtu", a.max_mtu);
@@ -128,6 +130,7 @@ export const openvpnTools: ToolModule = [
       certificate: z.string().optional(),
       auth: z.string().optional().describe("Comma-separated, e.g. 'sha256,sha1'"),
       cipher: z.string().optional().describe("Comma-separated, e.g. 'aes256-cbc,aes256-gcm'"),
+      tls_version: z.enum(["any", "only-1.2"]).optional().describe("Accepted TLS version"),
       max_mtu: z.number().int().optional(),
       default_profile: z.string().optional(),
       require_client_certificate: z.boolean().optional(),
@@ -146,6 +149,7 @@ export const openvpnTools: ToolModule = [
         .opt("certificate", a.certificate)
         .opt("auth", a.auth)
         .opt("cipher", a.cipher)
+        .opt("tls-version", a.tls_version)
         .opt("max-mtu", a.max_mtu)
         .opt("default-profile", a.default_profile)
         .bool("require-client-certificate", a.require_client_certificate)
@@ -223,6 +227,7 @@ export const openvpnTools: ToolModule = [
       certificate: z.string().optional(),
       auth: z.string().optional(),
       cipher: z.string().optional(),
+      tls_version: z.enum(["any", "only-1.2"]).optional().describe("Accepted TLS version"),
       max_mtu: z.number().int().optional(),
       default_profile: z.string().optional(),
       require_client_certificate: z.boolean().optional(),
@@ -240,6 +245,7 @@ export const openvpnTools: ToolModule = [
         .opt("certificate", a.certificate)
         .opt("auth", a.auth)
         .opt("cipher", a.cipher)
+        .opt("tls-version", a.tls_version)
         .opt("max-mtu", a.max_mtu)
         .opt("default-profile", a.default_profile)
         .bool("require-client-certificate", a.require_client_certificate)
@@ -372,10 +378,15 @@ export const openvpnTools: ToolModule = [
       certificate: z.string().optional(),
       cipher: z.string().optional(),
       auth: z.string().optional(),
+      tls_version: z.enum(["any", "only-1.2"]).optional().describe("Accepted TLS version"),
       mode: z.enum(["ip", "ethernet"]).optional(),
       protocol: z.enum(["tcp", "udp"]).optional(),
+      mac_address: z.string().optional().describe("Client MAC for ethernet mode"),
+      max_mtu: z.number().int().optional(),
       profile: z.string().optional(),
       add_default_route: z.boolean().optional(),
+      route_nopull: z.boolean().optional().describe("Ignore routes pushed by the server"),
+      use_peer_dns: z.boolean().optional().describe("Use DNS servers pushed by the server"),
       verify_server_certificate: z.boolean().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -391,10 +402,15 @@ export const openvpnTools: ToolModule = [
         .opt("certificate", a.certificate)
         .opt("cipher", a.cipher)
         .opt("auth", a.auth)
+        .opt("tls-version", a.tls_version)
         .opt("mode", a.mode)
         .opt("protocol", a.protocol)
+        .opt("mac-address", a.mac_address)
+        .opt("max-mtu", a.max_mtu)
         .opt("profile", a.profile)
         .bool("add-default-route", a.add_default_route)
+        .bool("route-nopull", a.route_nopull)
+        .bool("use-peer-dns", a.use_peer_dns)
         .bool("verify-server-certificate", a.verify_server_certificate)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
