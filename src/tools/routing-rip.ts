@@ -44,6 +44,7 @@ export const routingRipTools: ToolModule = [
       name: z.string().describe("Unique instance name"),
       router_id: z.string().optional().describe("IPv4 address, 'main', or a /routing id name"),
       vrf: z.string().optional(),
+      routing_table: z.string().optional().describe("Routing table to install routes into"),
       redistribute: z.string().optional().describe('Comma list, e.g. "connected,static"'),
       in_filter_chain: z.string().optional(),
       out_filter_chain: z.string().optional(),
@@ -57,6 +58,7 @@ export const routingRipTools: ToolModule = [
         .set("name", a.name)
         .opt("router-id", a.router_id)
         .opt("vrf", a.vrf)
+        .opt("routing-table", a.routing_table)
         .opt("redistribute", a.redistribute)
         .opt("in-filter-chain", a.in_filter_chain)
         .opt("out-filter-chain", a.out_filter_chain)
@@ -89,6 +91,7 @@ export const routingRipTools: ToolModule = [
     inputSchema: {
       name: z.string().describe("Existing RIP instance name"),
       router_id: z.string().optional(),
+      routing_table: z.string().optional().describe("Routing table to install routes into"),
       redistribute: z.string().optional(),
       in_filter_chain: z.string().optional(),
       out_filter_chain: z.string().optional(),
@@ -101,6 +104,7 @@ export const routingRipTools: ToolModule = [
       const base = `/routing rip instance set [find name="${a.name}"]`;
       const cmd = new Cmd(base)
         .opt("router-id", a.router_id)
+        .opt("routing-table", a.routing_table)
         .opt("redistribute", a.redistribute)
         .opt("in-filter-chain", a.in_filter_chain)
         .opt("out-filter-chain", a.out_filter_chain)
@@ -184,6 +188,8 @@ export const routingRipTools: ToolModule = [
       instance: z.string().describe("RIP instance name"),
       interfaces: z.string().describe("Interface or interface-list name"),
       passive: z.boolean().optional(),
+      split_horizon: z.boolean().optional().describe("Enable split-horizon loop prevention"),
+      poison_reverse: z.boolean().optional().describe("Advertise back with infinite metric"),
       key_chain: z.string().optional().describe("Key-chain name for authentication"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -196,6 +202,8 @@ export const routingRipTools: ToolModule = [
         .opt("key-chain", a.key_chain)
         .opt("comment", a.comment);
       if (a.passive !== undefined) cmd.bool("passive", a.passive);
+      if (a.split_horizon !== undefined) cmd.bool("split-horizon", a.split_horizon);
+      if (a.poison_reverse !== undefined) cmd.bool("poison-reverse", a.poison_reverse);
       cmd.flag("disabled", a.disabled);
 
       const result = await executeMikrotikCommand(cmd.build(), ctx);

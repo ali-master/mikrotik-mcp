@@ -84,6 +84,7 @@ export const routingBgpTools: ToolModule = [
       name: z.string().describe("Unique connection name"),
       remote_address: z.string().describe("Peer IP address (remote.address)"),
       remote_as: z.number().int().optional().describe("Peer AS number (remote.as)"),
+      remote_port: z.number().int().optional().describe("Peer TCP port (remote.port)"),
       as: z.number().int().optional().describe("Local AS number"),
       local_role: z
         .string()
@@ -92,21 +93,70 @@ export const routingBgpTools: ToolModule = [
           "local.role: ebgp, ibgp, ebgp-customer, ebgp-provider, ibgp-rr, ibgp-rr-client, …",
         ),
       local_address: z.string().optional().describe("Local source address (local.address)"),
+      local_port: z.number().int().optional().describe("Local TCP port (local.port)"),
       router_id: z.string().optional().describe("Override router-id for this connection"),
+      cluster_id: z.string().optional().describe("Route-reflector cluster ID (cluster-id)"),
       templates: z.string().optional().describe("Template name(s) to inherit settings from"),
       address_families: z.string().optional().describe('Comma list, e.g. "ip" or "ip,ipv6,l2vpn"'),
       hold_time: z.string().optional().describe('e.g. "3m" or "180s"'),
       keepalive_time: z.string().optional(),
       multihop: z.boolean().optional().describe("Allow non-directly-connected peers"),
       nexthop_choice: z.string().optional().describe("default, force-self, or propagate"),
+      use_bfd: z.boolean().optional().describe("Use BFD for fast failure detection (use-bfd)"),
+      tcp_md5_key: z.string().optional().describe("TCP MD5 authentication key (tcp-md5-key)"),
+      connect: z.boolean().optional().describe("Actively initiate the TCP session (connect)"),
+      listen: z.boolean().optional().describe("Accept incoming TCP session (listen)"),
       input_filter: z
         .string()
         .optional()
         .describe("Routing filter chain for inbound routes (input.filter)"),
+      input_accept_nlri: z
+        .string()
+        .optional()
+        .describe("Address list of accepted NLRI prefixes (input.accept-nlri)"),
+      input_allow_as: z
+        .number()
+        .int()
+        .optional()
+        .describe("Number of times own AS may appear in AS-path (input.allow-as)"),
+      input_ignore_as_path_len: z
+        .boolean()
+        .optional()
+        .describe("Ignore AS-path length in best-path selection (input.ignore-as-path-len)"),
       output_filter: z
         .string()
         .optional()
         .describe("Routing filter chain for outbound routes (output.filter)"),
+      output_network: z
+        .string()
+        .optional()
+        .describe("Address list of networks to originate/advertise (output.network)"),
+      output_default_originate: z
+        .string()
+        .optional()
+        .describe(
+          "Advertise a default route: never, if-installed, or always (output.default-originate)",
+        ),
+      output_redistribute: z
+        .string()
+        .optional()
+        .describe(
+          "Comma list of route sources to redistribute, e.g. connected,static (output.redistribute)",
+        ),
+      output_as_override: z
+        .boolean()
+        .optional()
+        .describe("Replace peer AS in AS-path with local AS (output.as-override)"),
+      output_keep_sent_attributes: z
+        .boolean()
+        .optional()
+        .describe("Retain sent path attributes for inspection (output.keep-sent-attributes)"),
+      output_no_client_to_client_reflection: z
+        .boolean()
+        .optional()
+        .describe(
+          "Disable route-reflector client-to-client reflection (output.no-client-to-client-reflection)",
+        ),
       routing_table: z.string().optional().describe("RIB to install learned routes into"),
       vrf: z.string().optional(),
       comment: z.string().optional(),
@@ -118,18 +168,34 @@ export const routingBgpTools: ToolModule = [
         .set("name", a.name)
         .set("remote.address", a.remote_address)
         .opt("remote.as", a.remote_as)
+        .opt("remote.port", a.remote_port)
         .opt("as", a.as)
         .opt("local.role", a.local_role)
         .opt("local.address", a.local_address)
+        .opt("local.port", a.local_port)
         .opt("router-id", a.router_id)
+        .opt("cluster-id", a.cluster_id)
         .opt("templates", a.templates)
         .opt("address-families", a.address_families)
         .opt("hold-time", a.hold_time)
         .opt("keepalive-time", a.keepalive_time)
         .bool("multihop", a.multihop)
         .opt("nexthop-choice", a.nexthop_choice)
+        .bool("use-bfd", a.use_bfd)
+        .opt("tcp-md5-key", a.tcp_md5_key)
+        .bool("connect", a.connect)
+        .bool("listen", a.listen)
         .opt("input.filter", a.input_filter)
+        .opt("input.accept-nlri", a.input_accept_nlri)
+        .opt("input.allow-as", a.input_allow_as)
+        .bool("input.ignore-as-path-len", a.input_ignore_as_path_len)
         .opt("output.filter", a.output_filter)
+        .opt("output.network", a.output_network)
+        .opt("output.default-originate", a.output_default_originate)
+        .opt("output.redistribute", a.output_redistribute)
+        .bool("output.as-override", a.output_as_override)
+        .bool("output.keep-sent-attributes", a.output_keep_sent_attributes)
+        .bool("output.no-client-to-client-reflection", a.output_no_client_to_client_reflection)
         .opt("routing-table", a.routing_table)
         .opt("vrf", a.vrf)
         .opt("comment", a.comment)
@@ -160,16 +226,33 @@ export const routingBgpTools: ToolModule = [
       name: z.string().describe("Existing BGP connection name"),
       remote_address: z.string().optional(),
       remote_as: z.number().int().optional(),
+      remote_port: z.number().int().optional(),
       as: z.number().int().optional(),
       local_role: z.string().optional(),
       local_address: z.string().optional(),
+      local_port: z.number().int().optional(),
       router_id: z.string().optional(),
+      cluster_id: z.string().optional(),
       address_families: z.string().optional(),
       hold_time: z.string().optional(),
       keepalive_time: z.string().optional(),
       multihop: z.boolean().optional(),
+      nexthop_choice: z.string().optional(),
+      use_bfd: z.boolean().optional(),
+      tcp_md5_key: z.string().optional(),
+      connect: z.boolean().optional(),
+      listen: z.boolean().optional(),
       input_filter: z.string().optional(),
+      input_accept_nlri: z.string().optional(),
+      input_allow_as: z.number().int().optional(),
+      input_ignore_as_path_len: z.boolean().optional(),
       output_filter: z.string().optional(),
+      output_network: z.string().optional(),
+      output_default_originate: z.string().optional(),
+      output_redistribute: z.string().optional(),
+      output_as_override: z.boolean().optional(),
+      output_keep_sent_attributes: z.boolean().optional(),
+      output_no_client_to_client_reflection: z.boolean().optional(),
       routing_table: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
@@ -180,17 +263,37 @@ export const routingBgpTools: ToolModule = [
       const cmd = new Cmd(base)
         .opt("remote.address", a.remote_address)
         .opt("remote.as", a.remote_as)
+        .opt("remote.port", a.remote_port)
         .opt("as", a.as)
         .opt("local.role", a.local_role)
         .opt("local.address", a.local_address)
+        .opt("local.port", a.local_port)
         .opt("router-id", a.router_id)
+        .opt("cluster-id", a.cluster_id)
         .opt("address-families", a.address_families)
         .opt("hold-time", a.hold_time)
         .opt("keepalive-time", a.keepalive_time)
+        .opt("nexthop-choice", a.nexthop_choice)
+        .opt("tcp-md5-key", a.tcp_md5_key)
         .opt("input.filter", a.input_filter)
+        .opt("input.accept-nlri", a.input_accept_nlri)
+        .opt("input.allow-as", a.input_allow_as)
         .opt("output.filter", a.output_filter)
+        .opt("output.network", a.output_network)
+        .opt("output.default-originate", a.output_default_originate)
+        .opt("output.redistribute", a.output_redistribute)
         .opt("routing-table", a.routing_table);
       if (a.multihop !== undefined) cmd.bool("multihop", a.multihop);
+      if (a.use_bfd !== undefined) cmd.bool("use-bfd", a.use_bfd);
+      if (a.connect !== undefined) cmd.bool("connect", a.connect);
+      if (a.listen !== undefined) cmd.bool("listen", a.listen);
+      if (a.input_ignore_as_path_len !== undefined)
+        cmd.bool("input.ignore-as-path-len", a.input_ignore_as_path_len);
+      if (a.output_as_override !== undefined) cmd.bool("output.as-override", a.output_as_override);
+      if (a.output_keep_sent_attributes !== undefined)
+        cmd.bool("output.keep-sent-attributes", a.output_keep_sent_attributes);
+      if (a.output_no_client_to_client_reflection !== undefined)
+        cmd.bool("output.no-client-to-client-reflection", a.output_no_client_to_client_reflection);
       if (a.comment !== undefined) cmd.set("comment", a.comment);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
 
@@ -289,9 +392,31 @@ export const routingBgpTools: ToolModule = [
       name: z.string().describe("Template name"),
       as: z.number().int().optional().describe("Local AS number"),
       router_id: z.string().optional(),
+      cluster_id: z.string().optional().describe("Route-reflector cluster ID (cluster-id)"),
       address_families: z.string().optional().describe('e.g. "ip,ipv6"'),
+      hold_time: z.string().optional().describe('e.g. "3m" or "180s"'),
+      keepalive_time: z.string().optional(),
+      multihop: z.boolean().optional().describe("Allow non-directly-connected peers"),
+      nexthop_choice: z.string().optional().describe("default, force-self, or propagate"),
+      use_bfd: z.boolean().optional().describe("Use BFD for fast failure detection (use-bfd)"),
       input_filter: z.string().optional(),
       output_filter: z.string().optional(),
+      output_network: z
+        .string()
+        .optional()
+        .describe("Address list of networks to originate/advertise (output.network)"),
+      output_default_originate: z
+        .string()
+        .optional()
+        .describe(
+          "Advertise a default route: never, if-installed, or always (output.default-originate)",
+        ),
+      output_redistribute: z
+        .string()
+        .optional()
+        .describe(
+          "Comma list of route sources to redistribute, e.g. connected,static (output.redistribute)",
+        ),
       routing_table: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -302,9 +427,18 @@ export const routingBgpTools: ToolModule = [
         .set("name", a.name)
         .opt("as", a.as)
         .opt("router-id", a.router_id)
+        .opt("cluster-id", a.cluster_id)
         .opt("address-families", a.address_families)
+        .opt("hold-time", a.hold_time)
+        .opt("keepalive-time", a.keepalive_time)
+        .bool("multihop", a.multihop)
+        .opt("nexthop-choice", a.nexthop_choice)
+        .bool("use-bfd", a.use_bfd)
         .opt("input.filter", a.input_filter)
         .opt("output.filter", a.output_filter)
+        .opt("output.network", a.output_network)
+        .opt("output.default-originate", a.output_default_originate)
+        .opt("output.redistribute", a.output_redistribute)
         .opt("routing-table", a.routing_table)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)

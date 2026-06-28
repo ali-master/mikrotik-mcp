@@ -92,7 +92,6 @@ export const routingRuleTools: ToolModule = [
       routing_mark: z.string().optional().describe("Match packets carrying this routing-mark"),
       interface: z.string().optional().describe("Match this incoming interface"),
       min_prefix: z.number().int().optional(),
-      max_prefix: z.number().int().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
       place_before: z
@@ -110,7 +109,6 @@ export const routingRuleTools: ToolModule = [
         .opt("routing-mark", a.routing_mark)
         .opt("interface", a.interface)
         .opt("min-prefix", a.min_prefix)
-        .opt("max-prefix", a.max_prefix)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .opt("place-before", a.place_before)
@@ -141,6 +139,7 @@ export const routingRuleTools: ToolModule = [
       dst_address: z.string().optional(),
       routing_mark: z.string().optional(),
       interface: z.string().optional(),
+      min_prefix: z.number().int().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -159,6 +158,7 @@ export const routingRuleTools: ToolModule = [
       for (const [key, val] of clearable) {
         if (val !== undefined) cmd.raw(val === "" ? `!${key}` : `${key}=${val}`);
       }
+      cmd.opt("min-prefix", a.min_prefix);
       if (a.comment !== undefined) cmd.set("comment", a.comment);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
 

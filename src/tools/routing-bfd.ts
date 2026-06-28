@@ -52,6 +52,7 @@ export const routingBfdTools: ToolModule = [
       min_rx: z.string().optional().describe('Desired min RX interval, e.g. "200ms"'),
       min_tx: z.string().optional().describe('Desired min TX interval, e.g. "200ms"'),
       multiplier: z.number().int().optional().describe("Detection multiplier, e.g. 5"),
+      forbid_bfd: z.boolean().optional().describe("Forbid BFD on the matched interfaces"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -63,6 +64,7 @@ export const routingBfdTools: ToolModule = [
         .opt("min-rx", a.min_rx)
         .opt("min-tx", a.min_tx)
         .opt("multiplier", a.multiplier)
+        .bool("forbid-bfd", a.forbid_bfd)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -91,6 +93,7 @@ export const routingBfdTools: ToolModule = [
       min_rx: z.string().optional(),
       min_tx: z.string().optional(),
       multiplier: z.number().int().optional(),
+      forbid_bfd: z.boolean().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -102,7 +105,8 @@ export const routingBfdTools: ToolModule = [
         .opt("vrf", a.vrf)
         .opt("min-rx", a.min_rx)
         .opt("min-tx", a.min_tx)
-        .opt("multiplier", a.multiplier);
+        .opt("multiplier", a.multiplier)
+        .bool("forbid-bfd", a.forbid_bfd);
       if (a.comment !== undefined) cmd.set("comment", a.comment);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
 

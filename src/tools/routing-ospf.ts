@@ -52,6 +52,11 @@ export const routingOspfTools: ToolModule = [
         .optional()
         .describe("Routing filter chain for redistributed routes"),
       originate_default: z.string().optional().describe("never, if-installed, or always"),
+      domain_id: z.string().optional().describe("OSPF domain ID (MPLS VPN PE-CE OSPF)"),
+      domain_tag: z.number().int().optional().describe("OSPF domain tag (MPLS VPN PE-CE OSPF)"),
+      use_dn: z.boolean().optional().describe("Use/ignore DN bit on OSPF routes (MPLS VPN)"),
+      mpls_te_area: z.string().optional().describe("Area used for MPLS traffic engineering"),
+      mpls_te_address: z.string().optional().describe("Router address advertised for MPLS TE"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -66,11 +71,14 @@ export const routingOspfTools: ToolModule = [
         .opt("in-filter-chain", a.in_filter_chain)
         .opt("out-filter-chain", a.out_filter_chain)
         .opt("originate-default", a.originate_default)
-        .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
-        .build();
+        .opt("domain-id", a.domain_id)
+        .opt("domain-tag", a.domain_tag)
+        .opt("mpls-te-area", a.mpls_te_area)
+        .opt("mpls-te-address", a.mpls_te_address);
+      if (a.use_dn !== undefined) cmd.bool("use-dn", a.use_dn);
+      cmd.opt("comment", a.comment).flag("disabled", a.disabled);
 
-      const result = await executeMikrotikCommand(cmd, ctx);
+      const result = await executeMikrotikCommand(cmd.build(), ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
       if (looksLikeError(result)) return `Failed to add OSPF instance: ${result}`;
       const details = await executeMikrotikCommand(
@@ -98,6 +106,11 @@ export const routingOspfTools: ToolModule = [
       in_filter_chain: z.string().optional(),
       out_filter_chain: z.string().optional(),
       originate_default: z.string().optional(),
+      domain_id: z.string().optional().describe("OSPF domain ID (MPLS VPN PE-CE OSPF)"),
+      domain_tag: z.number().int().optional().describe("OSPF domain tag (MPLS VPN PE-CE OSPF)"),
+      use_dn: z.boolean().optional().describe("Use/ignore DN bit on OSPF routes (MPLS VPN)"),
+      mpls_te_area: z.string().optional().describe("Area used for MPLS traffic engineering"),
+      mpls_te_address: z.string().optional().describe("Router address advertised for MPLS TE"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -109,7 +122,12 @@ export const routingOspfTools: ToolModule = [
         .opt("redistribute", a.redistribute)
         .opt("in-filter-chain", a.in_filter_chain)
         .opt("out-filter-chain", a.out_filter_chain)
-        .opt("originate-default", a.originate_default);
+        .opt("originate-default", a.originate_default)
+        .opt("domain-id", a.domain_id)
+        .opt("domain-tag", a.domain_tag)
+        .opt("mpls-te-area", a.mpls_te_area)
+        .opt("mpls-te-address", a.mpls_te_address);
+      if (a.use_dn !== undefined) cmd.bool("use-dn", a.use_dn);
       if (a.comment !== undefined) cmd.set("comment", a.comment);
       if (a.disabled !== undefined) cmd.bool("disabled", a.disabled);
 
@@ -191,6 +209,11 @@ export const routingOspfTools: ToolModule = [
         .boolean()
         .optional()
         .describe("Make a totally-stubby/NSSA area (block summary LSAs)"),
+      default_cost: z
+        .number()
+        .int()
+        .optional()
+        .describe("Cost of the default route an ABR injects into a stub/NSSA area"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -200,7 +223,8 @@ export const routingOspfTools: ToolModule = [
         .set("name", a.name)
         .set("area-id", a.area_id)
         .set("instance", a.instance)
-        .opt("type", a.type);
+        .opt("type", a.type)
+        .opt("default-cost", a.default_cost);
       if (a.no_summaries !== undefined) cmd.bool("no-summaries", a.no_summaries);
       cmd.opt("comment", a.comment).flag("disabled", a.disabled);
 
@@ -269,6 +293,7 @@ export const routingOspfTools: ToolModule = [
       advertise: z.boolean().default(true).describe("Advertise the summary (false suppresses it)"),
       cost: z.number().int().optional(),
       comment: z.string().optional(),
+      disabled: z.boolean().optional(),
     },
     async handler(a, ctx) {
       ctx.info(`Adding OSPF area range ${a.prefix} to ${a.area}`);
@@ -277,10 +302,10 @@ export const routingOspfTools: ToolModule = [
         .set("prefix", a.prefix)
         .bool("advertise", a.advertise)
         .opt("cost", a.cost)
-        .opt("comment", a.comment)
-        .build();
+        .opt("comment", a.comment);
+      if (a.disabled !== undefined) cmd.flag("disabled", a.disabled);
 
-      const result = await executeMikrotikCommand(cmd, ctx);
+      const result = await executeMikrotikCommand(cmd.build(), ctx);
       if (commandUnsupported(result)) return UNSUPPORTED;
       if (looksLikeError(result)) return `Failed to add OSPF area range: ${result}`;
       return `OSPF area range '${a.prefix}' added to area '${a.area}'.`;
@@ -359,6 +384,28 @@ export const routingOspfTools: ToolModule = [
       passive: z.boolean().optional(),
       hello_interval: z.string().optional().describe('e.g. "10s"'),
       dead_interval: z.string().optional().describe('e.g. "40s"'),
+      retransmit_interval: z
+        .string()
+        .optional()
+        .describe('Interval between LSA retransmissions, e.g. "5s"'),
+      transmit_delay: z.string().optional().describe('Estimated LSA transmit delay, e.g. "1s"'),
+      instance_id: z
+        .number()
+        .int()
+        .optional()
+        .describe("OSPF instance-id carried in hello packets"),
+      prefix_list: z
+        .string()
+        .optional()
+        .describe("Prefix-list name filtering which connected networks are advertised"),
+      vlink_neighbor_id: z
+        .string()
+        .optional()
+        .describe("Virtual-link remote router-id (type=virtual-link)"),
+      vlink_transit_area: z
+        .string()
+        .optional()
+        .describe("Transit area the virtual-link traverses (type=virtual-link)"),
       auth: z.enum(["simple", "md5", "sha1", "sha256", "sha384", "sha512"]).optional(),
       auth_id: z.number().int().optional().describe("Key id for keyed authentication"),
       auth_key: z.string().optional().describe("Authentication key/password"),
@@ -376,6 +423,12 @@ export const routingOspfTools: ToolModule = [
         .opt("type", a.type)
         .opt("hello-interval", a.hello_interval)
         .opt("dead-interval", a.dead_interval)
+        .opt("retransmit-interval", a.retransmit_interval)
+        .opt("transmit-delay", a.transmit_delay)
+        .opt("instance-id", a.instance_id)
+        .opt("prefix-list", a.prefix_list)
+        .opt("vlink-neighbor-id", a.vlink_neighbor_id)
+        .opt("vlink-transit-area", a.vlink_transit_area)
         .opt("auth", a.auth)
         .opt("auth-id", a.auth_id)
         .opt("auth-key", a.auth_key)

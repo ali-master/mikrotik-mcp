@@ -26,6 +26,8 @@ interface AddRouteArgs {
   vrf_interface?: string;
   pref_src?: string;
   check_gateway?: string;
+  suppress_hw_offload?: boolean;
+  type?: string;
 }
 
 /** Shared `add_route` body, reused by `add_default_route`. */
@@ -48,6 +50,8 @@ async function addRoute(
     .opt("vrf-interface", a.vrf_interface)
     .opt("pref-src", a.pref_src)
     .opt("check-gateway", a.check_gateway)
+    .bool("suppress-hw-offload", a.suppress_hw_offload)
+    .opt("type", a.type)
     .build();
 
   const result = await executeMikrotikCommand(cmd, ctx);
@@ -119,6 +123,14 @@ export const routeTools: ToolModule = [
       vrf_interface: z.string().optional(),
       pref_src: z.string().optional(),
       check_gateway: z.string().optional().describe('"ping" or "arp"'),
+      suppress_hw_offload: z
+        .boolean()
+        .optional()
+        .describe("Exclude route from hardware (HW) offloading"),
+      type: z
+        .string()
+        .optional()
+        .describe('"unicast" (default), "blackhole", "unreachable", or "prohibit"'),
     },
     async handler(a, ctx) {
       return addRoute(a, ctx);
@@ -228,6 +240,11 @@ export const routeTools: ToolModule = [
       vrf_interface: z.string().optional(),
       pref_src: z.string().optional(),
       check_gateway: z.string().optional().describe('"ping" or "arp"'),
+      suppress_hw_offload: z
+        .boolean()
+        .optional()
+        .describe("Exclude route from hardware (HW) offloading"),
+      type: z.string().optional().describe('"unicast", "blackhole", "unreachable", or "prohibit"'),
     },
     async handler(a, ctx) {
       ctx.info(`Updating route: route_id=${a.route_id}`);
@@ -256,6 +273,9 @@ export const routeTools: ToolModule = [
         cmd.raw(a.pref_src === "" ? "!pref-src" : `pref-src=${quoteValue(a.pref_src)}`);
       }
       if (a.check_gateway !== undefined) cmd.raw(`check-gateway=${quoteValue(a.check_gateway)}`);
+      if (a.suppress_hw_offload !== undefined)
+        cmd.bool("suppress-hw-offload", a.suppress_hw_offload);
+      if (a.type !== undefined) cmd.set("type", a.type);
 
       const built = cmd.build();
       if (built === base) return "No updates specified.";

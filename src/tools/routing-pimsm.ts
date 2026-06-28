@@ -43,6 +43,40 @@ export const routingPimsmTools: ToolModule = [
       afi: z.enum(["ipv4", "ipv6"]).default("ipv4").describe("Address family"),
       vrf: z.string().optional(),
       rp_set: z.string().optional().describe("Static RP-set name, if used"),
+      ssm_range: z
+        .string()
+        .optional()
+        .describe("Source-Specific Multicast group range(s) for this instance"),
+      rp_hash_mask_length: z
+        .number()
+        .int()
+        .optional()
+        .describe("RP hash mask length for group-to-RP mapping"),
+      rp_static_override: z
+        .boolean()
+        .optional()
+        .describe("Static RP entries override dynamically learned (BSR) RPs"),
+      switch_to_spt: z
+        .boolean()
+        .optional()
+        .describe("Switch from the shared (RP) tree to the shortest-path tree"),
+      switch_to_spt_bytes: z
+        .number()
+        .int()
+        .optional()
+        .describe("Traffic threshold in bytes before switching to the SPT"),
+      switch_to_spt_interval: z
+        .string()
+        .optional()
+        .describe('SPT switchover measurement interval, e.g. "1m"'),
+      bsm_forward_back: z
+        .boolean()
+        .optional()
+        .describe("Forward bootstrap (BSM) messages back out the receiving interface"),
+      crp_advertise_contained: z
+        .boolean()
+        .optional()
+        .describe("Candidate-RP advertises only contained group ranges"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -53,6 +87,14 @@ export const routingPimsmTools: ToolModule = [
         .opt("afi", a.afi)
         .opt("vrf", a.vrf)
         .opt("rp-set", a.rp_set)
+        .opt("ssm-range", a.ssm_range)
+        .opt("rp-hash-mask-length", a.rp_hash_mask_length)
+        .bool("rp-static-override", a.rp_static_override)
+        .bool("switch-to-spt", a.switch_to_spt)
+        .opt("switch-to-spt-bytes", a.switch_to_spt_bytes)
+        .opt("switch-to-spt-interval", a.switch_to_spt_interval)
+        .bool("bsm-forward-back", a.bsm_forward_back)
+        .bool("crp-advertise-contained", a.crp_advertise_contained)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -136,6 +178,30 @@ export const routingPimsmTools: ToolModule = [
       interfaces: z.string().describe("Interface or interface-list name"),
       priority: z.number().int().optional().describe("DR election priority"),
       hello_period: z.string().optional().describe('Hello interval, e.g. "30s"'),
+      hello_delay: z
+        .string()
+        .optional()
+        .describe('Max random delay before the first Hello, e.g. "5s"'),
+      join_prune_period: z
+        .string()
+        .optional()
+        .describe('Interval between periodic Join/Prune messages, e.g. "1m"'),
+      join_tracking_support: z
+        .boolean()
+        .optional()
+        .describe("Enable explicit Join/Prune tracking support"),
+      override_interval: z
+        .string()
+        .optional()
+        .describe('Randomized Join override interval, e.g. "2s500ms"'),
+      propagation_delay: z
+        .string()
+        .optional()
+        .describe('Expected link propagation delay, e.g. "500ms"'),
+      source_addresses: z
+        .string()
+        .optional()
+        .describe("Source IP address(es) used for PIM messages on these interfaces"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -146,6 +212,12 @@ export const routingPimsmTools: ToolModule = [
         .set("interfaces", a.interfaces)
         .opt("priority", a.priority)
         .opt("hello-period", a.hello_period)
+        .opt("hello-delay", a.hello_delay)
+        .opt("join-prune-period", a.join_prune_period)
+        .bool("join-tracking-support", a.join_tracking_support)
+        .opt("override-interval", a.override_interval)
+        .opt("propagation-delay", a.propagation_delay)
+        .opt("source-addresses", a.source_addresses)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
