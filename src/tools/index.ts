@@ -20,6 +20,7 @@ import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
 import { hotspotBuilderTools } from "./hotspot-builder";
+import { containerTools } from "./container";
 import { diskTools } from "./disk";
 import { dnsTools } from "./dns";
 import { parentalControlsTools } from "./parental-controls";
@@ -984,6 +985,15 @@ export const moduleCatalog: ModuleInfo[] = [
       "Storage management (`/disk`): list/get disks, format (filesystem/partition/encryption), label & " +
       "state, RAID/rsync/RAM virtual disks, SMB/NFS sharing, and eject.",
     tools: diskTools,
+  },
+  {
+    label: "Containers",
+    slug: "container",
+    group: "System & Ops",
+    description:
+      "OCI container subsystem (`/container`): lifecycle (add/start/stop/remove/set), global config " +
+      "(registry/tmpdir/RAM), named env lists, and volume mounts.",
+    tools: containerTools,
   },
   {
     label: "Safe Mode",

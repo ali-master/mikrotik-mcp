@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_container",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Container name (recommended for management)",
+      "type": "string"
+    },
+    "remote_image": {
+      "description": "Registry image, e.g. 'library/alpine:latest'",
+      "type": "string"
+    },
+    "file": {
+      "description": "Local Docker-v1 tar on the device (alternative to remote_image)",
+      "type": "string"
+    },
+    "interface": {
+      "description": "VETH interface name",
+      "type": "string"
+    },
+    "root_dir": {
+      "description": "Filesystem root, e.g. 'disk1/myapp'",
+      "type": "string"
+    },
+    "env": {
+      "description": "Inline env vars: 'K=v,K2=v2' (7.21+)",
+      "type": "string"
+    },
+    "envlists": {
+      "description": "Named env list name(s) (add_container_env)",
+      "type": "string"
+    },
+    "mount": {
+      "description": "Inline mount: 'src=disk1/data,dst=/data' (7.21+)",
+      "type": "string"
+    },
+    "mountlists": {
+      "description": "Named mount name(s) (add_container_mount)",
+      "type": "string"
+    },
+    "cmd": {
+      "description": "Override container CMD",
+      "type": "string"
+    },
+    "entrypoint": {
+      "description": "Override container ENTRYPOINT",
+      "type": "string"
+    },
+    "workdir": {
+      "description": "Override working directory",
+      "type": "string"
+    },
+    "hostname": {
+      "type": "string"
+    },
+    "dns": {
+      "description": "DNS server for the container",
+      "type": "string"
+    },
+    "user": {
+      "type": "string"
+    },
+    "stop_signal": {
+      "description": "Signal used to stop the container",
+      "type": "string"
+    },
+    "devices": {
+      "description": "Pass-through physical devices (7.20+)",
+      "type": "string"
+    },
+    "cpu_list": {
+      "description": "CPU core affinity",
+      "type": "string"
+    },
+    "memory_high": {
+      "description": "RAM limit, e.g. '256M'",
+      "type": "string"
+    },
+    "logging": {
+      "description": "Send stdout/stderr to the RouterOS log",
+      "type": "boolean"
+    },
+    "start_on_boot": {
+      "description": "Auto-start on device boot",
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

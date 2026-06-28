@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_container_envs",
+  "type": "object",
+  "properties": {
+    "list_filter": {
+      "description": "Partial env-list (group) name match",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

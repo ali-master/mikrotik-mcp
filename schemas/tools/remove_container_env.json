@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remove_container_env",
+  "type": "object",
+  "properties": {
+    "list": {
+      "type": "string",
+      "description": "Env-list (group) name"
+    },
+    "key": {
+      "type": "string",
+      "description": "Variable name to remove"
+    }
+  },
+  "required": ["list", "key"],
+  "additionalProperties": false
+}

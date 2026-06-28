@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_container_env",
+  "type": "object",
+  "properties": {
+    "list": {
+      "type": "string",
+      "description": "Env-list (group) name, e.g. 'MYAPP'"
+    },
+    "key": {
+      "type": "string",
+      "description": "Variable name, e.g. 'TZ'"
+    },
+    "value": {
+      "type": "string",
+      "description": "Variable value"
+    }
+  },
+  "required": ["list", "key", "value"],
+  "additionalProperties": false
+}

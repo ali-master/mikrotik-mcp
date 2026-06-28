@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "start_container",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Container name (set via add_container)",
+      "type": "string"
+    },
+    "tag": {
+      "description": "Image tag to match (e.g. 'pihole') if no name",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

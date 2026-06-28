@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "update_container",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Container name (set via add_container)",
+      "type": "string"
+    },
+    "tag": {
+      "description": "Image tag to match (e.g. 'pihole') if no name",
+      "type": "string"
+    },
+    "interface": {
+      "type": "string"
+    },
+    "root_dir": {
+      "type": "string"
+    },
+    "env": {
+      "type": "string"
+    },
+    "envlists": {
+      "type": "string"
+    },
+    "mount": {
+      "type": "string"
+    },
+    "mountlists": {
+      "type": "string"
+    },
+    "cmd": {
+      "type": "string"
+    },
+    "entrypoint": {
+      "type": "string"
+    },
+    "workdir": {
+      "type": "string"
+    },
+    "hostname": {
+      "type": "string"
+    },
+    "dns": {
+      "type": "string"
+    },
+    "cpu_list": {
+      "type": "string"
+    },
+    "memory_high": {
+      "type": "string"
+    },
+    "logging": {
+      "type": "boolean"
+    },
+    "start_on_boot": {
+      "type": "boolean"
+    },
+    "comment": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

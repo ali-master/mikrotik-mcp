@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.27.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 743,
+  "toolCount": 758,
   "tools": [
     {
       "name": "list_interfaces",
@@ -26417,6 +26417,533 @@
           }
         },
         "required": ["slot"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_containers",
+      "title": "List Containers",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "List all OCI containers on the device (`/container print`) with their status (running/stopped/extracting), image tag, name, VETH interface, and root-dir. Use to discover containers and the `name`/`tag` other container tools take. Optionally filter by partial `name_filter`, `tag_filter`, or `status_filter` (running/stopped). Set `detail=true` for the full property block. For one container use get_container; container stdout/stderr is in the log (`/log` topics~container) when logging=yes.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial container name match",
+            "type": "string"
+          },
+          "tag_filter": {
+            "description": "Partial image tag match",
+            "type": "string"
+          },
+          "status_filter": {
+            "description": "e.g. 'running', 'stopped'",
+            "type": "string"
+          },
+          "detail": {
+            "default": false,
+            "description": "Show the full per-container property block",
+            "type": "boolean"
+          }
+        },
+        "required": ["detail"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_container",
+      "title": "Get Container Detail",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Full detail for one container (`/container print detail`) — status, image tag, interface, root-dir, env/mounts, cmd/entrypoint, hostname/dns, logging and start-on-boot. Identify by `name` (preferred) or `tag`. Use list_containers to discover identifiers.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Container name (set via add_container)",
+            "type": "string"
+          },
+          "tag": {
+            "description": "Image tag to match (e.g. 'pihole') if no name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_container",
+      "title": "Add Container",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Create an OCI container (`/container add`). Supply EITHER `remote_image` (pull from the configured registry, e.g. 'library/alpine:latest') OR `file` (a local Docker-v1 tar already on the device). `interface` is the VETH that connects it to RouterOS networking; `root_dir` is its filesystem location (use external disk, e.g. 'disk1/myapp'). Set inline `env` ('K=v,K2=v2') and `mount` ('src=disk1/data,dst=/data') — or reference named lists via `envlists`/`mountlists` (add_container_env / add_container_mount). Override `cmd`/`entrypoint`/`workdir`, set `hostname`/`dns`, enable `logging` and `start_on_boot`, and cap resources with `memory_high`/`cpu_list`. Strongly set `name` so the lifecycle tools can find it. Image pull/extract is asynchronous — poll with list_containers until status is 'stopped', then start_container.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Container name (recommended for management)",
+            "type": "string"
+          },
+          "remote_image": {
+            "description": "Registry image, e.g. 'library/alpine:latest'",
+            "type": "string"
+          },
+          "file": {
+            "description": "Local Docker-v1 tar on the device (alternative to remote_image)",
+            "type": "string"
+          },
+          "interface": {
+            "description": "VETH interface name",
+            "type": "string"
+          },
+          "root_dir": {
+            "description": "Filesystem root, e.g. 'disk1/myapp'",
+            "type": "string"
+          },
+          "env": {
+            "description": "Inline env vars: 'K=v,K2=v2' (7.21+)",
+            "type": "string"
+          },
+          "envlists": {
+            "description": "Named env list name(s) (add_container_env)",
+            "type": "string"
+          },
+          "mount": {
+            "description": "Inline mount: 'src=disk1/data,dst=/data' (7.21+)",
+            "type": "string"
+          },
+          "mountlists": {
+            "description": "Named mount name(s) (add_container_mount)",
+            "type": "string"
+          },
+          "cmd": {
+            "description": "Override container CMD",
+            "type": "string"
+          },
+          "entrypoint": {
+            "description": "Override container ENTRYPOINT",
+            "type": "string"
+          },
+          "workdir": {
+            "description": "Override working directory",
+            "type": "string"
+          },
+          "hostname": {
+            "type": "string"
+          },
+          "dns": {
+            "description": "DNS server for the container",
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          },
+          "stop_signal": {
+            "description": "Signal used to stop the container",
+            "type": "string"
+          },
+          "devices": {
+            "description": "Pass-through physical devices (7.20+)",
+            "type": "string"
+          },
+          "cpu_list": {
+            "description": "CPU core affinity",
+            "type": "string"
+          },
+          "memory_high": {
+            "description": "RAM limit, e.g. '256M'",
+            "type": "string"
+          },
+          "logging": {
+            "description": "Send stdout/stderr to the RouterOS log",
+            "type": "boolean"
+          },
+          "start_on_boot": {
+            "description": "Auto-start on device boot",
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_container",
+      "title": "Update Container",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Modify an existing container's properties (`/container set [find …]`) without recreating it — change `start_on_boot`, `logging`, `cmd`/`entrypoint`/`workdir`, `hostname`/`dns`, `interface`, `root_dir`, inline `env`/`mount` or `envlists`/`mountlists`, resource caps, or `comment`. Identify by `name` or `tag`. Some changes only take effect after a stop/start. To create a container use add_container.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Container name (set via add_container)",
+            "type": "string"
+          },
+          "tag": {
+            "description": "Image tag to match (e.g. 'pihole') if no name",
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          },
+          "root_dir": {
+            "type": "string"
+          },
+          "env": {
+            "type": "string"
+          },
+          "envlists": {
+            "type": "string"
+          },
+          "mount": {
+            "type": "string"
+          },
+          "mountlists": {
+            "type": "string"
+          },
+          "cmd": {
+            "type": "string"
+          },
+          "entrypoint": {
+            "type": "string"
+          },
+          "workdir": {
+            "type": "string"
+          },
+          "hostname": {
+            "type": "string"
+          },
+          "dns": {
+            "type": "string"
+          },
+          "cpu_list": {
+            "type": "string"
+          },
+          "memory_high": {
+            "type": "string"
+          },
+          "logging": {
+            "type": "boolean"
+          },
+          "start_on_boot": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "start_container",
+      "title": "Start Container",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Start a stopped container (`/container start [find …]`). Identify by `name` or `tag`. The container must have finished extracting (status 'stopped') first — check with list_containers. View its output in the log when logging=yes. To stop it use stop_container.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Container name (set via add_container)",
+            "type": "string"
+          },
+          "tag": {
+            "description": "Image tag to match (e.g. 'pihole') if no name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "stop_container",
+      "title": "Stop Container",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Stop a running container (`/container stop [find …]`). Identify by `name` or `tag`. Stopping is asynchronous — poll list_containers until status is 'stopped' before removing it. To start it again use start_container.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Container name (set via add_container)",
+            "type": "string"
+          },
+          "tag": {
+            "description": "Image tag to match (e.g. 'pihole') if no name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_container",
+      "title": "Remove Container",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Permanently delete a container (`/container remove [find …]`). The container must be FULLY STOPPED first — RouterOS rejects removal while it is running or still stopping. If removal fails for that reason, stop it (stop_container), wait until list_containers shows status 'stopped', then retry. Identify by `name` or `tag`. This does not delete its root-dir data on disk.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Container name (set via add_container)",
+            "type": "string"
+          },
+          "tag": {
+            "description": "Image tag to match (e.g. 'pihole') if no name",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_container_config",
+      "title": "Get Container Global Config",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read the global container configuration (`/container config print`) — the image registry URL, the tmpdir used for pulls/extraction, the layer directory, and the RAM-high limit. Use to verify the registry/tmpdir are set before pulling images. To change them use set_container_config.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_container_config",
+      "title": "Set Container Global Config",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Configure the global container settings (`/container config set`) — set the `registry_url` (e.g. 'https://registry-1.docker.io') and `tmpdir` (on external disk, e.g. 'disk1/pull') so remote images can be pulled, the `layer_dir`, the `ram_high` cap, and optional registry `username`/`password` for private registries. This is a router-wide singleton. To read it use get_container_config.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "registry_url": {
+            "description": "Image registry URL",
+            "type": "string"
+          },
+          "tmpdir": {
+            "description": "Pull/extract temp dir, e.g. 'disk1/pull'",
+            "type": "string"
+          },
+          "layer_dir": {
+            "description": "Directory for extracted image layers",
+            "type": "string"
+          },
+          "ram_high": {
+            "description": "RAM-high limit, e.g. '256M'",
+            "type": "string"
+          },
+          "username": {
+            "description": "Registry username (private registries)",
+            "type": "string"
+          },
+          "password": {
+            "description": "Registry password (private registries)",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_container_envs",
+      "title": "List Container Env Variables",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "List named environment-variable entries (`/container envs print`) — each has a `list` (the group name referenced by a container's envlists), a `key` and a `value`. Optionally filter by partial `list_filter`. To add one use add_container_env; to delete use remove_container_env.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "list_filter": {
+            "description": "Partial env-list (group) name match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_container_env",
+      "title": "Add Container Env Variable",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Add an environment variable to a named list (`/container envs add list= key= value=`). Group related variables under the same `list` name, then reference it from a container via `envlists` (add_container or update_container). Inline `env` on add_container is an alternative for self-contained setups. Values may be secrets and are redacted from output.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "description": "Env-list (group) name, e.g. 'MYAPP'"
+          },
+          "key": {
+            "type": "string",
+            "description": "Variable name, e.g. 'TZ'"
+          },
+          "value": {
+            "type": "string",
+            "description": "Variable value"
+          }
+        },
+        "required": ["list", "key", "value"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_container_env",
+      "title": "Remove Container Env Variable",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Delete an environment variable from a list (`/container envs remove [find list= key=]`). Supply the `list` (group) name and the `key`. Verifies it exists first. To browse entries use list_container_envs.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "description": "Env-list (group) name"
+          },
+          "key": {
+            "type": "string",
+            "description": "Variable name to remove"
+          }
+        },
+        "required": ["list", "key"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_container_mounts",
+      "title": "List Container Mounts",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "List named volume mounts (`/container mounts print`) — each has a `name` (referenced by a container's mountlists), a host source `src` (e.g. 'disk1/appdata') and a container destination `dst` (e.g. '/data'). Optionally filter by partial `name_filter`. To add one use add_container_mount; to delete use remove_container_mount.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name_filter": {
+            "description": "Partial mount name match",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_container_mount",
+      "title": "Add Container Mount",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Create a named volume mount (`/container mounts add name= src= dst=`) — maps a host path `src` (place it on external disk, e.g. 'disk1/appdata') to a path `dst` inside the container (e.g. '/data'). Reference it from a container via `mountlists` (add_container or update_container). Inline `mount` on add_container is the alternative for self-contained setups.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Mount name, e.g. 'appdata'"
+          },
+          "src": {
+            "type": "string",
+            "description": "Host source path, e.g. 'disk1/appdata'"
+          },
+          "dst": {
+            "type": "string",
+            "description": "Container destination path, e.g. '/data'"
+          }
+        },
+        "required": ["name", "src", "dst"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "remove_container_mount",
+      "title": "Remove Container Mount",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Delete a named volume mount (`/container mounts remove [find name=...]`). Verifies it exists first. Does not delete the host data at `src`. To browse mounts use list_container_mounts.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Mount name to remove"
+          }
+        },
+        "required": ["name"],
         "additionalProperties": false
       }
     },

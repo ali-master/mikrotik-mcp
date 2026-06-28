@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_container_mount",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Mount name, e.g. 'appdata'"
+    },
+    "src": {
+      "type": "string",
+      "description": "Host source path, e.g. 'disk1/appdata'"
+    },
+    "dst": {
+      "type": "string",
+      "description": "Container destination path, e.g. '/data'"
+    }
+  },
+  "required": ["name", "src", "dst"],
+  "additionalProperties": false
+}

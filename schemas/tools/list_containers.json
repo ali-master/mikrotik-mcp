@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_containers",
+  "type": "object",
+  "properties": {
+    "name_filter": {
+      "description": "Partial container name match",
+      "type": "string"
+    },
+    "tag_filter": {
+      "description": "Partial image tag match",
+      "type": "string"
+    },
+    "status_filter": {
+      "description": "e.g. 'running', 'stopped'",
+      "type": "string"
+    },
+    "detail": {
+      "default": false,
+      "description": "Show the full per-container property block",
+      "type": "boolean"
+    }
+  },
+  "required": ["detail"],
+  "additionalProperties": false
+}
