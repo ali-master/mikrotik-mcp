@@ -14314,21 +14314,17 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Signs an existing certificate template (`/certificate sign`) to produce a valid certificate. Omit `ca` to produce a self-signed certificate; supply the name of an existing CA certificate in `ca` to issue it under that CA. The certificate template to sign must already exist — create it first with `create_certificate`. Optionally override the common name at signing time via `common_name`. May run for several seconds while the device generates key material. Returns the signing operation output from the device.",
+      "description": "Signs an existing certificate template (`/certificate sign`) to produce a valid certificate. Omit `ca` to produce a self-signed certificate; supply the name of an existing CA certificate in `ca` to issue it under that CA. IMPORTANT: certificate stores are PER-DEVICE — the template (and the `ca`, if given) must live on the SAME router this runs on. A 'CA not found' error almost always means the template or CA was created on a different device; verify with list_certificates on this device first (and check the targeting). Set the common name (CN) when you create the template (create_certificate), not here — `/certificate sign` has no CN option. May run for several seconds while the device generates key material. Returns the signing operation output from the device.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Name of the certificate to sign"
+            "description": "Name of the certificate template to sign"
           },
           "ca": {
-            "description": "Name of the CA certificate to sign with (omit to self-sign)",
-            "type": "string"
-          },
-          "common_name": {
-            "description": "Override the common name when signing",
+            "description": "Name of the CA certificate to sign with (must exist on THIS device; omit to self-sign)",
             "type": "string"
           }
         },

@@ -124,29 +124,58 @@ export const certificateTools: ToolModule = [
       "Signs an existing certificate template (`/certificate sign`) to produce a valid certificate. " +
       "Omit `ca` to produce a self-signed certificate; supply the name of an existing CA certificate in `ca` " +
       "to issue it under that CA. " +
-      "The certificate template to sign must already exist — create it first with `create_certificate`. " +
-      "Optionally override the common name at signing time via `common_name`. " +
+      "IMPORTANT: certificate stores are PER-DEVICE — the template (and the `ca`, if given) must live on the " +
+      "SAME router this runs on. A 'CA not found' error almost always means the template or CA was created on a " +
+      "different device; verify with list_certificates on this device first (and check the targeting). " +
+      "Set the common name (CN) when you create the template (create_certificate), not here — `/certificate sign` " +
+      "has no CN option. " +
       "May run for several seconds while the device generates key material. " +
       "Returns the signing operation output from the device.",
     inputSchema: {
-      name: z.string().describe("Name of the certificate to sign"),
+      name: z.string().describe("Name of the certificate template to sign"),
       ca: z
         .string()
         .optional()
-        .describe("Name of the CA certificate to sign with (omit to self-sign)"),
-      common_name: z.string().optional().describe("Override the common name when signing"),
+        .describe(
+          "Name of the CA certificate to sign with (must exist on THIS device; omit to self-sign)",
+        ),
     },
     async handler(a, ctx) {
-      ctx.info(`Signing certificate: name=${a.name}`);
-      const cmd = new Cmd("/certificate sign")
-        .raw(a.name)
-        .opt("ca", a.ca)
-        .opt("common-name", a.common_name)
-        .build();
+      ctx.info(`Signing certificate: name=${a.name}${a.ca ? ` ca=${a.ca}` : " (self-signed)"}`);
 
+      // Pre-flight: the template must exist ON THIS DEVICE. The most common
+      // failure — and the real cause of a confusing "CA not found" even when
+      // self-signing — is the template/CA having been created on a DIFFERENT
+      // router (each device has its own certificate store). Diagnose that
+      // clearly instead of letting RouterOS emit a cryptic error.
+      const templateCount = await executeMikrotikCommand(
+        `/certificate print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (templateCount.trim() === "0") {
+        return (
+          `Certificate template '${a.name}' was not found on this device. Certificate stores are per-device — ` +
+          `create the template here first (create_certificate), and make sure you are targeting the router that holds it ` +
+          `(use list_certificates / list_mikrotik_devices to confirm).`
+        );
+      }
+      if (a.ca) {
+        const caCount = await executeMikrotikCommand(
+          `/certificate print count-only where name="${a.ca}"`,
+          ctx,
+        );
+        if (caCount.trim() === "0") {
+          return (
+            `CA certificate '${a.ca}' was not found on this device. The signing CA must exist on the SAME router as ` +
+            `the template (certificate stores are per-device). Omit 'ca' to self-sign, or create/import the CA on this device first.`
+          );
+        }
+      }
+
+      const cmd = new Cmd("/certificate sign").raw(a.name).opt("ca", a.ca).build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to sign certificate: ${result}`;
-      return `Signing certificate '${a.name}'...\n\n${result}`;
+      return `Signing certificate '${a.name}'${a.ca ? ` with CA '${a.ca}'` : " (self-signed)"}…\n\n${result}`;
     },
   }),
 

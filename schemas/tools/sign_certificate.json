@@ -5,14 +5,10 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Name of the certificate to sign"
+      "description": "Name of the certificate template to sign"
     },
     "ca": {
-      "description": "Name of the CA certificate to sign with (omit to self-sign)",
-      "type": "string"
-    },
-    "common_name": {
-      "description": "Override the common name when signing",
+      "description": "Name of the CA certificate to sign with (must exist on THIS device; omit to self-sign)",
       "type": "string"
     }
   },
