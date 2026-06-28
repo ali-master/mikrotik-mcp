@@ -53,6 +53,114 @@
     "connection_nat_state": {
       "type": "string"
     },
+    "connection_state": {
+      "type": "string"
+    },
+    "connection_type": {
+      "type": "string"
+    },
+    "connection_bytes": {
+      "type": "string"
+    },
+    "connection_limit": {
+      "type": "string"
+    },
+    "connection_rate": {
+      "type": "string"
+    },
+    "port": {
+      "type": "string"
+    },
+    "src_mac_address": {
+      "type": "string"
+    },
+    "packet_mark": {
+      "type": "string"
+    },
+    "routing_mark": {
+      "type": "string"
+    },
+    "src_address_type": {
+      "type": "string"
+    },
+    "dst_address_type": {
+      "type": "string"
+    },
+    "in_bridge_port": {
+      "type": "string"
+    },
+    "out_bridge_port": {
+      "type": "string"
+    },
+    "in_bridge_port_list": {
+      "type": "string"
+    },
+    "out_bridge_port_list": {
+      "type": "string"
+    },
+    "icmp_options": {
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "type": "string"
+    },
+    "layer7_protocol": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "dscp": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "tcp_flags": {
+      "type": "string"
+    },
+    "tcp_mss": {
+      "type": "string"
+    },
+    "packet_size": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string"
+    },
+    "nth": {
+      "type": "string"
+    },
+    "psd": {
+      "type": "string"
+    },
+    "random": {
+      "type": "string"
+    },
+    "per_connection_classifier": {
+      "type": "string"
+    },
+    "time": {
+      "type": "string"
+    },
+    "ttl": {
+      "type": "string"
+    },
+    "hotspot": {
+      "type": "string"
+    },
+    "jump_target": {
+      "type": "string"
+    },
+    "address_list": {
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "type": "string"
+    },
+    "fragment": {
+      "type": "boolean"
+    },
     "to_addresses": {
       "type": "string"
     },

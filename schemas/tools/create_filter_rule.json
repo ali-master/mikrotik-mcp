@@ -63,6 +63,130 @@
       "description": "RouterOS flag expression e.g. \"syn,!ack\"",
       "type": "string"
     },
+    "src_mac_address": {
+      "description": "Source MAC, supports ! and mask e.g. \"00:11:...\"",
+      "type": "string"
+    },
+    "in_interface_list": {
+      "description": "Match by inbound interface list name",
+      "type": "string"
+    },
+    "out_interface_list": {
+      "description": "Match by outbound interface list name",
+      "type": "string"
+    },
+    "port": {
+      "description": "Match src OR dst port(s) (protocol-agnostic)",
+      "type": "string"
+    },
+    "connection_mark": {
+      "description": "Match packets with this connection mark",
+      "type": "string"
+    },
+    "packet_mark": {
+      "description": "Match packets with this packet mark",
+      "type": "string"
+    },
+    "routing_mark": {
+      "description": "Match packets with this routing mark",
+      "type": "string"
+    },
+    "connection_type": {
+      "description": "Conntrack helper type e.g. \"ftp,sip\"",
+      "type": "string"
+    },
+    "connection_bytes": {
+      "description": "Total conn bytes range e.g. \"1000000-0\"",
+      "type": "string"
+    },
+    "connection_limit": {
+      "description": "Per-address conn limit e.g. \"100,32\"",
+      "type": "string"
+    },
+    "connection_rate": {
+      "description": "Connection rate range e.g. \"0-100k\"",
+      "type": "string"
+    },
+    "content": {
+      "description": "Match a literal string in the packet payload",
+      "type": "string"
+    },
+    "dscp": {
+      "description": "Match DSCP/TOS value 0-63",
+      "type": "string"
+    },
+    "layer7_protocol": {
+      "description": "Match a /ip firewall layer7-protocol name",
+      "type": "string"
+    },
+    "packet_size": {
+      "description": "Packet size or range in bytes e.g. \"0-1500\"",
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "description": "IPsec policy match e.g. \"in,ipsec\" or \"out,none\"",
+      "type": "string"
+    },
+    "ttl": {
+      "description": "TTL match e.g. \"equal:64\" or \"less-than:5\"",
+      "type": "string"
+    },
+    "nth": {
+      "description": "Match every Nth packet e.g. \"2,1\"",
+      "type": "string"
+    },
+    "time": {
+      "description": "Time/day match e.g. \"8h-16h,mon,tue,wed\"",
+      "type": "string"
+    },
+    "random": {
+      "description": "Match a packet randomly with given probability (1-99)",
+      "type": "string"
+    },
+    "tcp_mss": {
+      "description": "TCP MSS match e.g. \"1300-1536\" or \"!1460\"",
+      "type": "string"
+    },
+    "fragment": {
+      "description": "Match non-first IP fragments",
+      "type": "boolean"
+    },
+    "src_address_type": {
+      "description": "Source address type e.g. \"unicast\",\"local\"",
+      "type": "string"
+    },
+    "dst_address_type": {
+      "description": "Dest address type e.g. \"broadcast\",\"multicast\"",
+      "type": "string"
+    },
+    "hotspot": {
+      "description": "Hotspot match e.g. \"auth\",\"from-client\",\"local-dst\"",
+      "type": "string"
+    },
+    "icmp_options": {
+      "description": "ICMP type:code match e.g. \"8:0\"",
+      "type": "string"
+    },
+    "priority": {
+      "description": "Match packets by priority (0-63) set internally",
+      "type": "string"
+    },
+    "jump_target": {
+      "description": "Target chain name when action=jump",
+      "type": "string"
+    },
+    "reject_with": {
+      "description": "ICMP/TCP reject response when action=reject",
+      "type": "string"
+    },
+    "address_list": {
+      "description": "List name for add-src-to-address-list / add-dst-to-address-list actions",
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "description": "Timeout for the address-list entry e.g. \"1d\" or \"none\"",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

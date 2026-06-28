@@ -44,7 +44,15 @@
     "dst_port": {
       "type": "string"
     },
+    "port": {
+      "description": "Match if src OR dst port matches (with protocol)",
+      "type": "string"
+    },
     "protocol": {
+      "type": "string"
+    },
+    "src_mac_address": {
+      "description": "Source MAC, negatable e.g. \"!00:11:...\"",
       "type": "string"
     },
     "in_interface": {
@@ -129,6 +137,42 @@
       "description": "e.g. \"1500\" or \"0-500\"",
       "type": "string"
     },
+    "ttl": {
+      "description": "Match TTL, e.g. \"equal:64\", \"less-than:10\"",
+      "type": "string"
+    },
+    "tcp_mss": {
+      "description": "Match TCP MSS, e.g. \"1400-1500\" or \"!1460\"",
+      "type": "string"
+    },
+    "fragment": {
+      "description": "Match second and further fragments",
+      "type": "boolean"
+    },
+    "icmp_options": {
+      "description": "Match ICMP type:code, e.g. \"8:0\"",
+      "type": "string"
+    },
+    "ipv4_options": {
+      "description": "e.g. \"any\", \"loose-source-routing\", \"record-route\"",
+      "type": "string"
+    },
+    "limit": {
+      "description": "Rate limit matcher, e.g. \"50,5:packet\"",
+      "type": "string"
+    },
+    "dst_limit": {
+      "description": "Per-destination rate matcher, e.g. \"50,5,dst-address/1m\"",
+      "type": "string"
+    },
+    "content": {
+      "description": "Match packets containing this text",
+      "type": "string"
+    },
+    "psd": {
+      "description": "Port scan detection, e.g. \"21,3s,3,1\"",
+      "type": "string"
+    },
     "layer7_protocol": {
       "description": "Name of an /ip firewall layer7-protocol regex",
       "type": "string"
@@ -177,8 +221,28 @@
       "description": "e.g. \"1440\" or \"clamp-to-pmtu\", for change-mss",
       "type": "string"
     },
+    "new_priority": {
+      "description": "Priority for action=set-priority, e.g. \"4\", \"from-dscp\", \"from-ingress\"",
+      "type": "string"
+    },
     "routing_table": {
       "description": "Routing table for action=route",
+      "type": "string"
+    },
+    "route_dst": {
+      "description": "Gateway IP for action=route",
+      "type": "string"
+    },
+    "jump_target": {
+      "description": "Target chain name for action=jump",
+      "type": "string"
+    },
+    "sniff_target": {
+      "description": "Collector IP for action=sniff-tzsp/sniff-pc",
+      "type": "string"
+    },
+    "sniff_target_port": {
+      "description": "Collector UDP port for action=sniff-tzsp",
       "type": "string"
     },
     "address_list": {

@@ -42,6 +42,32 @@
       "description": "e.g. \"40s\"",
       "type": "string"
     },
+    "retransmit_interval": {
+      "description": "Interval between LSA retransmissions, e.g. \"5s\"",
+      "type": "string"
+    },
+    "transmit_delay": {
+      "description": "Estimated LSA transmit delay, e.g. \"1s\"",
+      "type": "string"
+    },
+    "instance_id": {
+      "description": "OSPF instance-id carried in hello packets",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "prefix_list": {
+      "description": "Prefix-list name filtering which connected networks are advertised",
+      "type": "string"
+    },
+    "vlink_neighbor_id": {
+      "description": "Virtual-link remote router-id (type=virtual-link)",
+      "type": "string"
+    },
+    "vlink_transit_area": {
+      "description": "Transit area the virtual-link traverses (type=virtual-link)",
+      "type": "string"
+    },
     "auth": {
       "type": "string",
       "enum": ["simple", "md5", "sha1", "sha256", "sha384", "sha512"]

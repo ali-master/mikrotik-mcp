@@ -46,6 +46,10 @@
     "advertise_mac_address": {
       "type": "boolean"
     },
+    "dns": {
+      "description": "Recursive DNS servers advertised via RA (RDNSS), comma-separated IPv6",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

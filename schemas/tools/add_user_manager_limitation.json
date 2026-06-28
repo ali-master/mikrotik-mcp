@@ -15,12 +15,66 @@
       "description": "Upload rate limit, e.g. '10M'",
       "type": "string"
     },
+    "rate_limit_min_rx": {
+      "description": "Guaranteed (CIR) download rate, e.g. '2M'",
+      "type": "string"
+    },
+    "rate_limit_min_tx": {
+      "description": "Guaranteed (CIR) upload rate, e.g. '2M'",
+      "type": "string"
+    },
+    "rate_limit_burst_rx": {
+      "description": "Download burst rate, e.g. '20M'",
+      "type": "string"
+    },
+    "rate_limit_burst_tx": {
+      "description": "Upload burst rate, e.g. '20M'",
+      "type": "string"
+    },
+    "rate_limit_burst_threshold_rx": {
+      "description": "Download burst threshold rate",
+      "type": "string"
+    },
+    "rate_limit_burst_threshold_tx": {
+      "description": "Upload burst threshold rate",
+      "type": "string"
+    },
+    "rate_limit_burst_time_rx": {
+      "description": "Download burst time, e.g. '10s'",
+      "type": "string"
+    },
+    "rate_limit_burst_time_tx": {
+      "description": "Upload burst time, e.g. '10s'",
+      "type": "string"
+    },
+    "rate_limit_priority": {
+      "description": "Queue priority (1-8)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "download_limit": {
+      "description": "Download transfer cap in bytes, e.g. '5G'",
+      "type": "string"
+    },
+    "upload_limit": {
+      "description": "Upload transfer cap in bytes, e.g. '5G'",
+      "type": "string"
+    },
     "transfer_limit": {
       "description": "Total transfer cap, e.g. '10G'",
       "type": "string"
     },
     "uptime_limit": {
       "description": "Uptime cap, e.g. '1d'",
+      "type": "string"
+    },
+    "reset_counters_interval": {
+      "description": "Interval to auto-reset usage counters",
+      "type": "string"
+    },
+    "reset_counters_start_time": {
+      "description": "Start time for counter reset interval",
       "type": "string"
     },
     "comment": {

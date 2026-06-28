@@ -24,6 +24,9 @@
     "dst_port": {
       "type": "string"
     },
+    "port": {
+      "type": "string"
+    },
     "protocol": {
       "type": "string"
     },
@@ -33,10 +36,46 @@
     "out_interface": {
       "type": "string"
     },
+    "in_interface_list": {
+      "type": "string"
+    },
+    "out_interface_list": {
+      "type": "string"
+    },
     "src_address_list": {
       "type": "string"
     },
     "dst_address_list": {
+      "type": "string"
+    },
+    "src_address_type": {
+      "type": "string"
+    },
+    "dst_address_type": {
+      "type": "string"
+    },
+    "src_mac_address": {
+      "type": "string"
+    },
+    "hop_limit": {
+      "type": "string"
+    },
+    "tcp_flags": {
+      "type": "string"
+    },
+    "tcp_mss": {
+      "type": "string"
+    },
+    "packet_size": {
+      "type": "string"
+    },
+    "dscp": {
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "type": "string"
+    },
+    "limit": {
       "type": "string"
     },
     "comment": {

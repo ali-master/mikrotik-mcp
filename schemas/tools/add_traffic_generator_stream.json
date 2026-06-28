@@ -22,6 +22,24 @@
       "description": "Transmit rate in bits/second",
       "type": "string"
     },
+    "num": {
+      "description": "Stream number (0-15)",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "pps": {
+      "description": "Target throughput in packets per second",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mbps": {
+      "description": "Target throughput in megabits per second",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "comment": {
       "type": "string"
     },

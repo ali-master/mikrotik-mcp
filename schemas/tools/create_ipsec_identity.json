@@ -23,6 +23,11 @@
     "remote_id": {
       "type": "string"
     },
+    "match_by": {
+      "description": "How the remote peer is matched to this identity",
+      "type": "string",
+      "enum": ["remote-id", "certificate"]
+    },
     "generate_policy": {
       "type": "string",
       "enum": ["no", "port-override", "port-strict"]
@@ -36,10 +41,26 @@
     "certificate": {
       "type": "string"
     },
+    "remote_certificate": {
+      "description": "Remote peer's certificate name (rsa/digital-signature auth)",
+      "type": "string"
+    },
+    "eap_methods": {
+      "description": "EAP method(s), e.g. 'eap-tls' (eap auth)",
+      "type": "string"
+    },
+    "notrack_chain": {
+      "description": "Raw firewall chain to bypass connection tracking for matched traffic",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
     }
   },
-  "required": ["peer", "auth_method"],
+  "required": ["peer", "auth_method", "disabled"],
   "additionalProperties": false
 }

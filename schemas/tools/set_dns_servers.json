@@ -24,6 +24,20 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "max_concurrent_tcp_sessions": {
+      "description": "Maximum number of simultaneous TCP DNS sessions",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "query_server_timeout": {
+      "description": "Per-upstream-server query timeout, e.g. \"2s\"",
+      "type": "string"
+    },
+    "query_total_timeout": {
+      "description": "Total query timeout across all servers, e.g. \"10s\"",
+      "type": "string"
+    },
     "cache_size": {
       "type": "integer",
       "minimum": -9007199254740991,
@@ -42,6 +56,26 @@
     "verify_doh_cert": {
       "default": true,
       "type": "boolean"
+    },
+    "doh_max_server_connections": {
+      "description": "Maximum concurrent connections to the DoH server",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "doh_max_concurrent_queries": {
+      "description": "Maximum concurrent queries over DoH",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "doh_timeout": {
+      "description": "DoH request timeout, e.g. \"5s\"",
+      "type": "string"
+    },
+    "vrf": {
+      "description": "VRF the resolver uses for upstream queries",
+      "type": "string"
     }
   },
   "required": ["servers", "allow_remote_requests", "use_doh", "verify_doh_cert"],

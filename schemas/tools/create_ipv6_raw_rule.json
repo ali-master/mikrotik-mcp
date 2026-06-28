@@ -23,6 +23,10 @@
     "dst_port": {
       "type": "string"
     },
+    "port": {
+      "description": "Match src or dst port (any direction)",
+      "type": "string"
+    },
     "protocol": {
       "type": "string"
     },
@@ -32,10 +36,58 @@
     "out_interface": {
       "type": "string"
     },
+    "in_interface_list": {
+      "description": "Match inbound interface list name",
+      "type": "string"
+    },
+    "out_interface_list": {
+      "description": "Match outbound interface list name",
+      "type": "string"
+    },
     "src_address_list": {
       "type": "string"
     },
     "dst_address_list": {
+      "type": "string"
+    },
+    "src_address_type": {
+      "description": "Source address type e.g. \"unicast\", \"local\", \"multicast\"",
+      "type": "string"
+    },
+    "dst_address_type": {
+      "description": "Destination address type e.g. \"unicast\", \"local\", \"multicast\"",
+      "type": "string"
+    },
+    "src_mac_address": {
+      "description": "Match source MAC address",
+      "type": "string"
+    },
+    "hop_limit": {
+      "description": "Hop-limit expression e.g. \"equal:1\" or \"less:64\"",
+      "type": "string"
+    },
+    "tcp_flags": {
+      "description": "TCP flag expression e.g. \"syn,!ack\"",
+      "type": "string"
+    },
+    "tcp_mss": {
+      "description": "TCP MSS value or range e.g. \"1400-1500\"",
+      "type": "string"
+    },
+    "packet_size": {
+      "description": "Packet size or range in bytes e.g. \"0-500\"",
+      "type": "string"
+    },
+    "dscp": {
+      "description": "DSCP value 0-63",
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "description": "IPsec policy match e.g. \"in,ipsec\" or \"out,none\"",
+      "type": "string"
+    },
+    "limit": {
+      "description": "Rate/burst string e.g. \"10,5:packet\"",
       "type": "string"
     },
     "comment": {

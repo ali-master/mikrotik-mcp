@@ -23,6 +23,10 @@
       "description": "Start date, e.g. 'jan/01/2026'",
       "type": "string"
     },
+    "policy": {
+      "description": "Permission policy list, e.g. 'read,write,test,policy'",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

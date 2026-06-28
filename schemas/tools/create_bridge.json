@@ -28,6 +28,81 @@
       "type": "integer",
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
+    },
+    "ageing_time": {
+      "description": "Host table entry timeout, e.g. '5m'",
+      "type": "string"
+    },
+    "arp": {
+      "description": "ARP resolution mode",
+      "type": "string",
+      "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+    },
+    "arp_timeout": {
+      "description": "ARP entry timeout, e.g. '30s' or 'auto'",
+      "type": "string"
+    },
+    "auto_mac": {
+      "description": "Automatically pick the bridge MAC from a member port",
+      "type": "boolean"
+    },
+    "admin_mac": {
+      "description": "Static bridge MAC address (requires auto_mac=false)",
+      "type": "string"
+    },
+    "priority": {
+      "description": "STP/RSTP bridge priority, e.g. '0x8000'",
+      "type": "string"
+    },
+    "ether_type": {
+      "description": "Service VLAN (S-tag) EtherType when VLAN filtering",
+      "type": "string",
+      "enum": ["0x8100", "0x88a8", "0x9100"]
+    },
+    "pvid": {
+      "description": "Bridge-level default port VLAN ID",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4094
+    },
+    "frame_types": {
+      "description": "Default accepted frame types for ports",
+      "type": "string",
+      "enum": ["admit-all", "admit-only-untagged-and-priority-tagged", "admit-only-vlan-tagged"]
+    },
+    "ingress_filtering": {
+      "description": "Default ingress VLAN filtering for ports",
+      "type": "boolean"
+    },
+    "dhcp_snooping": {
+      "description": "Enable DHCP snooping",
+      "type": "boolean"
+    },
+    "igmp_snooping": {
+      "description": "Enable IGMP/MLD snooping",
+      "type": "boolean"
+    },
+    "fast_forward": {
+      "description": "Enable Fast Forward optimization",
+      "type": "boolean"
+    },
+    "mvrp": {
+      "description": "Enable Multiple VLAN Registration Protocol",
+      "type": "boolean"
+    },
+    "forward_delay": {
+      "description": "STP forward delay timer, e.g. '15s'",
+      "type": "string"
+    },
+    "max_message_age": {
+      "description": "STP maximum message age, e.g. '20s'",
+      "type": "string"
+    },
+    "transmit_hold_count": {
+      "description": "STP transmit hold count",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     }
   },
   "required": ["name", "vlan_filtering", "disabled"],

@@ -23,6 +23,14 @@
       "type": "integer",
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
+    },
+    "mrru": {
+      "description": "Max packet size for MP reassembly, or 'disabled'",
+      "type": "string"
+    },
+    "keepalive_timeout": {
+      "description": "Keepalive timeout in seconds, or 'disabled'",
+      "type": "string"
     }
   },
   "additionalProperties": false

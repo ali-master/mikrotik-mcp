@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.19.0",
+  "version": "3.23.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 721,
   "tools": [
@@ -171,6 +171,19 @@
           },
           "arp_timeout": {
             "type": "string"
+          },
+          "loop_protect": {
+            "description": "Loop protection: default, on, off",
+            "type": "string",
+            "enum": ["default", "on", "off"]
+          },
+          "loop_protect_disable_time": {
+            "description": "Time to disable interface on loop detection, e.g. '5m' (0 = forever)",
+            "type": "string"
+          },
+          "loop_protect_send_interval": {
+            "description": "Interval between loop-protect probe packets, e.g. '5s'",
+            "type": "string"
           }
         },
         "required": ["name", "vlan_id", "interface", "disabled", "use_service_tag", "arp"],
@@ -283,6 +296,19 @@
             "enum": ["enabled", "disabled", "proxy-arp", "reply-only"]
           },
           "arp_timeout": {
+            "type": "string"
+          },
+          "loop_protect": {
+            "description": "Loop protection: default, on, off",
+            "type": "string",
+            "enum": ["default", "on", "off"]
+          },
+          "loop_protect_disable_time": {
+            "description": "Time to disable interface on loop detection, e.g. '5m' (0 = forever)",
+            "type": "string"
+          },
+          "loop_protect_send_interval": {
+            "description": "Interval between loop-protect probe packets, e.g. '5s'",
             "type": "string"
           }
         },
@@ -424,6 +450,85 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "ageing_time": {
+            "description": "Host table entry timeout, e.g. '5m'",
+            "type": "string"
+          },
+          "arp": {
+            "description": "ARP resolution mode",
+            "type": "string",
+            "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+          },
+          "arp_timeout": {
+            "description": "ARP entry timeout, e.g. '30s' or 'auto'",
+            "type": "string"
+          },
+          "auto_mac": {
+            "description": "Automatically pick the bridge MAC from a member port",
+            "type": "boolean"
+          },
+          "admin_mac": {
+            "description": "Static bridge MAC address (requires auto_mac=false)",
+            "type": "string"
+          },
+          "priority": {
+            "description": "STP/RSTP bridge priority, e.g. '0x8000'",
+            "type": "string"
+          },
+          "ether_type": {
+            "description": "Service VLAN (S-tag) EtherType when VLAN filtering",
+            "type": "string",
+            "enum": ["0x8100", "0x88a8", "0x9100"]
+          },
+          "pvid": {
+            "description": "Bridge-level default port VLAN ID",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4094
+          },
+          "frame_types": {
+            "description": "Default accepted frame types for ports",
+            "type": "string",
+            "enum": [
+              "admit-all",
+              "admit-only-untagged-and-priority-tagged",
+              "admit-only-vlan-tagged"
+            ]
+          },
+          "ingress_filtering": {
+            "description": "Default ingress VLAN filtering for ports",
+            "type": "boolean"
+          },
+          "dhcp_snooping": {
+            "description": "Enable DHCP snooping",
+            "type": "boolean"
+          },
+          "igmp_snooping": {
+            "description": "Enable IGMP/MLD snooping",
+            "type": "boolean"
+          },
+          "fast_forward": {
+            "description": "Enable Fast Forward optimization",
+            "type": "boolean"
+          },
+          "mvrp": {
+            "description": "Enable Multiple VLAN Registration Protocol",
+            "type": "boolean"
+          },
+          "forward_delay": {
+            "description": "STP forward delay timer, e.g. '15s'",
+            "type": "string"
+          },
+          "max_message_age": {
+            "description": "STP maximum message age, e.g. '20s'",
+            "type": "string"
+          },
+          "transmit_hold_count": {
+            "description": "STP transmit hold count",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           }
         },
         "required": ["name", "vlan_filtering", "disabled"],
@@ -512,6 +617,85 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "ageing_time": {
+            "description": "Host table entry timeout, e.g. '5m'",
+            "type": "string"
+          },
+          "arp": {
+            "description": "ARP resolution mode",
+            "type": "string",
+            "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+          },
+          "arp_timeout": {
+            "description": "ARP entry timeout, e.g. '30s' or 'auto'",
+            "type": "string"
+          },
+          "auto_mac": {
+            "description": "Automatically pick the bridge MAC from a member port",
+            "type": "boolean"
+          },
+          "admin_mac": {
+            "description": "Static bridge MAC address (requires auto_mac=false)",
+            "type": "string"
+          },
+          "priority": {
+            "description": "STP/RSTP bridge priority, e.g. '0x8000'",
+            "type": "string"
+          },
+          "ether_type": {
+            "description": "Service VLAN (S-tag) EtherType when VLAN filtering",
+            "type": "string",
+            "enum": ["0x8100", "0x88a8", "0x9100"]
+          },
+          "pvid": {
+            "description": "Bridge-level default port VLAN ID",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4094
+          },
+          "frame_types": {
+            "description": "Default accepted frame types for ports",
+            "type": "string",
+            "enum": [
+              "admit-all",
+              "admit-only-untagged-and-priority-tagged",
+              "admit-only-vlan-tagged"
+            ]
+          },
+          "ingress_filtering": {
+            "description": "Default ingress VLAN filtering for ports",
+            "type": "boolean"
+          },
+          "dhcp_snooping": {
+            "description": "Enable DHCP snooping",
+            "type": "boolean"
+          },
+          "igmp_snooping": {
+            "description": "Enable IGMP/MLD snooping",
+            "type": "boolean"
+          },
+          "fast_forward": {
+            "description": "Enable Fast Forward optimization",
+            "type": "boolean"
+          },
+          "mvrp": {
+            "description": "Enable Multiple VLAN Registration Protocol",
+            "type": "boolean"
+          },
+          "forward_delay": {
+            "description": "STP forward delay timer, e.g. '15s'",
+            "type": "string"
+          },
+          "max_message_age": {
+            "description": "STP maximum message age, e.g. '20s'",
+            "type": "string"
+          },
+          "transmit_hold_count": {
+            "description": "STP transmit hold count",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           }
         },
         "required": ["name"],
@@ -572,6 +756,105 @@
           },
           "hw": {
             "description": "Use hardware offload for this port",
+            "type": "boolean"
+          },
+          "disabled": {
+            "description": "Disable this bridge port",
+            "type": "boolean"
+          },
+          "frame_types": {
+            "description": "Accepted frame types on ingress",
+            "type": "string",
+            "enum": [
+              "admit-all",
+              "admit-only-untagged-and-priority-tagged",
+              "admit-only-vlan-tagged"
+            ]
+          },
+          "ingress_filtering": {
+            "description": "Drop ingress frames tagged with a VLAN the port isn't a member of",
+            "type": "boolean"
+          },
+          "tag_stacking": {
+            "description": "Force an extra VLAN tag (Q-in-Q) on ingress",
+            "type": "boolean"
+          },
+          "priority": {
+            "description": "STP port priority, e.g. '0x80'",
+            "type": "string"
+          },
+          "path_cost": {
+            "description": "STP path cost for this port",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "internal_path_cost": {
+            "description": "MSTP internal path cost",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "horizon": {
+            "description": "Split-horizon group number for forwarding isolation",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "learn": {
+            "description": "MAC address learning mode",
+            "type": "string",
+            "enum": ["auto", "yes", "no"]
+          },
+          "edge": {
+            "description": "STP edge-port setting",
+            "type": "string",
+            "enum": ["auto", "no", "yes", "no-discover", "yes-discover"]
+          },
+          "point_to_point": {
+            "description": "STP point-to-point link setting",
+            "type": "string",
+            "enum": ["auto", "yes", "no"]
+          },
+          "auto_isolate": {
+            "description": "Keep port in discarding until a BPDU is received",
+            "type": "boolean"
+          },
+          "bpdu_guard": {
+            "description": "Disable the port if it receives a BPDU",
+            "type": "boolean"
+          },
+          "restricted_role": {
+            "description": "Exclude port from becoming the root port",
+            "type": "boolean"
+          },
+          "restricted_tcn": {
+            "description": "Block topology change notifications from this port",
+            "type": "boolean"
+          },
+          "trusted": {
+            "description": "Trust DHCP server replies on this port (DHCP snooping)",
+            "type": "boolean"
+          },
+          "multicast_router": {
+            "description": "IGMP-snooping multicast router state",
+            "type": "string",
+            "enum": ["disabled", "permanent", "temporary-query"]
+          },
+          "fast_leave": {
+            "description": "IGMP-snooping fast leave",
+            "type": "boolean"
+          },
+          "unknown_unicast_flood": {
+            "description": "Flood unknown-unicast frames to this port",
+            "type": "boolean"
+          },
+          "unknown_multicast_flood": {
+            "description": "Flood unknown-multicast frames to this port",
+            "type": "boolean"
+          },
+          "broadcast_flood": {
+            "description": "Flood broadcast frames to this port",
             "type": "boolean"
           }
         },
@@ -678,6 +961,13 @@
           "untagged": {
             "description": "Comma-separated untagged interfaces",
             "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "disabled": {
+            "description": "Disable this VLAN table entry",
+            "type": "boolean"
           }
         },
         "required": ["bridge", "vlan_ids"],
@@ -772,6 +1062,80 @@
             "enum": ["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"]
           },
           "security_profile": {
+            "type": "string"
+          },
+          "mtu": {
+            "description": "Interface MTU in bytes",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "arp": {
+            "description": "ARP mode for the interface",
+            "type": "string",
+            "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+          },
+          "hide_ssid": {
+            "description": "Legacy: do not broadcast the SSID in beacons (AP modes)",
+            "type": "boolean"
+          },
+          "wireless_protocol": {
+            "description": "Legacy: wireless protocol, e.g. '802.11', 'nv2', 'nstreme'",
+            "type": "string"
+          },
+          "scan_list": {
+            "description": "Legacy: frequencies/ranges to scan (e.g. 'default' or '5180-5320')",
+            "type": "string"
+          },
+          "frequency_mode": {
+            "description": "Legacy: regulatory frequency mode",
+            "type": "string",
+            "enum": ["manual-txpower", "regulatory-domain", "superchannel"]
+          },
+          "country": {
+            "description": "Legacy: regulatory country setting (e.g. 'united states')",
+            "type": "string"
+          },
+          "antenna_gain": {
+            "description": "Legacy: antenna gain in dBi used for tx-power calculations",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "wds_mode": {
+            "description": "Legacy: WDS mode",
+            "type": "string",
+            "enum": ["disabled", "dynamic", "dynamic-mesh", "static", "static-mesh"]
+          },
+          "wds_default_bridge": {
+            "description": "Legacy: bridge that dynamic WDS interfaces are added to",
+            "type": "string"
+          },
+          "default_authentication": {
+            "description": "Legacy: allow clients not in the access-list to authenticate",
+            "type": "boolean"
+          },
+          "default_forwarding": {
+            "description": "Legacy: allow client-to-client forwarding by default",
+            "type": "boolean"
+          },
+          "tx_power": {
+            "description": "Legacy: manual transmit power in dBm",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "tx_power_mode": {
+            "description": "Legacy: how tx-power is determined",
+            "type": "string",
+            "enum": ["default", "card-rates", "all-rates-fixed", "manual-table"]
+          },
+          "distance": {
+            "description": "Legacy: link distance ('dynamic', 'indoors', or a km value)",
+            "type": "string"
+          },
+          "disconnect_timeout": {
+            "description": "Legacy: time before a non-responding client is disconnected",
             "type": "string"
           }
         },
@@ -1152,6 +1516,97 @@
           },
           "comment": {
             "type": "string"
+          },
+          "mtu": {
+            "description": "Interface MTU in bytes",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "arp": {
+            "description": "ARP mode for the interface",
+            "type": "string",
+            "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+          },
+          "hide_ssid": {
+            "description": "Legacy: do not broadcast the SSID in beacons (AP modes)",
+            "type": "boolean"
+          },
+          "wireless_protocol": {
+            "description": "Legacy: wireless protocol, e.g. '802.11', 'nv2', 'nstreme'",
+            "type": "string"
+          },
+          "scan_list": {
+            "description": "Legacy: frequencies/ranges to scan (e.g. 'default' or '5180-5320')",
+            "type": "string"
+          },
+          "frequency": {
+            "description": "Legacy: operating frequency in MHz",
+            "type": "string"
+          },
+          "band": {
+            "description": "Legacy: band, e.g. '2ghz-b/g/n' or '5ghz-a/n/ac'",
+            "type": "string"
+          },
+          "channel_width": {
+            "description": "Legacy: channel width",
+            "type": "string",
+            "enum": ["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"]
+          },
+          "frequency_mode": {
+            "description": "Legacy: regulatory frequency mode",
+            "type": "string",
+            "enum": ["manual-txpower", "regulatory-domain", "superchannel"]
+          },
+          "country": {
+            "description": "Legacy: regulatory country setting (e.g. 'united states')",
+            "type": "string"
+          },
+          "antenna_gain": {
+            "description": "Legacy: antenna gain in dBi used for tx-power calculations",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "wds_mode": {
+            "description": "Legacy: WDS mode",
+            "type": "string",
+            "enum": ["disabled", "dynamic", "dynamic-mesh", "static", "static-mesh"]
+          },
+          "wds_default_bridge": {
+            "description": "Legacy: bridge that dynamic WDS interfaces are added to",
+            "type": "string"
+          },
+          "default_authentication": {
+            "description": "Legacy: allow clients not in the access-list to authenticate",
+            "type": "boolean"
+          },
+          "default_forwarding": {
+            "description": "Legacy: allow client-to-client forwarding by default",
+            "type": "boolean"
+          },
+          "tx_power": {
+            "description": "Legacy: manual transmit power in dBm",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "tx_power_mode": {
+            "description": "Legacy: how tx-power is determined",
+            "type": "string",
+            "enum": ["default", "card-rates", "all-rates-fixed", "manual-table"]
+          },
+          "distance": {
+            "description": "Legacy: link distance ('dynamic', 'indoors', or a km value)",
+            "type": "string"
+          },
+          "disconnect_timeout": {
+            "description": "Legacy: time before a non-responding client is disconnected",
+            "type": "string"
+          },
+          "security_profile": {
+            "description": "Legacy: name of the security profile to apply",
+            "type": "string"
           }
         },
         "required": ["name"],
@@ -1343,6 +1798,14 @@
           "mirror_egress": {
             "description": "Egress mirror source port (newer chips), or 'none'",
             "type": "string"
+          },
+          "mirror_egress_target": {
+            "description": "Egress mirror target port (88E6393X/88E6191X/88E6190 chips), or 'none'",
+            "type": "string"
+          },
+          "switch_all_ports": {
+            "description": "Switch all ports together (RB450G/RB435G/RB850Gx2 only)",
+            "type": "boolean"
           }
         },
         "required": ["switch_id"],
@@ -1592,6 +2055,14 @@
             "description": "Destination IP/mask",
             "type": "string"
           },
+          "src_address6": {
+            "description": "Source IPv6 address/mask",
+            "type": "string"
+          },
+          "dst_address6": {
+            "description": "Destination IPv6 address/mask",
+            "type": "string"
+          },
           "src_mac_address": {
             "description": "Source MAC/mask",
             "type": "string"
@@ -1615,6 +2086,11 @@
           "mac_protocol": {
             "description": "MAC protocol, e.g. 'ip', 'arp', 'vlan' or a number",
             "type": "string"
+          },
+          "vlan_header": {
+            "description": "Match on VLAN tag presence",
+            "type": "string",
+            "enum": ["any", "not-present", "present"]
           },
           "vlan_id": {
             "type": "string"
@@ -1745,6 +2221,12 @@
           "dst_address": {
             "type": "string"
           },
+          "src_address6": {
+            "type": "string"
+          },
+          "dst_address6": {
+            "type": "string"
+          },
           "src_mac_address": {
             "type": "string"
           },
@@ -1762,6 +2244,10 @@
           },
           "mac_protocol": {
             "type": "string"
+          },
+          "vlan_header": {
+            "type": "string",
+            "enum": ["any", "not-present", "present"]
           },
           "vlan_id": {
             "type": "string"
@@ -2247,6 +2733,14 @@
           "check_gateway": {
             "description": "\"ping\" or \"arp\"",
             "type": "string"
+          },
+          "suppress_hw_offload": {
+            "description": "Exclude route from hardware (HW) offloading",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "\"unicast\" (default), \"blackhole\", \"unreachable\", or \"prohibit\"",
+            "type": "string"
           }
         },
         "required": ["dst_address", "gateway", "disabled"],
@@ -2393,6 +2887,14 @@
           },
           "check_gateway": {
             "description": "\"ping\" or \"arp\"",
+            "type": "string"
+          },
+          "suppress_hw_offload": {
+            "description": "Exclude route from hardware (HW) offloading",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "\"unicast\", \"blackhole\", \"unreachable\", or \"prohibit\"",
             "type": "string"
           }
         },
@@ -2769,6 +3271,40 @@
           "delay_threshold": {
             "type": "string"
           },
+          "add_arp": {
+            "description": "Add dynamic ARP entry for each lease (use with reply-only ARP on the interface)",
+            "type": "boolean"
+          },
+          "always_broadcast": {
+            "description": "Always send replies as broadcast",
+            "type": "boolean"
+          },
+          "bootp_support": {
+            "description": "Which BOOTP requests to answer",
+            "type": "string",
+            "enum": ["none", "static", "dynamic"]
+          },
+          "conflict_detection": {
+            "description": "Ping/ARP-probe an address before offering it to detect conflicts",
+            "type": "boolean"
+          },
+          "use_radius": {
+            "description": "Use RADIUS for leases (accounting = RADIUS accounting only)",
+            "type": "string",
+            "enum": ["yes", "no", "accounting"]
+          },
+          "relay": {
+            "description": "DHCP relay address this server services",
+            "type": "string"
+          },
+          "server_address": {
+            "description": "Override the server identifier address sent to clients",
+            "type": "string"
+          },
+          "lease_script": {
+            "description": "Script run on lease assign/release",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           }
@@ -2876,6 +3412,29 @@
             }
           },
           "dhcp_option": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dhcp_option_set": {
+            "description": "Named option set (`/ip dhcp-server option sets`) to append",
+            "type": "string"
+          },
+          "dns_none": {
+            "description": "Do not send any DNS server to clients (overrides dns_servers)",
+            "type": "boolean"
+          },
+          "next_server": {
+            "description": "Next-server (siaddr) address for PXE/TFTP boot",
+            "type": "string"
+          },
+          "boot_file_name": {
+            "description": "Boot file name (option 67) for PXE/TFTP boot",
+            "type": "string"
+          },
+          "caps_manager": {
+            "description": "CAPsMAN address(es) advertised to CAPs via DHCP",
             "type": "array",
             "items": {
               "type": "string"
@@ -3009,6 +3568,12 @@
             "description": "Install the received default gateway",
             "type": "boolean"
           },
+          "default_route_distance": {
+            "description": "Administrative distance of the installed default route",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "use_peer_dns": {
             "default": true,
             "type": "boolean"
@@ -3016,6 +3581,22 @@
           "use_peer_ntp": {
             "default": true,
             "type": "boolean"
+          },
+          "dhcp_options": {
+            "description": "Comma-separated DHCP options to send, e.g. 'hostname,clientid'",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "Override the DHCP client identifier sent to the server",
+            "type": "string"
+          },
+          "host_name": {
+            "description": "Host name sent to the DHCP server",
+            "type": "string"
+          },
+          "script": {
+            "description": "Script run on lease bound/released",
+            "type": "string"
           },
           "disabled": {
             "default": false,
@@ -3049,11 +3630,33 @@
           "add_default_route": {
             "type": "boolean"
           },
+          "default_route_distance": {
+            "description": "Administrative distance of the installed default route",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "use_peer_dns": {
             "type": "boolean"
           },
           "use_peer_ntp": {
             "type": "boolean"
+          },
+          "dhcp_options": {
+            "description": "Comma-separated DHCP options to send, e.g. 'hostname,clientid'",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "Override the DHCP client identifier sent to the server",
+            "type": "string"
+          },
+          "host_name": {
+            "description": "Host name sent to the DHCP server",
+            "type": "string"
+          },
+          "script": {
+            "description": "Script run on lease bound/released",
+            "type": "string"
           },
           "disabled": {
             "type": "boolean"
@@ -3244,6 +3847,20 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "max_concurrent_tcp_sessions": {
+            "description": "Maximum number of simultaneous TCP DNS sessions",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "query_server_timeout": {
+            "description": "Per-upstream-server query timeout, e.g. \"2s\"",
+            "type": "string"
+          },
+          "query_total_timeout": {
+            "description": "Total query timeout across all servers, e.g. \"10s\"",
+            "type": "string"
+          },
           "cache_size": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -3262,6 +3879,26 @@
           "verify_doh_cert": {
             "default": true,
             "type": "boolean"
+          },
+          "doh_max_server_connections": {
+            "description": "Maximum concurrent connections to the DoH server",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "doh_max_concurrent_queries": {
+            "description": "Maximum concurrent queries over DoH",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "doh_timeout": {
+            "description": "DoH request timeout, e.g. \"5s\"",
+            "type": "string"
+          },
+          "vrf": {
+            "description": "VRF the resolver uses for upstream queries",
+            "type": "string"
           }
         },
         "required": ["servers", "allow_remote_requests", "use_doh", "verify_doh_cert"],
@@ -3301,10 +3938,30 @@
           "name": {
             "type": "string"
           },
+          "type": {
+            "description": "Record type, e.g. \"A\", \"AAAA\", \"CNAME\", \"NS\", \"FWD\", \"MX\", \"SRV\", \"TXT\"",
+            "type": "string"
+          },
           "address": {
             "type": "string"
           },
           "cname": {
+            "type": "string"
+          },
+          "ns": {
+            "description": "Name server FQDN for an NS-type record",
+            "type": "string"
+          },
+          "forward_to": {
+            "description": "DNS server to forward to for a FWD-type record",
+            "type": "string"
+          },
+          "match_subdomain": {
+            "description": "Also match all subdomains of name/regexp",
+            "type": "boolean"
+          },
+          "address_list": {
+            "description": "Add resolved addresses to this firewall address-list",
             "type": "string"
           },
           "mx_preference": {
@@ -3432,10 +4089,30 @@
           "name": {
             "type": "string"
           },
+          "type": {
+            "description": "Record type, e.g. \"A\", \"AAAA\", \"CNAME\", \"NS\", \"FWD\", \"MX\", \"SRV\", \"TXT\"",
+            "type": "string"
+          },
           "address": {
             "type": "string"
           },
           "cname": {
+            "type": "string"
+          },
+          "ns": {
+            "description": "Name server FQDN for an NS-type record",
+            "type": "string"
+          },
+          "forward_to": {
+            "description": "DNS server to forward to for a FWD-type record",
+            "type": "string"
+          },
+          "match_subdomain": {
+            "description": "Also match all subdomains of name/regexp",
+            "type": "boolean"
+          },
+          "address_list": {
+            "description": "Add resolved addresses to this firewall address-list",
             "type": "string"
           },
           "mx_preference": {
@@ -3949,6 +4626,18 @@
             "description": "Comma-separated custom DHCP option names",
             "type": "string"
           },
+          "use_interface_duid": {
+            "description": "Use the interface MAC address to generate the DUID instead of the system DUID",
+            "type": "boolean"
+          },
+          "custom_duid": {
+            "description": "Override the DUID with a custom hex value, e.g. '0x00010001...'",
+            "type": "string"
+          },
+          "script": {
+            "description": "RouterOS script run on lease bind/release/renew events",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -4284,6 +4973,18 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "use_radius": {
+            "description": "Authenticate clients via RADIUS",
+            "type": "boolean"
+          },
+          "allow_dual_stack_queue": {
+            "description": "Share a simple queue with the client's IPv4 DHCP lease",
+            "type": "boolean"
+          },
+          "parent_queue": {
+            "description": "Parent queue for dynamically created simple queues",
+            "type": "string"
+          },
           "dhcp_option": {
             "description": "Custom DHCPv6 option names",
             "type": "array",
@@ -4585,7 +5286,9 @@
               "passthrough",
               "return",
               "tarpit",
-              "fasttrack-connection"
+              "fasttrack-connection",
+              "add-src-to-address-list",
+              "add-dst-to-address-list"
             ]
           },
           "src_address": {
@@ -4635,6 +5338,126 @@
           },
           "tcp_flags": {
             "description": "RouterOS flag expression e.g. \"syn,!ack\"",
+            "type": "string"
+          },
+          "port": {
+            "description": "Match src or dst port (any protocol with ports)",
+            "type": "string"
+          },
+          "icmp_options": {
+            "description": "ICMPv6 type:code e.g. \"128:0\"",
+            "type": "string"
+          },
+          "connection_mark": {
+            "description": "Match packets with this connection mark",
+            "type": "string"
+          },
+          "connection_type": {
+            "description": "Match connection helper type e.g. \"ftp\", \"sip\"",
+            "type": "string"
+          },
+          "connection_bytes": {
+            "description": "Match total connection bytes range e.g. \"1000000-\"",
+            "type": "string"
+          },
+          "connection_limit": {
+            "description": "Limit connections per address e.g. \"100,128\"",
+            "type": "string"
+          },
+          "connection_rate": {
+            "description": "Match connection data rate e.g. \"100k-\"",
+            "type": "string"
+          },
+          "packet_mark": {
+            "description": "Match packets with this packet mark",
+            "type": "string"
+          },
+          "routing_mark": {
+            "description": "Match packets with this routing mark",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "Match packet size range e.g. \"1400-1500\"",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "Match DSCP (0-63)",
+            "type": "string"
+          },
+          "ingress_priority": {
+            "description": "Match ingress priority (0-63)",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Match priority set by mangle (0-63)",
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Match source MAC address",
+            "type": "string"
+          },
+          "src_address_type": {
+            "description": "Match src address type e.g. \"unicast\", \"multicast\"",
+            "type": "string"
+          },
+          "dst_address_type": {
+            "description": "Match dst address type e.g. \"unicast\", \"multicast\"",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "Match TCP MSS value/range e.g. \"1300-1536\"",
+            "type": "string"
+          },
+          "headers": {
+            "description": "Match IPv6 extension headers present in the packet",
+            "type": "string"
+          },
+          "tls_host": {
+            "description": "Match TLS SNI host (glob pattern)",
+            "type": "string"
+          },
+          "content": {
+            "description": "Match packets containing this text",
+            "type": "string"
+          },
+          "nth": {
+            "description": "Match every Nth packet e.g. \"2,0\"",
+            "type": "string"
+          },
+          "random": {
+            "description": "Randomly match a percentage of packets (1-99)",
+            "type": "string"
+          },
+          "time": {
+            "description": "Match by time/day e.g. \"8h-16h,mon,tue\"",
+            "type": "string"
+          },
+          "dst_limit": {
+            "description": "Per-destination rate limit e.g. \"10,5,dst-address\"",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "Match IPsec policy e.g. \"in,ipsec\" or \"out,none\"",
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "description": "Hash connections into buckets e.g. \"both-addresses:2/0\"",
+            "type": "string"
+          },
+          "jump_target": {
+            "description": "Target chain name when action=jump",
+            "type": "string"
+          },
+          "reject_with": {
+            "description": "ICMPv6 reject response when action=reject e.g. \"icmp-admin-prohibited\"",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "Address-list name when action=add-src/dst-to-address-list",
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "description": "Timeout for the added address-list entry e.g. \"1d\" or \"none\"",
             "type": "string"
           },
           "comment": {
@@ -4800,6 +5623,96 @@
           "tcp_flags": {
             "type": "string"
           },
+          "port": {
+            "type": "string"
+          },
+          "icmp_options": {
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "connection_bytes": {
+            "type": "string"
+          },
+          "connection_limit": {
+            "type": "string"
+          },
+          "connection_rate": {
+            "type": "string"
+          },
+          "packet_mark": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "ingress_priority": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "string"
+          },
+          "tls_host": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "nth": {
+            "type": "string"
+          },
+          "random": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "dst_limit": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "type": "string"
+          },
+          "jump_target": {
+            "type": "string"
+          },
+          "reject_with": {
+            "type": "string"
+          },
+          "address_list": {
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -4941,7 +5854,9 @@
               "return",
               "jump",
               "passthrough",
-              "log"
+              "log",
+              "add-src-to-address-list",
+              "add-dst-to-address-list"
             ]
           },
           "src_address": {
@@ -4975,6 +5890,138 @@
             "type": "string"
           },
           "dst_address_list": {
+            "type": "string"
+          },
+          "in_interface_list": {
+            "description": "Ingress interface list, e.g. \"WAN\" or \"!LAN\"",
+            "type": "string"
+          },
+          "out_interface_list": {
+            "description": "Egress interface list",
+            "type": "string"
+          },
+          "src_address_type": {
+            "description": "\"unicast\" / \"local\" / \"multicast\" / etc.",
+            "type": "string"
+          },
+          "dst_address_type": {
+            "description": "\"unicast\" / \"local\" / \"multicast\" / etc.",
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Source MAC, negate \"!AA:BB:..\"",
+            "type": "string"
+          },
+          "port": {
+            "description": "Match src OR dst port (any protocol with ports)",
+            "type": "string"
+          },
+          "connection_mark": {
+            "description": "Match a connection mark set in mangle",
+            "type": "string"
+          },
+          "connection_state": {
+            "description": "e.g. \"new\" / \"established,related\" / \"!invalid\"",
+            "type": "string"
+          },
+          "connection_type": {
+            "description": "Helper-detected conn type, e.g. \"ftp\" / \"sip\"",
+            "type": "string"
+          },
+          "connection_bytes": {
+            "description": "Total conn bytes range, e.g. \"1000000-\"",
+            "type": "string"
+          },
+          "connection_limit": {
+            "description": "Per-address conn limit, e.g. \"100,64\"",
+            "type": "string"
+          },
+          "connection_rate": {
+            "description": "Conn rate range, e.g. \"0-100k\"",
+            "type": "string"
+          },
+          "packet_mark": {
+            "description": "Match a packet mark set in mangle",
+            "type": "string"
+          },
+          "routing_mark": {
+            "description": "Match a routing mark set in mangle",
+            "type": "string"
+          },
+          "icmp_options": {
+            "description": "ICMPv6 type:code, e.g. \"128:0\"",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "e.g. \"in,ipsec\" / \"out,none\"",
+            "type": "string"
+          },
+          "content": {
+            "description": "Match a literal string in the packet payload",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "DSCP value 0-63",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Match packet priority (queue/VLAN)",
+            "type": "string"
+          },
+          "tcp_flags": {
+            "description": "e.g. \"syn,!ack\"",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "TCP MSS range, e.g. \"1440-1500\"",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "Packet size range, e.g. \"1500\" or \"0-500\"",
+            "type": "string"
+          },
+          "hop_limit": {
+            "description": "IPv6 hop-limit matcher, e.g. \"equal:64\"",
+            "type": "string"
+          },
+          "headers": {
+            "description": "Match IPv6 extension headers",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Rate limit, e.g. \"10,5:packet\"",
+            "type": "string"
+          },
+          "dst_limit": {
+            "description": "Per-dst rate limit, e.g. \"10,5,dst-address/1m\"",
+            "type": "string"
+          },
+          "nth": {
+            "description": "Every Nth packet, e.g. \"2,0\"",
+            "type": "string"
+          },
+          "random": {
+            "description": "Match packet randomly with given probability % (1-99)",
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "description": "PCC classifier, e.g. \"both-addresses:2/0\"",
+            "type": "string"
+          },
+          "time": {
+            "description": "Time/day matcher, e.g. \"8h-16h,mon,tue,wed,thu,fri\"",
+            "type": "string"
+          },
+          "jump_target": {
+            "description": "Target chain name when action=jump",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "List name for add-src-to-address-list / add-dst-to-address-list",
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "description": "Timeout for the address-list entry, e.g. \"1h\" or \"none\"",
             "type": "string"
           },
           "comment": {
@@ -5120,6 +6167,105 @@
             "type": "string"
           },
           "dst_address_list": {
+            "type": "string"
+          },
+          "in_interface_list": {
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "connection_state": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "connection_bytes": {
+            "type": "string"
+          },
+          "connection_limit": {
+            "type": "string"
+          },
+          "connection_rate": {
+            "type": "string"
+          },
+          "packet_mark": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "icmp_options": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "tcp_flags": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "hop_limit": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "dst_limit": {
+            "type": "string"
+          },
+          "nth": {
+            "type": "string"
+          },
+          "random": {
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "jump_target": {
+            "type": "string"
+          },
+          "address_list": {
+            "type": "string"
+          },
+          "address_list_timeout": {
             "type": "string"
           },
           "comment": {
@@ -5285,9 +6431,128 @@
             "type": "string"
           },
           "in_interface": {
+            "description": "Negatable, e.g. \"!ether1\"",
             "type": "string"
           },
           "out_interface": {
+            "type": "string"
+          },
+          "in_interface_list": {
+            "description": "Interface list, negatable e.g. \"!WAN\"",
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_list": {
+            "description": "Match src in a named list; negate \"!name\"",
+            "type": "string"
+          },
+          "dst_address_list": {
+            "description": "Match dst in a named list; negate \"!name\"",
+            "type": "string"
+          },
+          "src_address_type": {
+            "description": "e.g. \"unicast\", \"local\", \"!local\"",
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Source MAC, negatable e.g. \"!00:11:...\"",
+            "type": "string"
+          },
+          "port": {
+            "description": "Match if src OR dst port matches (with protocol)",
+            "type": "string"
+          },
+          "connection_state": {
+            "description": "e.g. \"new\", \"established,related\", \"!invalid\"",
+            "type": "string"
+          },
+          "connection_type": {
+            "description": "Helper, e.g. \"sip\", \"ftp\"",
+            "type": "string"
+          },
+          "connection_bytes": {
+            "description": "e.g. \"1000000-0\" (>1 MB connections)",
+            "type": "string"
+          },
+          "connection_limit": {
+            "description": "e.g. \"100,128\"",
+            "type": "string"
+          },
+          "connection_rate": {
+            "description": "e.g. \"100k-1M\"",
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "description": "PCC for load balancing, e.g. \"both-addresses:2/0\"",
+            "type": "string"
+          },
+          "tcp_flags": {
+            "description": "RouterOS flag expression e.g. \"syn,!ack\"",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "Match TCP MSS, e.g. \"1400-1500\" or \"!1460\"",
+            "type": "string"
+          },
+          "icmp_options": {
+            "description": "Match ICMPv6 type:code, e.g. \"128:0\"",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "e.g. \"1500\" or \"0-500\"",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "Match incoming DSCP (0-63)",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Match packet/queue priority (0-63)",
+            "type": "string"
+          },
+          "ingress_priority": {
+            "description": "Match ingress (VLAN/MPLS) priority (0-63)",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "e.g. \"in,ipsec\" or \"out,none\"",
+            "type": "string"
+          },
+          "nth": {
+            "description": "e.g. \"2,1\" — every 2nd packet",
+            "type": "string"
+          },
+          "random": {
+            "description": "Match a random N% of packets (1-99)",
+            "type": "string"
+          },
+          "time": {
+            "description": "e.g. \"8h-16h,mon,tue,wed,thu,fri\"",
+            "type": "string"
+          },
+          "hop_limit": {
+            "description": "Match hop-limit, e.g. \"equal:64\", \"less-than:10\"",
+            "type": "string"
+          },
+          "content": {
+            "description": "Match packets containing this text",
+            "type": "string"
+          },
+          "headers": {
+            "description": "Match IPv6 extension headers, e.g. \"hop:contains\"",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Rate limit matcher, e.g. \"50,5:packet\"",
+            "type": "string"
+          },
+          "dst_limit": {
+            "description": "Per-destination rate matcher, e.g. \"50,5,dst-address/1m\"",
             "type": "string"
           },
           "connection_mark": {
@@ -5309,10 +6574,31 @@
             "type": "string"
           },
           "new_dscp": {
+            "description": "0-63, for change-dscp",
             "type": "string"
           },
           "new_hop_limit": {
             "description": "e.g. \"decrement\", \"increment\", or \"set:64\"",
+            "type": "string"
+          },
+          "new_mss": {
+            "description": "e.g. \"1440\" or \"clamp-to-pmtu\", for change-mss",
+            "type": "string"
+          },
+          "new_priority": {
+            "description": "e.g. \"4\" or \"from-dscp\", for set-priority",
+            "type": "string"
+          },
+          "jump_target": {
+            "description": "Target chain name for action=jump",
+            "type": "string"
+          },
+          "sniff_target": {
+            "description": "TZSP collector IP for action=sniff-tzsp",
+            "type": "string"
+          },
+          "sniff_target_port": {
+            "description": "TZSP collector UDP port for sniff-tzsp",
             "type": "string"
           },
           "passthrough": {
@@ -5451,6 +6737,98 @@
           "out_interface": {
             "type": "string"
           },
+          "in_interface_list": {
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "src_address_list": {
+            "description": "Negate with \"!name\"",
+            "type": "string"
+          },
+          "dst_address_list": {
+            "description": "Negate with \"!name\"",
+            "type": "string"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "connection_state": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "connection_bytes": {
+            "type": "string"
+          },
+          "connection_limit": {
+            "type": "string"
+          },
+          "connection_rate": {
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "type": "string"
+          },
+          "tcp_flags": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "icmp_options": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "ingress_priority": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "nth": {
+            "type": "string"
+          },
+          "random": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "hop_limit": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "dst_limit": {
+            "type": "string"
+          },
           "connection_mark": {
             "type": "string"
           },
@@ -5473,6 +6851,21 @@
             "type": "string"
           },
           "new_hop_limit": {
+            "type": "string"
+          },
+          "new_mss": {
+            "type": "string"
+          },
+          "new_priority": {
+            "type": "string"
+          },
+          "jump_target": {
+            "type": "string"
+          },
+          "sniff_target": {
+            "type": "string"
+          },
+          "sniff_target_port": {
             "type": "string"
           },
           "passthrough": {
@@ -5622,6 +7015,10 @@
           "dst_port": {
             "type": "string"
           },
+          "port": {
+            "description": "Match src or dst port (any direction)",
+            "type": "string"
+          },
           "protocol": {
             "type": "string"
           },
@@ -5631,10 +7028,58 @@
           "out_interface": {
             "type": "string"
           },
+          "in_interface_list": {
+            "description": "Match inbound interface list name",
+            "type": "string"
+          },
+          "out_interface_list": {
+            "description": "Match outbound interface list name",
+            "type": "string"
+          },
           "src_address_list": {
             "type": "string"
           },
           "dst_address_list": {
+            "type": "string"
+          },
+          "src_address_type": {
+            "description": "Source address type e.g. \"unicast\", \"local\", \"multicast\"",
+            "type": "string"
+          },
+          "dst_address_type": {
+            "description": "Destination address type e.g. \"unicast\", \"local\", \"multicast\"",
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Match source MAC address",
+            "type": "string"
+          },
+          "hop_limit": {
+            "description": "Hop-limit expression e.g. \"equal:1\" or \"less:64\"",
+            "type": "string"
+          },
+          "tcp_flags": {
+            "description": "TCP flag expression e.g. \"syn,!ack\"",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "TCP MSS value or range e.g. \"1400-1500\"",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "Packet size or range in bytes e.g. \"0-500\"",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "DSCP value 0-63",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "IPsec policy match e.g. \"in,ipsec\" or \"out,none\"",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Rate/burst string e.g. \"10,5:packet\"",
             "type": "string"
           },
           "comment": {
@@ -5761,6 +7206,9 @@
           "dst_port": {
             "type": "string"
           },
+          "port": {
+            "type": "string"
+          },
           "protocol": {
             "type": "string"
           },
@@ -5770,10 +7218,46 @@
           "out_interface": {
             "type": "string"
           },
+          "in_interface_list": {
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
           "src_address_list": {
             "type": "string"
           },
           "dst_address_list": {
+            "type": "string"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "hop_limit": {
+            "type": "string"
+          },
+          "tcp_flags": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "limit": {
             "type": "string"
           },
           "comment": {
@@ -6106,6 +7590,10 @@
           "advertise_mac_address": {
             "type": "boolean"
           },
+          "dns": {
+            "description": "Recursive DNS servers advertised via RA (RDNSS), comma-separated IPv6",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -6223,6 +7711,10 @@
           },
           "advertise_mac_address": {
             "type": "boolean"
+          },
+          "dns": {
+            "description": "Recursive DNS servers advertised via RA (RDNSS), comma-separated IPv6",
+            "type": "string"
           },
           "comment": {
             "type": "string"
@@ -6647,6 +8139,16 @@
           "vrf_interface": {
             "type": "string"
           },
+          "route_tag": {
+            "description": "Route tag for matching in routing filters",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "suppress_hw_offload": {
+            "description": "Disable hardware offloading for this route",
+            "type": "boolean"
+          },
           "comment": {
             "type": "string"
           },
@@ -6874,10 +8376,39 @@
             "type": "string",
             "enum": ["yes", "no", "yes-if-forwarding-disabled"]
           },
+          "accept_router_advertisements_on": {
+            "description": "Interface list on which to accept router advertisements (e.g. 'all').",
+            "type": "string"
+          },
           "max_neighbor_entries": {
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "min_neighbor_entries": {
+            "description": "Lower threshold for the IPv6 neighbor cache below which entries are not reclaimed.",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "soft_max_neighbor_entries": {
+            "description": "Soft ceiling for the IPv6 neighbor cache before aggressive garbage collection.",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "stale_neighbor_timeout": {
+            "description": "Time a stale IPv6 neighbor entry is kept before revalidation (e.g. '60').",
+            "type": "string"
+          },
+          "multipath_hash_policy": {
+            "description": "Hashing fields for ECMP multipath route selection: l3, l4, or l3-inner.",
+            "type": "string",
+            "enum": ["l3", "l4", "l3-inner"]
+          },
+          "allow_fast_path": {
+            "description": "Allow IPv6 FastPath processing.",
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -7353,11 +8884,6 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
-          "max_prefix": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
           "comment": {
             "type": "string"
           },
@@ -7410,6 +8936,11 @@
           },
           "interface": {
             "type": "string"
+          },
+          "min_prefix": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "comment": {
             "type": "string"
@@ -7802,6 +9333,10 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "forbid_bfd": {
+            "description": "Forbid BFD on the matched interfaces",
+            "type": "boolean"
+          },
           "comment": {
             "type": "string"
           },
@@ -7848,6 +9383,9 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "forbid_bfd": {
+            "type": "boolean"
           },
           "comment": {
             "type": "string"
@@ -8005,6 +9543,12 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "remote_port": {
+            "description": "Peer TCP port (remote.port)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "as": {
             "description": "Local AS number",
             "type": "integer",
@@ -8019,8 +9563,18 @@
             "description": "Local source address (local.address)",
             "type": "string"
           },
+          "local_port": {
+            "description": "Local TCP port (local.port)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "router_id": {
             "description": "Override router-id for this connection",
+            "type": "string"
+          },
+          "cluster_id": {
+            "description": "Route-reflector cluster ID (cluster-id)",
             "type": "string"
           },
           "templates": {
@@ -8046,13 +9600,67 @@
             "description": "default, force-self, or propagate",
             "type": "string"
           },
+          "use_bfd": {
+            "description": "Use BFD for fast failure detection (use-bfd)",
+            "type": "boolean"
+          },
+          "tcp_md5_key": {
+            "description": "TCP MD5 authentication key (tcp-md5-key)",
+            "type": "string"
+          },
+          "connect": {
+            "description": "Actively initiate the TCP session (connect)",
+            "type": "boolean"
+          },
+          "listen": {
+            "description": "Accept incoming TCP session (listen)",
+            "type": "boolean"
+          },
           "input_filter": {
             "description": "Routing filter chain for inbound routes (input.filter)",
             "type": "string"
           },
+          "input_accept_nlri": {
+            "description": "Address list of accepted NLRI prefixes (input.accept-nlri)",
+            "type": "string"
+          },
+          "input_allow_as": {
+            "description": "Number of times own AS may appear in AS-path (input.allow-as)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "input_ignore_as_path_len": {
+            "description": "Ignore AS-path length in best-path selection (input.ignore-as-path-len)",
+            "type": "boolean"
+          },
           "output_filter": {
             "description": "Routing filter chain for outbound routes (output.filter)",
             "type": "string"
+          },
+          "output_network": {
+            "description": "Address list of networks to originate/advertise (output.network)",
+            "type": "string"
+          },
+          "output_default_originate": {
+            "description": "Advertise a default route: never, if-installed, or always (output.default-originate)",
+            "type": "string"
+          },
+          "output_redistribute": {
+            "description": "Comma list of route sources to redistribute, e.g. connected,static (output.redistribute)",
+            "type": "string"
+          },
+          "output_as_override": {
+            "description": "Replace peer AS in AS-path with local AS (output.as-override)",
+            "type": "boolean"
+          },
+          "output_keep_sent_attributes": {
+            "description": "Retain sent path attributes for inspection (output.keep-sent-attributes)",
+            "type": "boolean"
+          },
+          "output_no_client_to_client_reflection": {
+            "description": "Disable route-reflector client-to-client reflection (output.no-client-to-client-reflection)",
+            "type": "boolean"
           },
           "routing_table": {
             "description": "RIB to install learned routes into",
@@ -8099,6 +9707,11 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "remote_port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "as": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -8110,7 +9723,15 @@
           "local_address": {
             "type": "string"
           },
+          "local_port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "router_id": {
+            "type": "string"
+          },
+          "cluster_id": {
             "type": "string"
           },
           "address_families": {
@@ -8125,11 +9746,55 @@
           "multihop": {
             "type": "boolean"
           },
+          "nexthop_choice": {
+            "type": "string"
+          },
+          "use_bfd": {
+            "type": "boolean"
+          },
+          "tcp_md5_key": {
+            "type": "string"
+          },
+          "connect": {
+            "type": "boolean"
+          },
+          "listen": {
+            "type": "boolean"
+          },
           "input_filter": {
             "type": "string"
           },
+          "input_accept_nlri": {
+            "type": "string"
+          },
+          "input_allow_as": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "input_ignore_as_path_len": {
+            "type": "boolean"
+          },
           "output_filter": {
             "type": "string"
+          },
+          "output_network": {
+            "type": "string"
+          },
+          "output_default_originate": {
+            "type": "string"
+          },
+          "output_redistribute": {
+            "type": "string"
+          },
+          "output_as_override": {
+            "type": "boolean"
+          },
+          "output_keep_sent_attributes": {
+            "type": "boolean"
+          },
+          "output_no_client_to_client_reflection": {
+            "type": "boolean"
           },
           "routing_table": {
             "type": "string"
@@ -8237,14 +9902,49 @@
           "router_id": {
             "type": "string"
           },
+          "cluster_id": {
+            "description": "Route-reflector cluster ID (cluster-id)",
+            "type": "string"
+          },
           "address_families": {
             "description": "e.g. \"ip,ipv6\"",
             "type": "string"
+          },
+          "hold_time": {
+            "description": "e.g. \"3m\" or \"180s\"",
+            "type": "string"
+          },
+          "keepalive_time": {
+            "type": "string"
+          },
+          "multihop": {
+            "description": "Allow non-directly-connected peers",
+            "type": "boolean"
+          },
+          "nexthop_choice": {
+            "description": "default, force-self, or propagate",
+            "type": "string"
+          },
+          "use_bfd": {
+            "description": "Use BFD for fast failure detection (use-bfd)",
+            "type": "boolean"
           },
           "input_filter": {
             "type": "string"
           },
           "output_filter": {
+            "type": "string"
+          },
+          "output_network": {
+            "description": "Address list of networks to originate/advertise (output.network)",
+            "type": "string"
+          },
+          "output_default_originate": {
+            "description": "Advertise a default route: never, if-installed, or always (output.default-originate)",
+            "type": "string"
+          },
+          "output_redistribute": {
+            "description": "Comma list of route sources to redistribute, e.g. connected,static (output.redistribute)",
             "type": "string"
           },
           "routing_table": {
@@ -8395,6 +10095,28 @@
             "description": "never, if-installed, or always",
             "type": "string"
           },
+          "domain_id": {
+            "description": "OSPF domain ID (MPLS VPN PE-CE OSPF)",
+            "type": "string"
+          },
+          "domain_tag": {
+            "description": "OSPF domain tag (MPLS VPN PE-CE OSPF)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "use_dn": {
+            "description": "Use/ignore DN bit on OSPF routes (MPLS VPN)",
+            "type": "boolean"
+          },
+          "mpls_te_area": {
+            "description": "Area used for MPLS traffic engineering",
+            "type": "string"
+          },
+          "mpls_te_address": {
+            "description": "Router address advertised for MPLS TE",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -8438,6 +10160,28 @@
             "type": "string"
           },
           "originate_default": {
+            "type": "string"
+          },
+          "domain_id": {
+            "description": "OSPF domain ID (MPLS VPN PE-CE OSPF)",
+            "type": "string"
+          },
+          "domain_tag": {
+            "description": "OSPF domain tag (MPLS VPN PE-CE OSPF)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "use_dn": {
+            "description": "Use/ignore DN bit on OSPF routes (MPLS VPN)",
+            "type": "boolean"
+          },
+          "mpls_te_area": {
+            "description": "Area used for MPLS traffic engineering",
+            "type": "string"
+          },
+          "mpls_te_address": {
+            "description": "Router address advertised for MPLS TE",
             "type": "string"
           },
           "comment": {
@@ -8524,6 +10268,12 @@
             "description": "Make a totally-stubby/NSSA area (block summary LSAs)",
             "type": "boolean"
           },
+          "default_cost": {
+            "description": "Cost of the default route an ABR injects into a stub/NSSA area",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "comment": {
             "type": "string"
           },
@@ -8609,6 +10359,9 @@
           },
           "comment": {
             "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
           }
         },
         "required": ["area", "prefix", "advertise"],
@@ -8705,6 +10458,32 @@
           },
           "dead_interval": {
             "description": "e.g. \"40s\"",
+            "type": "string"
+          },
+          "retransmit_interval": {
+            "description": "Interval between LSA retransmissions, e.g. \"5s\"",
+            "type": "string"
+          },
+          "transmit_delay": {
+            "description": "Estimated LSA transmit delay, e.g. \"1s\"",
+            "type": "string"
+          },
+          "instance_id": {
+            "description": "OSPF instance-id carried in hello packets",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "prefix_list": {
+            "description": "Prefix-list name filtering which connected networks are advertised",
+            "type": "string"
+          },
+          "vlink_neighbor_id": {
+            "description": "Virtual-link remote router-id (type=virtual-link)",
+            "type": "string"
+          },
+          "vlink_transit_area": {
+            "description": "Transit area the virtual-link traverses (type=virtual-link)",
             "type": "string"
           },
           "auth": {
@@ -8836,6 +10615,10 @@
           "vrf": {
             "type": "string"
           },
+          "routing_table": {
+            "description": "Routing table to install routes into",
+            "type": "string"
+          },
           "redistribute": {
             "description": "Comma list, e.g. \"connected,static\"",
             "type": "string"
@@ -8881,6 +10664,10 @@
             "description": "Existing RIP instance name"
           },
           "router_id": {
+            "type": "string"
+          },
+          "routing_table": {
+            "description": "Routing table to install routes into",
             "type": "string"
           },
           "redistribute": {
@@ -8968,6 +10755,14 @@
             "description": "Interface or interface-list name"
           },
           "passive": {
+            "type": "boolean"
+          },
+          "split_horizon": {
+            "description": "Enable split-horizon loop prevention",
+            "type": "boolean"
+          },
+          "poison_reverse": {
+            "description": "Advertise back with infinite metric",
             "type": "boolean"
           },
           "key_chain": {
@@ -9146,6 +10941,42 @@
             "description": "Static RP-set name, if used",
             "type": "string"
           },
+          "ssm_range": {
+            "description": "Source-Specific Multicast group range(s) for this instance",
+            "type": "string"
+          },
+          "rp_hash_mask_length": {
+            "description": "RP hash mask length for group-to-RP mapping",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "rp_static_override": {
+            "description": "Static RP entries override dynamically learned (BSR) RPs",
+            "type": "boolean"
+          },
+          "switch_to_spt": {
+            "description": "Switch from the shared (RP) tree to the shortest-path tree",
+            "type": "boolean"
+          },
+          "switch_to_spt_bytes": {
+            "description": "Traffic threshold in bytes before switching to the SPT",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "switch_to_spt_interval": {
+            "description": "SPT switchover measurement interval, e.g. \"1m\"",
+            "type": "string"
+          },
+          "bsm_forward_back": {
+            "description": "Forward bootstrap (BSM) messages back out the receiving interface",
+            "type": "boolean"
+          },
+          "crp_advertise_contained": {
+            "description": "Candidate-RP advertises only contained group ranges",
+            "type": "boolean"
+          },
           "comment": {
             "type": "string"
           },
@@ -9227,6 +11058,30 @@
           },
           "hello_period": {
             "description": "Hello interval, e.g. \"30s\"",
+            "type": "string"
+          },
+          "hello_delay": {
+            "description": "Max random delay before the first Hello, e.g. \"5s\"",
+            "type": "string"
+          },
+          "join_prune_period": {
+            "description": "Interval between periodic Join/Prune messages, e.g. \"1m\"",
+            "type": "string"
+          },
+          "join_tracking_support": {
+            "description": "Enable explicit Join/Prune tracking support",
+            "type": "boolean"
+          },
+          "override_interval": {
+            "description": "Randomized Join override interval, e.g. \"2s500ms\"",
+            "type": "string"
+          },
+          "propagation_delay": {
+            "description": "Expected link propagation delay, e.g. \"500ms\"",
+            "type": "string"
+          },
+          "source_addresses": {
+            "description": "Source IP address(es) used for PIM messages on these interfaces",
             "type": "string"
           },
           "comment": {
@@ -9859,6 +11714,130 @@
             "description": "RouterOS flag expression e.g. \"syn,!ack\"",
             "type": "string"
           },
+          "src_mac_address": {
+            "description": "Source MAC, supports ! and mask e.g. \"00:11:...\"",
+            "type": "string"
+          },
+          "in_interface_list": {
+            "description": "Match by inbound interface list name",
+            "type": "string"
+          },
+          "out_interface_list": {
+            "description": "Match by outbound interface list name",
+            "type": "string"
+          },
+          "port": {
+            "description": "Match src OR dst port(s) (protocol-agnostic)",
+            "type": "string"
+          },
+          "connection_mark": {
+            "description": "Match packets with this connection mark",
+            "type": "string"
+          },
+          "packet_mark": {
+            "description": "Match packets with this packet mark",
+            "type": "string"
+          },
+          "routing_mark": {
+            "description": "Match packets with this routing mark",
+            "type": "string"
+          },
+          "connection_type": {
+            "description": "Conntrack helper type e.g. \"ftp,sip\"",
+            "type": "string"
+          },
+          "connection_bytes": {
+            "description": "Total conn bytes range e.g. \"1000000-0\"",
+            "type": "string"
+          },
+          "connection_limit": {
+            "description": "Per-address conn limit e.g. \"100,32\"",
+            "type": "string"
+          },
+          "connection_rate": {
+            "description": "Connection rate range e.g. \"0-100k\"",
+            "type": "string"
+          },
+          "content": {
+            "description": "Match a literal string in the packet payload",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "Match DSCP/TOS value 0-63",
+            "type": "string"
+          },
+          "layer7_protocol": {
+            "description": "Match a /ip firewall layer7-protocol name",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "Packet size or range in bytes e.g. \"0-1500\"",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "IPsec policy match e.g. \"in,ipsec\" or \"out,none\"",
+            "type": "string"
+          },
+          "ttl": {
+            "description": "TTL match e.g. \"equal:64\" or \"less-than:5\"",
+            "type": "string"
+          },
+          "nth": {
+            "description": "Match every Nth packet e.g. \"2,1\"",
+            "type": "string"
+          },
+          "time": {
+            "description": "Time/day match e.g. \"8h-16h,mon,tue,wed\"",
+            "type": "string"
+          },
+          "random": {
+            "description": "Match a packet randomly with given probability (1-99)",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "TCP MSS match e.g. \"1300-1536\" or \"!1460\"",
+            "type": "string"
+          },
+          "fragment": {
+            "description": "Match non-first IP fragments",
+            "type": "boolean"
+          },
+          "src_address_type": {
+            "description": "Source address type e.g. \"unicast\",\"local\"",
+            "type": "string"
+          },
+          "dst_address_type": {
+            "description": "Dest address type e.g. \"broadcast\",\"multicast\"",
+            "type": "string"
+          },
+          "hotspot": {
+            "description": "Hotspot match e.g. \"auth\",\"from-client\",\"local-dst\"",
+            "type": "string"
+          },
+          "icmp_options": {
+            "description": "ICMP type:code match e.g. \"8:0\"",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Match packets by priority (0-63) set internally",
+            "type": "string"
+          },
+          "jump_target": {
+            "description": "Target chain name when action=jump",
+            "type": "string"
+          },
+          "reject_with": {
+            "description": "ICMP/TCP reject response when action=reject",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "List name for add-src-to-address-list / add-dst-to-address-list actions",
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "description": "Timeout for the address-list entry e.g. \"1d\" or \"none\"",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -10014,6 +11993,99 @@
             "type": "string"
           },
           "tcp_flags": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "in_interface_list": {
+            "type": "string"
+          },
+          "out_interface_list": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "connection_mark": {
+            "type": "string"
+          },
+          "packet_mark": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "connection_bytes": {
+            "type": "string"
+          },
+          "connection_limit": {
+            "type": "string"
+          },
+          "connection_rate": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "layer7_protocol": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "ttl": {
+            "type": "string"
+          },
+          "nth": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "random": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "fragment": {
+            "type": "boolean"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "hotspot": {
+            "type": "string"
+          },
+          "icmp_options": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "jump_target": {
+            "type": "string"
+          },
+          "reject_with": {
+            "type": "string"
+          },
+          "address_list": {
+            "type": "string"
+          },
+          "address_list_timeout": {
             "type": "string"
           },
           "comment": {
@@ -10207,6 +12279,150 @@
             "description": "\"srcnat\" / \"dstnat\" / \"!dstnat\"",
             "type": "string"
           },
+          "connection_state": {
+            "description": "Match conn state, e.g. \"new\" / \"established,related\" / \"!invalid\"",
+            "type": "string"
+          },
+          "connection_type": {
+            "description": "Match helper-detected conn type, e.g. \"ftp\" / \"sip\"",
+            "type": "string"
+          },
+          "connection_bytes": {
+            "description": "Total conn bytes range, e.g. \"1000000-\"",
+            "type": "string"
+          },
+          "connection_limit": {
+            "description": "Per-address conn limit, e.g. \"100,32\"",
+            "type": "string"
+          },
+          "connection_rate": {
+            "description": "Conn rate range, e.g. \"0-100k\"",
+            "type": "string"
+          },
+          "port": {
+            "description": "Match src OR dst port (any protocol with ports)",
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Source MAC, negate \"!AA:BB:..\"",
+            "type": "string"
+          },
+          "packet_mark": {
+            "description": "Match a packet mark set in mangle",
+            "type": "string"
+          },
+          "routing_mark": {
+            "description": "Match a routing mark set in mangle",
+            "type": "string"
+          },
+          "src_address_type": {
+            "description": "\"unicast\" / \"local\" / \"broadcast\" / etc.",
+            "type": "string"
+          },
+          "dst_address_type": {
+            "description": "\"unicast\" / \"local\" / \"broadcast\" / etc.",
+            "type": "string"
+          },
+          "in_bridge_port": {
+            "description": "Ingress bridge port (bridge-filtered)",
+            "type": "string"
+          },
+          "out_bridge_port": {
+            "description": "Egress bridge port (bridge-filtered)",
+            "type": "string"
+          },
+          "in_bridge_port_list": {
+            "description": "Ingress bridge port list",
+            "type": "string"
+          },
+          "out_bridge_port_list": {
+            "description": "Egress bridge port list",
+            "type": "string"
+          },
+          "icmp_options": {
+            "description": "ICMP type:code, e.g. \"8:0\"",
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "description": "e.g. \"in,ipsec\" / \"out,none\"",
+            "type": "string"
+          },
+          "layer7_protocol": {
+            "description": "Name of an /ip firewall layer7-protocol",
+            "type": "string"
+          },
+          "content": {
+            "description": "Match a literal string in the packet payload",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "DSCP value 0-63",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Match packet priority (queue/VLAN)",
+            "type": "string"
+          },
+          "tcp_flags": {
+            "description": "e.g. \"syn,!ack\"",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "TCP MSS range, e.g. \"1440-1500\"",
+            "type": "string"
+          },
+          "packet_size": {
+            "description": "Packet size range, e.g. \"1500\" or \"0-500\"",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Rate limit, e.g. \"10,5:packet\"",
+            "type": "string"
+          },
+          "nth": {
+            "description": "Every Nth packet, e.g. \"2,0\"",
+            "type": "string"
+          },
+          "psd": {
+            "description": "Port-scan detection params",
+            "type": "string"
+          },
+          "random": {
+            "description": "Match packet randomly with given probability % (1-99)",
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "description": "PCC classifier, e.g. \"both-addresses:2/0\"",
+            "type": "string"
+          },
+          "time": {
+            "description": "Time/day matcher, e.g. \"8h-16h,mon,tue,wed,thu,fri\"",
+            "type": "string"
+          },
+          "ttl": {
+            "description": "IP TTL matcher, e.g. \"equal:64\"",
+            "type": "string"
+          },
+          "hotspot": {
+            "description": "Hotspot state, e.g. \"auth\" / \"!auth\"",
+            "type": "string"
+          },
+          "jump_target": {
+            "description": "Target chain name when action=jump",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "List name for action=add-src-to-address-list / add-dst-to-address-list",
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "description": "Timeout for the address-list entry, e.g. \"1h\" or \"none\"",
+            "type": "string"
+          },
+          "fragment": {
+            "description": "Match non-first IP fragments",
+            "type": "boolean"
+          },
           "to_addresses": {
             "description": "Single IP or range e.g. \"10.0.0.1\" or \"10.0.0.1-10.0.0.10\"",
             "type": "string"
@@ -10369,6 +12585,114 @@
           },
           "connection_nat_state": {
             "type": "string"
+          },
+          "connection_state": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string"
+          },
+          "connection_bytes": {
+            "type": "string"
+          },
+          "connection_limit": {
+            "type": "string"
+          },
+          "connection_rate": {
+            "type": "string"
+          },
+          "port": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "type": "string"
+          },
+          "packet_mark": {
+            "type": "string"
+          },
+          "routing_mark": {
+            "type": "string"
+          },
+          "src_address_type": {
+            "type": "string"
+          },
+          "dst_address_type": {
+            "type": "string"
+          },
+          "in_bridge_port": {
+            "type": "string"
+          },
+          "out_bridge_port": {
+            "type": "string"
+          },
+          "in_bridge_port_list": {
+            "type": "string"
+          },
+          "out_bridge_port_list": {
+            "type": "string"
+          },
+          "icmp_options": {
+            "type": "string"
+          },
+          "ipsec_policy": {
+            "type": "string"
+          },
+          "layer7_protocol": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "dscp": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "tcp_flags": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "packet_size": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "nth": {
+            "type": "string"
+          },
+          "psd": {
+            "type": "string"
+          },
+          "random": {
+            "type": "string"
+          },
+          "per_connection_classifier": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "ttl": {
+            "type": "string"
+          },
+          "hotspot": {
+            "type": "string"
+          },
+          "jump_target": {
+            "type": "string"
+          },
+          "address_list": {
+            "type": "string"
+          },
+          "address_list_timeout": {
+            "type": "string"
+          },
+          "fragment": {
+            "type": "boolean"
           },
           "to_addresses": {
             "type": "string"
@@ -10541,7 +12865,15 @@
           "dst_port": {
             "type": "string"
           },
+          "port": {
+            "description": "Match if src OR dst port matches (with protocol)",
+            "type": "string"
+          },
           "protocol": {
+            "type": "string"
+          },
+          "src_mac_address": {
+            "description": "Source MAC, negatable e.g. \"!00:11:...\"",
             "type": "string"
           },
           "in_interface": {
@@ -10626,6 +12958,42 @@
             "description": "e.g. \"1500\" or \"0-500\"",
             "type": "string"
           },
+          "ttl": {
+            "description": "Match TTL, e.g. \"equal:64\", \"less-than:10\"",
+            "type": "string"
+          },
+          "tcp_mss": {
+            "description": "Match TCP MSS, e.g. \"1400-1500\" or \"!1460\"",
+            "type": "string"
+          },
+          "fragment": {
+            "description": "Match second and further fragments",
+            "type": "boolean"
+          },
+          "icmp_options": {
+            "description": "Match ICMP type:code, e.g. \"8:0\"",
+            "type": "string"
+          },
+          "ipv4_options": {
+            "description": "e.g. \"any\", \"loose-source-routing\", \"record-route\"",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Rate limit matcher, e.g. \"50,5:packet\"",
+            "type": "string"
+          },
+          "dst_limit": {
+            "description": "Per-destination rate matcher, e.g. \"50,5,dst-address/1m\"",
+            "type": "string"
+          },
+          "content": {
+            "description": "Match packets containing this text",
+            "type": "string"
+          },
+          "psd": {
+            "description": "Port scan detection, e.g. \"21,3s,3,1\"",
+            "type": "string"
+          },
           "layer7_protocol": {
             "description": "Name of an /ip firewall layer7-protocol regex",
             "type": "string"
@@ -10674,8 +13042,28 @@
             "description": "e.g. \"1440\" or \"clamp-to-pmtu\", for change-mss",
             "type": "string"
           },
+          "new_priority": {
+            "description": "Priority for action=set-priority, e.g. \"4\", \"from-dscp\", \"from-ingress\"",
+            "type": "string"
+          },
           "routing_table": {
             "description": "Routing table for action=route",
+            "type": "string"
+          },
+          "route_dst": {
+            "description": "Gateway IP for action=route",
+            "type": "string"
+          },
+          "jump_target": {
+            "description": "Target chain name for action=jump",
+            "type": "string"
+          },
+          "sniff_target": {
+            "description": "Collector IP for action=sniff-tzsp/sniff-pc",
+            "type": "string"
+          },
+          "sniff_target_port": {
+            "description": "Collector UDP port for action=sniff-tzsp",
             "type": "string"
           },
           "address_list": {
@@ -10813,7 +13201,13 @@
           "dst_port": {
             "type": "string"
           },
+          "port": {
+            "type": "string"
+          },
           "protocol": {
+            "type": "string"
+          },
+          "src_mac_address": {
             "type": "string"
           },
           "in_interface": {
@@ -10884,6 +13278,33 @@
           "packet_size": {
             "type": "string"
           },
+          "ttl": {
+            "type": "string"
+          },
+          "tcp_mss": {
+            "type": "string"
+          },
+          "fragment": {
+            "type": "boolean"
+          },
+          "icmp_options": {
+            "type": "string"
+          },
+          "ipv4_options": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "dst_limit": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "psd": {
+            "type": "string"
+          },
           "layer7_protocol": {
             "type": "string"
           },
@@ -10923,7 +13344,22 @@
           "new_mss": {
             "type": "string"
           },
+          "new_priority": {
+            "type": "string"
+          },
           "routing_table": {
+            "type": "string"
+          },
+          "route_dst": {
+            "type": "string"
+          },
+          "jump_target": {
+            "type": "string"
+          },
+          "sniff_target": {
+            "type": "string"
+          },
+          "sniff_target_port": {
             "type": "string"
           },
           "address_list": {
@@ -11572,9 +14008,29 @@
             "description": "Country code (C), e.g. 'US'",
             "type": "string"
           },
+          "state": {
+            "description": "State or province (ST)",
+            "type": "string"
+          },
+          "locality": {
+            "description": "Locality / city (L)",
+            "type": "string"
+          },
           "organization": {
             "description": "Organization (O)",
             "type": "string"
+          },
+          "unit": {
+            "description": "Organizational unit (OU)",
+            "type": "string"
+          },
+          "subject_alt_name": {
+            "description": "Subject Alternative Name(s), e.g. 'DNS:example.com,IP:1.2.3.4'",
+            "type": "string"
+          },
+          "trusted": {
+            "description": "Whether the certificate is trusted for chain verification",
+            "type": "boolean"
           }
         },
         "required": ["name", "common_name", "key_size", "days_valid"],
@@ -11786,6 +14242,10 @@
           "certificate": {
             "description": "Certificate name (for TLS services)",
             "type": "string"
+          },
+          "vrf": {
+            "description": "VRF the service is bound to (default 'main')",
+            "type": "string"
           }
         },
         "required": ["name"],
@@ -11876,6 +14336,10 @@
           "update_time": {
             "description": "Also sync the router clock from the cloud",
             "type": "boolean"
+          },
+          "ddns_update_interval": {
+            "description": "How often to push DDNS updates (e.g. '1m', '1h') or 'none' for the default",
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -12537,6 +15001,40 @@
             "description": "seconds as string e.g. \"25\"",
             "type": "string"
           },
+          "name": {
+            "description": "optional peer name label",
+            "type": "string"
+          },
+          "private_key": {
+            "description": "peer's private key (lets the router generate this peer's client config)",
+            "type": "string"
+          },
+          "responder": {
+            "description": "only respond to handshakes, never initiate (for road-warrior clients)",
+            "type": "boolean"
+          },
+          "client_address": {
+            "description": "client tunnel address(es) for the generated client config",
+            "type": "string"
+          },
+          "client_dns": {
+            "description": "DNS server(s) written into the generated client config",
+            "type": "string"
+          },
+          "client_endpoint": {
+            "description": "server endpoint host[:port] written into the generated client config",
+            "type": "string"
+          },
+          "client_keepalive": {
+            "description": "client persistent-keepalive for the generated config e.g. \"25s\"",
+            "type": "string"
+          },
+          "client_listen_port": {
+            "description": "listen-port written into the generated client config",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "comment": {
             "type": "string"
           },
@@ -12632,6 +15130,40 @@
           },
           "persistent_keepalive": {
             "type": "string"
+          },
+          "name": {
+            "description": "optional peer name label",
+            "type": "string"
+          },
+          "private_key": {
+            "description": "peer's private key (lets the router generate this peer's client config)",
+            "type": "string"
+          },
+          "responder": {
+            "description": "only respond to handshakes, never initiate",
+            "type": "boolean"
+          },
+          "client_address": {
+            "description": "client tunnel address(es) for the generated client config",
+            "type": "string"
+          },
+          "client_dns": {
+            "description": "DNS server(s) written into the generated client config",
+            "type": "string"
+          },
+          "client_endpoint": {
+            "description": "server endpoint host[:port] written into the generated client config",
+            "type": "string"
+          },
+          "client_keepalive": {
+            "description": "client persistent-keepalive for the generated config e.g. \"25s\"",
+            "type": "string"
+          },
+          "client_listen_port": {
+            "description": "listen-port written into the generated client config",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "comment": {
             "type": "string"
@@ -12961,6 +15493,10 @@
             "description": "Hash algorithm, e.g. 'sha256'",
             "type": "string"
           },
+          "prf_algorithm": {
+            "description": "PRF algorithm, e.g. 'auto' or 'sha256'",
+            "type": "string"
+          },
           "lifetime": {
             "description": "Phase-1 lifetime, e.g. '1d'",
             "type": "string"
@@ -13058,6 +15594,9 @@
           "hash_algorithm": {
             "type": "string"
           },
+          "prf_algorithm": {
+            "type": "string"
+          },
           "lifetime": {
             "type": "string"
           },
@@ -13132,6 +15671,12 @@
           },
           "local_address": {
             "type": "string"
+          },
+          "port": {
+            "description": "UDP port for IKE negotiation (default 500)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "passive": {
             "description": "Passive (responder only)",
@@ -13230,6 +15775,11 @@
           "local_address": {
             "type": "string"
           },
+          "port": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "passive": {
             "type": "boolean"
           },
@@ -13299,6 +15849,11 @@
           "remote_id": {
             "type": "string"
           },
+          "match_by": {
+            "description": "How the remote peer is matched to this identity",
+            "type": "string",
+            "enum": ["remote-id", "certificate"]
+          },
           "generate_policy": {
             "type": "string",
             "enum": ["no", "port-override", "port-strict"]
@@ -13312,11 +15867,27 @@
           "certificate": {
             "type": "string"
           },
+          "remote_certificate": {
+            "description": "Remote peer's certificate name (rsa/digital-signature auth)",
+            "type": "string"
+          },
+          "eap_methods": {
+            "description": "EAP method(s), e.g. 'eap-tls' (eap auth)",
+            "type": "string"
+          },
+          "notrack_chain": {
+            "description": "Raw firewall chain to bypass connection tracking for matched traffic",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
           }
         },
-        "required": ["peer", "auth_method"],
+        "required": ["peer", "auth_method", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13400,9 +15971,13 @@
           "lifetime": {
             "description": "Phase-2 lifetime, e.g. '30m'",
             "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
           }
         },
-        "required": ["name", "auth_algorithms", "enc_algorithms", "pfs_group"],
+        "required": ["name", "auth_algorithms", "enc_algorithms", "pfs_group", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13482,6 +16057,9 @@
           },
           "lifetime": {
             "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
           }
         },
         "required": ["name"],
@@ -13531,9 +16109,21 @@
             "description": "Source subnet, e.g. '10.0.0.0/24'",
             "type": "string"
           },
+          "src_port": {
+            "description": "Source port to match (0 = any)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "dst_address": {
             "description": "Destination subnet, e.g. '10.0.1.0/24'",
             "type": "string"
+          },
+          "dst_port": {
+            "description": "Destination port to match (0 = any)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "protocol": {
             "type": "string"
@@ -13562,15 +16152,29 @@
           "sa_dst_address": {
             "type": "string"
           },
+          "priority": {
+            "description": "Policy ordering priority",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "template": {
             "description": "Policy template (for dynamic policies)",
             "type": "boolean"
           },
+          "group": {
+            "description": "Policy template group (when template=true)",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
+          },
+          "disabled": {
+            "default": false,
+            "type": "boolean"
           }
         },
-        "required": ["action", "tunnel"],
+        "required": ["action", "tunnel", "disabled"],
         "additionalProperties": false
       }
     },
@@ -13710,13 +16314,47 @@
           "dns_server": {
             "type": "string"
           },
+          "wins_server": {
+            "description": "WINS server IP(s) pushed to clients",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "Address list to add the remote address to",
+            "type": "string"
+          },
+          "incoming_filter": {
+            "description": "Firewall chain for incoming packets",
+            "type": "string"
+          },
+          "outgoing_filter": {
+            "description": "Firewall chain for outgoing packets",
+            "type": "string"
+          },
           "rate_limit": {
             "description": "Rate limit, e.g. '10M/10M'",
+            "type": "string"
+          },
+          "session_timeout": {
+            "description": "Max session duration, e.g. '1h'",
+            "type": "string"
+          },
+          "idle_timeout": {
+            "description": "Disconnect after this idle time, e.g. '5m'",
             "type": "string"
           },
           "use_encryption": {
             "type": "string",
             "enum": ["default", "yes", "no", "required"]
+          },
+          "use_mpls": {
+            "description": "MPLS over the link policy",
+            "type": "string",
+            "enum": ["default", "yes", "no", "required"]
+          },
+          "use_compression": {
+            "description": "Compression policy",
+            "type": "string",
+            "enum": ["default", "yes", "no"]
           },
           "change_tcp_mss": {
             "type": "string",
@@ -13728,6 +16366,36 @@
             "enum": ["default", "yes", "no"]
           },
           "bridge": {
+            "type": "string"
+          },
+          "bridge_horizon": {
+            "description": "Bridge split-horizon group",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "bridge_path_cost": {
+            "description": "Bridge port path cost",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "bridge_port_priority": {
+            "description": "Bridge port priority",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "dhcpv6_pd_pool": {
+            "description": "IPv6 prefix delegation pool name",
+            "type": "string"
+          },
+          "on_up": {
+            "description": "Script to run when the session connects",
+            "type": "string"
+          },
+          "on_down": {
+            "description": "Script to run when the session disconnects",
             "type": "string"
           },
           "comment": {
@@ -13812,12 +16480,46 @@
           "dns_server": {
             "type": "string"
           },
+          "wins_server": {
+            "description": "WINS server IP(s) pushed to clients",
+            "type": "string"
+          },
+          "address_list": {
+            "description": "Address list to add the remote address to",
+            "type": "string"
+          },
+          "incoming_filter": {
+            "description": "Firewall chain for incoming packets",
+            "type": "string"
+          },
+          "outgoing_filter": {
+            "description": "Firewall chain for outgoing packets",
+            "type": "string"
+          },
           "rate_limit": {
+            "type": "string"
+          },
+          "session_timeout": {
+            "description": "Max session duration, e.g. '1h'",
+            "type": "string"
+          },
+          "idle_timeout": {
+            "description": "Disconnect after this idle time, e.g. '5m'",
             "type": "string"
           },
           "use_encryption": {
             "type": "string",
             "enum": ["default", "yes", "no", "required"]
+          },
+          "use_mpls": {
+            "description": "MPLS over the link policy",
+            "type": "string",
+            "enum": ["default", "yes", "no", "required"]
+          },
+          "use_compression": {
+            "description": "Compression policy",
+            "type": "string",
+            "enum": ["default", "yes", "no"]
           },
           "change_tcp_mss": {
             "type": "string",
@@ -13828,6 +16530,36 @@
             "enum": ["default", "yes", "no"]
           },
           "bridge": {
+            "type": "string"
+          },
+          "bridge_horizon": {
+            "description": "Bridge split-horizon group",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "bridge_path_cost": {
+            "description": "Bridge port path cost",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "bridge_port_priority": {
+            "description": "Bridge port priority",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "dhcpv6_pd_pool": {
+            "description": "IPv6 prefix delegation pool name",
+            "type": "string"
+          },
+          "on_up": {
+            "description": "Script to run when the session connects",
+            "type": "string"
+          },
+          "on_down": {
+            "description": "Script to run when the session disconnects",
             "type": "string"
           },
           "comment": {
@@ -13896,8 +16628,24 @@
           "remote_address": {
             "type": "string"
           },
+          "routes": {
+            "description": "Routes added while this client is connected",
+            "type": "string"
+          },
           "caller_id": {
             "type": "string"
+          },
+          "limit_bytes_in": {
+            "description": "Max bytes the client may upload",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "limit_bytes_out": {
+            "description": "Max bytes the client may download",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "comment": {
             "type": "string"
@@ -13997,8 +16745,24 @@
           "remote_address": {
             "type": "string"
           },
+          "routes": {
+            "description": "Routes added while this client is connected",
+            "type": "string"
+          },
           "caller_id": {
             "type": "string"
+          },
+          "limit_bytes_in": {
+            "description": "Max bytes the client may upload",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "limit_bytes_out": {
+            "description": "Max bytes the client may download",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "comment": {
             "type": "string"
@@ -14137,6 +16901,33 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "mrru": {
+            "description": "Max receive reconstructed unit for MRRU (multilink)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "keepalive_timeout": {
+            "description": "Seconds before an idle tunnel is considered down",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_sessions": {
+            "description": "Maximum simultaneous client sessions",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "one_session_per_host": {
+            "description": "Allow only one active session per host",
+            "type": "boolean"
+          },
+          "caller_id_type": {
+            "description": "Caller ID format: ip-address or number",
+            "type": "string",
+            "enum": ["ip-address", "number"]
           }
         },
         "additionalProperties": false
@@ -14178,6 +16969,12 @@
           "add_default_route": {
             "type": "boolean"
           },
+          "default_route_distance": {
+            "description": "Distance of the auto-added default route",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "use_ipsec": {
             "type": "string",
             "enum": ["yes", "no"]
@@ -14185,6 +16982,42 @@
           "ipsec_secret": {
             "description": "Pre-shared key for L2TP/IPsec",
             "type": "string"
+          },
+          "allow": {
+            "description": "Allowed auth protocols, comma-separated (pap,chap,mschap1,mschap2)",
+            "type": "string"
+          },
+          "use_peer_dns": {
+            "description": "Use DNS servers offered by the remote peer",
+            "type": "boolean"
+          },
+          "dial_on_demand": {
+            "description": "Connect only when traffic is present",
+            "type": "boolean"
+          },
+          "keepalive_timeout": {
+            "description": "Seconds before an idle tunnel is considered down",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_mtu": {
+            "description": "Maximum transmission unit",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_mru": {
+            "description": "Maximum receive unit",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mrru": {
+            "description": "Max receive reconstructed unit for MRRU (multilink)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "comment": {
             "type": "string"
@@ -14359,6 +17192,14 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "mrru": {
+            "description": "Max packet size for MP reassembly, or 'disabled'",
+            "type": "string"
+          },
+          "keepalive_timeout": {
+            "description": "Keepalive timeout in seconds, or 'disabled'",
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -14398,6 +17239,38 @@
           },
           "add_default_route": {
             "type": "boolean"
+          },
+          "default_route_distance": {
+            "description": "Distance for the default route installed via this tunnel",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "allow": {
+            "description": "Allowed auth protocols, comma-separated, e.g. 'mschap2,mschap1'",
+            "type": "string"
+          },
+          "dial_on_demand": {
+            "description": "Connect only when outbound traffic is generated",
+            "type": "boolean"
+          },
+          "max_mtu": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_mru": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mrru": {
+            "description": "Max packet size for MP reassembly, or 'disabled'",
+            "type": "string"
+          },
+          "keepalive_timeout": {
+            "description": "Keepalive timeout in seconds, or 'disabled'",
+            "type": "string"
           },
           "comment": {
             "type": "string"
@@ -14533,6 +17406,38 @@
           },
           "verify_client_certificate": {
             "type": "boolean"
+          },
+          "pfs": {
+            "description": "Enable Perfect Forward Secrecy",
+            "type": "boolean"
+          },
+          "force_aes": {
+            "description": "Require clients to use AES ciphers",
+            "type": "boolean"
+          },
+          "max_mtu": {
+            "description": "Maximum transmission unit",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_mru": {
+            "description": "Maximum receive unit",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mrru": {
+            "description": "Max receive reconstructed unit for MP",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "keepalive_timeout": {
+            "description": "Seconds before an idle connection is considered down",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           }
         },
         "additionalProperties": false
@@ -14581,8 +17486,54 @@
           "verify_server_certificate": {
             "type": "boolean"
           },
+          "authentication": {
+            "description": "Comma-separated, e.g. 'mschap2,mschap1'",
+            "type": "string"
+          },
+          "tls_version": {
+            "type": "string",
+            "enum": ["any", "only-1.2"]
+          },
+          "pfs": {
+            "description": "Enable Perfect Forward Secrecy",
+            "type": "boolean"
+          },
           "add_default_route": {
             "type": "boolean"
+          },
+          "default_route_distance": {
+            "description": "Distance of the auto-added default route",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "dial_on_demand": {
+            "description": "Connect only when traffic is sent over the tunnel",
+            "type": "boolean"
+          },
+          "max_mtu": {
+            "description": "Maximum transmission unit",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "max_mru": {
+            "description": "Maximum receive unit",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mrru": {
+            "description": "Max receive reconstructed unit for MP",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "keepalive_timeout": {
+            "description": "Seconds before an idle connection is considered down",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "http_proxy": {
             "type": "string"
@@ -14728,6 +17679,11 @@
             "type": "string",
             "enum": ["tcp", "udp"]
           },
+          "tls_version": {
+            "description": "Accepted TLS version",
+            "type": "string",
+            "enum": ["any", "only-1.2"]
+          },
           "default_profile": {
             "type": "string"
           },
@@ -14793,6 +17749,11 @@
           "cipher": {
             "description": "Comma-separated, e.g. 'aes256-cbc,aes256-gcm'",
             "type": "string"
+          },
+          "tls_version": {
+            "description": "Accepted TLS version",
+            "type": "string",
+            "enum": ["any", "only-1.2"]
           },
           "max_mtu": {
             "type": "integer",
@@ -14886,6 +17847,11 @@
           },
           "cipher": {
             "type": "string"
+          },
+          "tls_version": {
+            "description": "Accepted TLS version",
+            "type": "string",
+            "enum": ["any", "only-1.2"]
           },
           "max_mtu": {
             "type": "integer",
@@ -15014,6 +17980,11 @@
           "auth": {
             "type": "string"
           },
+          "tls_version": {
+            "description": "Accepted TLS version",
+            "type": "string",
+            "enum": ["any", "only-1.2"]
+          },
           "mode": {
             "type": "string",
             "enum": ["ip", "ethernet"]
@@ -15022,10 +17993,27 @@
             "type": "string",
             "enum": ["tcp", "udp"]
           },
+          "mac_address": {
+            "description": "Client MAC for ethernet mode",
+            "type": "string"
+          },
+          "max_mtu": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "profile": {
             "type": "string"
           },
           "add_default_route": {
+            "type": "boolean"
+          },
+          "route_nopull": {
+            "description": "Ignore routes pushed by the server",
+            "type": "boolean"
+          },
+          "use_peer_dns": {
+            "description": "Use DNS servers pushed by the server",
             "type": "boolean"
           },
           "verify_server_certificate": {
@@ -15191,6 +18179,18 @@
             "description": "Clamp TCP MSS to the tunnel MTU",
             "type": "boolean"
           },
+          "allow_fast_path": {
+            "description": "Allow FastPath processing for this tunnel",
+            "type": "boolean"
+          },
+          "ipsec_secret": {
+            "description": "Pre-shared key to auto-create an IPsec policy securing the tunnel",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "DSCP for encapsulated packets: 'inherit' or 0-63",
+            "type": "string"
+          },
           "mtu": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -15301,6 +18301,27 @@
           },
           "keepalive": {
             "description": "Keepalive interval/retries, e.g. '10s,3'",
+            "type": "string"
+          },
+          "dont_fragment": {
+            "description": "Don't-fragment behavior",
+            "type": "string",
+            "enum": ["inherit", "no"]
+          },
+          "clamp_tcp_mss": {
+            "description": "Clamp TCP MSS to the tunnel MTU",
+            "type": "boolean"
+          },
+          "allow_fast_path": {
+            "description": "Allow FastPath processing for this tunnel",
+            "type": "boolean"
+          },
+          "ipsec_secret": {
+            "description": "Pre-shared key to auto-create an IPsec policy securing the tunnel",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "DSCP for encapsulated packets: 'inherit' or 0-63",
             "type": "string"
           },
           "mtu": {
@@ -15419,6 +18440,40 @@
           },
           "keepalive": {
             "description": "Keepalive interval/retries, e.g. '10s,3'",
+            "type": "string"
+          },
+          "dont_fragment": {
+            "description": "Don't-fragment behavior",
+            "type": "string",
+            "enum": ["inherit", "no"]
+          },
+          "clamp_tcp_mss": {
+            "description": "Clamp TCP MSS to the tunnel MTU",
+            "type": "boolean"
+          },
+          "allow_fast_path": {
+            "description": "Allow FastPath processing for this tunnel",
+            "type": "boolean"
+          },
+          "ipsec_secret": {
+            "description": "Pre-shared key to auto-create an IPsec policy securing the tunnel",
+            "type": "string"
+          },
+          "dscp": {
+            "description": "DSCP for encapsulated packets: 'inherit' or 0-63",
+            "type": "string"
+          },
+          "mac_address": {
+            "description": "MAC address of the EoIP interface",
+            "type": "string"
+          },
+          "arp": {
+            "description": "Address Resolution Protocol mode for the interface",
+            "type": "string",
+            "enum": ["disabled", "enabled", "local-proxy-arp", "proxy-arp", "reply-only"]
+          },
+          "arp_timeout": {
+            "description": "ARP entry timeout, e.g. '30s' or 'auto'",
             "type": "string"
           },
           "mtu": {
@@ -15541,6 +18596,38 @@
           "interface": {
             "description": "Source interface",
             "type": "string"
+          },
+          "group": {
+            "description": "Multicast group address for broadcast/unknown-unicast flooding",
+            "type": "string"
+          },
+          "vteps_ip_version": {
+            "description": "IP version used for VTEP addressing",
+            "type": "string",
+            "enum": ["ipv4", "ipv6"]
+          },
+          "mac_address": {
+            "description": "MAC address of the VXLAN interface",
+            "type": "string"
+          },
+          "arp": {
+            "description": "Address Resolution Protocol mode for the interface",
+            "type": "string",
+            "enum": ["disabled", "enabled", "local-proxy-arp", "proxy-arp", "reply-only"]
+          },
+          "arp_timeout": {
+            "description": "ARP entry timeout, e.g. '30s' or 'auto'",
+            "type": "string"
+          },
+          "max_fdb_size": {
+            "description": "Maximum forwarding database (FDB) size",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "allow_fast_path": {
+            "description": "Allow FastPath processing for this interface",
+            "type": "boolean"
           },
           "mtu": {
             "type": "integer",
@@ -15678,6 +18765,20 @@
           "domain": {
             "type": "string"
           },
+          "protocol": {
+            "description": "Transport protocol used to reach the server (default udp)",
+            "type": "string",
+            "enum": ["udp", "radsec"]
+          },
+          "certificate": {
+            "description": "Certificate name to present when protocol is radsec",
+            "type": "string"
+          },
+          "accounting_backup": {
+            "default": false,
+            "description": "Mark this entry as a backup accounting server",
+            "type": "boolean"
+          },
           "comment": {
             "type": "string"
           },
@@ -15692,6 +18793,7 @@
           "service",
           "authentication_port",
           "accounting_port",
+          "accounting_backup",
           "disabled"
         ],
         "additionalProperties": false
@@ -15797,6 +18899,19 @@
           },
           "domain": {
             "type": "string"
+          },
+          "protocol": {
+            "description": "Transport protocol used to reach the server (default udp)",
+            "type": "string",
+            "enum": ["udp", "radsec"]
+          },
+          "certificate": {
+            "description": "Certificate name to present when protocol is radsec",
+            "type": "string"
+          },
+          "accounting_backup": {
+            "description": "Mark this entry as a backup accounting server",
+            "type": "boolean"
           },
           "comment": {
             "type": "string"
@@ -15979,6 +19094,22 @@
             "description": "TLS certificate name for RADIUS over TLS",
             "type": "string"
           },
+          "radsec_certificate": {
+            "description": "Certificate name for RadSec (RADIUS over TLS)",
+            "type": "string"
+          },
+          "accounting_port": {
+            "description": "UDP port for RADIUS accounting",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "authentication_port": {
+            "description": "UDP port for RADIUS authentication",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "use_profiles": {
             "description": "Enable the profile/payment subsystem",
             "type": "boolean"
@@ -16019,6 +19150,14 @@
           },
           "attributes": {
             "description": "Custom RADIUS attributes",
+            "type": "string"
+          },
+          "caller_id": {
+            "description": "Caller ID the user is restricted to (e.g. MAC)",
+            "type": "string"
+          },
+          "otp_secret": {
+            "description": "Base32 OTP shared secret for two-factor auth",
             "type": "string"
           },
           "comment": {
@@ -16110,6 +19249,14 @@
             "maximum": 9007199254740991
           },
           "attributes": {
+            "type": "string"
+          },
+          "caller_id": {
+            "description": "Caller ID the user is restricted to (e.g. MAC)",
+            "type": "string"
+          },
+          "otp_secret": {
+            "description": "Base32 OTP shared secret for two-factor auth",
             "type": "string"
           },
           "comment": {
@@ -16311,6 +19458,13 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "protocol": {
+            "description": "RADIUS transport protocol for this client (e.g. radius, radsec)",
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
           "disabled": {
             "default": false,
             "type": "boolean"
@@ -16389,12 +19543,66 @@
             "description": "Upload rate limit, e.g. '10M'",
             "type": "string"
           },
+          "rate_limit_min_rx": {
+            "description": "Guaranteed (CIR) download rate, e.g. '2M'",
+            "type": "string"
+          },
+          "rate_limit_min_tx": {
+            "description": "Guaranteed (CIR) upload rate, e.g. '2M'",
+            "type": "string"
+          },
+          "rate_limit_burst_rx": {
+            "description": "Download burst rate, e.g. '20M'",
+            "type": "string"
+          },
+          "rate_limit_burst_tx": {
+            "description": "Upload burst rate, e.g. '20M'",
+            "type": "string"
+          },
+          "rate_limit_burst_threshold_rx": {
+            "description": "Download burst threshold rate",
+            "type": "string"
+          },
+          "rate_limit_burst_threshold_tx": {
+            "description": "Upload burst threshold rate",
+            "type": "string"
+          },
+          "rate_limit_burst_time_rx": {
+            "description": "Download burst time, e.g. '10s'",
+            "type": "string"
+          },
+          "rate_limit_burst_time_tx": {
+            "description": "Upload burst time, e.g. '10s'",
+            "type": "string"
+          },
+          "rate_limit_priority": {
+            "description": "Queue priority (1-8)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "download_limit": {
+            "description": "Download transfer cap in bytes, e.g. '5G'",
+            "type": "string"
+          },
+          "upload_limit": {
+            "description": "Upload transfer cap in bytes, e.g. '5G'",
+            "type": "string"
+          },
           "transfer_limit": {
             "description": "Total transfer cap, e.g. '10G'",
             "type": "string"
           },
           "uptime_limit": {
             "description": "Uptime cap, e.g. '1d'",
+            "type": "string"
+          },
+          "reset_counters_interval": {
+            "description": "Interval to auto-reset usage counters",
+            "type": "string"
+          },
+          "reset_counters_start_time": {
+            "description": "Start time for counter reset interval",
             "type": "string"
           },
           "comment": {
@@ -16544,6 +19752,23 @@
           "cake_overhead_scheme": {
             "type": "string"
           },
+          "cake_bandwidth": {
+            "description": "CAKE shaper bandwidth e.g. \"100M\", \"0\" for unlimited",
+            "type": "string"
+          },
+          "cake_atm": {
+            "description": "Link-layer ATM/PTM compensation",
+            "type": "string",
+            "enum": ["none", "atm", "ptm"]
+          },
+          "cake_autorate_ingress": {
+            "description": "Automatic ingress rate estimation",
+            "type": "boolean"
+          },
+          "cake_memlimit": {
+            "description": "Override CAKE buffer memory limit",
+            "type": "string"
+          },
           "pcq_rate": {
             "description": "Bandwidth per flow e.g. \"1M\", \"512k\"",
             "type": "string"
@@ -16556,6 +19781,48 @@
           "pcq_classifier": {
             "description": "Comma-separated classifiers e.g. \"src-address,dst-address\"",
             "type": "string"
+          },
+          "pcq_total_limit": {
+            "description": "Total packet limit across all PCQ sub-queues",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_burst_rate": {
+            "description": "PCQ burst rate e.g. \"1M\"",
+            "type": "string"
+          },
+          "pcq_burst_threshold": {
+            "description": "PCQ burst threshold e.g. \"512k\"",
+            "type": "string"
+          },
+          "pcq_burst_time": {
+            "description": "PCQ burst time e.g. \"10s\"",
+            "type": "string"
+          },
+          "pcq_src_address_mask": {
+            "description": "IPv4 src classifier mask bits (0-32)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_dst_address_mask": {
+            "description": "IPv4 dst classifier mask bits (0-32)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_src_address6_mask": {
+            "description": "IPv6 src classifier mask bits (0-128)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_dst_address6_mask": {
+            "description": "IPv6 dst classifier mask bits (0-128)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "pfifo_limit": {
             "type": "integer",
@@ -16722,6 +19989,18 @@
           "cake_overhead_scheme": {
             "type": "string"
           },
+          "cake_bandwidth": {
+            "type": "string"
+          },
+          "cake_atm": {
+            "type": "string"
+          },
+          "cake_autorate_ingress": {
+            "type": "boolean"
+          },
+          "cake_memlimit": {
+            "type": "string"
+          },
           "pcq_rate": {
             "type": "string"
           },
@@ -16732,6 +20011,40 @@
           },
           "pcq_classifier": {
             "type": "string"
+          },
+          "pcq_total_limit": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_burst_rate": {
+            "type": "string"
+          },
+          "pcq_burst_threshold": {
+            "type": "string"
+          },
+          "pcq_burst_time": {
+            "type": "string"
+          },
+          "pcq_src_address_mask": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_dst_address_mask": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_src_address6_mask": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "pcq_dst_address6_mask": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           }
         },
         "required": ["name"],
@@ -17076,6 +20389,10 @@
           "packet_marks": {
             "type": "string"
           },
+          "time": {
+            "description": "Active time/days e.g. \"0s-1d,sun,mon,tue,wed,thu,fri,sat\"",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -17204,6 +20521,10 @@
             "type": "string"
           },
           "packet_marks": {
+            "type": "string"
+          },
+          "time": {
+            "description": "Active time/days e.g. \"0s-1d,sun,mon,tue,wed,thu,fri,sat\"",
             "type": "string"
           },
           "comment": {
@@ -17564,6 +20885,10 @@
           "time": {
             "description": "e.g. '13:45:00'",
             "type": "string"
+          },
+          "time_zone_autodetect": {
+            "description": "Auto-detect the time zone from the public IP",
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -17605,6 +20930,15 @@
           },
           "servers": {
             "description": "Comma-separated NTP server list",
+            "type": "string"
+          },
+          "mode": {
+            "description": "NTP client operating mode",
+            "type": "string",
+            "enum": ["unicast", "broadcast", "multicast", "manycast"]
+          },
+          "vrf": {
+            "description": "VRF the NTP client operates in (e.g. 'main')",
             "type": "string"
           }
         },
@@ -17887,6 +21221,16 @@
           "broadcast_address": {
             "description": "Broadcast address for NTP broadcasts",
             "type": "string"
+          },
+          "use_local_clock": {
+            "description": "Serve time from the device's local clock as reference",
+            "type": "boolean"
+          },
+          "local_clock_stratum": {
+            "description": "Stratum advertised when using the local clock (1-15)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           }
         },
         "additionalProperties": false
@@ -18033,7 +21377,7 @@
         "destructiveHint": true,
         "openWorldHint": false
       },
-      "description": "Sends a factory-reset command to the device (`/system reset-configuration`). Use ONLY to wipe the entire configuration and reboot into defaults — the SSH connection will drop immediately after and all config will be lost. Requires `confirm=true`; without it the command is blocked. Optional: `keep_users` (preserve user accounts), `no_defaults` (skip loading default config), `skip_backup` (skip automatic pre-reset backup), `run_after_reset` (script to execute post-reboot). This operation is irreversible — there is no undo.",
+      "description": "Sends a factory-reset command to the device (`/system reset-configuration`). Use ONLY to wipe the entire configuration and reboot into defaults — the SSH connection will drop immediately after and all config will be lost. Requires `confirm=true`; without it the command is blocked. Optional: `keep_users` (preserve user accounts), `no_defaults` (skip loading default config), `skip_backup` (skip automatic pre-reset backup), `caps_mode` (reset into CAPsMAN-managed CAP mode), `run_after_reset` (script to execute post-reboot). This operation is irreversible — there is no undo.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -18052,6 +21396,10 @@
           },
           "skip_backup": {
             "description": "Skip the automatic backup before reset",
+            "type": "boolean"
+          },
+          "caps_mode": {
+            "description": "Reset into CAPsMAN-managed CAP mode instead of standalone",
             "type": "boolean"
           },
           "run_after_reset": {
@@ -18308,6 +21656,21 @@
           "host": {
             "type": "string",
             "description": "Host to monitor"
+          },
+          "type": {
+            "description": "Probe type: simple, icmp, tcp-conn, or http-get",
+            "type": "string",
+            "enum": ["simple", "icmp", "tcp-conn", "http-get"]
+          },
+          "port": {
+            "description": "Target port (tcp-conn/http-get types)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "src_address": {
+            "description": "Source address for the probe",
+            "type": "string"
           },
           "interval": {
             "description": "Probe interval, e.g. '00:00:10'",
@@ -18586,6 +21949,18 @@
           "lldp_med_net_policy_vlan": {
             "description": "LLDP-MED network-policy VLAN, e.g. \"auto\" or a VLAN id.",
             "type": "string"
+          },
+          "lldp_mac_phy_config": {
+            "description": "Include the IEEE 802.3 MAC/PHY Configuration/Status TLV in LLDP frames.",
+            "type": "boolean"
+          },
+          "lldp_max_frame_size": {
+            "description": "Include the Maximum Frame Size TLV in LLDP frames.",
+            "type": "boolean"
+          },
+          "lldp_vlan_info": {
+            "description": "Include the Port VLAN ID and VLAN Name TLVs in LLDP frames.",
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -18732,6 +22107,14 @@
           },
           "store_on_disk": {
             "type": "boolean"
+          },
+          "disabled": {
+            "description": "Whether the graphing rule is disabled",
+            "type": "boolean"
+          },
+          "comment": {
+            "description": "Free-text comment for the rule",
+            "type": "string"
           }
         },
         "required": ["interface"],
@@ -18761,6 +22144,14 @@
           },
           "store_on_disk": {
             "type": "boolean"
+          },
+          "disabled": {
+            "description": "Whether the graphing rule is disabled",
+            "type": "boolean"
+          },
+          "comment": {
+            "description": "Free-text comment for the rule",
+            "type": "string"
           }
         },
         "required": ["simple_queue"],
@@ -18785,6 +22176,14 @@
           },
           "store_on_disk": {
             "type": "boolean"
+          },
+          "disabled": {
+            "description": "Whether the graphing rule is disabled",
+            "type": "boolean"
+          },
+          "comment": {
+            "description": "Free-text comment for the rule",
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -19054,11 +22453,33 @@
             "description": "Match IP/CIDR, e.g. '10.0.0.0/24'",
             "type": "string"
           },
+          "filter_ipv6_address": {
+            "description": "Match IPv6/prefix, e.g. '2001:db8::/64'",
+            "type": "string"
+          },
+          "filter_mac_address": {
+            "description": "Match MAC address",
+            "type": "string"
+          },
           "filter_port": {
             "type": "string"
           },
           "filter_mac_protocol": {
             "type": "string"
+          },
+          "filter_direction": {
+            "description": "Capture direction: any, rx, or tx",
+            "type": "string",
+            "enum": ["any", "rx", "tx"]
+          },
+          "filter_operator_between_entries": {
+            "description": "How filter entries combine: and / or",
+            "type": "string",
+            "enum": ["and", "or"]
+          },
+          "filter_stream": {
+            "description": "Capture only TZSP-streamed packets",
+            "type": "boolean"
           },
           "streaming_enabled": {
             "type": "boolean"
@@ -19071,9 +22492,19 @@
             "description": "Buffer size, e.g. '10M'",
             "type": "string"
           },
+          "memory_scroll": {
+            "description": "Overwrite oldest packets when buffer is full",
+            "type": "boolean"
+          },
           "file_name": {
             "description": "Capture file name (.pcap)",
             "type": "string"
+          },
+          "file_limit": {
+            "description": "Max capture file size in KiB",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "only_headers": {
             "type": "boolean"
@@ -19454,6 +22885,10 @@
           "disabled": {
             "default": false,
             "type": "boolean"
+          },
+          "comment": {
+            "description": "Free-form comment for the port entry",
+            "type": "string"
           }
         },
         "required": ["interface", "disabled"],
@@ -19774,6 +23209,24 @@
           "tx_rate": {
             "description": "Transmit rate in bits/second",
             "type": "string"
+          },
+          "num": {
+            "description": "Stream number (0-15)",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15
+          },
+          "pps": {
+            "description": "Target throughput in packets per second",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "mbps": {
+            "description": "Target throughput in megabits per second",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "comment": {
             "type": "string"
@@ -20178,6 +23631,10 @@
             "description": "Start date, e.g. 'jan/01/2026'",
             "type": "string"
           },
+          "policy": {
+            "description": "Permission policy list, e.g. 'read,write,test,policy'",
+            "type": "string"
+          },
           "comment": {
             "type": "string"
           },
@@ -20320,6 +23777,10 @@
           "source": {
             "type": "string",
             "description": "Script source code (may contain spaces/semicolons)"
+          },
+          "policy": {
+            "description": "Permission policy list, e.g. 'read,write,test,policy'",
+            "type": "string"
           },
           "comment": {
             "type": "string"
@@ -21344,6 +24805,10 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "src_address": {
+            "description": "Source address used when sending to remote syslog (target=remote)",
+            "type": "string"
+          },
           "bsd_syslog": {
             "description": "Use BSD-style syslog format",
             "type": "boolean"
@@ -21352,6 +24817,10 @@
             "type": "string"
           },
           "syslog_severity": {
+            "type": "string"
+          },
+          "syslog_time_format": {
+            "description": "Syslog timestamp format, e.g. 'bsd' or 'iso8601'",
             "type": "string"
           },
           "disk_file_name": {
@@ -21363,11 +24832,29 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "disk_file_count": {
+            "description": "Number of files used to store log (target=disk)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "disk_stop_on_full": {
+            "description": "Stop saving once disk-lines-per-file is reached (target=disk)",
+            "type": "boolean"
+          },
           "memory_lines": {
             "description": "Lines kept for target=memory",
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "memory_stop_on_full": {
+            "description": "Stop saving once memory-lines is reached (target=memory)",
+            "type": "boolean"
+          },
+          "remember": {
+            "description": "Keep messages not yet displayed in console (target=memory)",
+            "type": "boolean"
           },
           "email_to": {
             "description": "Recipient address for target=email",

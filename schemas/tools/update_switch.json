@@ -25,6 +25,14 @@
     "mirror_egress": {
       "description": "Egress mirror source port (newer chips), or 'none'",
       "type": "string"
+    },
+    "mirror_egress_target": {
+      "description": "Egress mirror target port (88E6393X/88E6191X/88E6190 chips), or 'none'",
+      "type": "string"
+    },
+    "switch_all_ports": {
+      "description": "Switch all ports together (RB450G/RB435G/RB850Gx2 only)",
+      "type": "boolean"
     }
   },
   "required": ["switch_id"],

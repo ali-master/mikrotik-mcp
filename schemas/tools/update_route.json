@@ -53,6 +53,14 @@
     "check_gateway": {
       "description": "\"ping\" or \"arp\"",
       "type": "string"
+    },
+    "suppress_hw_offload": {
+      "description": "Exclude route from hardware (HW) offloading",
+      "type": "boolean"
+    },
+    "type": {
+      "description": "\"unicast\", \"blackhole\", \"unreachable\", or \"prohibit\"",
+      "type": "string"
     }
   },
   "required": ["route_id"],

@@ -24,7 +24,13 @@
     "dst_port": {
       "type": "string"
     },
+    "port": {
+      "type": "string"
+    },
     "protocol": {
+      "type": "string"
+    },
+    "src_mac_address": {
       "type": "string"
     },
     "in_interface": {
@@ -95,6 +101,33 @@
     "packet_size": {
       "type": "string"
     },
+    "ttl": {
+      "type": "string"
+    },
+    "tcp_mss": {
+      "type": "string"
+    },
+    "fragment": {
+      "type": "boolean"
+    },
+    "icmp_options": {
+      "type": "string"
+    },
+    "ipv4_options": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string"
+    },
+    "dst_limit": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "psd": {
+      "type": "string"
+    },
     "layer7_protocol": {
       "type": "string"
     },
@@ -134,7 +167,22 @@
     "new_mss": {
       "type": "string"
     },
+    "new_priority": {
+      "type": "string"
+    },
     "routing_table": {
+      "type": "string"
+    },
+    "route_dst": {
+      "type": "string"
+    },
+    "jump_target": {
+      "type": "string"
+    },
+    "sniff_target": {
+      "type": "string"
+    },
+    "sniff_target_port": {
       "type": "string"
     },
     "address_list": {

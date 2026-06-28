@@ -23,6 +23,101 @@
     "hw": {
       "description": "Use hardware offload for this port",
       "type": "boolean"
+    },
+    "disabled": {
+      "description": "Disable this bridge port",
+      "type": "boolean"
+    },
+    "frame_types": {
+      "description": "Accepted frame types on ingress",
+      "type": "string",
+      "enum": ["admit-all", "admit-only-untagged-and-priority-tagged", "admit-only-vlan-tagged"]
+    },
+    "ingress_filtering": {
+      "description": "Drop ingress frames tagged with a VLAN the port isn't a member of",
+      "type": "boolean"
+    },
+    "tag_stacking": {
+      "description": "Force an extra VLAN tag (Q-in-Q) on ingress",
+      "type": "boolean"
+    },
+    "priority": {
+      "description": "STP port priority, e.g. '0x80'",
+      "type": "string"
+    },
+    "path_cost": {
+      "description": "STP path cost for this port",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "internal_path_cost": {
+      "description": "MSTP internal path cost",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "horizon": {
+      "description": "Split-horizon group number for forwarding isolation",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "learn": {
+      "description": "MAC address learning mode",
+      "type": "string",
+      "enum": ["auto", "yes", "no"]
+    },
+    "edge": {
+      "description": "STP edge-port setting",
+      "type": "string",
+      "enum": ["auto", "no", "yes", "no-discover", "yes-discover"]
+    },
+    "point_to_point": {
+      "description": "STP point-to-point link setting",
+      "type": "string",
+      "enum": ["auto", "yes", "no"]
+    },
+    "auto_isolate": {
+      "description": "Keep port in discarding until a BPDU is received",
+      "type": "boolean"
+    },
+    "bpdu_guard": {
+      "description": "Disable the port if it receives a BPDU",
+      "type": "boolean"
+    },
+    "restricted_role": {
+      "description": "Exclude port from becoming the root port",
+      "type": "boolean"
+    },
+    "restricted_tcn": {
+      "description": "Block topology change notifications from this port",
+      "type": "boolean"
+    },
+    "trusted": {
+      "description": "Trust DHCP server replies on this port (DHCP snooping)",
+      "type": "boolean"
+    },
+    "multicast_router": {
+      "description": "IGMP-snooping multicast router state",
+      "type": "string",
+      "enum": ["disabled", "permanent", "temporary-query"]
+    },
+    "fast_leave": {
+      "description": "IGMP-snooping fast leave",
+      "type": "boolean"
+    },
+    "unknown_unicast_flood": {
+      "description": "Flood unknown-unicast frames to this port",
+      "type": "boolean"
+    },
+    "unknown_multicast_flood": {
+      "description": "Flood unknown-multicast frames to this port",
+      "type": "boolean"
+    },
+    "broadcast_flood": {
+      "description": "Flood broadcast frames to this port",
+      "type": "boolean"
     }
   },
   "required": ["bridge", "interface"],

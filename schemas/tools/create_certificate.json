@@ -33,9 +33,29 @@
       "description": "Country code (C), e.g. 'US'",
       "type": "string"
     },
+    "state": {
+      "description": "State or province (ST)",
+      "type": "string"
+    },
+    "locality": {
+      "description": "Locality / city (L)",
+      "type": "string"
+    },
     "organization": {
       "description": "Organization (O)",
       "type": "string"
+    },
+    "unit": {
+      "description": "Organizational unit (OU)",
+      "type": "string"
+    },
+    "subject_alt_name": {
+      "description": "Subject Alternative Name(s), e.g. 'DNS:example.com,IP:1.2.3.4'",
+      "type": "string"
+    },
+    "trusted": {
+      "description": "Whether the certificate is trusted for chain verification",
+      "type": "boolean"
     }
   },
   "required": ["name", "common_name", "key_size", "days_valid"],

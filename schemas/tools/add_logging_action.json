@@ -22,6 +22,10 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "src_address": {
+      "description": "Source address used when sending to remote syslog (target=remote)",
+      "type": "string"
+    },
     "bsd_syslog": {
       "description": "Use BSD-style syslog format",
       "type": "boolean"
@@ -30,6 +34,10 @@
       "type": "string"
     },
     "syslog_severity": {
+      "type": "string"
+    },
+    "syslog_time_format": {
+      "description": "Syslog timestamp format, e.g. 'bsd' or 'iso8601'",
       "type": "string"
     },
     "disk_file_name": {
@@ -41,11 +49,29 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "disk_file_count": {
+      "description": "Number of files used to store log (target=disk)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "disk_stop_on_full": {
+      "description": "Stop saving once disk-lines-per-file is reached (target=disk)",
+      "type": "boolean"
+    },
     "memory_lines": {
       "description": "Lines kept for target=memory",
       "type": "integer",
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
+    },
+    "memory_stop_on_full": {
+      "description": "Stop saving once memory-lines is reached (target=memory)",
+      "type": "boolean"
+    },
+    "remember": {
+      "description": "Keep messages not yet displayed in console (target=memory)",
+      "type": "boolean"
     },
     "email_to": {
       "description": "Recipient address for target=email",

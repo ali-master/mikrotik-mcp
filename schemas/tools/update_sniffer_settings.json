@@ -10,11 +10,33 @@
       "description": "Match IP/CIDR, e.g. '10.0.0.0/24'",
       "type": "string"
     },
+    "filter_ipv6_address": {
+      "description": "Match IPv6/prefix, e.g. '2001:db8::/64'",
+      "type": "string"
+    },
+    "filter_mac_address": {
+      "description": "Match MAC address",
+      "type": "string"
+    },
     "filter_port": {
       "type": "string"
     },
     "filter_mac_protocol": {
       "type": "string"
+    },
+    "filter_direction": {
+      "description": "Capture direction: any, rx, or tx",
+      "type": "string",
+      "enum": ["any", "rx", "tx"]
+    },
+    "filter_operator_between_entries": {
+      "description": "How filter entries combine: and / or",
+      "type": "string",
+      "enum": ["and", "or"]
+    },
+    "filter_stream": {
+      "description": "Capture only TZSP-streamed packets",
+      "type": "boolean"
     },
     "streaming_enabled": {
       "type": "boolean"
@@ -27,9 +49,19 @@
       "description": "Buffer size, e.g. '10M'",
       "type": "string"
     },
+    "memory_scroll": {
+      "description": "Overwrite oldest packets when buffer is full",
+      "type": "boolean"
+    },
     "file_name": {
       "description": "Capture file name (.pcap)",
       "type": "string"
+    },
+    "file_limit": {
+      "description": "Max capture file size in KiB",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     },
     "only_headers": {
       "type": "boolean"

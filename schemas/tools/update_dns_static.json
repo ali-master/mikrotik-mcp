@@ -9,10 +9,30 @@
     "name": {
       "type": "string"
     },
+    "type": {
+      "description": "Record type, e.g. \"A\", \"AAAA\", \"CNAME\", \"NS\", \"FWD\", \"MX\", \"SRV\", \"TXT\"",
+      "type": "string"
+    },
     "address": {
       "type": "string"
     },
     "cname": {
+      "type": "string"
+    },
+    "ns": {
+      "description": "Name server FQDN for an NS-type record",
+      "type": "string"
+    },
+    "forward_to": {
+      "description": "DNS server to forward to for a FWD-type record",
+      "type": "string"
+    },
+    "match_subdomain": {
+      "description": "Also match all subdomains of name/regexp",
+      "type": "boolean"
+    },
+    "address_list": {
+      "description": "Add resolved addresses to this firewall address-list",
       "type": "string"
     },
     "mx_preference": {

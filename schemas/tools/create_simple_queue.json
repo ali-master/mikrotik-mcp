@@ -49,6 +49,10 @@
     "packet_marks": {
       "type": "string"
     },
+    "time": {
+      "description": "Active time/days e.g. \"0s-1d,sun,mon,tue,wed,thu,fri,sat\"",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

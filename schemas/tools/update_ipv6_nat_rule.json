@@ -45,6 +45,105 @@
     "dst_address_list": {
       "type": "string"
     },
+    "in_interface_list": {
+      "type": "string"
+    },
+    "out_interface_list": {
+      "type": "string"
+    },
+    "src_address_type": {
+      "type": "string"
+    },
+    "dst_address_type": {
+      "type": "string"
+    },
+    "src_mac_address": {
+      "type": "string"
+    },
+    "port": {
+      "type": "string"
+    },
+    "connection_mark": {
+      "type": "string"
+    },
+    "connection_state": {
+      "type": "string"
+    },
+    "connection_type": {
+      "type": "string"
+    },
+    "connection_bytes": {
+      "type": "string"
+    },
+    "connection_limit": {
+      "type": "string"
+    },
+    "connection_rate": {
+      "type": "string"
+    },
+    "packet_mark": {
+      "type": "string"
+    },
+    "routing_mark": {
+      "type": "string"
+    },
+    "icmp_options": {
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "dscp": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "tcp_flags": {
+      "type": "string"
+    },
+    "tcp_mss": {
+      "type": "string"
+    },
+    "packet_size": {
+      "type": "string"
+    },
+    "hop_limit": {
+      "type": "string"
+    },
+    "headers": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string"
+    },
+    "dst_limit": {
+      "type": "string"
+    },
+    "nth": {
+      "type": "string"
+    },
+    "random": {
+      "type": "string"
+    },
+    "per_connection_classifier": {
+      "type": "string"
+    },
+    "time": {
+      "type": "string"
+    },
+    "jump_target": {
+      "type": "string"
+    },
+    "address_list": {
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

@@ -29,6 +29,40 @@
       "description": "seconds as string e.g. \"25\"",
       "type": "string"
     },
+    "name": {
+      "description": "optional peer name label",
+      "type": "string"
+    },
+    "private_key": {
+      "description": "peer's private key (lets the router generate this peer's client config)",
+      "type": "string"
+    },
+    "responder": {
+      "description": "only respond to handshakes, never initiate (for road-warrior clients)",
+      "type": "boolean"
+    },
+    "client_address": {
+      "description": "client tunnel address(es) for the generated client config",
+      "type": "string"
+    },
+    "client_dns": {
+      "description": "DNS server(s) written into the generated client config",
+      "type": "string"
+    },
+    "client_endpoint": {
+      "description": "server endpoint host[:port] written into the generated client config",
+      "type": "string"
+    },
+    "client_keepalive": {
+      "description": "client persistent-keepalive for the generated config e.g. \"25s\"",
+      "type": "string"
+    },
+    "client_listen_port": {
+      "description": "listen-port written into the generated client config",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "comment": {
       "type": "string"
     },

@@ -26,6 +26,11 @@
     "interface": {
       "type": "string"
     },
+    "min_prefix": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "comment": {
       "type": "string"
     },

@@ -19,6 +19,18 @@
     "lldp_med_net_policy_vlan": {
       "description": "LLDP-MED network-policy VLAN, e.g. \"auto\" or a VLAN id.",
       "type": "string"
+    },
+    "lldp_mac_phy_config": {
+      "description": "Include the IEEE 802.3 MAC/PHY Configuration/Status TLV in LLDP frames.",
+      "type": "boolean"
+    },
+    "lldp_max_frame_size": {
+      "description": "Include the Maximum Frame Size TLV in LLDP frames.",
+      "type": "boolean"
+    },
+    "lldp_vlan_info": {
+      "description": "Include the Port VLAN ID and VLAN Name TLVs in LLDP frames.",
+      "type": "boolean"
     }
   },
   "additionalProperties": false

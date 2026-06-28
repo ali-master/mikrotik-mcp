@@ -14,6 +14,10 @@
     "vrf": {
       "type": "string"
     },
+    "routing_table": {
+      "description": "Routing table to install routes into",
+      "type": "string"
+    },
     "redistribute": {
       "description": "Comma list, e.g. \"connected,static\"",
       "type": "string"

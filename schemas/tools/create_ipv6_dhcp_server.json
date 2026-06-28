@@ -34,6 +34,18 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "use_radius": {
+      "description": "Authenticate clients via RADIUS",
+      "type": "boolean"
+    },
+    "allow_dual_stack_queue": {
+      "description": "Share a simple queue with the client's IPv4 DHCP lease",
+      "type": "boolean"
+    },
+    "parent_queue": {
+      "description": "Parent queue for dynamically created simple queues",
+      "type": "string"
+    },
     "dhcp_option": {
       "description": "Custom DHCPv6 option names",
       "type": "array",

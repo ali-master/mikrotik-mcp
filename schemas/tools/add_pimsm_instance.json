@@ -20,6 +20,42 @@
       "description": "Static RP-set name, if used",
       "type": "string"
     },
+    "ssm_range": {
+      "description": "Source-Specific Multicast group range(s) for this instance",
+      "type": "string"
+    },
+    "rp_hash_mask_length": {
+      "description": "RP hash mask length for group-to-RP mapping",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "rp_static_override": {
+      "description": "Static RP entries override dynamically learned (BSR) RPs",
+      "type": "boolean"
+    },
+    "switch_to_spt": {
+      "description": "Switch from the shared (RP) tree to the shortest-path tree",
+      "type": "boolean"
+    },
+    "switch_to_spt_bytes": {
+      "description": "Traffic threshold in bytes before switching to the SPT",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "switch_to_spt_interval": {
+      "description": "SPT switchover measurement interval, e.g. \"1m\"",
+      "type": "string"
+    },
+    "bsm_forward_back": {
+      "description": "Forward bootstrap (BSM) messages back out the receiving interface",
+      "type": "boolean"
+    },
+    "crp_advertise_contained": {
+      "description": "Candidate-RP advertises only contained group ranges",
+      "type": "boolean"
+    },
     "comment": {
       "type": "string"
     },

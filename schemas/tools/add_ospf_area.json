@@ -23,6 +23,12 @@
       "description": "Make a totally-stubby/NSSA area (block summary LSAs)",
       "type": "boolean"
     },
+    "default_cost": {
+      "description": "Cost of the default route an ABR injects into a stub/NSSA area",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "comment": {
       "type": "string"
     },

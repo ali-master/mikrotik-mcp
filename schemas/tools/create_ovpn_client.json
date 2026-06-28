@@ -32,6 +32,11 @@
     "auth": {
       "type": "string"
     },
+    "tls_version": {
+      "description": "Accepted TLS version",
+      "type": "string",
+      "enum": ["any", "only-1.2"]
+    },
     "mode": {
       "type": "string",
       "enum": ["ip", "ethernet"]
@@ -40,10 +45,27 @@
       "type": "string",
       "enum": ["tcp", "udp"]
     },
+    "mac_address": {
+      "description": "Client MAC for ethernet mode",
+      "type": "string"
+    },
+    "max_mtu": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "profile": {
       "type": "string"
     },
     "add_default_route": {
+      "type": "boolean"
+    },
+    "route_nopull": {
+      "description": "Ignore routes pushed by the server",
+      "type": "boolean"
+    },
+    "use_peer_dns": {
+      "description": "Use DNS servers pushed by the server",
       "type": "boolean"
     },
     "verify_server_certificate": {

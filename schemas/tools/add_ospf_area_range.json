@@ -23,6 +23,9 @@
     },
     "comment": {
       "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
     }
   },
   "required": ["area", "prefix", "advertise"],

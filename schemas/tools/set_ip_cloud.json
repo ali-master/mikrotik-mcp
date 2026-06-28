@@ -10,6 +10,10 @@
     "update_time": {
       "description": "Also sync the router clock from the cloud",
       "type": "boolean"
+    },
+    "ddns_update_interval": {
+      "description": "How often to push DDNS updates (e.g. '1m', '1h') or 'none' for the default",
+      "type": "string"
     }
   },
   "additionalProperties": false

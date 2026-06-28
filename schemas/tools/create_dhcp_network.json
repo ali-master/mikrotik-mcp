@@ -39,6 +39,29 @@
         "type": "string"
       }
     },
+    "dhcp_option_set": {
+      "description": "Named option set (`/ip dhcp-server option sets`) to append",
+      "type": "string"
+    },
+    "dns_none": {
+      "description": "Do not send any DNS server to clients (overrides dns_servers)",
+      "type": "boolean"
+    },
+    "next_server": {
+      "description": "Next-server (siaddr) address for PXE/TFTP boot",
+      "type": "string"
+    },
+    "boot_file_name": {
+      "description": "Boot file name (option 67) for PXE/TFTP boot",
+      "type": "string"
+    },
+    "caps_manager": {
+      "description": "CAPsMAN address(es) advertised to CAPs via DHCP",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "comment": {
       "type": "string"
     }

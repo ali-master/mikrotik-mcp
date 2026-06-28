@@ -18,6 +18,13 @@
     "untagged": {
       "description": "Comma-separated untagged interfaces",
       "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "disabled": {
+      "description": "Disable this VLAN table entry",
+      "type": "boolean"
     }
   },
   "required": ["bridge", "vlan_ids"],

@@ -24,6 +24,14 @@
       "description": "Custom RADIUS attributes",
       "type": "string"
     },
+    "caller_id": {
+      "description": "Caller ID the user is restricted to (e.g. MAC)",
+      "type": "string"
+    },
+    "otp_secret": {
+      "description": "Base32 OTP shared secret for two-factor auth",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

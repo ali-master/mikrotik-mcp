@@ -17,10 +17,39 @@
       "type": "string",
       "enum": ["yes", "no", "yes-if-forwarding-disabled"]
     },
+    "accept_router_advertisements_on": {
+      "description": "Interface list on which to accept router advertisements (e.g. 'all').",
+      "type": "string"
+    },
     "max_neighbor_entries": {
       "type": "integer",
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
+    },
+    "min_neighbor_entries": {
+      "description": "Lower threshold for the IPv6 neighbor cache below which entries are not reclaimed.",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "soft_max_neighbor_entries": {
+      "description": "Soft ceiling for the IPv6 neighbor cache before aggressive garbage collection.",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "stale_neighbor_timeout": {
+      "description": "Time a stale IPv6 neighbor entry is kept before revalidation (e.g. '60').",
+      "type": "string"
+    },
+    "multipath_hash_policy": {
+      "description": "Hashing fields for ECMP multipath route selection: l3, l4, or l3-inner.",
+      "type": "string",
+      "enum": ["l3", "l4", "l3-inner"]
+    },
+    "allow_fast_path": {
+      "description": "Allow IPv6 FastPath processing.",
+      "type": "boolean"
     }
   },
   "additionalProperties": false

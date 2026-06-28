@@ -18,7 +18,9 @@
         "passthrough",
         "return",
         "tarpit",
-        "fasttrack-connection"
+        "fasttrack-connection",
+        "add-src-to-address-list",
+        "add-dst-to-address-list"
       ]
     },
     "src_address": {
@@ -68,6 +70,126 @@
     },
     "tcp_flags": {
       "description": "RouterOS flag expression e.g. \"syn,!ack\"",
+      "type": "string"
+    },
+    "port": {
+      "description": "Match src or dst port (any protocol with ports)",
+      "type": "string"
+    },
+    "icmp_options": {
+      "description": "ICMPv6 type:code e.g. \"128:0\"",
+      "type": "string"
+    },
+    "connection_mark": {
+      "description": "Match packets with this connection mark",
+      "type": "string"
+    },
+    "connection_type": {
+      "description": "Match connection helper type e.g. \"ftp\", \"sip\"",
+      "type": "string"
+    },
+    "connection_bytes": {
+      "description": "Match total connection bytes range e.g. \"1000000-\"",
+      "type": "string"
+    },
+    "connection_limit": {
+      "description": "Limit connections per address e.g. \"100,128\"",
+      "type": "string"
+    },
+    "connection_rate": {
+      "description": "Match connection data rate e.g. \"100k-\"",
+      "type": "string"
+    },
+    "packet_mark": {
+      "description": "Match packets with this packet mark",
+      "type": "string"
+    },
+    "routing_mark": {
+      "description": "Match packets with this routing mark",
+      "type": "string"
+    },
+    "packet_size": {
+      "description": "Match packet size range e.g. \"1400-1500\"",
+      "type": "string"
+    },
+    "dscp": {
+      "description": "Match DSCP (0-63)",
+      "type": "string"
+    },
+    "ingress_priority": {
+      "description": "Match ingress priority (0-63)",
+      "type": "string"
+    },
+    "priority": {
+      "description": "Match priority set by mangle (0-63)",
+      "type": "string"
+    },
+    "src_mac_address": {
+      "description": "Match source MAC address",
+      "type": "string"
+    },
+    "src_address_type": {
+      "description": "Match src address type e.g. \"unicast\", \"multicast\"",
+      "type": "string"
+    },
+    "dst_address_type": {
+      "description": "Match dst address type e.g. \"unicast\", \"multicast\"",
+      "type": "string"
+    },
+    "tcp_mss": {
+      "description": "Match TCP MSS value/range e.g. \"1300-1536\"",
+      "type": "string"
+    },
+    "headers": {
+      "description": "Match IPv6 extension headers present in the packet",
+      "type": "string"
+    },
+    "tls_host": {
+      "description": "Match TLS SNI host (glob pattern)",
+      "type": "string"
+    },
+    "content": {
+      "description": "Match packets containing this text",
+      "type": "string"
+    },
+    "nth": {
+      "description": "Match every Nth packet e.g. \"2,0\"",
+      "type": "string"
+    },
+    "random": {
+      "description": "Randomly match a percentage of packets (1-99)",
+      "type": "string"
+    },
+    "time": {
+      "description": "Match by time/day e.g. \"8h-16h,mon,tue\"",
+      "type": "string"
+    },
+    "dst_limit": {
+      "description": "Per-destination rate limit e.g. \"10,5,dst-address\"",
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "description": "Match IPsec policy e.g. \"in,ipsec\" or \"out,none\"",
+      "type": "string"
+    },
+    "per_connection_classifier": {
+      "description": "Hash connections into buckets e.g. \"both-addresses:2/0\"",
+      "type": "string"
+    },
+    "jump_target": {
+      "description": "Target chain name when action=jump",
+      "type": "string"
+    },
+    "reject_with": {
+      "description": "ICMPv6 reject response when action=reject e.g. \"icmp-admin-prohibited\"",
+      "type": "string"
+    },
+    "address_list": {
+      "description": "Address-list name when action=add-src/dst-to-address-list",
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "description": "Timeout for the added address-list entry e.g. \"1d\" or \"none\"",
       "type": "string"
     },
     "comment": {

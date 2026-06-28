@@ -41,6 +41,19 @@
     "domain": {
       "type": "string"
     },
+    "protocol": {
+      "description": "Transport protocol used to reach the server (default udp)",
+      "type": "string",
+      "enum": ["udp", "radsec"]
+    },
+    "certificate": {
+      "description": "Certificate name to present when protocol is radsec",
+      "type": "string"
+    },
+    "accounting_backup": {
+      "description": "Mark this entry as a backup accounting server",
+      "type": "boolean"
+    },
     "comment": {
       "type": "string"
     },

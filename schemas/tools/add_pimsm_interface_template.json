@@ -21,6 +21,30 @@
       "description": "Hello interval, e.g. \"30s\"",
       "type": "string"
     },
+    "hello_delay": {
+      "description": "Max random delay before the first Hello, e.g. \"5s\"",
+      "type": "string"
+    },
+    "join_prune_period": {
+      "description": "Interval between periodic Join/Prune messages, e.g. \"1m\"",
+      "type": "string"
+    },
+    "join_tracking_support": {
+      "description": "Enable explicit Join/Prune tracking support",
+      "type": "boolean"
+    },
+    "override_interval": {
+      "description": "Randomized Join override interval, e.g. \"2s500ms\"",
+      "type": "string"
+    },
+    "propagation_delay": {
+      "description": "Expected link propagation delay, e.g. \"500ms\"",
+      "type": "string"
+    },
+    "source_addresses": {
+      "description": "Source IP address(es) used for PIM messages on these interfaces",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

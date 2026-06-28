@@ -19,6 +19,16 @@
     "broadcast_address": {
       "description": "Broadcast address for NTP broadcasts",
       "type": "string"
+    },
+    "use_local_clock": {
+      "description": "Serve time from the device's local clock as reference",
+      "type": "boolean"
+    },
+    "local_clock_stratum": {
+      "description": "Stratum advertised when using the local clock (1-15)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     }
   },
   "additionalProperties": false

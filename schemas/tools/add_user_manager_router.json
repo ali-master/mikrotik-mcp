@@ -21,6 +21,13 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "protocol": {
+      "description": "RADIUS transport protocol for this client (e.g. radius, radsec)",
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
     "disabled": {
       "default": false,
       "type": "boolean"

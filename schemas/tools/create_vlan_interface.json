@@ -41,6 +41,19 @@
     },
     "arp_timeout": {
       "type": "string"
+    },
+    "loop_protect": {
+      "description": "Loop protection: default, on, off",
+      "type": "string",
+      "enum": ["default", "on", "off"]
+    },
+    "loop_protect_disable_time": {
+      "description": "Time to disable interface on loop detection, e.g. '5m' (0 = forever)",
+      "type": "string"
+    },
+    "loop_protect_send_interval": {
+      "description": "Interval between loop-protect probe packets, e.g. '5s'",
+      "type": "string"
     }
   },
   "required": ["name", "vlan_id", "interface", "disabled", "use_service_tag", "arp"],

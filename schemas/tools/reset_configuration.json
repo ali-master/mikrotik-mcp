@@ -19,6 +19,10 @@
       "description": "Skip the automatic backup before reset",
       "type": "boolean"
     },
+    "caps_mode": {
+      "description": "Reset into CAPsMAN-managed CAP mode instead of standalone",
+      "type": "boolean"
+    },
     "run_after_reset": {
       "description": "Script file to run after reset",
       "type": "string"

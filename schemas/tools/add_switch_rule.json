@@ -19,6 +19,14 @@
       "description": "Destination IP/mask",
       "type": "string"
     },
+    "src_address6": {
+      "description": "Source IPv6 address/mask",
+      "type": "string"
+    },
+    "dst_address6": {
+      "description": "Destination IPv6 address/mask",
+      "type": "string"
+    },
     "src_mac_address": {
       "description": "Source MAC/mask",
       "type": "string"
@@ -42,6 +50,11 @@
     "mac_protocol": {
       "description": "MAC protocol, e.g. 'ip', 'arp', 'vlan' or a number",
       "type": "string"
+    },
+    "vlan_header": {
+      "description": "Match on VLAN tag presence",
+      "type": "string",
+      "enum": ["any", "not-present", "present"]
     },
     "vlan_id": {
       "type": "string"

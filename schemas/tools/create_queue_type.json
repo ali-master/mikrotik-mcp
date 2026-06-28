@@ -57,6 +57,23 @@
     "cake_overhead_scheme": {
       "type": "string"
     },
+    "cake_bandwidth": {
+      "description": "CAKE shaper bandwidth e.g. \"100M\", \"0\" for unlimited",
+      "type": "string"
+    },
+    "cake_atm": {
+      "description": "Link-layer ATM/PTM compensation",
+      "type": "string",
+      "enum": ["none", "atm", "ptm"]
+    },
+    "cake_autorate_ingress": {
+      "description": "Automatic ingress rate estimation",
+      "type": "boolean"
+    },
+    "cake_memlimit": {
+      "description": "Override CAKE buffer memory limit",
+      "type": "string"
+    },
     "pcq_rate": {
       "description": "Bandwidth per flow e.g. \"1M\", \"512k\"",
       "type": "string"
@@ -69,6 +86,48 @@
     "pcq_classifier": {
       "description": "Comma-separated classifiers e.g. \"src-address,dst-address\"",
       "type": "string"
+    },
+    "pcq_total_limit": {
+      "description": "Total packet limit across all PCQ sub-queues",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pcq_burst_rate": {
+      "description": "PCQ burst rate e.g. \"1M\"",
+      "type": "string"
+    },
+    "pcq_burst_threshold": {
+      "description": "PCQ burst threshold e.g. \"512k\"",
+      "type": "string"
+    },
+    "pcq_burst_time": {
+      "description": "PCQ burst time e.g. \"10s\"",
+      "type": "string"
+    },
+    "pcq_src_address_mask": {
+      "description": "IPv4 src classifier mask bits (0-32)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pcq_dst_address_mask": {
+      "description": "IPv4 dst classifier mask bits (0-32)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pcq_src_address6_mask": {
+      "description": "IPv6 src classifier mask bits (0-128)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "pcq_dst_address6_mask": {
+      "description": "IPv6 dst classifier mask bits (0-128)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     },
     "pfifo_limit": {
       "type": "integer",

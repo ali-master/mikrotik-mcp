@@ -37,6 +37,28 @@
       "description": "never, if-installed, or always",
       "type": "string"
     },
+    "domain_id": {
+      "description": "OSPF domain ID (MPLS VPN PE-CE OSPF)",
+      "type": "string"
+    },
+    "domain_tag": {
+      "description": "OSPF domain tag (MPLS VPN PE-CE OSPF)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "use_dn": {
+      "description": "Use/ignore DN bit on OSPF routes (MPLS VPN)",
+      "type": "boolean"
+    },
+    "mpls_te_area": {
+      "description": "Area used for MPLS traffic engineering",
+      "type": "string"
+    },
+    "mpls_te_address": {
+      "description": "Router address advertised for MPLS TE",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

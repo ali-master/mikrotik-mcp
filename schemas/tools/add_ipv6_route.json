@@ -43,6 +43,16 @@
     "vrf_interface": {
       "type": "string"
     },
+    "route_tag": {
+      "description": "Route tag for matching in routing filters",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "suppress_hw_offload": {
+      "description": "Disable hardware offloading for this route",
+      "type": "boolean"
+    },
     "comment": {
       "type": "string"
     },

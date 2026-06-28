@@ -29,6 +29,40 @@
     "delay_threshold": {
       "type": "string"
     },
+    "add_arp": {
+      "description": "Add dynamic ARP entry for each lease (use with reply-only ARP on the interface)",
+      "type": "boolean"
+    },
+    "always_broadcast": {
+      "description": "Always send replies as broadcast",
+      "type": "boolean"
+    },
+    "bootp_support": {
+      "description": "Which BOOTP requests to answer",
+      "type": "string",
+      "enum": ["none", "static", "dynamic"]
+    },
+    "conflict_detection": {
+      "description": "Ping/ARP-probe an address before offering it to detect conflicts",
+      "type": "boolean"
+    },
+    "use_radius": {
+      "description": "Use RADIUS for leases (accounting = RADIUS accounting only)",
+      "type": "string",
+      "enum": ["yes", "no", "accounting"]
+    },
+    "relay": {
+      "description": "DHCP relay address this server services",
+      "type": "string"
+    },
+    "server_address": {
+      "description": "Override the server identifier address sent to clients",
+      "type": "string"
+    },
+    "lease_script": {
+      "description": "Script run on lease assign/release",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     }

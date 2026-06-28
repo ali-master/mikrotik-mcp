@@ -43,6 +43,20 @@
     "domain": {
       "type": "string"
     },
+    "protocol": {
+      "description": "Transport protocol used to reach the server (default udp)",
+      "type": "string",
+      "enum": ["udp", "radsec"]
+    },
+    "certificate": {
+      "description": "Certificate name to present when protocol is radsec",
+      "type": "string"
+    },
+    "accounting_backup": {
+      "default": false,
+      "description": "Mark this entry as a backup accounting server",
+      "type": "boolean"
+    },
     "comment": {
       "type": "string"
     },
@@ -57,6 +71,7 @@
     "service",
     "authentication_port",
     "accounting_port",
+    "accounting_backup",
     "disabled"
   ],
   "additionalProperties": false

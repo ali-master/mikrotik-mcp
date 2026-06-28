@@ -16,14 +16,49 @@
     "router_id": {
       "type": "string"
     },
+    "cluster_id": {
+      "description": "Route-reflector cluster ID (cluster-id)",
+      "type": "string"
+    },
     "address_families": {
       "description": "e.g. \"ip,ipv6\"",
       "type": "string"
+    },
+    "hold_time": {
+      "description": "e.g. \"3m\" or \"180s\"",
+      "type": "string"
+    },
+    "keepalive_time": {
+      "type": "string"
+    },
+    "multihop": {
+      "description": "Allow non-directly-connected peers",
+      "type": "boolean"
+    },
+    "nexthop_choice": {
+      "description": "default, force-self, or propagate",
+      "type": "string"
+    },
+    "use_bfd": {
+      "description": "Use BFD for fast failure detection (use-bfd)",
+      "type": "boolean"
     },
     "input_filter": {
       "type": "string"
     },
     "output_filter": {
+      "type": "string"
+    },
+    "output_network": {
+      "description": "Address list of networks to originate/advertise (output.network)",
+      "type": "string"
+    },
+    "output_default_originate": {
+      "description": "Advertise a default route: never, if-installed, or always (output.default-originate)",
+      "type": "string"
+    },
+    "output_redistribute": {
+      "description": "Comma list of route sources to redistribute, e.g. connected,static (output.redistribute)",
       "type": "string"
     },
     "routing_table": {

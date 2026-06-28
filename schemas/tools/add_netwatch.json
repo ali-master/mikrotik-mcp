@@ -7,6 +7,21 @@
       "type": "string",
       "description": "Host to monitor"
     },
+    "type": {
+      "description": "Probe type: simple, icmp, tcp-conn, or http-get",
+      "type": "string",
+      "enum": ["simple", "icmp", "tcp-conn", "http-get"]
+    },
+    "port": {
+      "description": "Target port (tcp-conn/http-get types)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "src_address": {
+      "description": "Source address for the probe",
+      "type": "string"
+    },
     "interval": {
       "description": "Probe interval, e.g. '00:00:10'",
       "type": "string"

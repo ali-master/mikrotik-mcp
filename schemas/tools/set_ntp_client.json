@@ -10,6 +10,15 @@
     "servers": {
       "description": "Comma-separated NTP server list",
       "type": "string"
+    },
+    "mode": {
+      "description": "NTP client operating mode",
+      "type": "string",
+      "enum": ["unicast", "broadcast", "multicast", "manycast"]
+    },
+    "vrf": {
+      "description": "VRF the NTP client operates in (e.g. 'main')",
+      "type": "string"
     }
   },
   "additionalProperties": false

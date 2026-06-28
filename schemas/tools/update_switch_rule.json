@@ -18,6 +18,12 @@
     "dst_address": {
       "type": "string"
     },
+    "src_address6": {
+      "type": "string"
+    },
+    "dst_address6": {
+      "type": "string"
+    },
     "src_mac_address": {
       "type": "string"
     },
@@ -35,6 +41,10 @@
     },
     "mac_protocol": {
       "type": "string"
+    },
+    "vlan_header": {
+      "type": "string",
+      "enum": ["any", "not-present", "present"]
     },
     "vlan_id": {
       "type": "string"

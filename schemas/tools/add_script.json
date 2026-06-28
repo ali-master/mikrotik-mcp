@@ -11,6 +11,10 @@
       "type": "string",
       "description": "Script source code (may contain spaces/semicolons)"
     },
+    "policy": {
+      "description": "Permission policy list, e.g. 'read,write,test,policy'",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

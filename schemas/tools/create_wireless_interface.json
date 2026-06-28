@@ -57,6 +57,80 @@
     },
     "security_profile": {
       "type": "string"
+    },
+    "mtu": {
+      "description": "Interface MTU in bytes",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "arp": {
+      "description": "ARP mode for the interface",
+      "type": "string",
+      "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+    },
+    "hide_ssid": {
+      "description": "Legacy: do not broadcast the SSID in beacons (AP modes)",
+      "type": "boolean"
+    },
+    "wireless_protocol": {
+      "description": "Legacy: wireless protocol, e.g. '802.11', 'nv2', 'nstreme'",
+      "type": "string"
+    },
+    "scan_list": {
+      "description": "Legacy: frequencies/ranges to scan (e.g. 'default' or '5180-5320')",
+      "type": "string"
+    },
+    "frequency_mode": {
+      "description": "Legacy: regulatory frequency mode",
+      "type": "string",
+      "enum": ["manual-txpower", "regulatory-domain", "superchannel"]
+    },
+    "country": {
+      "description": "Legacy: regulatory country setting (e.g. 'united states')",
+      "type": "string"
+    },
+    "antenna_gain": {
+      "description": "Legacy: antenna gain in dBi used for tx-power calculations",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "wds_mode": {
+      "description": "Legacy: WDS mode",
+      "type": "string",
+      "enum": ["disabled", "dynamic", "dynamic-mesh", "static", "static-mesh"]
+    },
+    "wds_default_bridge": {
+      "description": "Legacy: bridge that dynamic WDS interfaces are added to",
+      "type": "string"
+    },
+    "default_authentication": {
+      "description": "Legacy: allow clients not in the access-list to authenticate",
+      "type": "boolean"
+    },
+    "default_forwarding": {
+      "description": "Legacy: allow client-to-client forwarding by default",
+      "type": "boolean"
+    },
+    "tx_power": {
+      "description": "Legacy: manual transmit power in dBm",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "tx_power_mode": {
+      "description": "Legacy: how tx-power is determined",
+      "type": "string",
+      "enum": ["default", "card-rates", "all-rates-fixed", "manual-table"]
+    },
+    "distance": {
+      "description": "Legacy: link distance ('dynamic', 'indoors', or a km value)",
+      "type": "string"
+    },
+    "disconnect_timeout": {
+      "description": "Legacy: time before a non-responding client is disconnected",
+      "type": "string"
     }
   },
   "required": ["name", "disabled"],

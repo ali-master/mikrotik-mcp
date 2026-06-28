@@ -54,6 +54,150 @@
       "description": "\"srcnat\" / \"dstnat\" / \"!dstnat\"",
       "type": "string"
     },
+    "connection_state": {
+      "description": "Match conn state, e.g. \"new\" / \"established,related\" / \"!invalid\"",
+      "type": "string"
+    },
+    "connection_type": {
+      "description": "Match helper-detected conn type, e.g. \"ftp\" / \"sip\"",
+      "type": "string"
+    },
+    "connection_bytes": {
+      "description": "Total conn bytes range, e.g. \"1000000-\"",
+      "type": "string"
+    },
+    "connection_limit": {
+      "description": "Per-address conn limit, e.g. \"100,32\"",
+      "type": "string"
+    },
+    "connection_rate": {
+      "description": "Conn rate range, e.g. \"0-100k\"",
+      "type": "string"
+    },
+    "port": {
+      "description": "Match src OR dst port (any protocol with ports)",
+      "type": "string"
+    },
+    "src_mac_address": {
+      "description": "Source MAC, negate \"!AA:BB:..\"",
+      "type": "string"
+    },
+    "packet_mark": {
+      "description": "Match a packet mark set in mangle",
+      "type": "string"
+    },
+    "routing_mark": {
+      "description": "Match a routing mark set in mangle",
+      "type": "string"
+    },
+    "src_address_type": {
+      "description": "\"unicast\" / \"local\" / \"broadcast\" / etc.",
+      "type": "string"
+    },
+    "dst_address_type": {
+      "description": "\"unicast\" / \"local\" / \"broadcast\" / etc.",
+      "type": "string"
+    },
+    "in_bridge_port": {
+      "description": "Ingress bridge port (bridge-filtered)",
+      "type": "string"
+    },
+    "out_bridge_port": {
+      "description": "Egress bridge port (bridge-filtered)",
+      "type": "string"
+    },
+    "in_bridge_port_list": {
+      "description": "Ingress bridge port list",
+      "type": "string"
+    },
+    "out_bridge_port_list": {
+      "description": "Egress bridge port list",
+      "type": "string"
+    },
+    "icmp_options": {
+      "description": "ICMP type:code, e.g. \"8:0\"",
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "description": "e.g. \"in,ipsec\" / \"out,none\"",
+      "type": "string"
+    },
+    "layer7_protocol": {
+      "description": "Name of an /ip firewall layer7-protocol",
+      "type": "string"
+    },
+    "content": {
+      "description": "Match a literal string in the packet payload",
+      "type": "string"
+    },
+    "dscp": {
+      "description": "DSCP value 0-63",
+      "type": "string"
+    },
+    "priority": {
+      "description": "Match packet priority (queue/VLAN)",
+      "type": "string"
+    },
+    "tcp_flags": {
+      "description": "e.g. \"syn,!ack\"",
+      "type": "string"
+    },
+    "tcp_mss": {
+      "description": "TCP MSS range, e.g. \"1440-1500\"",
+      "type": "string"
+    },
+    "packet_size": {
+      "description": "Packet size range, e.g. \"1500\" or \"0-500\"",
+      "type": "string"
+    },
+    "limit": {
+      "description": "Rate limit, e.g. \"10,5:packet\"",
+      "type": "string"
+    },
+    "nth": {
+      "description": "Every Nth packet, e.g. \"2,0\"",
+      "type": "string"
+    },
+    "psd": {
+      "description": "Port-scan detection params",
+      "type": "string"
+    },
+    "random": {
+      "description": "Match packet randomly with given probability % (1-99)",
+      "type": "string"
+    },
+    "per_connection_classifier": {
+      "description": "PCC classifier, e.g. \"both-addresses:2/0\"",
+      "type": "string"
+    },
+    "time": {
+      "description": "Time/day matcher, e.g. \"8h-16h,mon,tue,wed,thu,fri\"",
+      "type": "string"
+    },
+    "ttl": {
+      "description": "IP TTL matcher, e.g. \"equal:64\"",
+      "type": "string"
+    },
+    "hotspot": {
+      "description": "Hotspot state, e.g. \"auth\" / \"!auth\"",
+      "type": "string"
+    },
+    "jump_target": {
+      "description": "Target chain name when action=jump",
+      "type": "string"
+    },
+    "address_list": {
+      "description": "List name for action=add-src-to-address-list / add-dst-to-address-list",
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "description": "Timeout for the address-list entry, e.g. \"1h\" or \"none\"",
+      "type": "string"
+    },
+    "fragment": {
+      "description": "Match non-first IP fragments",
+      "type": "boolean"
+    },
     "to_addresses": {
       "description": "Single IP or range e.g. \"10.0.0.1\" or \"10.0.0.1-10.0.0.10\"",
       "type": "string"

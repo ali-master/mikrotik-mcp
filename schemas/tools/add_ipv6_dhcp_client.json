@@ -44,6 +44,18 @@
       "description": "Comma-separated custom DHCP option names",
       "type": "string"
     },
+    "use_interface_duid": {
+      "description": "Use the interface MAC address to generate the DUID instead of the system DUID",
+      "type": "boolean"
+    },
+    "custom_duid": {
+      "description": "Override the DUID with a custom hex value, e.g. '0x00010001...'",
+      "type": "string"
+    },
+    "script": {
+      "description": "RouterOS script run on lease bind/release/renew events",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
     },

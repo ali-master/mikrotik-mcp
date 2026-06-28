@@ -14,6 +14,10 @@
     "time": {
       "description": "e.g. '13:45:00'",
       "type": "string"
+    },
+    "time_zone_autodetect": {
+      "description": "Auto-detect the time zone from the public IP",
+      "type": "boolean"
     }
   },
   "additionalProperties": false

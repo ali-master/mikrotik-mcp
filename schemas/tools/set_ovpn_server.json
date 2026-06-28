@@ -35,6 +35,11 @@
       "type": "string",
       "enum": ["tcp", "udp"]
     },
+    "tls_version": {
+      "description": "Accepted TLS version",
+      "type": "string",
+      "enum": ["any", "only-1.2"]
+    },
     "default_profile": {
       "type": "string"
     },

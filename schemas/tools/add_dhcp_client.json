@@ -12,6 +12,12 @@
       "description": "Install the received default gateway",
       "type": "boolean"
     },
+    "default_route_distance": {
+      "description": "Administrative distance of the installed default route",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "use_peer_dns": {
       "default": true,
       "type": "boolean"
@@ -19,6 +25,22 @@
     "use_peer_ntp": {
       "default": true,
       "type": "boolean"
+    },
+    "dhcp_options": {
+      "description": "Comma-separated DHCP options to send, e.g. 'hostname,clientid'",
+      "type": "string"
+    },
+    "client_id": {
+      "description": "Override the DHCP client identifier sent to the server",
+      "type": "string"
+    },
+    "host_name": {
+      "description": "Host name sent to the DHCP server",
+      "type": "string"
+    },
+    "script": {
+      "description": "Script run on lease bound/released",
+      "type": "string"
     },
     "disabled": {
       "default": false,

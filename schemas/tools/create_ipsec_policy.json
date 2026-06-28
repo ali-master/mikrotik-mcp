@@ -11,9 +11,21 @@
       "description": "Source subnet, e.g. '10.0.0.0/24'",
       "type": "string"
     },
+    "src_port": {
+      "description": "Source port to match (0 = any)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "dst_address": {
       "description": "Destination subnet, e.g. '10.0.1.0/24'",
       "type": "string"
+    },
+    "dst_port": {
+      "description": "Destination port to match (0 = any)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     },
     "protocol": {
       "type": "string"
@@ -42,14 +54,28 @@
     "sa_dst_address": {
       "type": "string"
     },
+    "priority": {
+      "description": "Policy ordering priority",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "template": {
       "description": "Policy template (for dynamic policies)",
       "type": "boolean"
     },
+    "group": {
+      "description": "Policy template group (when template=true)",
+      "type": "string"
+    },
     "comment": {
       "type": "string"
+    },
+    "disabled": {
+      "default": false,
+      "type": "boolean"
     }
   },
-  "required": ["action", "tunnel"],
+  "required": ["action", "tunnel", "disabled"],
   "additionalProperties": false
 }

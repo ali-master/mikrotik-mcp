@@ -25,6 +25,40 @@
       "description": "Keepalive interval/retries, e.g. '10s,3'",
       "type": "string"
     },
+    "dont_fragment": {
+      "description": "Don't-fragment behavior",
+      "type": "string",
+      "enum": ["inherit", "no"]
+    },
+    "clamp_tcp_mss": {
+      "description": "Clamp TCP MSS to the tunnel MTU",
+      "type": "boolean"
+    },
+    "allow_fast_path": {
+      "description": "Allow FastPath processing for this tunnel",
+      "type": "boolean"
+    },
+    "ipsec_secret": {
+      "description": "Pre-shared key to auto-create an IPsec policy securing the tunnel",
+      "type": "string"
+    },
+    "dscp": {
+      "description": "DSCP for encapsulated packets: 'inherit' or 0-63",
+      "type": "string"
+    },
+    "mac_address": {
+      "description": "MAC address of the EoIP interface",
+      "type": "string"
+    },
+    "arp": {
+      "description": "Address Resolution Protocol mode for the interface",
+      "type": "string",
+      "enum": ["disabled", "enabled", "local-proxy-arp", "proxy-arp", "reply-only"]
+    },
+    "arp_timeout": {
+      "description": "ARP entry timeout, e.g. '30s' or 'auto'",
+      "type": "string"
+    },
     "mtu": {
       "type": "integer",
       "minimum": -9007199254740991,

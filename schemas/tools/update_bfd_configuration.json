@@ -24,6 +24,9 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "forbid_bfd": {
+      "type": "boolean"
+    },
     "comment": {
       "type": "string"
     },

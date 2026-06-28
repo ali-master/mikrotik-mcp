@@ -13,6 +13,14 @@
     },
     "store_on_disk": {
       "type": "boolean"
+    },
+    "disabled": {
+      "description": "Whether the graphing rule is disabled",
+      "type": "boolean"
+    },
+    "comment": {
+      "description": "Free-text comment for the rule",
+      "type": "string"
     }
   },
   "required": ["simple_queue"],

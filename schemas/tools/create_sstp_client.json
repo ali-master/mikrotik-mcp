@@ -33,8 +33,54 @@
     "verify_server_certificate": {
       "type": "boolean"
     },
+    "authentication": {
+      "description": "Comma-separated, e.g. 'mschap2,mschap1'",
+      "type": "string"
+    },
+    "tls_version": {
+      "type": "string",
+      "enum": ["any", "only-1.2"]
+    },
+    "pfs": {
+      "description": "Enable Perfect Forward Secrecy",
+      "type": "boolean"
+    },
     "add_default_route": {
       "type": "boolean"
+    },
+    "default_route_distance": {
+      "description": "Distance of the auto-added default route",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "dial_on_demand": {
+      "description": "Connect only when traffic is sent over the tunnel",
+      "type": "boolean"
+    },
+    "max_mtu": {
+      "description": "Maximum transmission unit",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_mru": {
+      "description": "Maximum receive unit",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mrru": {
+      "description": "Max receive reconstructed unit for MP",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "keepalive_timeout": {
+      "description": "Seconds before an idle connection is considered down",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     },
     "http_proxy": {
       "type": "string"

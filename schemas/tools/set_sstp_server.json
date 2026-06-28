@@ -28,6 +28,38 @@
     },
     "verify_client_certificate": {
       "type": "boolean"
+    },
+    "pfs": {
+      "description": "Enable Perfect Forward Secrecy",
+      "type": "boolean"
+    },
+    "force_aes": {
+      "description": "Require clients to use AES ciphers",
+      "type": "boolean"
+    },
+    "max_mtu": {
+      "description": "Maximum transmission unit",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_mru": {
+      "description": "Maximum receive unit",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "mrru": {
+      "description": "Max receive reconstructed unit for MP",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "keepalive_timeout": {
+      "description": "Seconds before an idle connection is considered down",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     }
   },
   "additionalProperties": false

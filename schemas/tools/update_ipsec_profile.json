@@ -19,6 +19,9 @@
     "hash_algorithm": {
       "type": "string"
     },
+    "prf_algorithm": {
+      "type": "string"
+    },
     "lifetime": {
       "type": "string"
     },

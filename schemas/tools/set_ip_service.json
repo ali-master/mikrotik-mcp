@@ -24,6 +24,10 @@
     "certificate": {
       "description": "Certificate name (for TLS services)",
       "type": "string"
+    },
+    "vrf": {
+      "description": "VRF the service is bound to (default 'main')",
+      "type": "string"
     }
   },
   "required": ["name"],

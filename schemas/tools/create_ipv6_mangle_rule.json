@@ -42,9 +42,128 @@
       "type": "string"
     },
     "in_interface": {
+      "description": "Negatable, e.g. \"!ether1\"",
       "type": "string"
     },
     "out_interface": {
+      "type": "string"
+    },
+    "in_interface_list": {
+      "description": "Interface list, negatable e.g. \"!WAN\"",
+      "type": "string"
+    },
+    "out_interface_list": {
+      "type": "string"
+    },
+    "src_address_list": {
+      "description": "Match src in a named list; negate \"!name\"",
+      "type": "string"
+    },
+    "dst_address_list": {
+      "description": "Match dst in a named list; negate \"!name\"",
+      "type": "string"
+    },
+    "src_address_type": {
+      "description": "e.g. \"unicast\", \"local\", \"!local\"",
+      "type": "string"
+    },
+    "dst_address_type": {
+      "type": "string"
+    },
+    "src_mac_address": {
+      "description": "Source MAC, negatable e.g. \"!00:11:...\"",
+      "type": "string"
+    },
+    "port": {
+      "description": "Match if src OR dst port matches (with protocol)",
+      "type": "string"
+    },
+    "connection_state": {
+      "description": "e.g. \"new\", \"established,related\", \"!invalid\"",
+      "type": "string"
+    },
+    "connection_type": {
+      "description": "Helper, e.g. \"sip\", \"ftp\"",
+      "type": "string"
+    },
+    "connection_bytes": {
+      "description": "e.g. \"1000000-0\" (>1 MB connections)",
+      "type": "string"
+    },
+    "connection_limit": {
+      "description": "e.g. \"100,128\"",
+      "type": "string"
+    },
+    "connection_rate": {
+      "description": "e.g. \"100k-1M\"",
+      "type": "string"
+    },
+    "per_connection_classifier": {
+      "description": "PCC for load balancing, e.g. \"both-addresses:2/0\"",
+      "type": "string"
+    },
+    "tcp_flags": {
+      "description": "RouterOS flag expression e.g. \"syn,!ack\"",
+      "type": "string"
+    },
+    "tcp_mss": {
+      "description": "Match TCP MSS, e.g. \"1400-1500\" or \"!1460\"",
+      "type": "string"
+    },
+    "icmp_options": {
+      "description": "Match ICMPv6 type:code, e.g. \"128:0\"",
+      "type": "string"
+    },
+    "packet_size": {
+      "description": "e.g. \"1500\" or \"0-500\"",
+      "type": "string"
+    },
+    "dscp": {
+      "description": "Match incoming DSCP (0-63)",
+      "type": "string"
+    },
+    "priority": {
+      "description": "Match packet/queue priority (0-63)",
+      "type": "string"
+    },
+    "ingress_priority": {
+      "description": "Match ingress (VLAN/MPLS) priority (0-63)",
+      "type": "string"
+    },
+    "ipsec_policy": {
+      "description": "e.g. \"in,ipsec\" or \"out,none\"",
+      "type": "string"
+    },
+    "nth": {
+      "description": "e.g. \"2,1\" — every 2nd packet",
+      "type": "string"
+    },
+    "random": {
+      "description": "Match a random N% of packets (1-99)",
+      "type": "string"
+    },
+    "time": {
+      "description": "e.g. \"8h-16h,mon,tue,wed,thu,fri\"",
+      "type": "string"
+    },
+    "hop_limit": {
+      "description": "Match hop-limit, e.g. \"equal:64\", \"less-than:10\"",
+      "type": "string"
+    },
+    "content": {
+      "description": "Match packets containing this text",
+      "type": "string"
+    },
+    "headers": {
+      "description": "Match IPv6 extension headers, e.g. \"hop:contains\"",
+      "type": "string"
+    },
+    "limit": {
+      "description": "Rate limit matcher, e.g. \"50,5:packet\"",
+      "type": "string"
+    },
+    "dst_limit": {
+      "description": "Per-destination rate matcher, e.g. \"50,5,dst-address/1m\"",
       "type": "string"
     },
     "connection_mark": {
@@ -66,10 +185,31 @@
       "type": "string"
     },
     "new_dscp": {
+      "description": "0-63, for change-dscp",
       "type": "string"
     },
     "new_hop_limit": {
       "description": "e.g. \"decrement\", \"increment\", or \"set:64\"",
+      "type": "string"
+    },
+    "new_mss": {
+      "description": "e.g. \"1440\" or \"clamp-to-pmtu\", for change-mss",
+      "type": "string"
+    },
+    "new_priority": {
+      "description": "e.g. \"4\" or \"from-dscp\", for set-priority",
+      "type": "string"
+    },
+    "jump_target": {
+      "description": "Target chain name for action=jump",
+      "type": "string"
+    },
+    "sniff_target": {
+      "description": "TZSP collector IP for action=sniff-tzsp",
+      "type": "string"
+    },
+    "sniff_target_port": {
+      "description": "TZSP collector UDP port for sniff-tzsp",
       "type": "string"
     },
     "passthrough": {

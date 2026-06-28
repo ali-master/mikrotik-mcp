@@ -25,6 +25,10 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "forbid_bfd": {
+      "description": "Forbid BFD on the matched interfaces",
+      "type": "boolean"
+    },
     "comment": {
       "type": "string"
     },

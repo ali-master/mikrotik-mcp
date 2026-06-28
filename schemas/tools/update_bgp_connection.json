@@ -15,6 +15,11 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "remote_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "as": {
       "type": "integer",
       "minimum": -9007199254740991,
@@ -26,7 +31,15 @@
     "local_address": {
       "type": "string"
     },
+    "local_port": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "router_id": {
+      "type": "string"
+    },
+    "cluster_id": {
       "type": "string"
     },
     "address_families": {
@@ -41,11 +54,55 @@
     "multihop": {
       "type": "boolean"
     },
+    "nexthop_choice": {
+      "type": "string"
+    },
+    "use_bfd": {
+      "type": "boolean"
+    },
+    "tcp_md5_key": {
+      "type": "string"
+    },
+    "connect": {
+      "type": "boolean"
+    },
+    "listen": {
+      "type": "boolean"
+    },
     "input_filter": {
       "type": "string"
     },
+    "input_accept_nlri": {
+      "type": "string"
+    },
+    "input_allow_as": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "input_ignore_as_path_len": {
+      "type": "boolean"
+    },
     "output_filter": {
       "type": "string"
+    },
+    "output_network": {
+      "type": "string"
+    },
+    "output_default_originate": {
+      "type": "string"
+    },
+    "output_redistribute": {
+      "type": "string"
+    },
+    "output_as_override": {
+      "type": "boolean"
+    },
+    "output_keep_sent_attributes": {
+      "type": "boolean"
+    },
+    "output_no_client_to_client_reflection": {
+      "type": "boolean"
     },
     "routing_table": {
       "type": "string"

@@ -17,6 +17,12 @@
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
     },
+    "remote_port": {
+      "description": "Peer TCP port (remote.port)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "as": {
       "description": "Local AS number",
       "type": "integer",
@@ -31,8 +37,18 @@
       "description": "Local source address (local.address)",
       "type": "string"
     },
+    "local_port": {
+      "description": "Local TCP port (local.port)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "router_id": {
       "description": "Override router-id for this connection",
+      "type": "string"
+    },
+    "cluster_id": {
+      "description": "Route-reflector cluster ID (cluster-id)",
       "type": "string"
     },
     "templates": {
@@ -58,13 +74,67 @@
       "description": "default, force-self, or propagate",
       "type": "string"
     },
+    "use_bfd": {
+      "description": "Use BFD for fast failure detection (use-bfd)",
+      "type": "boolean"
+    },
+    "tcp_md5_key": {
+      "description": "TCP MD5 authentication key (tcp-md5-key)",
+      "type": "string"
+    },
+    "connect": {
+      "description": "Actively initiate the TCP session (connect)",
+      "type": "boolean"
+    },
+    "listen": {
+      "description": "Accept incoming TCP session (listen)",
+      "type": "boolean"
+    },
     "input_filter": {
       "description": "Routing filter chain for inbound routes (input.filter)",
       "type": "string"
     },
+    "input_accept_nlri": {
+      "description": "Address list of accepted NLRI prefixes (input.accept-nlri)",
+      "type": "string"
+    },
+    "input_allow_as": {
+      "description": "Number of times own AS may appear in AS-path (input.allow-as)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "input_ignore_as_path_len": {
+      "description": "Ignore AS-path length in best-path selection (input.ignore-as-path-len)",
+      "type": "boolean"
+    },
     "output_filter": {
       "description": "Routing filter chain for outbound routes (output.filter)",
       "type": "string"
+    },
+    "output_network": {
+      "description": "Address list of networks to originate/advertise (output.network)",
+      "type": "string"
+    },
+    "output_default_originate": {
+      "description": "Advertise a default route: never, if-installed, or always (output.default-originate)",
+      "type": "string"
+    },
+    "output_redistribute": {
+      "description": "Comma list of route sources to redistribute, e.g. connected,static (output.redistribute)",
+      "type": "string"
+    },
+    "output_as_override": {
+      "description": "Replace peer AS in AS-path with local AS (output.as-override)",
+      "type": "boolean"
+    },
+    "output_keep_sent_attributes": {
+      "description": "Retain sent path attributes for inspection (output.keep-sent-attributes)",
+      "type": "boolean"
+    },
+    "output_no_client_to_client_reflection": {
+      "description": "Disable route-reflector client-to-client reflection (output.no-client-to-client-reflection)",
+      "type": "boolean"
     },
     "routing_table": {
       "description": "RIB to install learned routes into",

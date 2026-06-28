@@ -31,6 +31,33 @@
       "type": "integer",
       "minimum": -9007199254740991,
       "maximum": 9007199254740991
+    },
+    "mrru": {
+      "description": "Max receive reconstructed unit for MRRU (multilink)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "keepalive_timeout": {
+      "description": "Seconds before an idle tunnel is considered down",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "max_sessions": {
+      "description": "Maximum simultaneous client sessions",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "one_session_per_host": {
+      "description": "Allow only one active session per host",
+      "type": "boolean"
+    },
+    "caller_id_type": {
+      "description": "Caller ID format: ip-address or number",
+      "type": "string",
+      "enum": ["ip-address", "number"]
     }
   },
   "additionalProperties": false

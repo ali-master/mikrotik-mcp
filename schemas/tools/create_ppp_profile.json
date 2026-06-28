@@ -18,13 +18,47 @@
     "dns_server": {
       "type": "string"
     },
+    "wins_server": {
+      "description": "WINS server IP(s) pushed to clients",
+      "type": "string"
+    },
+    "address_list": {
+      "description": "Address list to add the remote address to",
+      "type": "string"
+    },
+    "incoming_filter": {
+      "description": "Firewall chain for incoming packets",
+      "type": "string"
+    },
+    "outgoing_filter": {
+      "description": "Firewall chain for outgoing packets",
+      "type": "string"
+    },
     "rate_limit": {
       "description": "Rate limit, e.g. '10M/10M'",
+      "type": "string"
+    },
+    "session_timeout": {
+      "description": "Max session duration, e.g. '1h'",
+      "type": "string"
+    },
+    "idle_timeout": {
+      "description": "Disconnect after this idle time, e.g. '5m'",
       "type": "string"
     },
     "use_encryption": {
       "type": "string",
       "enum": ["default", "yes", "no", "required"]
+    },
+    "use_mpls": {
+      "description": "MPLS over the link policy",
+      "type": "string",
+      "enum": ["default", "yes", "no", "required"]
+    },
+    "use_compression": {
+      "description": "Compression policy",
+      "type": "string",
+      "enum": ["default", "yes", "no"]
     },
     "change_tcp_mss": {
       "type": "string",
@@ -36,6 +70,36 @@
       "enum": ["default", "yes", "no"]
     },
     "bridge": {
+      "type": "string"
+    },
+    "bridge_horizon": {
+      "description": "Bridge split-horizon group",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "bridge_path_cost": {
+      "description": "Bridge port path cost",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "bridge_port_priority": {
+      "description": "Bridge port priority",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "dhcpv6_pd_pool": {
+      "description": "IPv6 prefix delegation pool name",
+      "type": "string"
+    },
+    "on_up": {
+      "description": "Script to run when the session connects",
+      "type": "string"
+    },
+    "on_down": {
+      "description": "Script to run when the session disconnects",
       "type": "string"
     },
     "comment": {

@@ -24,6 +24,10 @@
     "disabled": {
       "default": false,
       "type": "boolean"
+    },
+    "comment": {
+      "description": "Free-form comment for the port entry",
+      "type": "string"
     }
   },
   "required": ["interface", "disabled"],

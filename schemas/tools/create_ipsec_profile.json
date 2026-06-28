@@ -21,6 +21,10 @@
       "description": "Hash algorithm, e.g. 'sha256'",
       "type": "string"
     },
+    "prf_algorithm": {
+      "description": "PRF algorithm, e.g. 'auto' or 'sha256'",
+      "type": "string"
+    },
     "lifetime": {
       "description": "Phase-1 lifetime, e.g. '1d'",
       "type": "string"

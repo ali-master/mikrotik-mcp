@@ -24,6 +24,12 @@
     "local_address": {
       "type": "string"
     },
+    "port": {
+      "description": "UDP port for IKE negotiation (default 500)",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
     "passive": {
       "description": "Passive (responder only)",
       "type": "boolean"
