@@ -11,6 +11,7 @@ import { containsRawParserError, indicatesFailure } from "./routeros";
 import { buildRecordsView } from "./routeros-parse";
 import { toolUiMeta, uiViewUri } from "./ui-meta";
 import type { UiLink } from "./ui-meta";
+import type { DeviceDirectoryEntry } from "./runtime";
 import { riskOf } from "../observability/event";
 import { isRecording, recordToolCall } from "../observability/recorder";
 
@@ -62,11 +63,51 @@ export interface RegisterOptions {
    */
   deviceAliases?: string[];
   /**
+   * Human-facing directory of every device (key → label → target), used to make
+   * the `device` selector's description unambiguous so the model can tell
+   * similarly-named routers apart and never substitute one for another.
+   */
+  deviceDirectory?: DeviceDirectoryEntry[];
+  /**
    * Read-only mode: register only tools annotated `readOnlyHint`. Used to
    * withhold every write/destructive tool from a publicly-exposed surface (e.g.
    * a ChatGPT Apps connector) until authentication is in place.
    */
   readOnly?: boolean;
+}
+
+/**
+ * Build the `device` selector's description. When a device directory is
+ * available it lists each router as `key ("label") → host:port [default]` so the
+ * model can tell similarly-named devices apart (e.g. "Ali Home" @ 45.87.6.144 vs
+ * "home" @ 192.168.7.1) and is explicitly told to match the user's wording
+ * exactly and never substitute one device for another.
+ */
+function deviceSelectorDescription(
+  selectorNames: string[],
+  directory?: DeviceDirectoryEntry[],
+): string {
+  if (directory && directory.length > 0) {
+    const rows = directory
+      .map(
+        (d) =>
+          `• ${d.key}${d.label && d.label !== d.key ? ` ("${d.label}")` : ""} → ${d.target}${
+            d.isDefault ? " [default]" : ""
+          }`,
+      )
+      .join("\n");
+    return (
+      "Which configured MikroTik device to run this on. Pass the EXACT config key (or its label) " +
+      "that matches the user's wording — these are different physical routers, so never substitute " +
+      'one for another (e.g. "Ali Home" is NOT "home"). Configured devices:\n' +
+      `${rows}\n` +
+      "Omit only when the user did not name a device (uses the default)."
+    );
+  }
+  return (
+    `Which configured MikroTik device to run this on. One of: ${selectorNames.join(", ")} ` +
+    "(a config key or its label). Omit to use the default device."
+  );
 }
 
 // ── Behaviour presets (MCP §Tool Annotations) ──────────────────────────────
@@ -153,7 +194,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     inputSchema: def.inputSchema,
     ui: def.ui,
     register(server: McpServer, opts: RegisterOptions = {}) {
-      const { sendLog, deviceNames, deviceAliases } = opts;
+      const { sendLog, deviceNames, deviceAliases, deviceDirectory } = opts;
       // The single-vs-multi decision is keyed on the device COUNT, never the
       // enum size — a lone device that happens to have a label must not gain a
       // selector.
@@ -174,9 +215,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
             device: z
               .enum(selectorNames as [string, ...string[]])
               .optional()
-              .describe(
-                `Which configured MikroTik device to run this on. One of: ${selectorNames.join(", ")} (a config key or its label). Omit to use the default device.`,
-              ),
+              .describe(deviceSelectorDescription(selectorNames, deviceDirectory)),
           }
         : def.inputSchema;
 

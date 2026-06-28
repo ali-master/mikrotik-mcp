@@ -6,7 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SendLog } from "./core/context";
 import { registerTools } from "./core/registry";
 import { registerUiResources } from "./core/ui-resources";
-import { listDevices, deviceLabels, getConfig } from "./core/runtime";
+import { listDevices, deviceDirectory, deviceLabels, getConfig } from "./core/runtime";
 import { registerPrompts } from "./prompts";
 import { selectToolModules } from "./tools";
 import {
@@ -124,6 +124,9 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
     // Friendly labels (descriptions) are accepted as device aliases too, so the
     // AI can target e.g. "Ali Home" as well as the config key "home".
     deviceAliases: deviceLabels(),
+    // A key → label → target directory so the `device` selector can list each
+    // router unambiguously and the model won't confuse e.g. "Ali Home" with "home".
+    deviceDirectory: deviceDirectory(),
     readOnly,
   });
   const promptCount = registerPrompts(server);

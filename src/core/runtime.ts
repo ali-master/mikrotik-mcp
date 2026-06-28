@@ -58,6 +58,9 @@ export function deviceLabels(): string[] {
 /**
  * Resolve a (possibly undefined) device name to a concrete, existing config key.
  * Accepts a config key OR a device's free-text label; falls back to the default.
+ *
+ * Matching is EXACT (key first, then label) — never fuzzy/substring — so a name
+ * like "Ali Home" can never collapse onto a different device such as "home".
  */
 export function resolveDeviceName(name?: string): string {
   if (name) {
@@ -68,6 +71,30 @@ export function resolveDeviceName(name?: string): string {
   return active.defaultDevice in active.devices
     ? active.defaultDevice
     : (Object.keys(active.devices)[0] ?? active.defaultDevice);
+}
+
+/** One row of the human-facing device directory shown in the `device` selector. */
+export interface DeviceDirectoryEntry {
+  key: string;
+  label?: string;
+  /** Where it connects: `host:port`, or `MAC <addr>` for a MAC-Telnet device. */
+  target: string;
+  isDefault: boolean;
+}
+
+/**
+ * A clear key → label → target listing of every configured device, used to build
+ * the `device` selector's description so the model can tell similarly-named
+ * routers apart (e.g. "Ali Home" at 45.87.6.144 vs "home" at 192.168.7.1) and
+ * never substitute one for another.
+ */
+export function deviceDirectory(): DeviceDirectoryEntry[] {
+  return Object.entries(active.devices).map(([key, dc]) => ({
+    key,
+    label: dc.description?.trim() || undefined,
+    target: dc.mac ? `MAC ${dc.mac}` : `${dc.host}:${dc.port ?? 22}`,
+    isDefault: key === active.defaultDevice,
+  }));
 }
 
 /**
