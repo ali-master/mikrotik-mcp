@@ -138,7 +138,9 @@ export const pptpTools: ToolModule = [
         .opt("mrru", a.mrru)
         .opt("keepalive-timeout", a.keepalive_timeout)
         .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
+        // `.bool` so `disabled=false` emits an explicit `disabled=no` rather than
+        // omitting it (which can leave the new interface disabled).
+        .bool("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);

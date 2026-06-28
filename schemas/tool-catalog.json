@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.26.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 736,
+  "toolCount": 738,
   "tools": [
     {
       "name": "list_interfaces",
@@ -17868,7 +17868,51 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Permanently delete an SSTP client tunnel interface (`/interface sstp-client remove [find name=...]`) by interface name. First verifies the interface exists (count-only check), then removes it; the tunnel is torn down immediately and the action is irreversible. Use `list_sstp_clients` to confirm the interface name before calling this tool. For L2TP, OpenVPN, or PPTP client interfaces see their respective tool scopes (`create_l2tp_client`, `create_ovpn_client`, `create_pptp_client`). To disable the interface without deleting it, no dedicated enable/disable tool exists in this scope — set `disabled=yes` via RouterOS directly. Returns a confirmation message on success or a not-found message if the name does not exist.",
+      "description": "Permanently delete an SSTP client tunnel interface (`/interface sstp-client remove [find name=...]`) by interface name. First verifies the interface exists (count-only check), then removes it; the tunnel is torn down immediately and the action is irreversible. Use `list_sstp_clients` to confirm the interface name before calling this tool. For L2TP, OpenVPN, or PPTP client interfaces see their respective tool scopes (`create_l2tp_client`, `create_ovpn_client`, `create_pptp_client`). To deactivate the interface without deleting it use `disable_sstp_client` (re-activate with `enable_sstp_client`). Returns a confirmation message on success or a not-found message if the name does not exist.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enable_sstp_client",
+      "title": "Enable SSTP Client Interface",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Enables a disabled SSTP client interface (`/interface sstp-client enable [find name=...]`), causing the router to dial out and attempt the TLS connection to the remote SSTP server. Use to activate a tunnel that was created disabled or stopped with `disable_sstp_client`. For L2TP/PPTP/OpenVPN tunnels use their own enable tools. Identifies the interface by name — create one with `create_sstp_client`.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "disable_sstp_client",
+      "title": "Disable SSTP Client Interface",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disables an active SSTP client interface (`/interface sstp-client disable [find name=...]`), tearing down the tunnel without removing its configuration. Use to temporarily stop a tunnel while preserving its settings for later reuse. To re-enable use `enable_sstp_client`; to permanently remove use `remove_sstp_client`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

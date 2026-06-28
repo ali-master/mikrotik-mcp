@@ -158,7 +158,10 @@ export const sstpTools: ToolModule = [
         .opt("keepalive-timeout", a.keepalive_timeout)
         .opt("http-proxy", a.http_proxy)
         .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
+        // `.bool` (not `.flag`) so `disabled=false` emits an explicit
+        // `disabled=no` — otherwise the parameter is omitted and the new
+        // interface can come up disabled, the opposite of what was asked.
+        .bool("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
@@ -235,7 +238,7 @@ export const sstpTools: ToolModule = [
       "First verifies the interface exists (count-only check), then removes it; the tunnel is torn down immediately and the action is irreversible. " +
       "Use `list_sstp_clients` to confirm the interface name before calling this tool. " +
       "For L2TP, OpenVPN, or PPTP client interfaces see their respective tool scopes (`create_l2tp_client`, `create_ovpn_client`, `create_pptp_client`). " +
-      "To disable the interface without deleting it, no dedicated enable/disable tool exists in this scope — set `disabled=yes` via RouterOS directly. " +
+      "To deactivate the interface without deleting it use `disable_sstp_client` (re-activate with `enable_sstp_client`). " +
       "Returns a confirmation message on success or a not-found message if the name does not exist.",
     inputSchema: { name: z.string() },
     async handler(a, ctx) {
@@ -252,6 +255,59 @@ export const sstpTools: ToolModule = [
       );
       if (looksLikeError(result)) return `Failed to remove SSTP client: ${result}`;
       return `SSTP client '${a.name}' removed successfully.`;
+    },
+  }),
+
+  defineTool({
+    name: "enable_sstp_client",
+    title: "Enable SSTP Client Interface",
+    annotations: WRITE_IDEMPOTENT,
+    description:
+      "Enables a disabled SSTP client interface (`/interface sstp-client enable [find name=...]`), " +
+      "causing the router to dial out and attempt the TLS connection to the remote SSTP server. " +
+      "Use to activate a tunnel that was created disabled or stopped with `disable_sstp_client`. " +
+      "For L2TP/PPTP/OpenVPN tunnels use their own enable tools. " +
+      "Identifies the interface by name — create one with `create_sstp_client`.",
+    inputSchema: { name: z.string() },
+    async handler(a, ctx) {
+      ctx.info(`Enabling SSTP client: name=${a.name}`);
+      const count = await executeMikrotikCommand(
+        `/interface sstp-client print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (count.trim() === "0") return `SSTP client '${a.name}' not found.`;
+      const result = await executeMikrotikCommand(
+        `/interface sstp-client enable [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result)) return `Failed to enable SSTP client: ${result}`;
+      return `SSTP client '${a.name}' enabled successfully.`;
+    },
+  }),
+
+  defineTool({
+    name: "disable_sstp_client",
+    title: "Disable SSTP Client Interface",
+    annotations: WRITE_IDEMPOTENT,
+    description:
+      "Disables an active SSTP client interface (`/interface sstp-client disable [find name=...]`), " +
+      "tearing down the tunnel without removing its configuration. " +
+      "Use to temporarily stop a tunnel while preserving its settings for later reuse. " +
+      "To re-enable use `enable_sstp_client`; to permanently remove use `remove_sstp_client`.",
+    inputSchema: { name: z.string() },
+    async handler(a, ctx) {
+      ctx.info(`Disabling SSTP client: name=${a.name}`);
+      const count = await executeMikrotikCommand(
+        `/interface sstp-client print count-only where name="${a.name}"`,
+        ctx,
+      );
+      if (count.trim() === "0") return `SSTP client '${a.name}' not found.`;
+      const result = await executeMikrotikCommand(
+        `/interface sstp-client disable [find name="${a.name}"]`,
+        ctx,
+      );
+      if (looksLikeError(result)) return `Failed to disable SSTP client: ${result}`;
+      return `SSTP client '${a.name}' disabled successfully.`;
     },
   }),
 ];

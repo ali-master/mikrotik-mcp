@@ -159,7 +159,9 @@ export const l2tpTools: ToolModule = [
         .opt("max-mru", a.max_mru)
         .opt("mrru", a.mrru)
         .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
+        // `.bool` so `disabled=false` emits an explicit `disabled=no` rather than
+        // omitting it (which can leave the new interface disabled).
+        .bool("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);

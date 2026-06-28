@@ -154,7 +154,9 @@ export const openvpnTools: ToolModule = [
         .opt("default-profile", a.default_profile)
         .bool("require-client-certificate", a.require_client_certificate)
         .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
+        // `.bool` so `disabled=false` emits an explicit `disabled=no` rather than
+        // omitting it (which can leave the new interface/server disabled).
+        .bool("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
@@ -413,7 +415,9 @@ export const openvpnTools: ToolModule = [
         .bool("use-peer-dns", a.use_peer_dns)
         .bool("verify-server-certificate", a.verify_server_certificate)
         .opt("comment", a.comment)
-        .flag("disabled", a.disabled)
+        // `.bool` so `disabled=false` emits an explicit `disabled=no` rather than
+        // omitting it (which can leave the new interface/server disabled).
+        .bool("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
