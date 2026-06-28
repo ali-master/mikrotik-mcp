@@ -5,7 +5,7 @@
  * importing scripts, and moving files on and off the device filesystem.
  */
 import { z } from "zod";
-import { executeMikrotikCommand } from "../core/connector";
+import { executeMikrotikCommand, uploadFileToDevice } from "../core/connector";
 import { deviceDateStamp } from "../core/datestamp";
 import { WRITE, READ, defineTool, DANGEROUS } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -233,29 +233,54 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "upload_file",
-    title: "Upload File to Device (Simulated)",
+    title: "Upload File to Device",
     annotations: WRITE,
     description:
-      "Accepts a base64-encoded file intended for the device filesystem. NOTE: the current handler" +
-      " only validates the base64 encoding and returns a simulated success — it does not transfer" +
-      " bytes to the device over SSH. Once a `.backup` file is present on the device apply it with" +
-      " `restore_backup`; for `.rsc` configuration scripts use `import_configuration`.",
+      "Transfer a file to the device filesystem over SFTP (the file subsystem RouterOS exposes on its SSH" +
+      " server) — this actually pushes the bytes, then verifies the file appears in `/file`. Use it to put" +
+      " a file on the router before another tool can use it: a `.rsc` config script (then apply with" +
+      " `import_configuration`), a `.backup` file (then `restore_backup`), or a certificate/key (then" +
+      " `import_certificate`). `filename` is the DESTINATION path on the device — root by default" +
+      " (e.g. `config.rsc`), or an external-disk path (e.g. `disk1/cert.pem`). `content_base64` is the file's" +
+      " raw bytes, base64-encoded (binary-safe — works for `.backup`/cert files, not just text). Overwrites" +
+      " any existing file of the same name. NOT available on MAC-Telnet devices (Layer-2 has no file" +
+      " transfer) — there, have the router pull the file itself with `/tool fetch` from a reachable URL.",
     inputSchema: {
-      filename: z.string(),
-      content_base64: z.string(),
+      filename: z
+        .string()
+        .describe("Destination path on the device, e.g. 'config.rsc' or 'disk1/cert.pem'"),
+      content_base64: z.string().describe("File bytes, base64-encoded (binary-safe)"),
     },
     async handler(a, ctx) {
       ctx.info(`Uploading file: filename=${a.filename}`);
-
-      // Decode base64 content
-      try {
-        Buffer.from(a.content_base64, "base64").toString("utf8");
-      } catch (e) {
-        return `Failed to decode file content: ${e instanceof Error ? e.message : String(e)}`;
+      const data = Buffer.from(a.content_base64, "base64");
+      if (data.length === 0) {
+        return "Nothing to upload: content_base64 is empty or decoded to 0 bytes.";
       }
 
-      // This is a simplified version - actual implementation would need proper file upload
-      return `File '${a.filename}' uploaded successfully (simulated).`;
+      try {
+        await uploadFileToDevice(ctx.device, a.filename, data);
+      } catch (e) {
+        return `Failed to upload '${a.filename}': ${e instanceof Error ? e.message : String(e)}`;
+      }
+
+      // Confirm the bytes landed: a successful SFTP write should surface the file
+      // in /file by the same name (RouterOS lists uploaded files there).
+      const verify = await executeMikrotikCommand(
+        `/file print count-only where name="${a.filename}"`,
+        ctx,
+      );
+      if (verify.trim() === "0") {
+        return (
+          `File '${a.filename}' was transferred (${data.length} bytes) but did not appear in /file under ` +
+          "that exact name — RouterOS may have stored it at a slightly different path. Run list_files to " +
+          "confirm, then apply it (import_configuration / restore_backup / import_certificate)."
+        );
+      }
+      return (
+        `File '${a.filename}' uploaded successfully (${data.length} bytes) and is now in /file. Apply it: ` +
+        "import_configuration for a `.rsc`, restore_backup for a `.backup`, or import_certificate for a cert."
+      );
     },
   }),
 

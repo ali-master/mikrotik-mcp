@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.27.0",
+  "version": "3.28.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 758,
   "tools": [
@@ -25552,22 +25552,24 @@
     },
     {
       "name": "upload_file",
-      "title": "Upload File to Device (Simulated)",
+      "title": "Upload File to Device",
       "risk": "write",
       "annotations": {
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Accepts a base64-encoded file intended for the device filesystem. NOTE: the current handler only validates the base64 encoding and returns a simulated success — it does not transfer bytes to the device over SSH. Once a `.backup` file is present on the device apply it with `restore_backup`; for `.rsc` configuration scripts use `import_configuration`.",
+      "description": "Transfer a file to the device filesystem over SFTP (the file subsystem RouterOS exposes on its SSH server) — this actually pushes the bytes, then verifies the file appears in `/file`. Use it to put a file on the router before another tool can use it: a `.rsc` config script (then apply with `import_configuration`), a `.backup` file (then `restore_backup`), or a certificate/key (then `import_certificate`). `filename` is the DESTINATION path on the device — root by default (e.g. `config.rsc`), or an external-disk path (e.g. `disk1/cert.pem`). `content_base64` is the file's raw bytes, base64-encoded (binary-safe — works for `.backup`/cert files, not just text). Overwrites any existing file of the same name. NOT available on MAC-Telnet devices (Layer-2 has no file transfer) — there, have the router pull the file itself with `/tool fetch` from a reachable URL.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "filename": {
-            "type": "string"
+            "type": "string",
+            "description": "Destination path on the device, e.g. 'config.rsc' or 'disk1/cert.pem'"
           },
           "content_base64": {
-            "type": "string"
+            "type": "string",
+            "description": "File bytes, base64-encoded (binary-safe)"
           }
         },
         "required": ["filename", "content_base64"],

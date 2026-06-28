@@ -164,6 +164,37 @@ export class MikroTikSSHClient {
     });
   }
 
+  /**
+   * Upload a file's bytes to the device over SFTP — the file-transfer subsystem
+   * RouterOS exposes on its SSH server. `remotePath` is relative to the SFTP
+   * default directory (the flash root), so `config.rsc` lands at the root and
+   * appears in `/file`; a path like `disk1/config.rsc` targets external disk.
+   * Resolves on success; rejects with a clear reason on failure.
+   */
+  uploadFile(remotePath: string, data: Buffer): Promise<void> {
+    if (!this.client) {
+      return Promise.reject(new Error("Not connected to MikroTik device"));
+    }
+    const openSftp = this.client.sftp.bind(this.client);
+    return new Promise((resolve, reject) => {
+      openSftp((err, sftp) => {
+        if (err) {
+          reject(new Error(`SFTP subsystem unavailable: ${err.message}`));
+          return;
+        }
+        sftp.writeFile(remotePath, data, (werr) => {
+          try {
+            sftp.end();
+          } catch {
+            /* already closed */
+          }
+          if (werr) reject(new Error(`SFTP write failed: ${werr.message}`));
+          else resolve();
+        });
+      });
+    });
+  }
+
   /** Open a persistent interactive shell channel (used by Safe Mode). */
   shell(opts: { term?: string; cols?: number; rows?: number } = {}): Promise<ClientChannel> {
     if (!this.client) {

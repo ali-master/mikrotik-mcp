@@ -9,8 +9,9 @@
  */
 import type { ToolContext } from "./context";
 import { resolveDeviceName, getDevice } from "./runtime";
-import { connectErrorMessage, createDeviceClient } from "./transport";
+import { connectErrorMessage, createDeviceClient, isMacTelnetDevice } from "./transport";
 import { getSafeModeManager } from "../ssh/safe-mode";
+import { MikroTikSSHClient } from "../ssh/client";
 
 async function runOnce(
   command: string,
@@ -65,4 +66,44 @@ export async function executeMikrotikCommand(
   }
   ctx.info(`[${deviceName}] Executing MikroTik command: ${command}`);
   return runOnce(command, ctx.device, opts);
+}
+
+/**
+ * Push a file's bytes onto the device filesystem over SFTP (RouterOS's SSH file
+ * subsystem). Opens a dedicated SSH connection (file transfer is a separate
+ * channel, not a CLI command, so it bypasses the command choke point above).
+ * Throws a clear error for a MAC-Telnet device, which has no file transport.
+ */
+export async function uploadFileToDevice(
+  deviceName: string | undefined,
+  remotePath: string,
+  data: Buffer,
+): Promise<void> {
+  const name = resolveDeviceName(deviceName);
+  const dc = getDevice(deviceName);
+  if (isMacTelnetDevice(dc)) {
+    throw new Error(
+      `Cannot transfer a file to '${name}': it is reached over Layer-2 MAC-Telnet, which has no file ` +
+        "transfer. Configure SSH (host + credentials) for this device, or have the router pull the file " +
+        "itself with /tool fetch from a URL it can reach.",
+    );
+  }
+  const ssh = new MikroTikSSHClient({
+    host: dc.host,
+    username: dc.username,
+    password: dc.password,
+    keyFilename: dc.keyFilename,
+    privateKey: dc.privateKey,
+    keyPassphrase: dc.keyPassphrase,
+    port: dc.port,
+    timeoutMs: dc.timeoutMs,
+  });
+  if (!(await ssh.connect())) {
+    throw new Error(connectErrorMessage(name, dc, ssh.lastError));
+  }
+  try {
+    await ssh.uploadFile(remotePath, data);
+  } finally {
+    ssh.disconnect();
+  }
 }
