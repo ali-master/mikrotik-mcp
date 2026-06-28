@@ -73,7 +73,18 @@ export const certificateTools: ToolModule = [
       days_valid: z.number().int().default(365).describe("Validity period in days"),
       key_usage: z.string().optional().describe("Comma-separated key usages, e.g. 'tls-server'"),
       country: z.string().optional().describe("Country code (C), e.g. 'US'"),
+      state: z.string().optional().describe("State or province (ST)"),
+      locality: z.string().optional().describe("Locality / city (L)"),
       organization: z.string().optional().describe("Organization (O)"),
+      unit: z.string().optional().describe("Organizational unit (OU)"),
+      subject_alt_name: z
+        .string()
+        .optional()
+        .describe("Subject Alternative Name(s), e.g. 'DNS:example.com,IP:1.2.3.4'"),
+      trusted: z
+        .boolean()
+        .optional()
+        .describe("Whether the certificate is trusted for chain verification"),
     },
     async handler(a, ctx) {
       ctx.info(`Creating certificate: name=${a.name}`);
@@ -84,7 +95,12 @@ export const certificateTools: ToolModule = [
         .opt("days-valid", a.days_valid)
         .opt("key-usage", a.key_usage)
         .opt("country", a.country)
+        .opt("state", a.state)
+        .opt("locality", a.locality)
         .opt("organization", a.organization)
+        .opt("unit", a.unit)
+        .opt("subject-alt-name", a.subject_alt_name)
+        .bool("trusted", a.trusted)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);

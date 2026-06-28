@@ -107,6 +107,18 @@ export const neighborTools: ToolModule = [
         .string()
         .optional()
         .describe('LLDP-MED network-policy VLAN, e.g. "auto" or a VLAN id.'),
+      lldp_mac_phy_config: z
+        .boolean()
+        .optional()
+        .describe("Include the IEEE 802.3 MAC/PHY Configuration/Status TLV in LLDP frames."),
+      lldp_max_frame_size: z
+        .boolean()
+        .optional()
+        .describe("Include the Maximum Frame Size TLV in LLDP frames."),
+      lldp_vlan_info: z
+        .boolean()
+        .optional()
+        .describe("Include the Port VLAN ID and VLAN Name TLVs in LLDP frames."),
     },
     async handler(a, ctx) {
       ctx.info("Updating neighbor discovery settings");
@@ -115,6 +127,9 @@ export const neighborTools: ToolModule = [
         .opt("mode", a.mode)
         .opt("protocol", a.protocol)
         .opt("lldp-med-net-policy-vlan", a.lldp_med_net_policy_vlan)
+        .bool("lldp-mac-phy-config", a.lldp_mac_phy_config)
+        .bool("lldp-max-frame-size", a.lldp_max_frame_size)
+        .bool("lldp-vlan-info", a.lldp_vlan_info)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to update discovery settings: ${result}`;

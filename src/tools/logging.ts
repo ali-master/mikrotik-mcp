@@ -121,12 +121,37 @@ export const systemLoggingTools: ToolModule = [
         .describe("Where log messages are written"),
       remote: z.string().optional().describe("Remote syslog server address (target=remote)"),
       remote_port: z.number().int().optional().describe("Remote syslog UDP port"),
+      src_address: z
+        .string()
+        .optional()
+        .describe("Source address used when sending to remote syslog (target=remote)"),
       bsd_syslog: z.boolean().optional().describe("Use BSD-style syslog format"),
       syslog_facility: z.string().optional(),
       syslog_severity: z.string().optional(),
+      syslog_time_format: z
+        .string()
+        .optional()
+        .describe("Syslog timestamp format, e.g. 'bsd' or 'iso8601'"),
       disk_file_name: z.string().optional().describe("File name for target=disk"),
       disk_lines_per_file: z.number().int().optional(),
+      disk_file_count: z
+        .number()
+        .int()
+        .optional()
+        .describe("Number of files used to store log (target=disk)"),
+      disk_stop_on_full: z
+        .boolean()
+        .optional()
+        .describe("Stop saving once disk-lines-per-file is reached (target=disk)"),
       memory_lines: z.number().int().optional().describe("Lines kept for target=memory"),
+      memory_stop_on_full: z
+        .boolean()
+        .optional()
+        .describe("Stop saving once memory-lines is reached (target=memory)"),
+      remember: z
+        .boolean()
+        .optional()
+        .describe("Keep messages not yet displayed in console (target=memory)"),
       email_to: z.string().optional().describe("Recipient address for target=email"),
       disabled: z.boolean().default(false),
     },
@@ -137,12 +162,18 @@ export const systemLoggingTools: ToolModule = [
         .set("target", a.target)
         .opt("remote", a.remote)
         .opt("remote-port", a.remote_port)
+        .opt("src-address", a.src_address)
         .bool("bsd-syslog", a.bsd_syslog)
         .opt("syslog-facility", a.syslog_facility)
         .opt("syslog-severity", a.syslog_severity)
+        .opt("syslog-time-format", a.syslog_time_format)
         .opt("disk-file-name", a.disk_file_name)
         .opt("disk-lines-per-file", a.disk_lines_per_file)
+        .opt("disk-file-count", a.disk_file_count)
+        .bool("disk-stop-on-full", a.disk_stop_on_full)
         .opt("memory-lines", a.memory_lines)
+        .bool("memory-stop-on-full", a.memory_stop_on_full)
+        .bool("remember", a.remember)
         .opt("email-to", a.email_to)
         .flag("disabled", a.disabled)
         .build();

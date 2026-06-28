@@ -25,6 +25,10 @@ export const schedulerTools: ToolModule = [
       interval: z.string().optional().describe("Run interval, e.g. '00:05:00' (0 = run once)"),
       start_time: z.string().optional().describe("Start time, e.g. '12:00:00' or 'startup'"),
       start_date: z.string().optional().describe("Start date, e.g. 'jan/01/2026'"),
+      policy: z
+        .string()
+        .optional()
+        .describe("Permission policy list, e.g. 'read,write,test,policy'"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -36,6 +40,7 @@ export const schedulerTools: ToolModule = [
         .opt("interval", a.interval)
         .opt("start-time", a.start_time)
         .opt("start-date", a.start_date)
+        .opt("policy", a.policy)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -182,6 +187,10 @@ export const schedulerTools: ToolModule = [
     inputSchema: {
       name: z.string().describe("Name for the script"),
       source: z.string().describe("Script source code (may contain spaces/semicolons)"),
+      policy: z
+        .string()
+        .optional()
+        .describe("Permission policy list, e.g. 'read,write,test,policy'"),
       comment: z.string().optional(),
       dont_require_permissions: z
         .boolean()
@@ -193,6 +202,7 @@ export const schedulerTools: ToolModule = [
       const cmd = new Cmd("/system script add")
         .set("name", a.name)
         .set("source", a.source)
+        .opt("policy", a.policy)
         .opt("comment", a.comment)
         .flag("dont-require-permissions", a.dont_require_permissions)
         .build();

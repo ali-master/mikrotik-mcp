@@ -172,6 +172,12 @@ export const networkToolTools: ToolModule = [
       "To view existing entries use `list_netwatch`; to inspect one entry's detail use `get_netwatch`; to delete use `remove_netwatch`.",
     inputSchema: {
       host: z.string().describe("Host to monitor"),
+      type: z
+        .enum(["simple", "icmp", "tcp-conn", "http-get"])
+        .optional()
+        .describe("Probe type: simple, icmp, tcp-conn, or http-get"),
+      port: z.number().int().optional().describe("Target port (tcp-conn/http-get types)"),
+      src_address: z.string().optional().describe("Source address for the probe"),
       interval: z.string().optional().describe("Probe interval, e.g. '00:00:10'"),
       timeout: z.string().optional().describe("Probe timeout, e.g. '00:00:01'"),
       up_script: z.string().optional().describe("Script to run when the host comes up"),
@@ -183,6 +189,9 @@ export const networkToolTools: ToolModule = [
       ctx.info(`Adding netwatch for host ${a.host}`);
       const cmd = new Cmd("/tool netwatch add")
         .set("host", a.host)
+        .opt("type", a.type)
+        .opt("port", a.port)
+        .opt("src-address", a.src_address)
         .opt("interval", a.interval)
         .opt("timeout", a.timeout)
         .opt("up-script", a.up_script)

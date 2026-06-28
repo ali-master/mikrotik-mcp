@@ -120,6 +120,9 @@ export const trafficGeneratorTools: ToolModule = [
       tx_template: z.string().optional().describe("Packet-template name to transmit"),
       packet_size: z.string().optional().describe("Packet size or range"),
       tx_rate: z.string().optional().describe("Transmit rate in bits/second"),
+      num: z.number().int().min(0).max(15).optional().describe("Stream number (0-15)"),
+      pps: z.number().int().optional().describe("Target throughput in packets per second"),
+      mbps: z.number().int().optional().describe("Target throughput in megabits per second"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -131,6 +134,9 @@ export const trafficGeneratorTools: ToolModule = [
         .opt("tx-template", a.tx_template)
         .opt("packet-size", a.packet_size)
         .opt("tx-rate", a.tx_rate)
+        .opt("num", a.num)
+        .opt("pps", a.pps)
+        .opt("mbps", a.mbps)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();

@@ -48,12 +48,31 @@ export const snifferTools: ToolModule = [
     inputSchema: {
       filter_interface: z.string().optional(),
       filter_ip_address: z.string().optional().describe("Match IP/CIDR, e.g. '10.0.0.0/24'"),
+      filter_ipv6_address: z
+        .string()
+        .optional()
+        .describe("Match IPv6/prefix, e.g. '2001:db8::/64'"),
+      filter_mac_address: z.string().optional().describe("Match MAC address"),
       filter_port: z.string().optional(),
       filter_mac_protocol: z.string().optional(),
+      filter_direction: z
+        .enum(["any", "rx", "tx"])
+        .optional()
+        .describe("Capture direction: any, rx, or tx"),
+      filter_operator_between_entries: z
+        .enum(["and", "or"])
+        .optional()
+        .describe("How filter entries combine: and / or"),
+      filter_stream: z.boolean().optional().describe("Capture only TZSP-streamed packets"),
       streaming_enabled: z.boolean().optional(),
       streaming_server: z.string().optional().describe("TZSP target, e.g. '192.168.88.2'"),
       memory_limit: z.string().optional().describe("Buffer size, e.g. '10M'"),
+      memory_scroll: z
+        .boolean()
+        .optional()
+        .describe("Overwrite oldest packets when buffer is full"),
       file_name: z.string().optional().describe("Capture file name (.pcap)"),
+      file_limit: z.number().int().optional().describe("Max capture file size in KiB"),
       only_headers: z.boolean().optional(),
     },
     async handler(a, ctx) {
@@ -61,12 +80,19 @@ export const snifferTools: ToolModule = [
       const cmd = new Cmd("/tool sniffer set")
         .opt("filter-interface", a.filter_interface)
         .opt("filter-ip-address", a.filter_ip_address)
+        .opt("filter-ipv6-address", a.filter_ipv6_address)
+        .opt("filter-mac-address", a.filter_mac_address)
         .opt("filter-port", a.filter_port)
         .opt("filter-mac-protocol", a.filter_mac_protocol)
+        .opt("filter-direction", a.filter_direction)
+        .opt("filter-operator-between-entries", a.filter_operator_between_entries)
+        .bool("filter-stream", a.filter_stream)
         .bool("streaming-enabled", a.streaming_enabled)
         .opt("streaming-server", a.streaming_server)
         .opt("memory-limit", a.memory_limit)
+        .bool("memory-scroll", a.memory_scroll)
         .opt("file-name", a.file_name)
+        .opt("file-limit", a.file_limit)
         .bool("only-headers", a.only_headers);
 
       const built = cmd.build();

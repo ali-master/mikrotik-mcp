@@ -133,15 +133,21 @@ export const systemTools: ToolModule = [
       time_zone_name: z.string().optional().describe("e.g. 'Europe/Amsterdam' or 'manual'"),
       date: z.string().optional().describe("e.g. 'jun/19/2026'"),
       time: z.string().optional().describe("e.g. '13:45:00'"),
+      time_zone_autodetect: z
+        .boolean()
+        .optional()
+        .describe("Auto-detect the time zone from the public IP"),
     },
     async handler(a, ctx) {
       ctx.info("Setting system clock");
-      if (!a.time_zone_name && !a.date && !a.time) return "No clock settings specified.";
+      if (!a.time_zone_name && !a.date && !a.time && a.time_zone_autodetect === undefined)
+        return "No clock settings specified.";
 
       const cmd = new Cmd("/system clock set")
         .opt("time-zone-name", a.time_zone_name)
         .opt("date", a.date)
         .opt("time", a.time)
+        .bool("time-zone-autodetect", a.time_zone_autodetect)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set system clock: ${result}`;
@@ -181,12 +187,19 @@ export const systemTools: ToolModule = [
     inputSchema: {
       enabled: z.boolean().optional().describe("Enable or disable the NTP client"),
       servers: z.string().optional().describe("Comma-separated NTP server list"),
+      mode: z
+        .enum(["unicast", "broadcast", "multicast", "manycast"])
+        .optional()
+        .describe("NTP client operating mode"),
+      vrf: z.string().optional().describe("VRF the NTP client operates in (e.g. 'main')"),
     },
     async handler(a, ctx) {
       ctx.info("Setting NTP client configuration");
       const cmd = new Cmd("/system ntp client set")
         .bool("enabled", a.enabled)
         .opt("servers", a.servers)
+        .opt("mode", a.mode)
+        .opt("vrf", a.vrf)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set NTP client: ${result}`;

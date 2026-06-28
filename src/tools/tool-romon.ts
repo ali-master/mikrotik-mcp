@@ -76,6 +76,7 @@ export const romonTools: ToolModule = [
       secrets: z.string().optional(),
       forbid: z.boolean().optional().describe("Forbid RoMON on this interface"),
       disabled: z.boolean().default(false),
+      comment: z.string().optional().describe("Free-form comment for the port entry"),
     },
     async handler(a, ctx) {
       ctx.info(`Adding romon port: interface=${a.interface}`);
@@ -85,6 +86,7 @@ export const romonTools: ToolModule = [
         .opt("secrets", a.secrets)
         .bool("forbid", a.forbid)
         .flag("disabled", a.disabled)
+        .opt("comment", a.comment)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to add romon port: ${result}`;

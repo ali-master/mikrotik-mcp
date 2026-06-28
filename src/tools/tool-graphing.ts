@@ -27,6 +27,8 @@ export const graphingTools: ToolModule = [
         .optional()
         .describe("Subnet allowed to view the graphs, e.g. '0.0.0.0/0'"),
       store_on_disk: z.boolean().optional(),
+      disabled: z.boolean().optional().describe("Whether the graphing rule is disabled"),
+      comment: z.string().optional().describe("Free-text comment for the rule"),
     },
     async handler(a, ctx) {
       ctx.info(`Adding interface graphing: interface=${a.interface}`);
@@ -34,6 +36,8 @@ export const graphingTools: ToolModule = [
         .set("interface", a.interface)
         .opt("allow-address", a.allow_address)
         .bool("store-on-disk", a.store_on_disk)
+        .bool("disabled", a.disabled)
+        .opt("comment", a.comment)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to add interface graphing: ${result}`;
@@ -58,6 +62,8 @@ export const graphingTools: ToolModule = [
       simple_queue: z.string().default("all").describe("Simple queue to graph, or 'all'"),
       allow_address: z.string().optional(),
       store_on_disk: z.boolean().optional(),
+      disabled: z.boolean().optional().describe("Whether the graphing rule is disabled"),
+      comment: z.string().optional().describe("Free-text comment for the rule"),
     },
     async handler(a, ctx) {
       ctx.info(`Adding queue graphing: simple_queue=${a.simple_queue}`);
@@ -65,6 +71,8 @@ export const graphingTools: ToolModule = [
         .set("simple-queue", a.simple_queue)
         .opt("allow-address", a.allow_address)
         .bool("store-on-disk", a.store_on_disk)
+        .bool("disabled", a.disabled)
+        .opt("comment", a.comment)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to add queue graphing: ${result}`;
@@ -86,12 +94,16 @@ export const graphingTools: ToolModule = [
     inputSchema: {
       allow_address: z.string().optional(),
       store_on_disk: z.boolean().optional(),
+      disabled: z.boolean().optional().describe("Whether the graphing rule is disabled"),
+      comment: z.string().optional().describe("Free-text comment for the rule"),
     },
     async handler(a, ctx) {
       ctx.info("Adding resource graphing");
       const cmd = new Cmd("/tool graphing resource add")
         .opt("allow-address", a.allow_address)
         .bool("store-on-disk", a.store_on_disk)
+        .bool("disabled", a.disabled)
+        .opt("comment", a.comment)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to add resource graphing: ${result}`;

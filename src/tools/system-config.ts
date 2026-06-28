@@ -199,6 +199,15 @@ export const systemConfigTools: ToolModule = [
       multicast: z.boolean().optional(),
       manycast: z.boolean().optional(),
       broadcast_address: z.string().optional().describe("Broadcast address for NTP broadcasts"),
+      use_local_clock: z
+        .boolean()
+        .optional()
+        .describe("Serve time from the device's local clock as reference"),
+      local_clock_stratum: z
+        .number()
+        .int()
+        .optional()
+        .describe("Stratum advertised when using the local clock (1-15)"),
     },
     async handler(a, ctx) {
       ctx.info("Setting NTP server configuration");
@@ -207,7 +216,9 @@ export const systemConfigTools: ToolModule = [
         a.broadcast === undefined &&
         a.multicast === undefined &&
         a.manycast === undefined &&
-        a.broadcast_address === undefined
+        a.broadcast_address === undefined &&
+        a.use_local_clock === undefined &&
+        a.local_clock_stratum === undefined
       ) {
         return "No updates specified.";
       }
@@ -218,6 +229,8 @@ export const systemConfigTools: ToolModule = [
         .bool("multicast", a.multicast)
         .bool("manycast", a.manycast)
         .opt("broadcast-address", a.broadcast_address)
+        .bool("use-local-clock", a.use_local_clock)
+        .opt("local-clock-stratum", a.local_clock_stratum)
         .build();
       const result = await executeMikrotikCommand(cmd, ctx);
       if (looksLikeError(result)) return `Failed to set NTP server: ${result}`;
@@ -390,13 +403,18 @@ export const systemConfigTools: ToolModule = [
       "the SSH connection will drop immediately after and all config will be lost. " +
       "Requires `confirm=true`; without it the command is blocked. " +
       "Optional: `keep_users` (preserve user accounts), `no_defaults` (skip loading default config), " +
-      "`skip_backup` (skip automatic pre-reset backup), `run_after_reset` (script to execute post-reboot). " +
+      "`skip_backup` (skip automatic pre-reset backup), `caps_mode` (reset into CAPsMAN-managed CAP mode), " +
+      "`run_after_reset` (script to execute post-reboot). " +
       "This operation is irreversible — there is no undo.",
     inputSchema: {
       confirm: z.boolean().describe("Must be true to actually ERASE the configuration"),
       keep_users: z.boolean().optional().describe("Keep existing user accounts after reset"),
       no_defaults: z.boolean().optional().describe("Do not load the default configuration"),
       skip_backup: z.boolean().optional().describe("Skip the automatic backup before reset"),
+      caps_mode: z
+        .boolean()
+        .optional()
+        .describe("Reset into CAPsMAN-managed CAP mode instead of standalone"),
       run_after_reset: z.string().optional().describe("Script file to run after reset"),
     },
     async handler(a, ctx) {
@@ -406,6 +424,7 @@ export const systemConfigTools: ToolModule = [
         .flag("keep-users", a.keep_users)
         .flag("no-defaults", a.no_defaults)
         .flag("skip-backup", a.skip_backup)
+        .flag("caps-mode", a.caps_mode)
         .opt("run-after-reset", a.run_after_reset)
         .build();
       await executeMikrotikCommand(cmd, ctx);
