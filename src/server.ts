@@ -67,6 +67,8 @@ export interface CreatedServer {
 }
 
 export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
+  process.title = `Mikrotik MCP Server v${VERSION}`;
+
   const { names, default: defaultDevice } = listDevices();
   const readOnly = getConfig().readOnly;
   const instructions =
