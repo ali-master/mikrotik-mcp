@@ -90,19 +90,17 @@ export class MikroTikMacTelnetClient {
       // OSes only egresses the default-route NIC, so a device on any other segment
       // becomes unreachable. Detect that fallback to give a precise failure reason.
       const askedDiscovery = host === DEFAULT_MAC_TELNET_BROADCAST && !explicitSourceMac;
-      if (askedDiscovery) {
-        // Log the interfaces discovery will spray, with the source MAC it
-        // resolved for each. A same-LAN timeout is usually visible here: the LAN
-        // NIC is missing, or shows an all-zero MAC the device will silently reject.
-        const candidates = listBroadcastInterfaces();
-        logger.info(
-          `[mac-telnet] discovery candidates: ${
-            candidates.length
-              ? candidates.map((i) => `${i.name}(${formatMac(i.mac)}→${i.broadcast})`).join(", ")
-              : "NONE — no usable non-internal IPv4 interface found"
-          }`,
-        );
-      }
+      // The interfaces discovery will spray, each with the real MAC it resolved.
+      // A same-LAN timeout is usually visible here: the LAN NIC is missing, or it
+      // shows an all-zero MAC the device silently rejects (the OS reported no MAC
+      // and the `ifconfig` fallback is unavailable — e.g. running under Node, not
+      // Bun). This list is the single most useful diagnostic, so it goes in the
+      // error too — not just the log the user may never see.
+      const candidates = askedDiscovery ? listBroadcastInterfaces() : [];
+      const candidatesText = candidates.length
+        ? candidates.map((i) => `${i.name}(${formatMac(i.mac)}→${i.broadcast})`).join(", ")
+        : "NONE — no usable non-internal IPv4 interface found (is this host on the device's LAN?)";
+      if (askedDiscovery) logger.info(`[mac-telnet] discovery candidates: ${candidatesText}`);
       logger.info(`[mac-telnet] resolving route to ${this.opts.mac}…`);
       const route = await resolveMacTelnetRoute({
         destinationMac,
@@ -113,10 +111,14 @@ export class MikroTikMacTelnetClient {
       });
       const discoveryFailed = askedDiscovery && route.host === DEFAULT_MAC_TELNET_BROADCAST;
       this.routeHint = discoveryFailed
-        ? "no local interface got a reply from the device during discovery — it is likely on a " +
-          "different Layer-2 segment, mac-server is disabled on the facing interface, or a host " +
-          "firewall is dropping the UDP 20561 reply. Pin the segment by setting `macHost` to the " +
-          "device subnet's broadcast (e.g. 192.168.88.255) and, if needed, `sourceMac`."
+        ? "no local interface got a reply from the device during discovery — MAC-Telnet is Layer-2 " +
+          "only, so the machine running this MCP server MUST be on the SAME Ethernet/Wi-Fi segment as " +
+          "the device (it cannot cross any router or the internet). Likely: this host is not on that " +
+          "segment, mac-server is disabled on the device's facing interface (`/tool mac-server`), or a " +
+          "host firewall is dropping the UDP 20561 reply. " +
+          `Interfaces tried: ${candidatesText}. ` +
+          "To pin it, set the device's `macHost` to the LAN's directed broadcast (e.g. 192.168.88.255) " +
+          "and `sourceMac` to the real MAC of the interface on that LAN."
         : undefined;
       logger.info(
         `[mac-telnet] route: source ${formatMac(route.sourceMac)} → ${route.host} ` +

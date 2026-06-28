@@ -19,6 +19,15 @@ import { Client } from "ssh2";
 import type { ConnectConfig, ClientChannel } from "ssh2";
 import { logger } from "../logger";
 
+/**
+ * How long a one-shot `run()` may go with NO output and NO channel close before
+ * it is treated as wedged and aborted. Generous enough that a slow-but-active
+ * command (large `/export`) — which keeps streaming and re-arms the timer — is
+ * never cut off, but far below the MCP client's multi-minute patience, so a
+ * genuinely stuck command (e.g. a malformed `/system script add`) fails fast.
+ */
+const RUN_IDLE_TIMEOUT_MS = 60_000;
+
 export interface SSHClientOptions {
   host: string;
   username: string;
@@ -128,14 +137,54 @@ export class MikroTikSSHClient {
         const stderrBuf: Buffer[] = [];
         let settled = false;
         let timer: ReturnType<typeof setTimeout> | undefined;
+        let idleTimer: ReturnType<typeof setTimeout> | undefined;
+        const clearTimers = (): void => {
+          if (timer) clearTimeout(timer);
+          if (idleTimer) clearTimeout(idleTimer);
+        };
         const finish = (): void => {
           if (settled) return;
           settled = true;
-          if (timer) clearTimeout(timer);
+          clearTimers();
           const out = decodeOutput(Buffer.concat(stdout));
           const error = decodeOutput(Buffer.concat(stderrBuf));
           resolve(error && !out ? error : out);
         };
+        const fail = (e: Error): void => {
+          if (settled) return;
+          settled = true;
+          clearTimers();
+          try {
+            stream.close();
+          } catch {
+            /* channel already closing */
+          }
+          reject(e);
+        };
+        // Idle watchdog: if the channel goes silent AND never closes, the command
+        // is wedged — e.g. RouterOS waiting for more input from a malformed/
+        // unbalanced command, which would otherwise pin this connection (and the
+        // tool call) until the MCP client gives up minutes later. Abort fast.
+        // Re-armed on every chunk, so a slow-but-streaming command (a large
+        // `/export`) is never cut off while it is actively producing output.
+        const armIdle = (): void => {
+          if (idleTimer) clearTimeout(idleTimer);
+          idleTimer = setTimeout(() => {
+            try {
+              stream.signal("INT");
+            } catch {
+              /* RouterOS may not honour signals */
+            }
+            fail(
+              new Error(
+                `MikroTik command produced no output for ${RUN_IDLE_TIMEOUT_MS / 1000}s and the SSH ` +
+                  "channel never closed — it appears wedged (often a malformed or unbalanced command). " +
+                  `Aborted to avoid hanging the connection. Command: ${command.slice(0, 120)}`,
+              ),
+            );
+          }, RUN_IDLE_TIMEOUT_MS);
+        };
+        armIdle();
         // Interactive RouterOS commands (`/ping`, `/tool bandwidth-test`,
         // `/tool speed-test`) stream a live counter and may never close the
         // exec channel on their own — even when bounded by count/duration. The
@@ -158,8 +207,14 @@ export class MikroTikSSHClient {
         }
         stream
           .on("close", finish)
-          .on("data", (d: Buffer) => stdout.push(d))
-          .stderr.on("data", (d: Buffer) => stderrBuf.push(d));
+          .on("data", (d: Buffer) => {
+            stdout.push(d);
+            armIdle();
+          })
+          .stderr.on("data", (d: Buffer) => {
+            stderrBuf.push(d);
+            armIdle();
+          });
       });
     });
   }
