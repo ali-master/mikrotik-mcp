@@ -1,0 +1,783 @@
+/**
+ * AAA view — full management of the router's RADIUS client (`/radius`) and the
+ * built-in User Manager RADIUS server (`/user-manager`).
+ *
+ * Talks to the dashboard's `/api/aaa/*` routes, which call the same shared
+ * `aaa-data` layer the AAA MCP App view uses — so a change here and a change
+ * from chat run identical RouterOS commands. The CRUD entities (RADIUS servers,
+ * UM users/profiles/limitations/NAS clients/assignments) are all rendered by one
+ * schema-driven {@link EntityManager}; sessions are read-only; RADIUS-incoming
+ * (CoA) and UM global settings are singleton forms.
+ */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { api, postJson } from "./api";
+import { Panel } from "./atoms";
+import { Badge, Button, Input, Note, Select } from "./geist";
+import type { DevicesPayload } from "./types";
+
+type Row = Record<string, string>;
+interface AaaList {
+  available: boolean;
+  rows: Row[];
+}
+interface OpResult {
+  ok: boolean;
+  message: string;
+}
+
+/** A form/column field. `key` is the RouterOS attribute name (server whitelist). */
+interface Field {
+  key: string;
+  label: string;
+  type?: "text" | "number" | "password" | "bool" | "select";
+  options?: string[];
+  placeholder?: string;
+  /** Required when creating (add). */
+  required?: boolean;
+}
+
+interface EntityConfig {
+  slug: string;
+  /** The row column holding the stable id sent on mutations (`.id` or `name`). */
+  idKey: string;
+  /** Columns shown in the table. */
+  columns: { key: string; label: string }[];
+  /** Fields offered in the add/edit form. */
+  fields: Field[];
+  toggle?: boolean;
+  /** Assignment-style entities support add + remove but not edit. */
+  addOnly?: boolean;
+  /** A short empty-state hint. */
+  empty?: string;
+}
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+const isDisabled = (r: Row): boolean => (r.flags ?? "").includes("X") || r.disabled === "yes";
+
+function rowLabel(r: Row, cfg: EntityConfig): string {
+  return r[cfg.idKey] || r.name || r.address || r.user || "(row)";
+}
+
+// ── one CRUD entity (table + inline add/edit form) ───────────────────────────
+function EntityManager({ config, device }: { config: EntityConfig; device: string }): ReactNode {
+  const [data, setData] = useState<AaaList | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState("");
+  // The form: null (closed), "new", or an existing row's id (editing).
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState<Row>({});
+
+  const load = useCallback(async (): Promise<void> => {
+    try {
+      const q = device ? `?device=${encodeURIComponent(device)}` : "";
+      setData(await api<AaaList>(`/api/aaa/list/${config.slug}${q}`));
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [config.slug, device]);
+
+  useEffect(() => {
+    setData(null);
+    setEditing(null);
+    void load();
+  }, [load]);
+
+  const post = useCallback(
+    async (path: string, payload: Record<string, unknown>): Promise<boolean> => {
+      setBusy(true);
+      setError(null);
+      try {
+        const r = await postJson<OpResult>(`/api/aaa/${path}`, {
+          device,
+          slug: config.slug,
+          ...payload,
+        });
+        if (!r.ok) {
+          setError(r.message);
+          return false;
+        }
+        await load();
+        return true;
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [device, config.slug, load],
+  );
+
+  const openAdd = (): void => {
+    setEditing("new");
+    setForm({});
+  };
+  const openEdit = (r: Row): void => {
+    setEditing(r[config.idKey]);
+    // Prefill non-secret fields; secrets are redacted, so leave blank = unchanged.
+    const f: Row = {};
+    for (const fd of config.fields) {
+      if (fd.type === "password") continue;
+      if (fd.key === "disabled") f.disabled = isDisabled(r) ? "yes" : "no";
+      else if (r[fd.key] != null) f[fd.key] = r[fd.key];
+    }
+    setForm(f);
+  };
+
+  const save = async (): Promise<void> => {
+    const ok =
+      editing === "new"
+        ? await post("add", { fields: form })
+        : await post("update", { id: editing, fields: form });
+    if (ok) setEditing(null);
+  };
+
+  const rows = useMemo(() => {
+    const all = data?.rows ?? [];
+    const q = filter.trim().toLowerCase();
+    if (!q) return all;
+    return all.filter((r) =>
+      config.columns.some((c) => (r[c.key] ?? "").toLowerCase().includes(q)),
+    );
+  }, [data, filter, config.columns]);
+
+  if (data && !data.available) {
+    return (
+      <Note type="warning" label="User Manager not installed">
+        This device doesn't have the <code>user-manager</code> package. Install it (System →
+        Packages) and reboot to manage the built-in RADIUS server here.
+      </Note>
+    );
+  }
+
+  return (
+    <div className="aaa-entity">
+      <div className="aaa-entity__toolbar">
+        <Input
+          placeholder="Filter…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="aaa-filter"
+        />
+        <span className="muted">{rows.length} rows</span>
+        <span style={{ flex: 1 }} />
+        <Button size="sm" ghost onClick={() => void load()}>
+          ↻ Refresh
+        </Button>
+        <Button size="sm" type="accent" onClick={openAdd}>
+          + Add
+        </Button>
+      </div>
+
+      {error && (
+        <Note type="error" className="aaa-error">
+          {error}
+        </Note>
+      )}
+
+      {editing && (
+        <div className="aaa-form">
+          <div className="aaa-form__title">
+            {editing === "new" ? `New ${config.slug}` : `Edit ${editing}`}
+          </div>
+          <div className="aaa-form__grid">
+            {config.fields.map((fd) => (
+              <label key={fd.key} className="aaa-field">
+                <span className="aaa-field__label">
+                  {fd.label}
+                  {fd.required && editing === "new" ? " *" : ""}
+                </span>
+                {fd.type === "bool" ? (
+                  <Select
+                    value={form[fd.key] ?? ""}
+                    onChange={(e) => setForm({ ...form, [fd.key]: e.target.value })}
+                  >
+                    <option value="">—</option>
+                    <option value="no">no</option>
+                    <option value="yes">yes</option>
+                  </Select>
+                ) : fd.type === "select" ? (
+                  <Select
+                    value={form[fd.key] ?? ""}
+                    onChange={(e) => setForm({ ...form, [fd.key]: e.target.value })}
+                  >
+                    <option value="">—</option>
+                    {(fd.options ?? []).map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    type={
+                      fd.type === "password" ? "password" : fd.type === "number" ? "number" : "text"
+                    }
+                    placeholder={fd.placeholder ?? (fd.type === "password" ? "(unchanged)" : "")}
+                    value={form[fd.key] ?? ""}
+                    onChange={(e) => setForm({ ...form, [fd.key]: e.target.value })}
+                  />
+                )}
+              </label>
+            ))}
+          </div>
+          <div className="aaa-form__actions">
+            <Button size="sm" type="accent" loading={busy} onClick={() => void save()}>
+              {editing === "new" ? "Create" : "Save"}
+            </Button>
+            <Button size="sm" ghost onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!data ? (
+        <div className="muted">loading…</div>
+      ) : rows.length === 0 ? (
+        <div className="muted aaa-empty">{config.empty ?? "Nothing here yet."}</div>
+      ) : (
+        <div className="aaa-table">
+          <div className="aaa-row aaa-row--head" style={gridCols(config)}>
+            {config.columns.map((c) => (
+              <span key={c.key}>{c.label}</span>
+            ))}
+            <span className="aaa-actions-h">Actions</span>
+          </div>
+          {rows.map((r) => {
+            const id = r[config.idKey];
+            const off = isDisabled(r);
+            return (
+              <div
+                key={id || rowLabel(r, config)}
+                className={`aaa-row${off ? " is-off" : ""}`}
+                style={gridCols(config)}
+              >
+                {config.columns.map((c) => (
+                  <span key={c.key} className="aaa-cell" title={r[c.key] ?? ""}>
+                    {c.key === "_status" ? (
+                      <Badge type={off ? "secondary" : "success"}>
+                        {off ? "disabled" : "enabled"}
+                      </Badge>
+                    ) : (
+                      (r[c.key] ?? "")
+                    )}
+                  </span>
+                ))}
+                <span className="aaa-actions">
+                  {config.toggle && (
+                    <Button
+                      size="sm"
+                      ghost
+                      disabled={busy}
+                      onClick={() => void post("toggle", { id, enable: off })}
+                    >
+                      {off ? "Enable" : "Disable"}
+                    </Button>
+                  )}
+                  {!config.addOnly && (
+                    <Button size="sm" ghost disabled={busy} onClick={() => openEdit(r)}>
+                      Edit
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    type="error"
+                    ghost
+                    disabled={busy}
+                    onClick={() => void post("remove", { id })}
+                  >
+                    Remove
+                  </Button>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function gridCols(config: EntityConfig): CSSProperties {
+  // One column per field + an auto actions column.
+  return {
+    gridTemplateColumns: `${config.columns.map(() => "1fr").join(" ")} minmax(200px, auto)`,
+  };
+}
+
+// ── read-only sessions table ─────────────────────────────────────────────────
+const SESSION_COLS = [
+  "user",
+  "calling-station-id",
+  "nas-ip-address",
+  "started",
+  "ended",
+  "uptime",
+  "download",
+  "upload",
+  "status",
+];
+function SessionsTable({ device }: { device: string }): ReactNode {
+  const [data, setData] = useState<AaaList | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const load = useCallback(async (): Promise<void> => {
+    try {
+      const q = device ? `?device=${encodeURIComponent(device)}` : "";
+      setData(await api<AaaList>(`/api/aaa/list/um-sessions${q}`));
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [device]);
+  useEffect(() => {
+    setData(null);
+    void load();
+    const t = setInterval(() => void load(), 10_000);
+    return () => clearInterval(t);
+  }, [load]);
+
+  if (data && !data.available) {
+    return (
+      <Note type="warning" label="User Manager not installed">
+        The <code>user-manager</code> package isn't installed on this device.
+      </Note>
+    );
+  }
+  const rows = (data?.rows ?? []).filter(
+    (r) => !filter.trim() || (r.user ?? "").toLowerCase().includes(filter.trim().toLowerCase()),
+  );
+  return (
+    <div className="aaa-entity">
+      <div className="aaa-entity__toolbar">
+        <Input
+          placeholder="Filter by user…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="aaa-filter"
+        />
+        <span className="muted">{rows.length} sessions</span>
+        <span style={{ flex: 1 }} />
+        <Button size="sm" ghost onClick={() => void load()}>
+          ↻ Refresh
+        </Button>
+      </div>
+      {error && <Note type="error">{error}</Note>}
+      {!data ? (
+        <div className="muted">loading…</div>
+      ) : rows.length === 0 ? (
+        <div className="muted aaa-empty">No accounting sessions recorded.</div>
+      ) : (
+        <div className="aaa-table aaa-table--scroll">
+          <div className="aaa-row aaa-row--head aaa-row--sessions">
+            {SESSION_COLS.map((c) => (
+              <span key={c}>{c.replace(/-/g, " ")}</span>
+            ))}
+          </div>
+          {rows.map((r, i) => (
+            <div key={r[".id"] || i} className="aaa-row aaa-row--sessions">
+              {SESSION_COLS.map((c) => (
+                <span key={c} className="aaa-cell" title={r[c] ?? ""}>
+                  {r[c] ?? ""}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── singleton settings forms (RADIUS incoming / UM global) ───────────────────
+function SingletonForm({
+  device,
+  getPath,
+  setPath,
+  fields,
+  title,
+  unwrap,
+  extra,
+}: {
+  device: string;
+  getPath: string;
+  setPath: string;
+  fields: Field[];
+  title: string;
+  /** Pull the row out of the GET payload (UM settings nests under `settings`). */
+  unwrap: (payload: unknown) => { available: boolean; row: Row };
+  extra?: ReactNode;
+}): ReactNode {
+  const [row, setRow] = useState<Row | null>(null);
+  const [available, setAvailable] = useState(true);
+  const [form, setForm] = useState<Row>({});
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async (): Promise<void> => {
+    const q = device ? `?device=${encodeURIComponent(device)}` : "";
+    const payload = await api<unknown>(`${getPath}${q}`).catch(() => null);
+    const { available: av, row: r } = unwrap(payload);
+    setAvailable(av);
+    setRow(r);
+    setForm({});
+  }, [device, getPath, unwrap]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const save = async (): Promise<void> => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await postJson<OpResult>(setPath, { device, fields: form });
+      setMsg(r.message);
+      if (r.ok) await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!available) {
+    return (
+      <Note type="warning" label="Not available">
+        {title} is not available on this device.
+      </Note>
+    );
+  }
+  return (
+    <div className="aaa-singleton">
+      <div className="aaa-singleton__title">{title}</div>
+      {row && (
+        <div className="aaa-singleton__current muted">
+          {fields.map((f) => `${f.label}: ${row[f.key] ?? "—"}`).join("  ·  ")}
+        </div>
+      )}
+      <div className="aaa-form__grid">
+        {fields.map((f) => (
+          <label key={f.key} className="aaa-field">
+            <span className="aaa-field__label">{f.label}</span>
+            {f.type === "bool" ? (
+              <Select
+                value={form[f.key] ?? ""}
+                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+              >
+                <option value="">(unchanged)</option>
+                <option value="no">no</option>
+                <option value="yes">yes</option>
+              </Select>
+            ) : (
+              <Input
+                type={f.type === "number" ? "number" : "text"}
+                placeholder={f.placeholder ?? row?.[f.key] ?? ""}
+                value={form[f.key] ?? ""}
+                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+              />
+            )}
+          </label>
+        ))}
+      </div>
+      <div className="aaa-form__actions">
+        <Button size="sm" type="accent" loading={busy} onClick={() => void save()}>
+          Save
+        </Button>
+        {extra}
+        {msg && <span className="muted">{msg}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── entity schemas (mirror the server's allowed-field whitelist) ─────────────
+const RADIUS_CONFIG: EntityConfig = {
+  slug: "radius",
+  idKey: ".id",
+  toggle: true,
+  columns: [
+    { key: "address", label: "Address" },
+    { key: "service", label: "Service" },
+    { key: "authentication-port", label: "Auth" },
+    { key: "accounting-port", label: "Acct" },
+    { key: "protocol", label: "Proto" },
+    { key: "_status", label: "Status" },
+  ],
+  empty: "No RADIUS servers configured.",
+  fields: [
+    { key: "address", label: "Address", required: true, placeholder: "1.2.3.4 or host" },
+    { key: "secret", label: "Secret", type: "password", required: true },
+    {
+      key: "service",
+      label: "Service",
+      required: true,
+      placeholder: "login,ppp,hotspot,wireless,dhcp,ipsec,dot1x",
+    },
+    { key: "authentication-port", label: "Auth port", type: "number", placeholder: "1812" },
+    { key: "accounting-port", label: "Acct port", type: "number", placeholder: "1813" },
+    { key: "timeout", label: "Timeout", placeholder: "300ms" },
+    { key: "src-address", label: "Src address" },
+    { key: "realm", label: "Realm" },
+    { key: "called-id", label: "Called ID" },
+    { key: "domain", label: "Domain" },
+    { key: "protocol", label: "Protocol", type: "select", options: ["udp", "radsec"] },
+    { key: "certificate", label: "Certificate" },
+    { key: "accounting-backup", label: "Acct backup", type: "bool" },
+    { key: "comment", label: "Comment" },
+    { key: "disabled", label: "Disabled", type: "bool" },
+  ],
+};
+
+const UM_USERS_CONFIG: EntityConfig = {
+  slug: "um-users",
+  idKey: "name",
+  toggle: true,
+  columns: [
+    { key: "name", label: "Name" },
+    { key: "group", label: "Group" },
+    { key: "shared-users", label: "Shared" },
+    { key: "caller-id", label: "Caller ID" },
+    { key: "comment", label: "Comment" },
+    { key: "_status", label: "Status" },
+  ],
+  empty: "No RADIUS users.",
+  fields: [
+    { key: "name", label: "Name", required: true },
+    { key: "password", label: "Password", type: "password", required: true },
+    { key: "group", label: "Group" },
+    { key: "shared-users", label: "Shared users", type: "number", placeholder: "1" },
+    { key: "attributes", label: "RADIUS attributes" },
+    { key: "caller-id", label: "Caller ID (MAC)" },
+    { key: "otp-secret", label: "OTP secret", type: "password" },
+    { key: "comment", label: "Comment" },
+    { key: "disabled", label: "Disabled", type: "bool" },
+  ],
+};
+
+const UM_PROFILES_CONFIG: EntityConfig = {
+  slug: "um-profiles",
+  idKey: "name",
+  columns: [
+    { key: "name", label: "Name" },
+    { key: "name-for-users", label: "Display" },
+    { key: "validity", label: "Validity" },
+    { key: "price", label: "Price" },
+    { key: "starts-when", label: "Starts" },
+  ],
+  empty: "No service profiles.",
+  fields: [
+    { key: "name", label: "Name", required: true },
+    { key: "name-for-users", label: "Display name" },
+    { key: "validity", label: "Validity", placeholder: "30d" },
+    { key: "price", label: "Price", type: "number" },
+    {
+      key: "starts-when",
+      label: "Starts when",
+      type: "select",
+      options: ["assigned", "first-auth"],
+    },
+    { key: "override-shared-users", label: "Override shared-users" },
+    { key: "comment", label: "Comment" },
+  ],
+};
+
+const UM_LIMITATIONS_CONFIG: EntityConfig = {
+  slug: "um-limitations",
+  idKey: "name",
+  columns: [
+    { key: "name", label: "Name" },
+    { key: "rate-limit-rx", label: "Rate ↓" },
+    { key: "rate-limit-tx", label: "Rate ↑" },
+    { key: "transfer-limit", label: "Transfer" },
+    { key: "uptime-limit", label: "Uptime" },
+  ],
+  empty: "No limitation templates.",
+  fields: [
+    { key: "name", label: "Name", required: true },
+    { key: "rate-limit-rx", label: "Download rate", placeholder: "10M" },
+    { key: "rate-limit-tx", label: "Upload rate", placeholder: "10M" },
+    { key: "rate-limit-min-rx", label: "Min download (CIR)", placeholder: "2M" },
+    { key: "rate-limit-min-tx", label: "Min upload (CIR)", placeholder: "2M" },
+    { key: "rate-limit-burst-rx", label: "Burst download", placeholder: "20M" },
+    { key: "rate-limit-burst-tx", label: "Burst upload", placeholder: "20M" },
+    { key: "rate-limit-burst-threshold-rx", label: "Burst thr. ↓" },
+    { key: "rate-limit-burst-threshold-tx", label: "Burst thr. ↑" },
+    { key: "rate-limit-burst-time-rx", label: "Burst time ↓", placeholder: "10s" },
+    { key: "rate-limit-burst-time-tx", label: "Burst time ↑", placeholder: "10s" },
+    { key: "rate-limit-priority", label: "Priority (1-8)", type: "number" },
+    { key: "download-limit", label: "Download cap", placeholder: "5G" },
+    { key: "upload-limit", label: "Upload cap", placeholder: "5G" },
+    { key: "transfer-limit", label: "Total transfer cap", placeholder: "10G" },
+    { key: "uptime-limit", label: "Uptime cap", placeholder: "1d" },
+    { key: "reset-counters-interval", label: "Reset interval" },
+    { key: "reset-counters-start-time", label: "Reset start time" },
+    { key: "comment", label: "Comment" },
+  ],
+};
+
+const UM_ROUTERS_CONFIG: EntityConfig = {
+  slug: "um-routers",
+  idKey: "name",
+  toggle: true,
+  columns: [
+    { key: "name", label: "Name" },
+    { key: "address", label: "Address" },
+    { key: "coa-port", label: "CoA port" },
+    { key: "protocol", label: "Proto" },
+    { key: "comment", label: "Comment" },
+    { key: "_status", label: "Status" },
+  ],
+  empty: "No NAS clients registered.",
+  fields: [
+    { key: "name", label: "Name", required: true },
+    { key: "address", label: "Address", required: true, placeholder: "192.168.88.1" },
+    { key: "shared-secret", label: "Shared secret", type: "password", required: true },
+    { key: "coa-port", label: "CoA port", type: "number" },
+    { key: "protocol", label: "Protocol", placeholder: "radius" },
+    { key: "comment", label: "Comment" },
+    { key: "disabled", label: "Disabled", type: "bool" },
+  ],
+};
+
+const UM_ASSIGN_CONFIG: EntityConfig = {
+  slug: "um-user-profiles",
+  idKey: ".id",
+  addOnly: true,
+  columns: [
+    { key: "user", label: "User" },
+    { key: "profile", label: "Profile" },
+    { key: "state", label: "State" },
+    { key: "end-time", label: "Ends" },
+  ],
+  empty: "No profile assignments.",
+  fields: [
+    { key: "user", label: "User", required: true },
+    { key: "profile", label: "Profile", required: true },
+  ],
+};
+
+// ── tabs ─────────────────────────────────────────────────────────────────────
+type TabId =
+  | "radius"
+  | "users"
+  | "profiles"
+  | "limitations"
+  | "nas"
+  | "assignments"
+  | "sessions"
+  | "settings";
+const TABS: { id: TabId; label: string }[] = [
+  { id: "radius", label: "RADIUS Servers" },
+  { id: "users", label: "Users" },
+  { id: "profiles", label: "Profiles" },
+  { id: "limitations", label: "Limitations" },
+  { id: "nas", label: "NAS Clients" },
+  { id: "assignments", label: "Assignments" },
+  { id: "sessions", label: "Sessions" },
+  { id: "settings", label: "Settings" },
+];
+
+const RADIUS_INCOMING_FIELDS: Field[] = [
+  { key: "accept", label: "Accept CoA", type: "bool" },
+  { key: "port", label: "CoA port", type: "number", placeholder: "3799" },
+];
+const UM_SETTINGS_FIELDS: Field[] = [
+  { key: "enabled", label: "Enabled", type: "bool" },
+  { key: "use-profiles", label: "Use profiles", type: "bool" },
+  { key: "certificate", label: "Certificate" },
+  { key: "authentication-port", label: "Auth port", type: "number" },
+  { key: "accounting-port", label: "Acct port", type: "number" },
+];
+
+/** RADIUS client + User Manager (built-in RADIUS server) management. */
+export function AaaView(): ReactNode {
+  const [routers, setRouters] = useState<DevicesPayload | null>(null);
+  const [device, setDevice] = useState("");
+  const [tab, setTab] = useState<TabId>("radius");
+
+  useEffect(() => {
+    void api<DevicesPayload>("/api/devices")
+      .then((r) => {
+        setRouters(r);
+        setDevice((cur) => cur || r.defaultDevice || r.devices[0]?.name || "");
+      })
+      .catch(() => setRouters({ server: "", defaultDevice: "", devices: [] }));
+  }, []);
+
+  const routerOptions = routers?.devices ?? [];
+
+  return (
+    <section className="view">
+      <Panel
+        title="RADIUS & User Manager"
+        className="reveal"
+        extra={
+          routerOptions.length > 1 ? (
+            <Select value={device} onChange={(e) => setDevice(e.target.value)} aria-label="Router">
+              {routerOptions.map((d) => (
+                <option key={d.name} value={d.name}>
+                  {d.name}
+                  {d.isDefault ? " (default)" : ""}
+                </option>
+              ))}
+            </Select>
+          ) : undefined
+        }
+      >
+        <div className="aaa-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={`aaa-tab${tab === t.id ? " is-active" : ""}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "radius" && <EntityManager config={RADIUS_CONFIG} device={device} />}
+        {tab === "users" && <EntityManager config={UM_USERS_CONFIG} device={device} />}
+        {tab === "profiles" && <EntityManager config={UM_PROFILES_CONFIG} device={device} />}
+        {tab === "limitations" && <EntityManager config={UM_LIMITATIONS_CONFIG} device={device} />}
+        {tab === "nas" && <EntityManager config={UM_ROUTERS_CONFIG} device={device} />}
+        {tab === "assignments" && <EntityManager config={UM_ASSIGN_CONFIG} device={device} />}
+        {tab === "sessions" && <SessionsTable device={device} />}
+        {tab === "settings" && (
+          <div className="aaa-settings">
+            <SingletonForm
+              device={device}
+              getPath="/api/aaa/radius-incoming"
+              setPath="/api/aaa/radius-incoming"
+              title="RADIUS Incoming (CoA listener)"
+              fields={RADIUS_INCOMING_FIELDS}
+              unwrap={(p) => ({ available: true, row: (p as Row) ?? {} })}
+              extra={
+                <Button
+                  size="sm"
+                  ghost
+                  onClick={() => void postJson("/api/aaa/radius-reset-counters", { device })}
+                >
+                  Reset RADIUS counters
+                </Button>
+              }
+            />
+            <SingletonForm
+              device={device}
+              getPath="/api/aaa/um-settings"
+              setPath="/api/aaa/um-settings"
+              title="User Manager (built-in RADIUS server)"
+              fields={UM_SETTINGS_FIELDS}
+              unwrap={(p) => {
+                const o = (p as { available?: boolean; settings?: Row }) ?? {};
+                return { available: o.available !== false, row: o.settings ?? {} };
+              }}
+            />
+          </div>
+        )}
+      </Panel>
+    </section>
+  );
+}

@@ -57,6 +57,19 @@ import {
   setDeviceIp,
   setDeviceLabel,
 } from "../tools/connected-devices";
+import {
+  AAA_ENTITIES,
+  addAaaEntity,
+  getRadiusIncoming,
+  getUmSettings,
+  listAaaEntity,
+  removeAaaEntity,
+  resetRadiusCounters,
+  setRadiusIncoming,
+  setUmSettings,
+  toggleAaaEntity,
+  updateAaaEntity,
+} from "../tools/aaa-data";
 import { normalizeExport } from "../snapshots/format";
 import { openSnapshotStore } from "../snapshots/store";
 import type { SnapshotStore } from "../snapshots/store";
@@ -571,6 +584,80 @@ async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
   return null;
 }
 
+// ── AAA (RADIUS + User Manager) API ──────────────────────────────────────────
+/**
+ * Routes for the AAA page — full management of the router's RADIUS client
+ * (`/radius`) and the built-in User Manager RADIUS server (`/user-manager`:
+ * users, profiles, limitations, NAS clients, user-profile assignments, sessions
+ * and global settings). Each handler builds a {@link createContext} for the
+ * requested device and calls the shared `aaa-data` layer, so the dashboard and
+ * the AAA MCP App view run identical RouterOS commands. Reads return
+ * `{ available, rows }`; mutations return `{ ok, message }`.
+ */
+async function aaaRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+  if (!p.startsWith("/api/aaa")) return null;
+
+  const deviceFromQuery = (): string | undefined => url.searchParams.get("device") ?? undefined;
+
+  // ── Reads (GET) ────────────────────────────────────────────────────────────
+  if (req.method === "GET") {
+    if (p === "/api/aaa/entities") {
+      // Static metadata so the UI knows which entities/fields exist.
+      return json({ entities: AAA_ENTITIES });
+    }
+    if (p === "/api/aaa/radius-incoming") {
+      return json(await getRadiusIncoming(createContext(undefined, deviceFromQuery())));
+    }
+    if (p === "/api/aaa/um-settings") {
+      return json(await getUmSettings(createContext(undefined, deviceFromQuery())));
+    }
+    const listMatch = p.match(/^\/api\/aaa\/list\/([\w-]+)$/);
+    if (listMatch) {
+      const slug = listMatch[1] as string;
+      if (!AAA_ENTITIES[slug]) return json({ error: "unknown entity" }, 404);
+      return json(await listAaaEntity(createContext(undefined, deviceFromQuery()), slug));
+    }
+    return null;
+  }
+
+  // ── Writes (POST) ──────────────────────────────────────────────────────────
+  if (req.method === "POST") {
+    const body = (await readJson(req)) as {
+      device?: string;
+      slug?: string;
+      id?: string;
+      enable?: boolean;
+      fields?: Record<string, string>;
+    };
+    const ctx = createContext(undefined, body?.device);
+
+    if (p === "/api/aaa/radius-incoming")
+      return json(await setRadiusIncoming(ctx, body?.fields ?? {}));
+    if (p === "/api/aaa/um-settings") return json(await setUmSettings(ctx, body?.fields ?? {}));
+    if (p === "/api/aaa/radius-reset-counters") return json(await resetRadiusCounters(ctx));
+
+    const slug = body?.slug ?? "";
+    if (!AAA_ENTITIES[slug]) return json({ error: "unknown entity" }, 404);
+
+    if (p === "/api/aaa/add") return json(await addAaaEntity(ctx, slug, body?.fields ?? {}));
+    if (p === "/api/aaa/update") {
+      if (!body?.id) return json({ error: "id required" }, 400);
+      return json(await updateAaaEntity(ctx, slug, body.id, body?.fields ?? {}));
+    }
+    if (p === "/api/aaa/remove") {
+      if (!body?.id) return json({ error: "id required" }, 400);
+      return json(await removeAaaEntity(ctx, slug, body.id));
+    }
+    if (p === "/api/aaa/toggle") {
+      if (!body?.id) return json({ error: "id required" }, 400);
+      return json(await toggleAaaEntity(ctx, slug, body.id, body?.enable === true));
+    }
+  }
+
+  return null;
+}
+
 // Lazily open the config-snapshot store (shared with the snapshot tools), so the
 // SQLite handle isn't created unless the Snapshots page is actually used.
 let snapStorePromise: Promise<SnapshotStore> | null = null;
@@ -895,6 +982,9 @@ export async function runDashboard(
 
       const clientsResp = await clientsRoutes(req, url);
       if (clientsResp) return clientsResp;
+
+      const aaaResp = await aaaRoutes(req, url);
+      if (aaaResp) return aaaResp;
 
       const featureResp = await featureRoutes(req, url);
       if (featureResp) return featureResp;

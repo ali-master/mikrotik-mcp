@@ -81,6 +81,7 @@ import { pptpTools } from "./pptp";
 import { qosArchitectTools } from "./qos-architect";
 import { queueTools } from "./queue";
 import { queueInterfaceTools } from "./queue-interface";
+import { aaaViewTools } from "./aaa-view";
 import { radiusTools } from "./radius";
 import { multiwanTools } from "./multiwan";
 import { routeTools } from "./routes";
@@ -710,6 +711,15 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Built-in RADIUS server: users, profiles, routers (NAS), limitations, sessions (`/user-manager`).",
     tools: userManagerTools,
+  },
+  {
+    label: "RADIUS & UM Dashboard",
+    slug: "aaa-dashboard",
+    group: "AAA",
+    description:
+      "Interactive MCP App dashboard to manage RADIUS + User Manager (servers, users, profiles, " +
+      "limitations, NAS, assignments, sessions, settings) with full add/edit/remove.",
+    tools: aaaViewTools,
   },
   // ── QoS ──────────────────────────────────────────────────────────────────
   {

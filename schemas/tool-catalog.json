@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.23.0",
+  "version": "3.24.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 730,
+  "toolCount": 735,
   "tools": [
     {
       "name": "list_interfaces",
@@ -13769,7 +13769,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Live download/upload throughput for one device, sampled for the connected-devices charts. Reads a matching `/queue simple` entry's stats (rate + cumulative bytes) when one targets the device's IP; otherwise reports source='none' (RouterOS does not track per-device bytes for a wired client without a queue — create_simple_queue with target=<ip> to enable tracking). Returns rx/tx bits-per-second and cumulative bytes so the MCP App can plot the ↓/↑ chart over time.",
+      "description": "Live download/upload throughput for one device, sampled for the connected-devices charts. Reads a matching `/queue simple` entry's stats (rate + cumulative bytes) when one targets the device's IP; otherwise reports source='none' (create_simple_queue with target=<ip> to enable tracking). Returns rx/tx bits-per-second and cumulative bytes so the MCP App can plot the ↓/↑ chart over time.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -13867,7 +13867,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Deny a device all network access by its MAC — installs tagged `/ip firewall filter` drop rules in the forward chain (traffic through the router: internet + inter-VLAN) and the input chain (access to the router itself), and sets its DHCP lease block-access=yes. Blocking by MAC survives the device changing IP. Idempotent: re-blocking an already-blocked device is a no-op. Reverse with allow_device. Identify by MAC.",
+      "description": "Deny a device all network access by its MAC — installs tagged `/ip firewall filter` drop rules in the forward chain (traffic through the router) and the input chain (access to the router itself), and sets its DHCP lease block-access=yes. Blocking by MAC survives the device changing IP. Idempotent. Reverse with allow_device. Identify by MAC.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -19916,6 +19916,168 @@
           }
         },
         "required": ["active_only"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "manage_radius_user_manager",
+      "title": "Manage RADIUS & User Manager (Dashboard)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Opens the interactive RADIUS & User Manager management dashboard — a single view to manage the router's RADIUS client (`/radius`) and the built-in User Manager RADIUS server (`/user-manager`). Tabs cover RADIUS servers, User Manager users, service profiles, rate/quota limitations, NAS clients (routers), profile assignments, accounting sessions, and global/CoA settings, each with full add/edit/enable-disable/remove. `section` picks the tab to open first. For one-off scripted changes the granular tools (add_radius_server, add_user_manager_user, …) still apply.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "section": {
+            "description": "Which section/tab to open first (default 'radius')",
+            "type": "string",
+            "enum": [
+              "radius",
+              "um-users",
+              "um-profiles",
+              "um-user-profiles",
+              "um-routers",
+              "um-limitations",
+              "um-sessions"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_aaa_section",
+      "title": "Get AAA Section (Dashboard)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "App-only helper for the RADIUS & User Manager dashboard: returns the rows of one section (radius, um-users, um-profiles, um-limitations, um-routers, um-user-profiles, um-sessions) as structured records with a stable id and secrets redacted, so the view can render and refresh its table.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "enum": [
+              "radius",
+              "um-users",
+              "um-profiles",
+              "um-user-profiles",
+              "um-routers",
+              "um-limitations",
+              "um-sessions"
+            ]
+          }
+        },
+        "required": ["slug"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "aaa_mutate",
+      "title": "Mutate AAA Row (Dashboard)",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "App-only helper for the RADIUS & User Manager dashboard: performs one create/update/remove/toggle on a section row through the shared whitelist-guarded data layer, then returns the refreshed section so the view can adopt it. `op` is add|update|remove|toggle; `slug` is the section; `id` is the row's stable identifier (RouterOS .id or name); `fields` carries the RouterOS attribute values for add/update; `enable` is the target state for toggle.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": ["add", "update", "remove", "toggle"]
+          },
+          "slug": {
+            "type": "string",
+            "enum": [
+              "radius",
+              "um-users",
+              "um-profiles",
+              "um-user-profiles",
+              "um-routers",
+              "um-limitations",
+              "um-sessions"
+            ]
+          },
+          "id": {
+            "description": "Row stable id (.id or name) for update/remove/toggle",
+            "type": "string"
+          },
+          "enable": {
+            "description": "Target enabled state for op=toggle",
+            "type": "boolean"
+          },
+          "fields": {
+            "description": "RouterOS attribute=value pairs for add/update",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["op", "slug"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_aaa_settings",
+      "title": "Get AAA Settings (Dashboard)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "App-only helper for the RADIUS & User Manager dashboard: returns the singleton settings — RADIUS incoming/CoA listener (`/radius incoming`) and User Manager global settings (`/user-manager`) — for the Settings tab.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_aaa_settings",
+      "title": "Set AAA Settings (Dashboard)",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "App-only helper for the RADIUS & User Manager dashboard: writes a singleton setting and returns the refreshed settings. `target` is radius-incoming (CoA accept/port), um-settings (enabled, use-profiles, certificate, ports) or radius-reset-counters; `fields` carries the RouterOS attribute values.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "enum": ["radius-incoming", "um-settings", "radius-reset-counters"]
+          },
+          "fields": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["target"],
         "additionalProperties": false
       }
     },

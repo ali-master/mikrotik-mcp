@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "get_aaa_section",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "enum": [
+        "radius",
+        "um-users",
+        "um-profiles",
+        "um-user-profiles",
+        "um-routers",
+        "um-limitations",
+        "um-sessions"
+      ]
+    }
+  },
+  "required": ["slug"],
+  "additionalProperties": false
+}

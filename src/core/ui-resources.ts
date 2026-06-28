@@ -73,6 +73,13 @@ export const UI_VIEWS: UiView[] = [
       "Devices on the network with per-device Download/Upload charts, uptime/status, and one-click " +
       "block/allow and pin-IP.",
   },
+  {
+    id: "aaa",
+    name: "MikroTik RADIUS & User Manager",
+    description:
+      "Full RADIUS client + built-in User Manager RADIUS server management: servers, users, " +
+      "profiles, limitations, NAS clients, assignments, sessions and settings, with add/edit/remove.",
+  },
 ];
 
 /** Placeholder served when a view's HTML hasn't been built yet. */

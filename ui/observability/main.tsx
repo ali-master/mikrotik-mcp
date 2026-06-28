@@ -17,6 +17,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { api, deleteEvents } from "./api";
 import { HBars, Panel, StatCard } from "./atoms";
 import { BackupsView } from "./backups";
+import { AaaView } from "./aaa";
 import { ChangePlanView } from "./change-plan";
 import { ActivityChart, RiskDonut } from "./charts";
 import { ClientsView } from "./clients";
@@ -65,6 +66,7 @@ type ViewId =
   | "overview"
   | "devices"
   | "clients"
+  | "aaa"
   | "topology"
   | "packets"
   | "snapshots"
@@ -77,6 +79,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
   { id: "devices", label: "Devices", sub: "Connectivity radar & system health" },
   { id: "clients", label: "Clients", sub: "Connected LAN devices — usage, block/allow, pin IP" },
+  { id: "aaa", label: "RADIUS & UM", sub: "RADIUS client & User Manager RADIUS server" },
   { id: "topology", label: "Topology", sub: "Layer-2 neighbours via MNDP / CDP / LLDP" },
   { id: "packets", label: "Packets", sub: "Live TZSP capture & decode" },
   { id: "snapshots", label: "Snapshots", sub: "Config history & time-travel diff" },
@@ -132,6 +135,7 @@ const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   overview: MONO_ACCENT,
   devices: MONO_ACCENT,
   clients: MONO_ACCENT,
+  aaa: MONO_ACCENT,
   topology: MONO_ACCENT,
   packets: MONO_ACCENT,
   snapshots: MONO_ACCENT,
@@ -170,6 +174,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Pick the router (top-right) to inspect its connected devices; filter by IP, MAC or name.",
       "Click a device to open its live ↓/↑ traffic chart — needs a simple queue targeting its IP.",
       "Block/allow is enforced by MAC, so it survives the device changing IP; “Pin IP” makes its lease static.",
+    ],
+  },
+  aaa: {
+    what: "Full management of the router's RADIUS client (`/radius`) and the built-in User Manager RADIUS server (`/user-manager`): RADIUS servers + incoming CoA, and User Manager users, service profiles, rate/quota limitations, NAS clients, profile assignments, accounting sessions, and global settings.",
+    tips: [
+      "Pick the router (top-right), then switch tabs across RADIUS, Users, Profiles, Limitations, NAS, Assignments, Sessions and Settings.",
+      "Every tab is full CRUD: add, edit, enable/disable and remove — secrets are write-only and shown redacted.",
+      "If a device lacks the user-manager package, the User Manager tabs explain how to install it; RADIUS-client tabs still work.",
     ],
   },
   topology: {
@@ -281,6 +293,12 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <circle cx="9" cy="8" r="3" />
         <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
         <path d="M16 7.5a2.5 2.5 0 0 1 0 5M17.5 19a4.5 4.5 0 0 0-2-3.6" />
+      </>
+    ),
+    aaa: (
+      <>
+        <path d="M12 3 4 6v5c0 4.4 3.2 7.6 8 9 4.8-1.4 8-4.6 8-9V6l-8-3Z" />
+        <path d="M9.5 11.5 11 13l3.5-3.5" />
       </>
     ),
     topology: (
@@ -961,6 +979,9 @@ function App(): ReactNode {
 
         {/* ── Clients ── */}
         {view === "clients" && <ClientsView />}
+
+        {/* ── RADIUS & User Manager ── */}
+        {view === "aaa" && <AaaView />}
 
         {/* ── Topology ── */}
         {view === "topology" &&

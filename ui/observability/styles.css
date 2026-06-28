@@ -2914,3 +2914,132 @@ pre.body.ros .ros-comment {
 .clients-edit .geist-input {
   width: 220px;
 }
+
+/* ── AAA (RADIUS & User Manager) ──────────────────────────────────────────── */
+.aaa-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--mt-border);
+}
+.aaa-tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--mt-text-dim);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 12px;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.aaa-tab:hover {
+  color: var(--mt-text);
+}
+.aaa-tab.is-active {
+  color: var(--mt-text);
+  border-bottom-color: var(--page-accent);
+}
+.aaa-entity__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.aaa-filter {
+  width: 200px;
+}
+.aaa-error {
+  margin-bottom: 10px;
+}
+.aaa-empty {
+  padding: 20px 4px;
+}
+.aaa-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.aaa-table--scroll {
+  overflow-x: auto;
+}
+.aaa-row {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--mt-radius-sm);
+  font-size: 13px;
+}
+.aaa-row--head {
+  color: var(--mt-text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.aaa-row:not(.aaa-row--head):hover {
+  background: var(--mt-surface-2);
+}
+.aaa-row.is-off .aaa-cell {
+  color: var(--mt-text-faint);
+}
+.aaa-row--sessions {
+  grid-template-columns: repeat(9, minmax(90px, 1fr));
+  min-width: 900px;
+}
+.aaa-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aaa-actions,
+.aaa-actions-h {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.aaa-form,
+.aaa-singleton {
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  background: var(--mt-surface-2);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.aaa-form__title,
+.aaa-singleton__title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.aaa-singleton__current {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.aaa-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 14px;
+}
+.aaa-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.aaa-field__label {
+  font-size: 11.5px;
+  color: var(--mt-text-dim);
+}
+.aaa-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.aaa-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

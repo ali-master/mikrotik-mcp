@@ -36,6 +36,7 @@ export default defineConfig({
         firewall: resolve(here, "firewall/index.html"),
         "firewall-audit": resolve(here, "firewall-audit/index.html"),
         "connected-devices": resolve(here, "connected-devices/index.html"),
+        aaa: resolve(here, "aaa/index.html"),
       },
     },
   },

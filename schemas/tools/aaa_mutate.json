@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "aaa_mutate",
+  "type": "object",
+  "properties": {
+    "op": {
+      "type": "string",
+      "enum": ["add", "update", "remove", "toggle"]
+    },
+    "slug": {
+      "type": "string",
+      "enum": [
+        "radius",
+        "um-users",
+        "um-profiles",
+        "um-user-profiles",
+        "um-routers",
+        "um-limitations",
+        "um-sessions"
+      ]
+    },
+    "id": {
+      "description": "Row stable id (.id or name) for update/remove/toggle",
+      "type": "string"
+    },
+    "enable": {
+      "description": "Target enabled state for op=toggle",
+      "type": "boolean"
+    },
+    "fields": {
+      "description": "RouterOS attribute=value pairs for add/update",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["op", "slug"],
+  "additionalProperties": false
+}

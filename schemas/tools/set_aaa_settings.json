@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_aaa_settings",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "enum": ["radius-incoming", "um-settings", "radius-reset-counters"]
+    },
+    "fields": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}

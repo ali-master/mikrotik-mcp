@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "manage_radius_user_manager",
+  "type": "object",
+  "properties": {
+    "section": {
+      "description": "Which section/tab to open first (default 'radius')",
+      "type": "string",
+      "enum": [
+        "radius",
+        "um-users",
+        "um-profiles",
+        "um-user-profiles",
+        "um-routers",
+        "um-limitations",
+        "um-sessions"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
