@@ -63,8 +63,23 @@ export const ipDhcpClientTools: ToolModule = [
     inputSchema: {
       interface: z.string().describe("Interface to run the DHCP client on, e.g. 'ether1'"),
       add_default_route: z.boolean().default(true).describe("Install the received default gateway"),
+      default_route_distance: z
+        .number()
+        .int()
+        .optional()
+        .describe("Administrative distance of the installed default route"),
       use_peer_dns: z.boolean().default(true),
       use_peer_ntp: z.boolean().default(true),
+      dhcp_options: z
+        .string()
+        .optional()
+        .describe("Comma-separated DHCP options to send, e.g. 'hostname,clientid'"),
+      client_id: z
+        .string()
+        .optional()
+        .describe("Override the DHCP client identifier sent to the server"),
+      host_name: z.string().optional().describe("Host name sent to the DHCP server"),
+      script: z.string().optional().describe("Script run on lease bound/released"),
       disabled: z.boolean().default(false),
       comment: z.string().optional(),
     },
@@ -73,8 +88,13 @@ export const ipDhcpClientTools: ToolModule = [
       const cmd = new Cmd("/ip dhcp-client add")
         .set("interface", a.interface)
         .bool("add-default-route", a.add_default_route)
+        .opt("default-route-distance", a.default_route_distance)
         .bool("use-peer-dns", a.use_peer_dns)
         .bool("use-peer-ntp", a.use_peer_ntp)
+        .opt("dhcp-options", a.dhcp_options)
+        .opt("client-id", a.client_id)
+        .opt("host-name", a.host_name)
+        .opt("script", a.script)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -99,8 +119,23 @@ export const ipDhcpClientTools: ToolModule = [
     inputSchema: {
       interface: z.string(),
       add_default_route: z.boolean().optional(),
+      default_route_distance: z
+        .number()
+        .int()
+        .optional()
+        .describe("Administrative distance of the installed default route"),
       use_peer_dns: z.boolean().optional(),
       use_peer_ntp: z.boolean().optional(),
+      dhcp_options: z
+        .string()
+        .optional()
+        .describe("Comma-separated DHCP options to send, e.g. 'hostname,clientid'"),
+      client_id: z
+        .string()
+        .optional()
+        .describe("Override the DHCP client identifier sent to the server"),
+      host_name: z.string().optional().describe("Host name sent to the DHCP server"),
+      script: z.string().optional().describe("Script run on lease bound/released"),
       disabled: z.boolean().optional(),
     },
     async handler(a, ctx) {
@@ -108,8 +143,13 @@ export const ipDhcpClientTools: ToolModule = [
       const base = `/ip dhcp-client set [find interface="${a.interface}"]`;
       const cmd = new Cmd(base)
         .bool("add-default-route", a.add_default_route)
+        .opt("default-route-distance", a.default_route_distance)
         .bool("use-peer-dns", a.use_peer_dns)
         .bool("use-peer-ntp", a.use_peer_ntp)
+        .opt("dhcp-options", a.dhcp_options)
+        .opt("client-id", a.client_id)
+        .opt("host-name", a.host_name)
+        .opt("script", a.script)
         .bool("disabled", a.disabled)
         .build();
       if (cmd === base) return "No updates specified.";

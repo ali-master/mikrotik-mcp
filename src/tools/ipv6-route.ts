@@ -19,6 +19,8 @@ interface AddIpv6RouteArgs {
   pref_src?: string;
   check_gateway?: string;
   vrf_interface?: string;
+  route_tag?: number;
+  suppress_hw_offload?: boolean;
   comment?: string;
   disabled?: boolean;
 }
@@ -37,6 +39,8 @@ async function addIpv6Route(a: AddIpv6RouteArgs, ctx: ToolContext): Promise<stri
     .opt("pref-src", a.pref_src)
     .opt("check-gateway", a.check_gateway)
     .opt("vrf-interface", a.vrf_interface)
+    .opt("route-tag", a.route_tag)
+    .bool("suppress-hw-offload", a.suppress_hw_offload)
     .opt("comment", a.comment)
     .flag("disabled", a.disabled)
     .build();
@@ -106,6 +110,11 @@ export const ipv6RouteTools: ToolModule = [
       pref_src: z.string().optional(),
       check_gateway: z.string().optional().describe("'ping', 'arp', 'bfd' or 'none'"),
       vrf_interface: z.string().optional(),
+      route_tag: z.number().int().optional().describe("Route tag for matching in routing filters"),
+      suppress_hw_offload: z
+        .boolean()
+        .optional()
+        .describe("Disable hardware offloading for this route"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },

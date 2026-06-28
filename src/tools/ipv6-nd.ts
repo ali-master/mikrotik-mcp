@@ -39,6 +39,10 @@ export const ipv6NdTools: ToolModule = [
       other_configuration: z.boolean().optional(),
       advertise_dns: z.boolean().optional(),
       advertise_mac_address: z.boolean().optional(),
+      dns: z
+        .string()
+        .optional()
+        .describe("Recursive DNS servers advertised via RA (RDNSS), comma-separated IPv6"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -58,6 +62,7 @@ export const ipv6NdTools: ToolModule = [
         .bool("other-configuration", a.other_configuration)
         .bool("advertise-dns", a.advertise_dns)
         .bool("advertise-mac-address", a.advertise_mac_address)
+        .opt("dns", a.dns)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -160,6 +165,10 @@ export const ipv6NdTools: ToolModule = [
       other_configuration: z.boolean().optional(),
       advertise_dns: z.boolean().optional(),
       advertise_mac_address: z.boolean().optional(),
+      dns: z
+        .string()
+        .optional()
+        .describe("Recursive DNS servers advertised via RA (RDNSS), comma-separated IPv6"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -179,7 +188,8 @@ export const ipv6NdTools: ToolModule = [
         .bool("managed-address-configuration", a.managed_address_configuration)
         .bool("other-configuration", a.other_configuration)
         .bool("advertise-dns", a.advertise_dns)
-        .bool("advertise-mac-address", a.advertise_mac_address);
+        .bool("advertise-mac-address", a.advertise_mac_address)
+        .opt("dns", a.dns);
       if (a.comment !== undefined) cmd.raw(`comment=${quoteValue(a.comment)}`);
       if (a.disabled !== undefined) cmd.raw(`disabled=${yesno(a.disabled)}`);
 

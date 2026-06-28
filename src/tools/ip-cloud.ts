@@ -45,12 +45,17 @@ export const ipCloudTools: ToolModule = [
         .optional()
         .describe("Enable (true) or disable (false) the DDNS name"),
       update_time: z.boolean().optional().describe("Also sync the router clock from the cloud"),
+      ddns_update_interval: z
+        .string()
+        .optional()
+        .describe("How often to push DDNS updates (e.g. '1m', '1h') or 'none' for the default"),
     },
     async handler(a, ctx) {
       ctx.info("Configuring IP cloud");
       const cmd = new Cmd("/ip cloud set")
         .bool("ddns-enabled", a.ddns_enabled)
         .bool("update-time", a.update_time)
+        .opt("ddns-update-interval", a.ddns_update_interval)
         .build();
       if (cmd === "/ip cloud set") return "No updates specified.";
       const result = await executeMikrotikCommand(cmd, ctx);

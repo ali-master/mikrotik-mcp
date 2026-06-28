@@ -8,8 +8,13 @@ import { yesno, whereClause, quoteValue, looksLikeError, isEmpty, Cmd } from "..
 
 interface AddDnsStaticArgs {
   name: string;
+  type?: string;
   address?: string;
   cname?: string;
+  ns?: string;
+  forward_to?: string;
+  match_subdomain?: boolean;
+  address_list?: string;
   mx_preference?: number;
   mx_exchange?: string;
   text?: string;
@@ -26,8 +31,13 @@ interface AddDnsStaticArgs {
 interface UpdateDnsStaticArgs {
   entry_id: string;
   name?: string;
+  type?: string;
   address?: string;
   cname?: string;
+  ns?: string;
+  forward_to?: string;
+  match_subdomain?: boolean;
+  address_list?: string;
   mx_preference?: number;
   mx_exchange?: string;
   text?: string;
@@ -45,8 +55,13 @@ async function addDnsStatic(a: AddDnsStaticArgs, ctx: ToolContext): Promise<stri
   ctx.info(`Adding static DNS entry: name=${a.name}`);
 
   const cmd = new Cmd("/ip dns static add").set("name", a.name);
+  cmd.opt("type", a.type);
   cmd.opt("address", a.address);
   cmd.opt("cname", a.cname);
+  cmd.opt("ns", a.ns);
+  cmd.opt("forward-to", a.forward_to);
+  cmd.flag("match-subdomain", a.match_subdomain);
+  cmd.opt("address-list", a.address_list);
   if (a.mx_preference !== undefined && a.mx_exchange) {
     cmd.set("mx-preference", a.mx_preference).set("mx-exchange", a.mx_exchange);
   }
@@ -98,10 +113,19 @@ async function updateDnsStatic(a: UpdateDnsStaticArgs, ctx: ToolContext): Promis
 
   const updates: string[] = [];
   if (a.name) updates.push(`name=${quoteValue(a.name)}`);
+  if (a.type !== undefined) updates.push(a.type === "" ? "!type" : `type=${quoteValue(a.type)}`);
   if (a.address !== undefined)
     updates.push(a.address === "" ? "!address" : `address=${quoteValue(a.address)}`);
   if (a.cname !== undefined)
     updates.push(a.cname === "" ? "!cname" : `cname=${quoteValue(a.cname)}`);
+  if (a.ns !== undefined) updates.push(a.ns === "" ? "!ns" : `ns=${quoteValue(a.ns)}`);
+  if (a.forward_to !== undefined)
+    updates.push(a.forward_to === "" ? "!forward-to" : `forward-to=${quoteValue(a.forward_to)}`);
+  if (a.match_subdomain !== undefined) updates.push(`match-subdomain=${yesno(a.match_subdomain)}`);
+  if (a.address_list !== undefined)
+    updates.push(
+      a.address_list === "" ? "!address-list" : `address-list=${quoteValue(a.address_list)}`,
+    );
   if (a.mx_preference !== undefined) updates.push(`mx-preference=${a.mx_preference}`);
   if (a.mx_exchange !== undefined)
     updates.push(
@@ -151,11 +175,36 @@ export const dnsTools: ToolModule = [
       allow_remote_requests: z.boolean().default(false),
       max_udp_packet_size: z.number().int().optional(),
       max_concurrent_queries: z.number().int().optional(),
+      max_concurrent_tcp_sessions: z
+        .number()
+        .int()
+        .optional()
+        .describe("Maximum number of simultaneous TCP DNS sessions"),
+      query_server_timeout: z
+        .string()
+        .optional()
+        .describe('Per-upstream-server query timeout, e.g. "2s"'),
+      query_total_timeout: z
+        .string()
+        .optional()
+        .describe('Total query timeout across all servers, e.g. "10s"'),
       cache_size: z.number().int().optional(),
       cache_max_ttl: z.string().optional(),
       use_doh: z.boolean().default(false),
       doh_server: z.string().optional(),
       verify_doh_cert: z.boolean().default(true),
+      doh_max_server_connections: z
+        .number()
+        .int()
+        .optional()
+        .describe("Maximum concurrent connections to the DoH server"),
+      doh_max_concurrent_queries: z
+        .number()
+        .int()
+        .optional()
+        .describe("Maximum concurrent queries over DoH"),
+      doh_timeout: z.string().optional().describe('DoH request timeout, e.g. "5s"'),
+      vrf: z.string().optional().describe("VRF the resolver uses for upstream queries"),
     },
     async handler(a, ctx) {
       ctx.info(`Setting DNS servers: ${a.servers.join(", ")}`);
@@ -165,11 +214,20 @@ export const dnsTools: ToolModule = [
         .bool("allow-remote-requests", a.allow_remote_requests)
         .opt("max-udp-packet-size", a.max_udp_packet_size)
         .opt("max-concurrent-queries", a.max_concurrent_queries)
+        .opt("max-concurrent-tcp-sessions", a.max_concurrent_tcp_sessions)
+        .opt("query-server-timeout", a.query_server_timeout)
+        .opt("query-total-timeout", a.query_total_timeout)
         .opt("cache-size", a.cache_size)
-        .opt("cache-max-ttl", a.cache_max_ttl);
+        .opt("cache-max-ttl", a.cache_max_ttl)
+        .opt("vrf", a.vrf);
 
       if (a.use_doh && a.doh_server) {
-        cmd.set("use-doh-server", a.doh_server).bool("verify-doh-cert", a.verify_doh_cert);
+        cmd
+          .set("use-doh-server", a.doh_server)
+          .bool("verify-doh-cert", a.verify_doh_cert)
+          .opt("doh-max-server-connections", a.doh_max_server_connections)
+          .opt("doh-max-concurrent-queries", a.doh_max_concurrent_queries)
+          .opt("doh-timeout", a.doh_timeout);
       }
 
       const result = await executeMikrotikCommand(cmd.build(), ctx);
@@ -214,8 +272,19 @@ export const dnsTools: ToolModule = [
       "Returns the created entry's full detail including its `.id`.",
     inputSchema: {
       name: z.string(),
+      type: z
+        .string()
+        .optional()
+        .describe('Record type, e.g. "A", "AAAA", "CNAME", "NS", "FWD", "MX", "SRV", "TXT"'),
       address: z.string().optional(),
       cname: z.string().optional(),
+      ns: z.string().optional().describe("Name server FQDN for an NS-type record"),
+      forward_to: z.string().optional().describe("DNS server to forward to for a FWD-type record"),
+      match_subdomain: z.boolean().optional().describe("Also match all subdomains of name/regexp"),
+      address_list: z
+        .string()
+        .optional()
+        .describe("Add resolved addresses to this firewall address-list"),
       mx_preference: z.number().int().optional(),
       mx_exchange: z.string().optional(),
       text: z.string().optional(),
@@ -308,8 +377,19 @@ export const dnsTools: ToolModule = [
     inputSchema: {
       entry_id: z.string(),
       name: z.string().optional(),
+      type: z
+        .string()
+        .optional()
+        .describe('Record type, e.g. "A", "AAAA", "CNAME", "NS", "FWD", "MX", "SRV", "TXT"'),
       address: z.string().optional(),
       cname: z.string().optional(),
+      ns: z.string().optional().describe("Name server FQDN for an NS-type record"),
+      forward_to: z.string().optional().describe("DNS server to forward to for a FWD-type record"),
+      match_subdomain: z.boolean().optional().describe("Also match all subdomains of name/regexp"),
+      address_list: z
+        .string()
+        .optional()
+        .describe("Add resolved addresses to this firewall address-list"),
       mx_preference: z.number().int().optional(),
       mx_exchange: z.string().optional(),
       text: z.string().optional(),

@@ -47,6 +47,18 @@ export const ipv6DhcpClientTools: ToolModule = [
       use_peer_dns: z.boolean().optional(),
       rapid_commit: z.boolean().optional(),
       dhcp_options: z.string().optional().describe("Comma-separated custom DHCP option names"),
+      use_interface_duid: z
+        .boolean()
+        .optional()
+        .describe("Use the interface MAC address to generate the DUID instead of the system DUID"),
+      custom_duid: z
+        .string()
+        .optional()
+        .describe("Override the DUID with a custom hex value, e.g. '0x00010001...'"),
+      script: z
+        .string()
+        .optional()
+        .describe("RouterOS script run on lease bind/release/renew events"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -63,6 +75,9 @@ export const ipv6DhcpClientTools: ToolModule = [
         .bool("use-peer-dns", a.use_peer_dns)
         .bool("rapid-commit", a.rapid_commit)
         .opt("dhcp-options", a.dhcp_options)
+        .bool("use-interface-duid", a.use_interface_duid)
+        .opt("custom-duid", a.custom_duid)
+        .opt("script", a.script)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();

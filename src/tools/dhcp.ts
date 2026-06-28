@@ -30,6 +30,31 @@ export const dhcpTools: ToolModule = [
       disabled: z.boolean().default(false),
       authoritative: Authoritative.default("yes"),
       delay_threshold: z.string().optional(),
+      add_arp: z
+        .boolean()
+        .optional()
+        .describe(
+          "Add dynamic ARP entry for each lease (use with reply-only ARP on the interface)",
+        ),
+      always_broadcast: z.boolean().optional().describe("Always send replies as broadcast"),
+      bootp_support: z
+        .enum(["none", "static", "dynamic"])
+        .optional()
+        .describe("Which BOOTP requests to answer"),
+      conflict_detection: z
+        .boolean()
+        .optional()
+        .describe("Ping/ARP-probe an address before offering it to detect conflicts"),
+      use_radius: z
+        .enum(["yes", "no", "accounting"])
+        .optional()
+        .describe("Use RADIUS for leases (accounting = RADIUS accounting only)"),
+      relay: z.string().optional().describe("DHCP relay address this server services"),
+      server_address: z
+        .string()
+        .optional()
+        .describe("Override the server identifier address sent to clients"),
+      lease_script: z.string().optional().describe("Script run on lease assign/release"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -43,6 +68,14 @@ export const dhcpTools: ToolModule = [
         .flag("disabled", a.disabled)
         .raw(a.authoritative !== "yes" ? `authoritative=${a.authoritative}` : null)
         .opt("delay-threshold", a.delay_threshold)
+        .bool("add-arp", a.add_arp)
+        .bool("always-broadcast", a.always_broadcast)
+        .opt("bootp-support", a.bootp_support)
+        .bool("conflict-detection", a.conflict_detection)
+        .opt("use-radius", a.use_radius)
+        .opt("relay", a.relay)
+        .opt("server-address", a.server_address)
+        .opt("lease-script", a.lease_script)
         .opt("comment", a.comment)
         .build();
 
@@ -133,6 +166,23 @@ export const dhcpTools: ToolModule = [
       wins_servers: z.array(z.string()).optional(),
       ntp_servers: z.array(z.string()).optional(),
       dhcp_option: z.array(z.string()).optional(),
+      dhcp_option_set: z
+        .string()
+        .optional()
+        .describe("Named option set (`/ip dhcp-server option sets`) to append"),
+      dns_none: z
+        .boolean()
+        .optional()
+        .describe("Do not send any DNS server to clients (overrides dns_servers)"),
+      next_server: z.string().optional().describe("Next-server (siaddr) address for PXE/TFTP boot"),
+      boot_file_name: z
+        .string()
+        .optional()
+        .describe("Boot file name (option 67) for PXE/TFTP boot"),
+      caps_manager: z
+        .array(z.string())
+        .optional()
+        .describe("CAPsMAN address(es) advertised to CAPs via DHCP"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -147,6 +197,11 @@ export const dhcpTools: ToolModule = [
         .opt("wins-server", a.wins_servers?.length ? a.wins_servers.join(",") : undefined)
         .opt("ntp-server", a.ntp_servers?.length ? a.ntp_servers.join(",") : undefined)
         .opt("dhcp-option", a.dhcp_option?.length ? a.dhcp_option.join(",") : undefined)
+        .opt("dhcp-option-set", a.dhcp_option_set)
+        .bool("dns-none", a.dns_none)
+        .opt("next-server", a.next_server)
+        .opt("boot-file-name", a.boot_file_name)
+        .opt("caps-manager", a.caps_manager?.length ? a.caps_manager.join(",") : undefined)
         .opt("comment", a.comment)
         .build();
 

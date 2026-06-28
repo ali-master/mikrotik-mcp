@@ -6,6 +6,7 @@ import type { ToolModule } from "../core/registry";
 import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const AcceptMode = z.enum(["yes", "no", "yes-if-forwarding-disabled"]);
+const MultipathHashPolicy = z.enum(["l3", "l4", "l3-inner"]);
 
 export const ipv6SettingsTools: ToolModule = [
   defineTool({
@@ -52,7 +53,31 @@ export const ipv6SettingsTools: ToolModule = [
       forward: z.boolean().optional(),
       accept_redirects: AcceptMode.optional(),
       accept_router_advertisements: AcceptMode.optional(),
+      accept_router_advertisements_on: z
+        .string()
+        .optional()
+        .describe("Interface list on which to accept router advertisements (e.g. 'all')."),
       max_neighbor_entries: z.number().int().optional(),
+      min_neighbor_entries: z
+        .number()
+        .int()
+        .optional()
+        .describe(
+          "Lower threshold for the IPv6 neighbor cache below which entries are not reclaimed.",
+        ),
+      soft_max_neighbor_entries: z
+        .number()
+        .int()
+        .optional()
+        .describe("Soft ceiling for the IPv6 neighbor cache before aggressive garbage collection."),
+      stale_neighbor_timeout: z
+        .string()
+        .optional()
+        .describe("Time a stale IPv6 neighbor entry is kept before revalidation (e.g. '60')."),
+      multipath_hash_policy: MultipathHashPolicy.optional().describe(
+        "Hashing fields for ECMP multipath route selection: l3, l4, or l3-inner.",
+      ),
+      allow_fast_path: z.boolean().optional().describe("Allow IPv6 FastPath processing."),
     },
     async handler(a, ctx) {
       ctx.info("Updating IPv6 settings");
@@ -61,7 +86,13 @@ export const ipv6SettingsTools: ToolModule = [
         .bool("forward", a.forward)
         .opt("accept-redirects", a.accept_redirects)
         .opt("accept-router-advertisements", a.accept_router_advertisements)
-        .opt("max-neighbor-entries", a.max_neighbor_entries);
+        .opt("accept-router-advertisements-on", a.accept_router_advertisements_on)
+        .opt("max-neighbor-entries", a.max_neighbor_entries)
+        .opt("min-neighbor-entries", a.min_neighbor_entries)
+        .opt("soft-max-neighbor-entries", a.soft_max_neighbor_entries)
+        .opt("stale-neighbor-timeout", a.stale_neighbor_timeout)
+        .opt("multipath-hash-policy", a.multipath_hash_policy)
+        .bool("allow-fast-path", a.allow_fast_path);
 
       const built = cmd.build();
       if (built === "/ipv6 settings set") return "No updates specified.";

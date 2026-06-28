@@ -58,6 +58,7 @@ export const ipServiceTools: ToolModule = [
       address: z.string().optional().describe("Allowed source subnets, comma-separated"),
       disabled: z.boolean().optional().describe("Disable (true) or enable (false) the service"),
       certificate: z.string().optional().describe("Certificate name (for TLS services)"),
+      vrf: z.string().optional().describe("VRF the service is bound to (default 'main')"),
     },
     async handler(a, ctx) {
       ctx.info(`Updating IP service: name=${a.name}`);
@@ -66,6 +67,7 @@ export const ipServiceTools: ToolModule = [
         .opt("address", a.address)
         .bool("disabled", a.disabled)
         .opt("certificate", a.certificate)
+        .opt("vrf", a.vrf)
         .build();
 
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";

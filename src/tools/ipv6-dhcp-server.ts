@@ -32,6 +32,15 @@ export const ipv6DhcpServerTools: ToolModule = [
       rapid_commit: z.boolean().optional(),
       preference: z.number().int().min(0).max(255).optional(),
       route_distance: z.number().int().optional(),
+      use_radius: z.boolean().optional().describe("Authenticate clients via RADIUS"),
+      allow_dual_stack_queue: z
+        .boolean()
+        .optional()
+        .describe("Share a simple queue with the client's IPv4 DHCP lease"),
+      parent_queue: z
+        .string()
+        .optional()
+        .describe("Parent queue for dynamically created simple queues"),
       dhcp_option: z.array(z.string()).optional().describe("Custom DHCPv6 option names"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
@@ -47,6 +56,9 @@ export const ipv6DhcpServerTools: ToolModule = [
         .bool("rapid-commit", a.rapid_commit)
         .opt("preference", a.preference)
         .opt("route-distance", a.route_distance)
+        .bool("use-radius", a.use_radius)
+        .bool("allow-dual-stack-queue", a.allow_dual_stack_queue)
+        .opt("parent-queue", a.parent_queue)
         .opt("dhcp-option", a.dhcp_option?.length ? a.dhcp_option.join(",") : undefined)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
