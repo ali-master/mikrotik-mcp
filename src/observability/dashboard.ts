@@ -56,6 +56,7 @@ import {
   sampleDeviceTraffic,
   setDeviceIp,
   setDeviceLabel,
+  setDeviceLimits,
 } from "../tools/connected-devices";
 import {
   AAA_ENTITIES,
@@ -558,9 +559,18 @@ async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
       ip?: string;
       label?: string;
       comment?: string;
+      download?: string;
+      upload?: string;
     };
+    const ctx = createContext(undefined, b?.device);
+
+    // Rate limits are keyed by IP (the queue target), not MAC.
+    if (p === "/api/clients/limits") {
+      if (!b?.ip) return json({ error: "ip required" }, 400);
+      return json(await setDeviceLimits(ctx, b.ip, { download: b.download, upload: b.upload }));
+    }
+
     if (!b?.mac) return json({ error: "mac required" }, 400);
-    const ctx = createContext(undefined, b.device);
 
     const run = async (op: Promise<{ ok: boolean; message: string }>): Promise<Response> => {
       const r = await op;

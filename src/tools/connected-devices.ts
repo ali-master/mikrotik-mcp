@@ -55,6 +55,10 @@ export interface DeviceTraffic {
   txBitsPerSec: number;
   rxBytes: number;
   txBytes: number;
+  /** Configured max download rate (e.g. "10M"), "" when unlimited/unset. */
+  downloadLimit: string;
+  /** Configured max upload rate (e.g. "2M"), "" when unlimited/unset. */
+  uploadLimit: string;
 }
 
 /** Result of a device mutation, shared by the tools (text) and dashboard (JSON). */
@@ -122,11 +126,23 @@ export async function sampleDeviceTraffic(ctx: ToolContext, ip: string): Promise
     ctx,
   );
   if (isEmpty(q) || looksLikeError(q)) {
-    return { ip, source: "none", rxBitsPerSec: 0, txBitsPerSec: 0, rxBytes: 0, txBytes: 0 };
+    return {
+      ip,
+      source: "none",
+      rxBitsPerSec: 0,
+      txBitsPerSec: 0,
+      rxBytes: 0,
+      txBytes: 0,
+      downloadLimit: "",
+      uploadLimit: "",
+    };
   }
   const row = parseRecords(q).rows[0] ?? {};
   const [up, down] = (row.rate ?? "0/0").split("/");
   const [upB, downB] = (row.bytes ?? "0/0").split("/");
+  // `max-limit` is RouterOS's `upload/download` (tx/rx); "0" means unlimited.
+  const [upLim, downLim] = (row["max-limit"] ?? "0/0").split("/");
+  const limit = (v: string | undefined): string => (v && v !== "0" ? v : "");
   return {
     ip,
     source: "queue",
@@ -134,6 +150,56 @@ export async function sampleDeviceTraffic(ctx: ToolContext, ip: string): Promise
     rxBitsPerSec: parseLeadingNumber(down) ?? 0,
     txBytes: parseLeadingNumber(upB) ?? 0,
     rxBytes: parseLeadingNumber(downB) ?? 0,
+    downloadLimit: limit(downLim),
+    uploadLimit: limit(upLim),
+  };
+}
+
+/**
+ * Set (or clear) a device's download/upload rate limits by managing a
+ * `/queue simple` targeting its IP. RouterOS `max-limit` is `upload/download`
+ * (tx/rx); a blank or "0" rate means unlimited. Updates the existing queue if
+ * one already targets the IP, otherwise creates one (which also enables the
+ * per-device traffic counter the Clients chart reads). Rates are RouterOS rate
+ * strings, e.g. "10M", "512k", "0"/"" for unlimited.
+ */
+export async function setDeviceLimits(
+  ctx: ToolContext,
+  ip: string,
+  opts: { download?: string; upload?: string; name?: string },
+): Promise<OpResult> {
+  const rate = (v: string | undefined): string => {
+    const t = (v ?? "").trim();
+    return t === "" ? "0" : t;
+  };
+  const down = rate(opts.download);
+  const up = rate(opts.upload);
+  const maxLimit = `${up}/${down}`;
+
+  const existing = await executeMikrotikCommand(
+    `/queue simple print count-only where target~"${ip}"`,
+    ctx,
+  );
+  const have = (parseLeadingNumber(existing.trim()) ?? 0) > 0;
+
+  if (!have && down === "0" && up === "0") {
+    return { ok: true, message: `No rate limit set for ${ip} (left unlimited).` };
+  }
+
+  const cmd = have
+    ? new Cmd(`/queue simple set [find target~"${ip}"]`).set("max-limit", maxLimit).build()
+    : new Cmd("/queue simple add")
+        .set("name", opts.name?.trim() || `client-${ip}`)
+        .set("target", ip)
+        .set("max-limit", maxLimit)
+        .build();
+  const out = await executeMikrotikCommand(cmd, ctx);
+  if (looksLikeError(out)) return { ok: false, message: `Failed to set limits: ${out}` };
+
+  const human = (r: string): string => (r === "0" ? "unlimited" : r);
+  return {
+    ok: true,
+    message: `Limits for ${ip} set — ↓ ${human(down)} / ↑ ${human(up)}.`,
   };
 }
 
@@ -443,6 +509,39 @@ export const connectedDeviceTools: ToolModule = [
     },
     async handler(a, ctx) {
       return (await setDeviceLabel(ctx, a.mac, a.label)).message;
+    },
+  }),
+
+  defineTool({
+    name: "set_device_limits",
+    title: "Set a Device's Download/Upload Rate Limits",
+    annotations: WRITE_IDEMPOTENT,
+    description:
+      "Throttle (or unthrottle) a device's bandwidth by managing a `/queue simple` targeting its IP " +
+      "— sets the max download and upload rate. RouterOS rate strings: e.g. `10M`, `512k`; pass `0` " +
+      "or omit a side to leave it unlimited. Updates the device's existing simple queue if there is " +
+      "one, otherwise creates it (which also enables the per-device traffic counter the Connected " +
+      "Devices charts read). Identify the device by IP (the queue target).",
+    inputSchema: {
+      ip: z.string().describe("Device IP address (the queue target)"),
+      download_limit: z
+        .string()
+        .optional()
+        .describe('Max download rate, e.g. "10M". "0"/omit = unlimited'),
+      upload_limit: z
+        .string()
+        .optional()
+        .describe('Max upload rate, e.g. "2M". "0"/omit = unlimited'),
+      name: z.string().optional().describe("Optional name for a newly created queue"),
+    },
+    async handler(a, ctx) {
+      return (
+        await setDeviceLimits(ctx, a.ip, {
+          download: a.download_limit,
+          upload: a.upload_limit,
+          name: a.name,
+        })
+      ).message;
     },
   }),
 

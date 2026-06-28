@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.24.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 735,
+  "toolCount": 736,
   "tools": [
     {
       "name": "list_interfaces",
@@ -13856,6 +13856,41 @@
           }
         },
         "required": ["mac", "label"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_device_limits",
+      "title": "Set a Device's Download/Upload Rate Limits",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Throttle (or unthrottle) a device's bandwidth by managing a `/queue simple` targeting its IP — sets the max download and upload rate. RouterOS rate strings: e.g. `10M`, `512k`; pass `0` or omit a side to leave it unlimited. Updates the device's existing simple queue if there is one, otherwise creates it (which also enables the per-device traffic counter the Connected Devices charts read). Identify the device by IP (the queue target).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "Device IP address (the queue target)"
+          },
+          "download_limit": {
+            "description": "Max download rate, e.g. \"10M\". \"0\"/omit = unlimited",
+            "type": "string"
+          },
+          "upload_limit": {
+            "description": "Max upload rate, e.g. \"2M\". \"0\"/omit = unlimited",
+            "type": "string"
+          },
+          "name": {
+            "description": "Optional name for a newly created queue",
+            "type": "string"
+          }
+        },
+        "required": ["ip"],
         "additionalProperties": false
       }
     },

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_device_limits",
+  "type": "object",
+  "properties": {
+    "ip": {
+      "type": "string",
+      "description": "Device IP address (the queue target)"
+    },
+    "download_limit": {
+      "description": "Max download rate, e.g. \"10M\". \"0\"/omit = unlimited",
+      "type": "string"
+    },
+    "upload_limit": {
+      "description": "Max upload rate, e.g. \"2M\". \"0\"/omit = unlimited",
+      "type": "string"
+    },
+    "name": {
+      "description": "Optional name for a newly created queue",
+      "type": "string"
+    }
+  },
+  "required": ["ip"],
+  "additionalProperties": false
+}

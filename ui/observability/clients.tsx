@@ -42,6 +42,8 @@ interface TrafficSample {
   txBitsPerSec: number;
   rxBytes: number;
   txBytes: number;
+  downloadLimit: string;
+  uploadLimit: string;
 }
 interface OpResult {
   ok: boolean;
@@ -87,39 +89,141 @@ function TrafficChart({ history }: { history: { rx: number; tx: number }[] }): R
   );
 }
 
-/** Detail panel for the selected device: live ↓/↑ rates, chart, and totals. */
+/** Set/clear a device's download & upload rate limits (a `/queue simple`). */
+function LimitsEditor({
+  ip,
+  deviceName,
+  current,
+  onSaved,
+}: {
+  ip: string;
+  deviceName: string;
+  current: { download: string; upload: string };
+  onSaved: () => void;
+}): ReactNode {
+  const [dl, setDl] = useState(current.download);
+  const [ul, setUl] = useState(current.upload);
+  const [dirty, setDirty] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  // Adopt the live (fetched) limits until the user starts editing.
+  useEffect(() => {
+    if (!dirty) {
+      setDl(current.download);
+      setUl(current.upload);
+    }
+  }, [current.download, current.upload, dirty]);
+
+  const apply = useCallback(
+    async (download: string, upload: string): Promise<void> => {
+      setBusy(true);
+      setMsg(null);
+      try {
+        const r = await postJson<OpResult>("/api/clients/limits", {
+          ip,
+          device: deviceName,
+          download,
+          upload,
+        });
+        setMsg(r.message);
+        if (r.ok) {
+          setDirty(false);
+          onSaved();
+        }
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : String(e));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [ip, deviceName, onSaved],
+  );
+
+  const hasLimit = Boolean(current.download || current.upload);
+  return (
+    <div className="clients-limits">
+      <div className="clients-limits__hd">
+        <span className="clients-limits__label">Rate limits</span>
+        <span className="muted">
+          current: ↓ {current.download || "unlimited"} · ↑ {current.upload || "unlimited"}
+        </span>
+      </div>
+      <div className="clients-limits__row">
+        <label className="clients-limits__field">
+          <span className="muted">↓ Download</span>
+          <Input
+            placeholder="10M · blank = unlimited"
+            value={dl}
+            onChange={(e) => {
+              setDirty(true);
+              setDl(e.target.value);
+            }}
+          />
+        </label>
+        <label className="clients-limits__field">
+          <span className="muted">↑ Upload</span>
+          <Input
+            placeholder="2M · blank = unlimited"
+            value={ul}
+            onChange={(e) => {
+              setDirty(true);
+              setUl(e.target.value);
+            }}
+          />
+        </label>
+        <Button size="sm" type="accent" loading={busy} onClick={() => void apply(dl, ul)}>
+          Apply
+        </Button>
+        <Button
+          size="sm"
+          ghost
+          disabled={busy || !hasLimit}
+          onClick={() => {
+            setDl("");
+            setUl("");
+            void apply("", "");
+          }}
+        >
+          Remove
+        </Button>
+      </div>
+      {msg && <div className="muted clients-limits__msg">{msg}</div>}
+    </div>
+  );
+}
+
+/** Detail panel for the selected device: live ↓/↑ rates, chart, totals, limits. */
 function DeviceDetail({ device, deviceName }: { device: Device; deviceName: string }): ReactNode {
   const [latest, setLatest] = useState<TrafficSample | null>(null);
   const [history, setHistory] = useState<{ rx: number; tx: number }[]>([]);
   const ipRef = useRef(device.ip);
   ipRef.current = device.ip;
 
+  const pollOnce = useCallback(async (): Promise<void> => {
+    if (!device.ip) return;
+    try {
+      const q = deviceName ? `&device=${encodeURIComponent(deviceName)}` : "";
+      const s = await api<TrafficSample>(
+        `/api/clients/traffic?ip=${encodeURIComponent(device.ip)}${q}`,
+      );
+      if (s.ip !== ipRef.current) return;
+      setLatest(s);
+      setHistory((h) => [...h, { rx: s.rxBitsPerSec, tx: s.txBitsPerSec }].slice(-MAX_SAMPLES));
+    } catch {
+      /* transient poll error — keep the last good sample */
+    }
+  }, [device.ip, deviceName]);
+
   // Reset and poll whenever the selected device's IP changes.
   useEffect(() => {
     setLatest(null);
     setHistory([]);
     if (!device.ip) return;
-    let alive = true;
-    const tick = async (): Promise<void> => {
-      try {
-        const q = deviceName ? `&device=${encodeURIComponent(deviceName)}` : "";
-        const s = await api<TrafficSample>(
-          `/api/clients/traffic?ip=${encodeURIComponent(device.ip)}${q}`,
-        );
-        if (!alive || s.ip !== ipRef.current) return;
-        setLatest(s);
-        setHistory((h) => [...h, { rx: s.rxBitsPerSec, tx: s.txBitsPerSec }].slice(-MAX_SAMPLES));
-      } catch {
-        /* transient poll error — keep the last good sample */
-      }
-    };
-    void tick();
-    const t = setInterval(() => void tick(), POLL_MS);
-    return () => {
-      alive = false;
-      clearInterval(t);
-    };
-  }, [device.ip, deviceName]);
+    void pollOnce();
+    const t = setInterval(() => void pollOnce(), POLL_MS);
+    return () => clearInterval(t);
+  }, [pollOnce, device.ip]);
 
   return (
     <div className="clients-detail">
@@ -131,8 +235,8 @@ function DeviceDetail({ device, deviceName }: { device: Device; deviceName: stri
       </div>
       {latest && latest.source === "none" ? (
         <Note type="secondary" label="No per-device counter">
-          Create a simple queue targeting <code>{device.ip}</code> (the{" "}
-          <code>create_simple_queue</code> tool) to track this device's Download/Upload.
+          Set a rate limit below to start tracking this device's Download/Upload (it creates a
+          simple queue targeting <code>{device.ip}</code>), or leave it unlimited.
         </Note>
       ) : (
         <>
@@ -147,6 +251,14 @@ function DeviceDetail({ device, deviceName }: { device: Device; deviceName: stri
             </div>
           )}
         </>
+      )}
+      {device.ip && (
+        <LimitsEditor
+          ip={device.ip}
+          deviceName={deviceName}
+          current={{ download: latest?.downloadLimit ?? "", upload: latest?.uploadLimit ?? "" }}
+          onSaved={() => void pollOnce()}
+        />
       )}
     </div>
   );

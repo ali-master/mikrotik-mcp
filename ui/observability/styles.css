@@ -3043,3 +3043,40 @@ pre.body.ros .ros-comment {
   flex-direction: column;
   gap: 8px;
 }
+
+/* ── Clients: per-device rate limits ──────────────────────────────────────── */
+.clients-limits {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mt-border);
+  max-width: 520px;
+}
+.clients-limits__hd {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.clients-limits__label {
+  font-weight: 600;
+  font-size: 13px;
+}
+.clients-limits__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.clients-limits__field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11.5px;
+}
+.clients-limits__field .geist-input {
+  width: 150px;
+}
+.clients-limits__msg {
+  margin-top: 6px;
+  font-size: 12px;
+}
