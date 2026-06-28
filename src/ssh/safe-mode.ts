@@ -150,7 +150,7 @@ export class SafeModeManager {
       this.ssh = ssh;
       this.channel = await ssh.shell({ term: "dumb", cols: 220, rows: 50 });
 
-      const initial = await this.readUntilPrompt(20_000);
+      const initial = (await this.readUntilPrompt(20_000)).text;
       if (!PROMPT_RE.test(initial)) {
         this.cleanup();
         return `Error: Timed out waiting for MikroTik shell prompt. Got: ${JSON.stringify(initial.slice(0, 300))}`;
@@ -161,7 +161,7 @@ export class SafeModeManager {
       // after Ctrl+X RouterOS can echo a redraw of the still-normal prompt
       // before the `<SAFE>` marker appears, which would otherwise be misread as
       // "did not activate". Fall back to the timeout buffer either way.
-      const response = await this.readUntilPrompt(10_000, (c) => isSafeModeActivated(c));
+      const response = (await this.readUntilPrompt(10_000, (c) => isSafeModeActivated(c))).text;
       // Activation is confirmed EITHER by the prompt switching to the `<SAFE>`
       // marker (the usual case) OR by RouterOS printing a textual confirmation
       // — some versions/terminal types emit "Taking Safe Mode session...
@@ -181,15 +181,29 @@ export class SafeModeManager {
     });
   }
 
-  /** Execute a command through the safe-mode persistent shell session. */
+  /**
+   * Execute a command through the safe-mode persistent shell session.
+   *
+   * If the shell never returns a prompt within the timeout, the interactive
+   * Safe-Mode session is wedged — this throws immediately so the caller aborts
+   * instead of issuing more commands that would each also burn the full timeout
+   * (the cumulative effect of which is a multi-minute "hang" to the MCP client).
+   */
   execute(command: string): Promise<string> {
     return this.lock(async () => {
       if (!this.active || !this.channel) {
         throw new Error("Safe mode session is not active.");
       }
       this.channel.write(`${command}\n`);
-      const raw = await this.readUntilPrompt();
-      return this.extractOutput(raw, command);
+      const { text, timedOut } = await this.readUntilPrompt();
+      if (timedOut) {
+        throw new Error(
+          `Safe Mode shell did not return a prompt within 15s (command: ${command}). The interactive ` +
+            "session appears wedged — some RouterOS builds/terminals don't support Safe Mode over SSH. " +
+            "Apply the change with the direct write tools instead (verify each with a read).",
+        );
+      }
+      return this.extractOutput(text, command);
     });
   }
 
@@ -286,9 +300,9 @@ export class SafeModeManager {
   private readUntilPrompt(
     timeoutMs = 15_000,
     isDone: (cleaned: string) => boolean = (c) => PROMPT_RE.test(c),
-  ): Promise<string> {
+  ): Promise<{ text: string; timedOut: boolean }> {
     const channel = this.channel;
-    if (!channel) return Promise.resolve("");
+    if (!channel) return Promise.resolve({ text: "", timedOut: false });
     return new Promise((resolve) => {
       let buf = "";
       // Function declarations are hoisted, so onData/finish can reference each
@@ -297,16 +311,20 @@ export class SafeModeManager {
       function onData(chunk: Buffer): void {
         buf += decodeOutput(chunk);
         const cleaned = stripAnsi(buf);
-        if (isDone(cleaned)) finish(cleaned);
+        if (isDone(cleaned)) finish(cleaned, false);
       }
-      function finish(result: string): void {
+      function finish(result: string, timedOut: boolean): void {
         clearTimeout(timer);
         // `channel` is non-null past the early return above; the hoisted
         // function declaration just doesn't carry that narrowing.
         channel!.removeListener("data", onData);
-        resolve(result);
+        resolve({ text: result, timedOut });
       }
-      timer = setTimeout(() => finish(stripAnsi(buf)), timeoutMs);
+      // A timeout resolves with `timedOut: true` so callers can tell "the prompt
+      // appeared" from "the shell never answered" — the latter means the
+      // interactive Safe-Mode session is wedged and must abort fast rather than
+      // letting every subsequent command burn the full timeout.
+      timer = setTimeout(() => finish(stripAnsi(buf), true), timeoutMs);
       channel.on("data", onData);
     });
   }
@@ -325,10 +343,12 @@ export class SafeModeManager {
     this.channel.write(`:put "${token}"\n`);
     // Settle only once the sentinel's OUTPUT is on screen AND a prompt follows
     // it — i.e. the command fully round-tripped at the current prompt.
-    const out = await this.readUntilPrompt(8_000, (cleaned) => {
-      const i = cleaned.lastIndexOf(token);
-      return i >= 0 && PROMPT_RE.test(cleaned.slice(i));
-    });
+    const out = (
+      await this.readUntilPrompt(8_000, (cleaned) => {
+        const i = cleaned.lastIndexOf(token);
+        return i >= 0 && PROMPT_RE.test(cleaned.slice(i));
+      })
+    ).text;
     return classifyPrompt(out);
   }
 

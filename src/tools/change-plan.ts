@@ -109,11 +109,27 @@ export const changePlanTools: ToolModule = [
       const enabled = await safe.enable();
       if (enabled.startsWith("Error")) return enabled;
 
+      // Overall time budget so apply_plan can never approach the MCP client's
+      // patience (it gave up around 4 min). A wedged Safe-Mode shell now aborts
+      // on the first command via safe.execute; this is the belt-and-suspenders
+      // backstop for an unusually long but otherwise-healthy run.
+      const APPLY_BUDGET_MS = 90_000;
+      const startedAt = Date.now();
+      const overBudget = (): boolean => Date.now() - startedAt > APPLY_BUDGET_MS;
+
       try {
         const before = normalizeExport(await safe.execute("/export terse"));
 
         const log: string[] = [];
         for (const step of plan.steps) {
+          if (overBudget()) {
+            await safe.rollback();
+            return (
+              `Aborted after ${Math.round((Date.now() - startedAt) / 1000)}s (time budget exceeded) — ` +
+              "the plan was ROLLED BACK (nothing committed). Safe Mode is slow/unresponsive on this " +
+              "device; apply the change with the direct write tools instead."
+            );
+          }
           const out = await safe.execute(step.command);
           if (looksLikeError(out)) {
             await safe.rollback();
