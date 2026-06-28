@@ -11,6 +11,7 @@ import { containsRawParserError, indicatesFailure } from "./routeros";
 import { buildRecordsView } from "./routeros-parse";
 import { toolUiMeta, uiViewUri } from "./ui-meta";
 import type { UiLink } from "./ui-meta";
+import { resolvedTarget } from "./runtime";
 import type { DeviceDirectoryEntry } from "./runtime";
 import { riskOf } from "../observability/event";
 import { isRecording, recordToolCall } from "../observability/recorder";
@@ -225,6 +226,19 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
         const { device, ...rest } = args as { device?: unknown };
         const deviceName = typeof device === "string" ? device : undefined;
         const ctx = createContext(sendLog, deviceName);
+        // For state-changing tools on a multi-device server, stamp the result
+        // with the exact router this call hit — per-call proof of targeting so
+        // the model can trust writes (the live device map is fixed for the
+        // process; it can't silently swap mid-session). Reads stay unstamped.
+        const deviceStamp =
+          multiDevice && risk !== "READ"
+            ? (() => {
+                const t = resolvedTarget(deviceName);
+                const label = t.label && t.label !== t.key ? ` "${t.label}"` : "";
+                const how = deviceName === undefined ? " — DEFAULT (no device specified)" : "";
+                return `↳ executed on device: ${t.key}${label}${how} → ${t.target}`;
+              })()
+            : null;
         // Observability: capture timing + outcome for the dashboard (no-op when
         // the dashboard is disabled). Tracked across try/catch, emitted in finally.
         const startedAt = Date.now();
@@ -273,6 +287,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
             result.structuredContent = out.structuredContent;
             hasStructured = true;
           }
+          if (deviceStamp) result.content.push({ type: "text", text: deviceStamp });
           return result;
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
@@ -281,7 +296,10 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
           errMsg = msg;
           outText = `Error: ${msg}`;
           return {
-            content: [{ type: "text", text: `Error: ${msg}` }],
+            content: [
+              { type: "text", text: `Error: ${msg}` },
+              ...(deviceStamp ? [{ type: "text" as const, text: deviceStamp }] : []),
+            ],
             isError: true,
           };
         } finally {

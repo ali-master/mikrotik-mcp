@@ -20,6 +20,8 @@ export const deviceTools: ToolModule = [
       "List all MikroTik devices registered in this server's configuration (server-side metadata — no RouterOS command is run, no SSH connection is opened). " +
       "Use this to discover the exact device name strings required by the `device` argument on every other tool, especially when working across multiple routers (e.g. building a tunnel between two devices). " +
       "Returns each device's name, username, host, port, auth method (key / password / none), optional description, and which entry is the default. " +
+      "This name → host:port mapping is FIXED for the life of the server process — it does NOT change mid-session, so a given device name always reaches the same physical router. " +
+      "Call this to verify the exact target before any write/destructive change when several routers are configured. " +
       "Credentials and private-key material are never included in the output.",
     handler(_a, ctx) {
       ctx.info("Listing configured MikroTik devices");

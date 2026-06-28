@@ -5,7 +5,13 @@
  */
 import { afterEach, describe, expect, test } from "vite-plus/test";
 import { MikrotikConfigSchema } from "../src/config";
-import { deviceDirectory, getConfig, resolveDeviceName, setConfig } from "../src/core/runtime";
+import {
+  deviceDirectory,
+  getConfig,
+  resolveDeviceName,
+  resolvedTarget,
+  setConfig,
+} from "../src/core/runtime";
 
 const CONFIG = MikrotikConfigSchema.parse({
   defaultDevice: "home",
@@ -60,5 +66,25 @@ describe("deviceDirectory", () => {
     expect(dir.find((d) => d.key === "home")?.isDefault).toBe(true);
     // The two home-ish devices stay distinct targets.
     expect(dir.find((d) => d.key === "home")?.target).toBe("192.168.7.1:1986");
+  });
+});
+
+describe("resolvedTarget (per-call targeting stamp)", () => {
+  test("reports the exact router an explicit name hits", () => {
+    setConfig(CONFIG);
+    expect(resolvedTarget("Ali Home")).toEqual({
+      key: "Ali Home",
+      label: "Ali Home",
+      target: "45.87.6.144:1996",
+    });
+  });
+
+  test("an omitted name resolves to the default, with its real target", () => {
+    setConfig(CONFIG);
+    expect(resolvedTarget(undefined)).toEqual({
+      key: "home",
+      label: "Home router",
+      target: "192.168.7.1:1986",
+    });
   });
 });

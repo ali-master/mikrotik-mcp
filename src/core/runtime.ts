@@ -82,6 +82,12 @@ export interface DeviceDirectoryEntry {
   isDefault: boolean;
 }
 
+/** Where a device connects: `host:port`, or `MAC <addr>` for a MAC-Telnet device. */
+function deviceTarget(dc: DeviceConfig | undefined): string {
+  if (!dc) return "?";
+  return dc.mac ? `MAC ${dc.mac}` : `${dc.host}:${dc.port ?? 22}`;
+}
+
 /**
  * A clear key → label → target listing of every configured device, used to build
  * the `device` selector's description so the model can tell similarly-named
@@ -92,9 +98,25 @@ export function deviceDirectory(): DeviceDirectoryEntry[] {
   return Object.entries(active.devices).map(([key, dc]) => ({
     key,
     label: dc.description?.trim() || undefined,
-    target: dc.mac ? `MAC ${dc.mac}` : `${dc.host}:${dc.port ?? 22}`,
+    target: deviceTarget(dc),
     isDefault: key === active.defaultDevice,
   }));
+}
+
+/**
+ * Resolve a (possibly undefined) device name to the concrete router a call will
+ * actually hit — its key, friendly label and connection target — so a tool can
+ * stamp every result with exactly which physical device it ran on (proof of
+ * targeting, never a guess).
+ */
+export function resolvedTarget(name?: string): {
+  key: string;
+  label?: string;
+  target: string;
+} {
+  const key = resolveDeviceName(name);
+  const dc = active.devices[key];
+  return { key, label: dc?.description?.trim() || undefined, target: deviceTarget(dc) };
 }
 
 /**
