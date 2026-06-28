@@ -3080,3 +3080,137 @@ pre.body.ros .ros-comment {
   margin-top: 6px;
   font-size: 12px;
 }
+
+/* ── Usage history chart (clients + User Manager) ─────────────────────────── */
+.usage-chart__empty {
+  padding: 16px 4px;
+  font-size: 12.5px;
+}
+.usage-chart__legend {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  font-size: 12px;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.usage-chart__legend .rate {
+  font-weight: 600;
+}
+.usage-chart__legend .rate.rx {
+  color: var(--lime);
+}
+.usage-chart__legend .rate.tx {
+  color: var(--amber);
+}
+.usage-chart__svg {
+  width: 100%;
+  max-width: 640px;
+  height: 150px;
+  display: block;
+  background: var(--mt-surface);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+}
+.usage-chart__svg .line {
+  fill: none;
+  stroke-width: 2;
+}
+.usage-chart__svg .rx.line {
+  stroke: var(--lime);
+}
+.usage-chart__svg .tx.line {
+  stroke: var(--amber);
+}
+.usage-chart__svg .rx.area {
+  fill: color-mix(in srgb, var(--lime) 18%, transparent);
+  stroke: none;
+}
+.usage-chart__svg .tx.area {
+  fill: color-mix(in srgb, var(--amber) 14%, transparent);
+  stroke: none;
+}
+.clients-history,
+.aaa-usage__section {
+  margin-top: 16px;
+}
+.clients-history__hd,
+.aaa-usage__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mt-text-dim);
+  margin-bottom: 8px;
+}
+
+/* ── GitHub-style contribution heatmap ────────────────────────────────────── */
+.aaa-usage__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.heatmap__hd {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.heatmap__title {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.heatmap__scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.heatmap__svg {
+  display: block;
+}
+.heatmap__month,
+.heatmap__wd {
+  fill: var(--mt-text-dim);
+  font-size: 9px;
+  font-family: inherit;
+}
+.heatmap__cell {
+  stroke: color-mix(in srgb, var(--mt-border) 60%, transparent);
+  stroke-width: 1;
+}
+.heatmap__cell.lvl0,
+.heatmap__swatch.lvl0 {
+  fill: var(--mt-surface-2);
+  background: var(--mt-surface-2);
+}
+.heatmap__cell.lvl1,
+.heatmap__swatch.lvl1 {
+  fill: color-mix(in srgb, var(--lime) 30%, var(--mt-surface-2));
+  background: color-mix(in srgb, var(--lime) 30%, var(--mt-surface-2));
+}
+.heatmap__cell.lvl2,
+.heatmap__swatch.lvl2 {
+  fill: color-mix(in srgb, var(--lime) 50%, var(--mt-surface-2));
+  background: color-mix(in srgb, var(--lime) 50%, var(--mt-surface-2));
+}
+.heatmap__cell.lvl3,
+.heatmap__swatch.lvl3 {
+  fill: color-mix(in srgb, var(--lime) 72%, transparent);
+  background: color-mix(in srgb, var(--lime) 72%, transparent);
+}
+.heatmap__cell.lvl4,
+.heatmap__swatch.lvl4 {
+  fill: var(--lime);
+  background: var(--lime);
+}
+.heatmap__legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  margin-top: 8px;
+}
+.heatmap__swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  display: inline-block;
+}

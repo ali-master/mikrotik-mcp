@@ -181,6 +181,7 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
     tips: [
       "Pick the router (top-right), then switch tabs across RADIUS, Users, Profiles, Limitations, NAS, Assignments, Sessions and Settings.",
       "Every tab is full CRUD: add, edit, enable/disable and remove — secrets are write-only and shown redacted.",
+      "The Usage & Heatmap tab shows each user's 3-month download/upload and a GitHub-style connection heatmap, persisted locally.",
       "If a device lacks the user-manager package, the User Manager tabs explain how to install it; RADIUS-client tabs still work.",
     ],
   },

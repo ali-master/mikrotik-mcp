@@ -16,6 +16,7 @@ import { Panel } from "./atoms";
 import { bytes } from "./format";
 import { Badge, Button, Input, Note, Select } from "./geist";
 import type { DevicesPayload } from "./types";
+import { UsageHistoryChart } from "./usage-charts";
 
 interface Device {
   mac: string;
@@ -259,6 +260,17 @@ function DeviceDetail({ device, deviceName }: { device: Device; deviceName: stri
           current={{ download: latest?.downloadLimit ?? "", upload: latest?.uploadLimit ?? "" }}
           onSaved={() => void pollOnce()}
         />
+      )}
+      {device.ip && (
+        <div className="clients-history">
+          <div className="clients-history__hd">Usage history · last 3 months</div>
+          <UsageHistoryChart
+            endpoint={`/api/usage/client?ip=${encodeURIComponent(device.ip)}${
+              deviceName ? `&device=${encodeURIComponent(deviceName)}` : ""
+            }&days=90`}
+            days={90}
+          />
+        </div>
       )}
     </div>
   );

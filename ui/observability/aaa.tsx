@@ -15,6 +15,7 @@ import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { Badge, Button, Input, Note, Select } from "./geist";
 import type { DevicesPayload } from "./types";
+import { Heatmap, UsageHistoryChart } from "./usage-charts";
 
 type Row = Record<string, string>;
 interface AaaList {
@@ -667,6 +668,7 @@ type TabId =
   | "nas"
   | "assignments"
   | "sessions"
+  | "usage"
   | "settings";
 const TABS: { id: TabId; label: string }[] = [
   { id: "radius", label: "RADIUS Servers" },
@@ -676,6 +678,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "nas", label: "NAS Clients" },
   { id: "assignments", label: "Assignments" },
   { id: "sessions", label: "Sessions" },
+  { id: "usage", label: "Usage & Heatmap" },
   { id: "settings", label: "Settings" },
 ];
 
@@ -690,6 +693,74 @@ const UM_SETTINGS_FIELDS: Field[] = [
   { key: "authentication-port", label: "Auth port", type: "number" },
   { key: "accounting-port", label: "Acct port", type: "number" },
 ];
+
+/**
+ * Usage & heatmap tab: per-user 3-month download/upload (from persisted User
+ * Manager sessions) and a GitHub-style connection heatmap (per-day VPN/RADIUS
+ * connection counts), both backed by the local usage database.
+ */
+function UsageTab({ device }: { device: string }): ReactNode {
+  const [users, setUsers] = useState<string[] | null>(null);
+  const [user, setUser] = useState<string>("");
+
+  useEffect(() => {
+    const q = device ? `?device=${encodeURIComponent(device)}` : "";
+    void api<{ users: string[] }>(`/api/usage/um-users${q}`)
+      .then((r) => {
+        setUsers(r.users);
+        setUser((cur) => cur || r.users[0] || "");
+      })
+      .catch(() => setUsers([]));
+  }, [device]);
+
+  const dev = device ? `&device=${encodeURIComponent(device)}` : "";
+
+  return (
+    <div className="aaa-usage">
+      <div className="aaa-usage__bar">
+        <span className="muted">User</span>
+        <Select value={user} onChange={(e) => setUser(e.target.value)} aria-label="User">
+          {(users ?? []).map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+          {(!users || users.length === 0) && <option value="">— no sessions recorded yet —</option>}
+        </Select>
+      </div>
+
+      {users && users.length === 0 ? (
+        <Note type="secondary" label="No data yet">
+          No User Manager sessions have been recorded yet. The dashboard ingests sessions every 10
+          minutes and keeps them forever, so usage and the heatmap fill in over time.
+        </Note>
+      ) : (
+        user && (
+          <>
+            <div className="aaa-usage__section">
+              <div className="aaa-usage__title">Download / upload · last 3 months</div>
+              <UsageHistoryChart
+                endpoint={`/api/usage/um-user?user=${encodeURIComponent(user)}${dev}&days=90`}
+                days={90}
+              />
+            </div>
+            <div className="aaa-usage__section">
+              <div className="aaa-usage__title">Connection heatmap · {user}</div>
+              <Heatmap
+                endpoint={`/api/usage/heatmap?user=${encodeURIComponent(user)}${dev}&days=371`}
+                label={`${user} — connections`}
+              />
+            </div>
+            <div className="aaa-usage__section">
+              <div className="aaa-usage__title">All users · connections</div>
+              <Heatmap endpoint={`/api/usage/heatmap?days=371${dev}`} label="All users" />
+            </div>
+          </>
+        )
+      )}
+    </div>
+  );
+}
 
 /** RADIUS client + User Manager (built-in RADIUS server) management. */
 export function AaaView(): ReactNode {
@@ -745,6 +816,7 @@ export function AaaView(): ReactNode {
         {tab === "nas" && <EntityManager config={UM_ROUTERS_CONFIG} device={device} />}
         {tab === "assignments" && <EntityManager config={UM_ASSIGN_CONFIG} device={device} />}
         {tab === "sessions" && <SessionsTable device={device} />}
+        {tab === "usage" && <UsageTab device={device} />}
         {tab === "settings" && (
           <div className="aaa-settings">
             <SingletonForm

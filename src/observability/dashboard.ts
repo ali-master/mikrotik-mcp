@@ -20,7 +20,7 @@
  */
 import { readFileSync } from "node:fs";
 import { homedir, networkInterfaces } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { serve } from "bun";
 import type { Server, ServerWebSocket } from "bun";
 import { z } from "zod";
@@ -101,6 +101,9 @@ import {
 import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./recorder";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
+import { openUsageStore } from "./usage-store";
+import type { UsageStore } from "./usage-store";
+import { startUsageSampler, stopUsageSampler } from "./usage-sampler";
 import { computeStats } from "./stats";
 import { buildTopology } from "./topology";
 import { capture, DEFAULT_TZSP_PORT } from "./capture";
@@ -668,6 +671,68 @@ async function aaaRoutes(req: Request, url: URL): Promise<Response | null> {
   return null;
 }
 
+// ── Usage history API (clients + User Manager, persisted) ────────────────────
+// The usage store is opened once in runDashboard and held here so the routes can
+// read it (it's filled by the background usage sampler).
+let usageStore: UsageStore | null = null;
+
+/** Clamp a `days` query param to a sane window (default 90, max ~400). */
+function daysParam(url: URL, fallback: number, max: number): number {
+  const n = Number(url.searchParams.get("days"));
+  return Number.isFinite(n) && n > 0 ? Math.min(n, max) : fallback;
+}
+
+/**
+ * Routes for the persisted usage views:
+ *   • `GET /api/usage/client`   — a connected client's per-day ↓/↑ over N days.
+ *   • `GET /api/usage/um-user`  — a User Manager user's per-day ↓/↑ over N days.
+ *   • `GET /api/usage/um-users` — User Manager users that have stored sessions.
+ *   • `GET /api/usage/heatmap`  — per-day connection counts (GitHub-style), for
+ *     one user or all, since N days ago.
+ */
+function usageRoutes(req: Request, url: URL): Response | null {
+  const p = url.pathname;
+  if (!p.startsWith("/api/usage")) return null;
+  if (req.method !== "GET") return null;
+  if (!usageStore) return json({ error: "usage store not active" }, 503);
+
+  const device = resolveDeviceName(url.searchParams.get("device") ?? undefined);
+  const sinceTs = (days: number): number => Date.now() - days * 86_400_000;
+
+  if (p === "/api/usage/um-users") {
+    return json({ users: usageStore.umUsers(device) });
+  }
+  if (p === "/api/usage/client") {
+    const ip = url.searchParams.get("ip");
+    if (!ip) return json({ error: "ip required" }, 400);
+    const series = usageStore.clientDailyUsage(device, ip, sinceTs(daysParam(url, 90, 400)));
+    return json(withTotals(series));
+  }
+  if (p === "/api/usage/um-user") {
+    const user = url.searchParams.get("user");
+    if (!user) return json({ error: "user required" }, 400);
+    const series = usageStore.umUserDailyUsage(device, user, sinceTs(daysParam(url, 90, 400)));
+    return json(withTotals(series));
+  }
+  if (p === "/api/usage/heatmap") {
+    const user = url.searchParams.get("user");
+    const days = usageStore.heatmap(device, user || null, sinceTs(daysParam(url, 371, 400)));
+    const total = days.reduce((s, d) => s + d.count, 0);
+    const max = days.reduce((m, d) => Math.max(m, d.count), 0);
+    return json({ days, total, max });
+  }
+  return null;
+}
+
+/** Attach cumulative totals to a per-day usage series. */
+function withTotals(series: { day: string; rx: number; tx: number }[]): unknown {
+  return {
+    series,
+    totalRx: series.reduce((s, d) => s + d.rx, 0),
+    totalTx: series.reduce((s, d) => s + d.tx, 0),
+  };
+}
+
 // Lazily open the config-snapshot store (shared with the snapshot tools), so the
 // SQLite handle isn't created unless the Snapshots page is actually used.
 let snapStorePromise: Promise<SnapshotStore> | null = null;
@@ -921,6 +986,16 @@ export async function runDashboard(
   // connectivity graph/status (one immediate pass, then every 30s).
   startHealthChecks(30_000);
 
+  // Persisted usage history: a SQLite DB beside the events DB, filled by a slow
+  // background sampler (per-client ↓/↑ snapshots + User Manager session ingest)
+  // that powers the 3-month usage graphs and the forever connection heatmap.
+  try {
+    usageStore = await openUsageStore(join(dirname(cfg.dbPath), "usage.db"));
+    startUsageSampler(usageStore);
+  } catch (e) {
+    logger.warn(`[${SERVER_TAG}] usage history disabled: ${String(e)}`);
+  }
+
   // Seed an initial config baseline so the version timeline always has at least
   // one restore point (the state the dashboard started with).
   try {
@@ -995,6 +1070,9 @@ export async function runDashboard(
 
       const aaaResp = await aaaRoutes(req, url);
       if (aaaResp) return aaaResp;
+
+      const usageResp = usageRoutes(req, url);
+      if (usageResp) return usageResp;
 
       const featureResp = await featureRoutes(req, url);
       if (featureResp) return featureResp;
@@ -1115,8 +1193,11 @@ export async function runDashboard(
     store,
     stop() {
       stopHealthChecks();
+      stopUsageSampler();
       void server.stop(true);
       store.close();
+      usageStore?.close();
+      usageStore = null;
     },
   };
 }
