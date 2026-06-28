@@ -87,7 +87,8 @@
         "allowedHosts": "",
         "allowedOrigins": "",
         "corsOrigins": "",
-        "toolPageSize": 0
+        "toolPageSize": 0,
+        "appViews": true
       },
       "type": "object",
       "properties": {
@@ -123,6 +124,10 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991
+        },
+        "appViews": {
+          "default": true,
+          "type": "boolean"
         }
       },
       "required": [
@@ -132,7 +137,8 @@
         "allowedHosts",
         "allowedOrigins",
         "corsOrigins",
-        "toolPageSize"
+        "toolPageSize",
+        "appViews"
       ],
       "additionalProperties": false
     },

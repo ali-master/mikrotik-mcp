@@ -71,6 +71,15 @@ export const McpServerSettingsSchema = z.object({
    * large single response can still load EVERY tool. No tool is ever disabled.
    */
   toolPageSize: z.coerce.number().int().min(0).default(0),
+  /**
+   * Emit MCP App view metadata (`_meta.ui`) on tools. Default true. Set false
+   * when the MCP host's tool discovery hides or deprioritises tools that carry
+   * App / `openai/outputTemplate` metadata — every `list_*`/`get_*` read tool
+   * carries the auto-records view, so on such a host only the metadata-free
+   * write tools surface. Disabling makes every read tool plain and discoverable
+   * (you lose the interactive table/detail widgets, not any tool).
+   */
+  appViews: z.boolean().default(true),
 });
 export type McpServerSettings = z.infer<typeof McpServerSettingsSchema>;
 
@@ -276,6 +285,7 @@ function parseDevicesSource(
   s3?: Record<string, unknown>;
   dashboard?: Record<string, unknown>;
   tools?: Record<string, unknown>;
+  mcp?: Record<string, unknown>;
 } {
   let json: unknown;
   try {
@@ -306,7 +316,11 @@ function parseDevicesSource(
     structured && obj.tools && typeof obj.tools === "object"
       ? (obj.tools as Record<string, unknown>)
       : undefined;
-  return { devices, defaultDevice, s3, dashboard, tools };
+  const mcp =
+    structured && obj.mcp && typeof obj.mcp === "object"
+      ? (obj.mcp as Record<string, unknown>)
+      : undefined;
+  return { devices, defaultDevice, s3, dashboard, tools, mcp };
 }
 
 /**
@@ -369,6 +383,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   let fileS3: Record<string, unknown> | undefined = {};
   let fileDashboard: Record<string, unknown> | undefined = {};
   let fileTools: Record<string, unknown> | undefined;
+  let fileMcp: Record<string, unknown> | undefined;
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -379,6 +394,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     fileS3 = src.s3;
     fileDashboard = src.dashboard;
     fileTools = src.tools;
+    fileMcp = src.mcp;
   }
 
   // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
@@ -396,6 +412,13 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     ...fileS3,
   };
 
+  // App-view metadata toggle: env/flag is a tri-state — absent leaves the schema
+  // default (true), an explicit falsy value disables it. The config-file
+  // `mcp.appViews` (merged below) overrides this.
+  const appViewsRaw = pick("app-views", "MIKROTIK_MCP__APP_VIEWS");
+  const appViewsEnv =
+    appViewsRaw === undefined ? undefined : !/^(0|false|no|off)$/i.test(appViewsRaw);
+
   const mcp = {
     transport: pick("transport", "MIKROTIK_MCP__TRANSPORT", "MCP_TRANSPORT"),
     host: pick("mcp-host", "MIKROTIK_MCP__HOST"),
@@ -404,6 +427,10 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     allowedOrigins: pick("mcp-allowed-origins", "MIKROTIK_MCP__ALLOWED_ORIGINS"),
     corsOrigins: pick("mcp-cors-origins", "MIKROTIK_MCP__CORS_ORIGINS"),
     toolPageSize: pick("tool-page-size", "MIKROTIK_MCP__TOOL_PAGE_SIZE"),
+    // `--app-views=false` / MIKROTIK_MCP__APP_VIEWS=false disables App-view metadata.
+    appViews: appViewsEnv,
+    // The config-file `mcp` block overrides anything from env/flags.
+    ...fileMcp,
   };
 
   // Read-only mode (boolean flag/env). A bare `--read-only` parses to "true".

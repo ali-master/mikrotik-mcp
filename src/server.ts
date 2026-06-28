@@ -129,6 +129,9 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
     // A key → label → target directory so the `device` selector can list each
     // router unambiguously and the model won't confuse e.g. "Ali Home" with "home".
     deviceDirectory: deviceDirectory(),
+    // When false, no tool carries `_meta.ui` — read tools stay plain so hosts that
+    // hide App-metadata tools still surface them (the recurring "reads don't load").
+    appViews: getConfig().mcp.appViews,
     readOnly,
   });
   const promptCount = registerPrompts(server);

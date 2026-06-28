@@ -70,6 +70,14 @@ export interface RegisterOptions {
    */
   deviceDirectory?: DeviceDirectoryEntry[];
   /**
+   * Emit MCP App view metadata (`_meta.ui`) on tools. Default true. Set false for
+   * hosts whose tool discovery hides/deprioritises tools that carry App/
+   * `openai/outputTemplate` metadata — without it, every `list_*`/`get_*` read
+   * tool gains the auto-records view and some clients then surface only the
+   * (metadata-free) write tools. Disabling makes reads plain, surfacing tools.
+   */
+  appViews?: boolean;
+  /**
    * Read-only mode: register only tools annotated `readOnlyHint`. Used to
    * withhold every write/destructive tool from a publicly-exposed surface (e.g.
    * a ChatGPT Apps connector) until authentication is in place.
@@ -195,13 +203,15 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     inputSchema: def.inputSchema,
     ui: def.ui,
     register(server: McpServer, opts: RegisterOptions = {}) {
-      const { sendLog, deviceNames, deviceAliases, deviceDirectory } = opts;
+      const { sendLog, deviceNames, deviceAliases, deviceDirectory, appViews } = opts;
       // The single-vs-multi decision is keyed on the device COUNT, never the
       // enum size — a lone device that happens to have a label must not gain a
       // selector.
       const multiDevice = !!deviceNames && deviceNames.length > 1;
       // Resolve the view once: explicit `ui` or the auto `records` view for reads.
-      const { ui, auto } = effectiveUi(def);
+      // When App views are disabled, no tool carries `_meta.ui` — read tools
+      // become plain tools so hosts that hide App-metadata tools still surface them.
+      const { ui, auto } = appViews === false ? { ui: undefined, auto: false } : effectiveUi(def);
 
       // When more than one device is configured, every tool gains an optional
       // `device` selector (a validated enum) so the AI can target a specific
