@@ -104,6 +104,65 @@ export const wirelessTools: ToolModule = [
         .enum(["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"])
         .optional(),
       security_profile: z.string().optional(),
+      mtu: z.number().int().optional().describe("Interface MTU in bytes"),
+      arp: z
+        .enum(["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"])
+        .optional()
+        .describe("ARP mode for the interface"),
+      hide_ssid: z
+        .boolean()
+        .optional()
+        .describe("Legacy: do not broadcast the SSID in beacons (AP modes)"),
+      wireless_protocol: z
+        .string()
+        .optional()
+        .describe("Legacy: wireless protocol, e.g. '802.11', 'nv2', 'nstreme'"),
+      scan_list: z
+        .string()
+        .optional()
+        .describe("Legacy: frequencies/ranges to scan (e.g. 'default' or '5180-5320')"),
+      frequency_mode: z
+        .enum(["manual-txpower", "regulatory-domain", "superchannel"])
+        .optional()
+        .describe("Legacy: regulatory frequency mode"),
+      country: z
+        .string()
+        .optional()
+        .describe("Legacy: regulatory country setting (e.g. 'united states')"),
+      antenna_gain: z
+        .number()
+        .int()
+        .optional()
+        .describe("Legacy: antenna gain in dBi used for tx-power calculations"),
+      wds_mode: z
+        .enum(["disabled", "dynamic", "dynamic-mesh", "static", "static-mesh"])
+        .optional()
+        .describe("Legacy: WDS mode"),
+      wds_default_bridge: z
+        .string()
+        .optional()
+        .describe("Legacy: bridge that dynamic WDS interfaces are added to"),
+      default_authentication: z
+        .boolean()
+        .optional()
+        .describe("Legacy: allow clients not in the access-list to authenticate"),
+      default_forwarding: z
+        .boolean()
+        .optional()
+        .describe("Legacy: allow client-to-client forwarding by default"),
+      tx_power: z.number().int().optional().describe("Legacy: manual transmit power in dBm"),
+      tx_power_mode: z
+        .enum(["default", "card-rates", "all-rates-fixed", "manual-table"])
+        .optional()
+        .describe("Legacy: how tx-power is determined"),
+      distance: z
+        .string()
+        .optional()
+        .describe("Legacy: link distance ('dynamic', 'indoors', or a km value)"),
+      disconnect_timeout: z
+        .string()
+        .optional()
+        .describe("Legacy: time before a non-responding client is disconnected"),
     },
     async handler(a, ctx) {
       ctx.info(`Creating wireless interface: name=${a.name}, ssid=${a.ssid}`);
@@ -119,6 +178,8 @@ export const wirelessTools: ToolModule = [
           .opt("ssid", a.ssid)
           .flag("disabled", a.disabled)
           .opt("comment", a.comment)
+          .opt("mtu", a.mtu)
+          .opt("arp", a.arp)
           .build();
       } else {
         // Legacy wireless syntax (RouterOS v6.x and older).
@@ -136,6 +197,22 @@ export const wirelessTools: ToolModule = [
           .opt("band", a.band)
           .opt("channel-width", a.channel_width)
           .opt("security-profile", a.security_profile)
+          .opt("mtu", a.mtu)
+          .opt("arp", a.arp)
+          .bool("hide-ssid", a.hide_ssid)
+          .opt("wireless-protocol", a.wireless_protocol)
+          .opt("scan-list", a.scan_list)
+          .opt("frequency-mode", a.frequency_mode)
+          .opt("country", a.country)
+          .opt("antenna-gain", a.antenna_gain)
+          .opt("wds-mode", a.wds_mode)
+          .opt("wds-default-bridge", a.wds_default_bridge)
+          .bool("default-authentication", a.default_authentication)
+          .bool("default-forwarding", a.default_forwarding)
+          .opt("tx-power", a.tx_power)
+          .opt("tx-power-mode", a.tx_power_mode)
+          .opt("distance", a.distance)
+          .opt("disconnect-timeout", a.disconnect_timeout)
           .build();
       }
 
@@ -595,6 +672,75 @@ For legacy systems:
       ssid: z.string().optional(),
       disabled: z.boolean().optional(),
       comment: z.string().optional(),
+      mtu: z.number().int().optional().describe("Interface MTU in bytes"),
+      arp: z
+        .enum(["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"])
+        .optional()
+        .describe("ARP mode for the interface"),
+      hide_ssid: z
+        .boolean()
+        .optional()
+        .describe("Legacy: do not broadcast the SSID in beacons (AP modes)"),
+      wireless_protocol: z
+        .string()
+        .optional()
+        .describe("Legacy: wireless protocol, e.g. '802.11', 'nv2', 'nstreme'"),
+      scan_list: z
+        .string()
+        .optional()
+        .describe("Legacy: frequencies/ranges to scan (e.g. 'default' or '5180-5320')"),
+      frequency: z.string().optional().describe("Legacy: operating frequency in MHz"),
+      band: z.string().optional().describe("Legacy: band, e.g. '2ghz-b/g/n' or '5ghz-a/n/ac'"),
+      channel_width: z
+        .enum(["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"])
+        .optional()
+        .describe("Legacy: channel width"),
+      frequency_mode: z
+        .enum(["manual-txpower", "regulatory-domain", "superchannel"])
+        .optional()
+        .describe("Legacy: regulatory frequency mode"),
+      country: z
+        .string()
+        .optional()
+        .describe("Legacy: regulatory country setting (e.g. 'united states')"),
+      antenna_gain: z
+        .number()
+        .int()
+        .optional()
+        .describe("Legacy: antenna gain in dBi used for tx-power calculations"),
+      wds_mode: z
+        .enum(["disabled", "dynamic", "dynamic-mesh", "static", "static-mesh"])
+        .optional()
+        .describe("Legacy: WDS mode"),
+      wds_default_bridge: z
+        .string()
+        .optional()
+        .describe("Legacy: bridge that dynamic WDS interfaces are added to"),
+      default_authentication: z
+        .boolean()
+        .optional()
+        .describe("Legacy: allow clients not in the access-list to authenticate"),
+      default_forwarding: z
+        .boolean()
+        .optional()
+        .describe("Legacy: allow client-to-client forwarding by default"),
+      tx_power: z.number().int().optional().describe("Legacy: manual transmit power in dBm"),
+      tx_power_mode: z
+        .enum(["default", "card-rates", "all-rates-fixed", "manual-table"])
+        .optional()
+        .describe("Legacy: how tx-power is determined"),
+      distance: z
+        .string()
+        .optional()
+        .describe("Legacy: link distance ('dynamic', 'indoors', or a km value)"),
+      disconnect_timeout: z
+        .string()
+        .optional()
+        .describe("Legacy: time before a non-responding client is disconnected"),
+      security_profile: z
+        .string()
+        .optional()
+        .describe("Legacy: name of the security profile to apply"),
     },
     async handler(a, ctx) {
       ctx.info(`Updating wireless interface: name=${a.name}`);
@@ -613,6 +759,26 @@ For legacy systems:
         .opt("ssid", a.ssid)
         .bool("disabled", a.disabled)
         .opt("comment", a.comment)
+        .opt("mtu", a.mtu)
+        .opt("arp", a.arp)
+        .bool("hide-ssid", a.hide_ssid)
+        .opt("wireless-protocol", a.wireless_protocol)
+        .opt("scan-list", a.scan_list)
+        .opt("frequency", a.frequency)
+        .opt("band", a.band)
+        .opt("channel-width", a.channel_width)
+        .opt("frequency-mode", a.frequency_mode)
+        .opt("country", a.country)
+        .opt("antenna-gain", a.antenna_gain)
+        .opt("wds-mode", a.wds_mode)
+        .opt("wds-default-bridge", a.wds_default_bridge)
+        .bool("default-authentication", a.default_authentication)
+        .bool("default-forwarding", a.default_forwarding)
+        .opt("tx-power", a.tx_power)
+        .opt("tx-power-mode", a.tx_power_mode)
+        .opt("distance", a.distance)
+        .opt("disconnect-timeout", a.disconnect_timeout)
+        .opt("security-profile", a.security_profile)
         .build();
 
       // No updates were supplied -> the command would just be the `set [find ...]` stem.

@@ -22,12 +22,15 @@ interface SwitchRuleArgs {
   ports?: string;
   src_address?: string;
   dst_address?: string;
+  src_address6?: string;
+  dst_address6?: string;
   src_mac_address?: string;
   dst_mac_address?: string;
   src_port?: string;
   dst_port?: string;
   protocol?: string;
   mac_protocol?: string;
+  vlan_header?: string;
   vlan_id?: string;
   vlan_priority?: string;
   dscp?: string;
@@ -62,12 +65,15 @@ async function updateSwitchRule(
   put("ports", a.ports);
   put("src-address", a.src_address);
   put("dst-address", a.dst_address);
+  put("src-address6", a.src_address6);
+  put("dst-address6", a.dst_address6);
   put("src-mac-address", a.src_mac_address);
   put("dst-mac-address", a.dst_mac_address);
   put("src-port", a.src_port);
   put("dst-port", a.dst_port);
   put("protocol", a.protocol);
   put("mac-protocol", a.mac_protocol);
+  put("vlan-header", a.vlan_header);
   put("vlan-id", a.vlan_id);
   put("vlan-priority", a.vlan_priority);
   put("dscp", a.dscp);
@@ -119,6 +125,8 @@ export const switchRuleTools: ToolModule = [
       ports: z.string().describe("Comma-separated source ports the rule matches"),
       src_address: z.string().optional().describe("Source IP/mask"),
       dst_address: z.string().optional().describe("Destination IP/mask"),
+      src_address6: z.string().optional().describe("Source IPv6 address/mask"),
+      dst_address6: z.string().optional().describe("Destination IPv6 address/mask"),
       src_mac_address: z.string().optional().describe("Source MAC/mask"),
       dst_mac_address: z.string().optional().describe("Destination MAC/mask"),
       src_port: z.string().optional().describe("Layer-4 source port(s)"),
@@ -128,6 +136,10 @@ export const switchRuleTools: ToolModule = [
         .string()
         .optional()
         .describe("MAC protocol, e.g. 'ip', 'arp', 'vlan' or a number"),
+      vlan_header: z
+        .enum(["any", "not-present", "present"])
+        .optional()
+        .describe("Match on VLAN tag presence"),
       vlan_id: z.string().optional(),
       vlan_priority: z.string().optional(),
       dscp: z.string().optional(),
@@ -152,12 +164,15 @@ export const switchRuleTools: ToolModule = [
         .set("ports", a.ports)
         .opt("src-address", a.src_address)
         .opt("dst-address", a.dst_address)
+        .opt("src-address6", a.src_address6)
+        .opt("dst-address6", a.dst_address6)
         .opt("src-mac-address", a.src_mac_address)
         .opt("dst-mac-address", a.dst_mac_address)
         .opt("src-port", a.src_port)
         .opt("dst-port", a.dst_port)
         .opt("protocol", a.protocol)
         .opt("mac-protocol", a.mac_protocol)
+        .opt("vlan-header", a.vlan_header)
         .opt("vlan-id", a.vlan_id)
         .opt("vlan-priority", a.vlan_priority)
         .opt("dscp", a.dscp)
@@ -289,12 +304,15 @@ export const switchRuleTools: ToolModule = [
       ports: z.string().optional(),
       src_address: z.string().optional(),
       dst_address: z.string().optional(),
+      src_address6: z.string().optional(),
+      dst_address6: z.string().optional(),
       src_mac_address: z.string().optional(),
       dst_mac_address: z.string().optional(),
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
       protocol: z.string().optional(),
       mac_protocol: z.string().optional(),
+      vlan_header: z.enum(["any", "not-present", "present"]).optional(),
       vlan_id: z.string().optional(),
       vlan_priority: z.string().optional(),
       dscp: z.string().optional(),

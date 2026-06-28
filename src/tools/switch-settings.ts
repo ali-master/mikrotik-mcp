@@ -88,6 +88,14 @@ export const switchSettingsTools: ToolModule = [
         .string()
         .optional()
         .describe("Egress mirror source port (newer chips), or 'none'"),
+      mirror_egress_target: z
+        .string()
+        .optional()
+        .describe("Egress mirror target port (88E6393X/88E6191X/88E6190 chips), or 'none'"),
+      switch_all_ports: z
+        .boolean()
+        .optional()
+        .describe("Switch all ports together (RB450G/RB435G/RB850Gx2 only)"),
     },
     async handler(a, ctx) {
       ctx.info(`Updating switch: switch_id=${a.switch_id}`);
@@ -100,7 +108,9 @@ export const switchSettingsTools: ToolModule = [
         .bool("cpu-flow-control", a.cpu_flow_control)
         .opt("mirror-source", a.mirror_source)
         .opt("mirror-target", a.mirror_target)
-        .opt("mirror-egress", a.mirror_egress);
+        .opt("mirror-egress", a.mirror_egress)
+        .opt("mirror-egress-target", a.mirror_egress_target)
+        .bool("switch-all-ports", a.switch_all_ports);
 
       const built = cmd.build();
       if (built === base) return "No updates specified.";

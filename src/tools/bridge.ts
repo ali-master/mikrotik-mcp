@@ -13,6 +13,17 @@ import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const ProtocolMode = z.enum(["none", "rstp", "stp", "mstp"]);
+const ArpMode = z.enum(["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]);
+const EtherType = z.enum(["0x8100", "0x88a8", "0x9100"]);
+const FrameTypes = z.enum([
+  "admit-all",
+  "admit-only-untagged-and-priority-tagged",
+  "admit-only-vlan-tagged",
+]);
+const PortLearn = z.enum(["auto", "yes", "no"]);
+const PortEdge = z.enum(["auto", "no", "yes", "no-discover", "yes-discover"]);
+const PortPointToPoint = z.enum(["auto", "yes", "no"]);
+const MulticastRouter = z.enum(["disabled", "permanent", "temporary-query"]);
 
 export const bridgeTools: ToolModule = [
   defineTool({
@@ -35,6 +46,40 @@ export const bridgeTools: ToolModule = [
       protocol_mode: ProtocolMode.optional().describe("Spanning-tree protocol mode"),
       disabled: z.boolean().default(false),
       mtu: z.number().int().optional(),
+      ageing_time: z.string().optional().describe("Host table entry timeout, e.g. '5m'"),
+      arp: ArpMode.optional().describe("ARP resolution mode"),
+      arp_timeout: z.string().optional().describe("ARP entry timeout, e.g. '30s' or 'auto'"),
+      auto_mac: z
+        .boolean()
+        .optional()
+        .describe("Automatically pick the bridge MAC from a member port"),
+      admin_mac: z
+        .string()
+        .optional()
+        .describe("Static bridge MAC address (requires auto_mac=false)"),
+      priority: z.string().optional().describe("STP/RSTP bridge priority, e.g. '0x8000'"),
+      ether_type: EtherType.optional().describe(
+        "Service VLAN (S-tag) EtherType when VLAN filtering",
+      ),
+      pvid: z
+        .number()
+        .int()
+        .min(1)
+        .max(4094)
+        .optional()
+        .describe("Bridge-level default port VLAN ID"),
+      frame_types: FrameTypes.optional().describe("Default accepted frame types for ports"),
+      ingress_filtering: z
+        .boolean()
+        .optional()
+        .describe("Default ingress VLAN filtering for ports"),
+      dhcp_snooping: z.boolean().optional().describe("Enable DHCP snooping"),
+      igmp_snooping: z.boolean().optional().describe("Enable IGMP/MLD snooping"),
+      fast_forward: z.boolean().optional().describe("Enable Fast Forward optimization"),
+      mvrp: z.boolean().optional().describe("Enable Multiple VLAN Registration Protocol"),
+      forward_delay: z.string().optional().describe("STP forward delay timer, e.g. '15s'"),
+      max_message_age: z.string().optional().describe("STP maximum message age, e.g. '20s'"),
+      transmit_hold_count: z.number().int().optional().describe("STP transmit hold count"),
     },
     async handler(a, ctx) {
       ctx.info(`Creating bridge: name=${a.name}, vlan_filtering=${a.vlan_filtering}`);
@@ -44,6 +89,23 @@ export const bridgeTools: ToolModule = [
         .flag("vlan-filtering", a.vlan_filtering)
         .opt("protocol-mode", a.protocol_mode)
         .opt("mtu", a.mtu)
+        .opt("ageing-time", a.ageing_time)
+        .opt("arp", a.arp)
+        .opt("arp-timeout", a.arp_timeout)
+        .bool("auto-mac", a.auto_mac)
+        .opt("admin-mac", a.admin_mac)
+        .opt("priority", a.priority)
+        .opt("ether-type", a.ether_type)
+        .opt("pvid", a.pvid)
+        .opt("frame-types", a.frame_types)
+        .bool("ingress-filtering", a.ingress_filtering)
+        .bool("dhcp-snooping", a.dhcp_snooping)
+        .bool("igmp-snooping", a.igmp_snooping)
+        .bool("fast-forward", a.fast_forward)
+        .bool("mvrp", a.mvrp)
+        .opt("forward-delay", a.forward_delay)
+        .opt("max-message-age", a.max_message_age)
+        .opt("transmit-hold-count", a.transmit_hold_count)
         .flag("disabled", a.disabled)
         .build();
 
@@ -125,6 +187,40 @@ export const bridgeTools: ToolModule = [
       protocol_mode: ProtocolMode.optional(),
       disabled: z.boolean().optional(),
       mtu: z.number().int().optional(),
+      ageing_time: z.string().optional().describe("Host table entry timeout, e.g. '5m'"),
+      arp: ArpMode.optional().describe("ARP resolution mode"),
+      arp_timeout: z.string().optional().describe("ARP entry timeout, e.g. '30s' or 'auto'"),
+      auto_mac: z
+        .boolean()
+        .optional()
+        .describe("Automatically pick the bridge MAC from a member port"),
+      admin_mac: z
+        .string()
+        .optional()
+        .describe("Static bridge MAC address (requires auto_mac=false)"),
+      priority: z.string().optional().describe("STP/RSTP bridge priority, e.g. '0x8000'"),
+      ether_type: EtherType.optional().describe(
+        "Service VLAN (S-tag) EtherType when VLAN filtering",
+      ),
+      pvid: z
+        .number()
+        .int()
+        .min(1)
+        .max(4094)
+        .optional()
+        .describe("Bridge-level default port VLAN ID"),
+      frame_types: FrameTypes.optional().describe("Default accepted frame types for ports"),
+      ingress_filtering: z
+        .boolean()
+        .optional()
+        .describe("Default ingress VLAN filtering for ports"),
+      dhcp_snooping: z.boolean().optional().describe("Enable DHCP snooping"),
+      igmp_snooping: z.boolean().optional().describe("Enable IGMP/MLD snooping"),
+      fast_forward: z.boolean().optional().describe("Enable Fast Forward optimization"),
+      mvrp: z.boolean().optional().describe("Enable Multiple VLAN Registration Protocol"),
+      forward_delay: z.string().optional().describe("STP forward delay timer, e.g. '15s'"),
+      max_message_age: z.string().optional().describe("STP maximum message age, e.g. '20s'"),
+      transmit_hold_count: z.number().int().optional().describe("STP transmit hold count"),
     },
     async handler(a, ctx) {
       ctx.info(`Updating bridge: name=${a.name}`);
@@ -135,6 +231,23 @@ export const bridgeTools: ToolModule = [
         .opt("protocol-mode", a.protocol_mode)
         .bool("disabled", a.disabled)
         .opt("mtu", a.mtu)
+        .opt("ageing-time", a.ageing_time)
+        .opt("arp", a.arp)
+        .opt("arp-timeout", a.arp_timeout)
+        .bool("auto-mac", a.auto_mac)
+        .opt("admin-mac", a.admin_mac)
+        .opt("priority", a.priority)
+        .opt("ether-type", a.ether_type)
+        .opt("pvid", a.pvid)
+        .opt("frame-types", a.frame_types)
+        .bool("ingress-filtering", a.ingress_filtering)
+        .bool("dhcp-snooping", a.dhcp_snooping)
+        .bool("igmp-snooping", a.igmp_snooping)
+        .bool("fast-forward", a.fast_forward)
+        .bool("mvrp", a.mvrp)
+        .opt("forward-delay", a.forward_delay)
+        .opt("max-message-age", a.max_message_age)
+        .opt("transmit-hold-count", a.transmit_hold_count)
         .build();
 
       // No updates were supplied -> the command would just be the `set [find ...]` stem.
@@ -204,6 +317,49 @@ export const bridgeTools: ToolModule = [
         .describe("Port VLAN ID for untagged ingress"),
       comment: z.string().optional(),
       hw: z.boolean().optional().describe("Use hardware offload for this port"),
+      disabled: z.boolean().optional().describe("Disable this bridge port"),
+      frame_types: FrameTypes.optional().describe("Accepted frame types on ingress"),
+      ingress_filtering: z
+        .boolean()
+        .optional()
+        .describe("Drop ingress frames tagged with a VLAN the port isn't a member of"),
+      tag_stacking: z.boolean().optional().describe("Force an extra VLAN tag (Q-in-Q) on ingress"),
+      priority: z.string().optional().describe("STP port priority, e.g. '0x80'"),
+      path_cost: z.number().int().optional().describe("STP path cost for this port"),
+      internal_path_cost: z.number().int().optional().describe("MSTP internal path cost"),
+      horizon: z
+        .number()
+        .int()
+        .optional()
+        .describe("Split-horizon group number for forwarding isolation"),
+      learn: PortLearn.optional().describe("MAC address learning mode"),
+      edge: PortEdge.optional().describe("STP edge-port setting"),
+      point_to_point: PortPointToPoint.optional().describe("STP point-to-point link setting"),
+      auto_isolate: z
+        .boolean()
+        .optional()
+        .describe("Keep port in discarding until a BPDU is received"),
+      bpdu_guard: z.boolean().optional().describe("Disable the port if it receives a BPDU"),
+      restricted_role: z.boolean().optional().describe("Exclude port from becoming the root port"),
+      restricted_tcn: z
+        .boolean()
+        .optional()
+        .describe("Block topology change notifications from this port"),
+      trusted: z
+        .boolean()
+        .optional()
+        .describe("Trust DHCP server replies on this port (DHCP snooping)"),
+      multicast_router: MulticastRouter.optional().describe("IGMP-snooping multicast router state"),
+      fast_leave: z.boolean().optional().describe("IGMP-snooping fast leave"),
+      unknown_unicast_flood: z
+        .boolean()
+        .optional()
+        .describe("Flood unknown-unicast frames to this port"),
+      unknown_multicast_flood: z
+        .boolean()
+        .optional()
+        .describe("Flood unknown-multicast frames to this port"),
+      broadcast_flood: z.boolean().optional().describe("Flood broadcast frames to this port"),
     },
     async handler(a, ctx) {
       ctx.info(`Adding bridge port: bridge=${a.bridge}, interface=${a.interface}`);
@@ -213,6 +369,27 @@ export const bridgeTools: ToolModule = [
         .opt("pvid", a.pvid)
         .opt("comment", a.comment)
         .bool("hw", a.hw)
+        .bool("disabled", a.disabled)
+        .opt("frame-types", a.frame_types)
+        .bool("ingress-filtering", a.ingress_filtering)
+        .bool("tag-stacking", a.tag_stacking)
+        .opt("priority", a.priority)
+        .opt("path-cost", a.path_cost)
+        .opt("internal-path-cost", a.internal_path_cost)
+        .opt("horizon", a.horizon)
+        .opt("learn", a.learn)
+        .opt("edge", a.edge)
+        .opt("point-to-point", a.point_to_point)
+        .bool("auto-isolate", a.auto_isolate)
+        .bool("bpdu-guard", a.bpdu_guard)
+        .bool("restricted-role", a.restricted_role)
+        .bool("restricted-tcn", a.restricted_tcn)
+        .bool("trusted", a.trusted)
+        .opt("multicast-router", a.multicast_router)
+        .bool("fast-leave", a.fast_leave)
+        .bool("unknown-unicast-flood", a.unknown_unicast_flood)
+        .bool("unknown-multicast-flood", a.unknown_multicast_flood)
+        .bool("broadcast-flood", a.broadcast_flood)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
@@ -335,6 +512,8 @@ export const bridgeTools: ToolModule = [
       vlan_ids: z.string().describe("VLAN ID(s), e.g. '100' or '100,200'"),
       tagged: z.string().optional().describe("Comma-separated tagged interfaces"),
       untagged: z.string().optional().describe("Comma-separated untagged interfaces"),
+      comment: z.string().optional(),
+      disabled: z.boolean().optional().describe("Disable this VLAN table entry"),
     },
     async handler(a, ctx) {
       ctx.info(`Adding bridge VLAN: bridge=${a.bridge}, vlan_ids=${a.vlan_ids}`);
@@ -343,6 +522,8 @@ export const bridgeTools: ToolModule = [
         .set("vlan-ids", a.vlan_ids)
         .opt("tagged", a.tagged)
         .opt("untagged", a.untagged)
+        .opt("comment", a.comment)
+        .bool("disabled", a.disabled)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);

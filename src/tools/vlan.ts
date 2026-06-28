@@ -13,6 +13,7 @@ import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 
 const ArpMode = z.enum(["enabled", "disabled", "proxy-arp", "reply-only"]);
+const LoopProtect = z.enum(["default", "on", "off"]);
 
 export const vlanTools: ToolModule = [
   defineTool({
@@ -35,6 +36,15 @@ export const vlanTools: ToolModule = [
       use_service_tag: z.boolean().default(false).describe("Use 802.1ad service tag (QinQ)"),
       arp: ArpMode.default("enabled"),
       arp_timeout: z.string().optional(),
+      loop_protect: LoopProtect.optional().describe("Loop protection: default, on, off"),
+      loop_protect_disable_time: z
+        .string()
+        .optional()
+        .describe("Time to disable interface on loop detection, e.g. '5m' (0 = forever)"),
+      loop_protect_send_interval: z
+        .string()
+        .optional()
+        .describe("Interval between loop-protect probe packets, e.g. '5s'"),
     },
     async handler(a, ctx) {
       ctx.info(
@@ -50,6 +60,9 @@ export const vlanTools: ToolModule = [
         .flag("use-service-tag", a.use_service_tag)
         .raw(a.arp !== "enabled" ? `arp=${a.arp}` : null)
         .opt("arp-timeout", a.arp_timeout)
+        .opt("loop-protect", a.loop_protect)
+        .opt("loop-protect-disable-time", a.loop_protect_disable_time)
+        .opt("loop-protect-send-interval", a.loop_protect_send_interval)
         .build();
 
       const result = await executeMikrotikCommand(cmd, ctx);
@@ -141,6 +154,15 @@ export const vlanTools: ToolModule = [
       use_service_tag: z.boolean().optional(),
       arp: ArpMode.optional(),
       arp_timeout: z.string().optional(),
+      loop_protect: LoopProtect.optional().describe("Loop protection: default, on, off"),
+      loop_protect_disable_time: z
+        .string()
+        .optional()
+        .describe("Time to disable interface on loop detection, e.g. '5m' (0 = forever)"),
+      loop_protect_send_interval: z
+        .string()
+        .optional()
+        .describe("Interval between loop-protect probe packets, e.g. '5s'"),
     },
     async handler(a, ctx) {
       ctx.info(`Updating VLAN interface: name=${a.name}`);
@@ -154,6 +176,9 @@ export const vlanTools: ToolModule = [
         .bool("use-service-tag", a.use_service_tag)
         .opt("arp", a.arp)
         .opt("arp-timeout", a.arp_timeout)
+        .opt("loop-protect", a.loop_protect)
+        .opt("loop-protect-disable-time", a.loop_protect_disable_time)
+        .opt("loop-protect-send-interval", a.loop_protect_send_interval)
         .build();
 
       // No updates were supplied -> the command would just be the `set [find ...]` stem.
