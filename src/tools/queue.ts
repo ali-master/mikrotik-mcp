@@ -80,12 +80,50 @@ export const queueTools: ToolModule = [
       cake_rtt: z.string().optional().describe('Round-trip time e.g. "50ms", "100ms"'),
       cake_wash: z.boolean().optional(),
       cake_overhead_scheme: z.string().optional(),
+      cake_bandwidth: z
+        .string()
+        .optional()
+        .describe('CAKE shaper bandwidth e.g. "100M", "0" for unlimited'),
+      cake_atm: z
+        .enum(["none", "atm", "ptm"])
+        .optional()
+        .describe("Link-layer ATM/PTM compensation"),
+      cake_autorate_ingress: z.boolean().optional().describe("Automatic ingress rate estimation"),
+      cake_memlimit: z.string().optional().describe("Override CAKE buffer memory limit"),
       pcq_rate: z.string().optional().describe('Bandwidth per flow e.g. "1M", "512k"'),
       pcq_limit: z.number().int().optional(),
       pcq_classifier: z
         .string()
         .optional()
         .describe('Comma-separated classifiers e.g. "src-address,dst-address"'),
+      pcq_total_limit: z
+        .number()
+        .int()
+        .optional()
+        .describe("Total packet limit across all PCQ sub-queues"),
+      pcq_burst_rate: z.string().optional().describe('PCQ burst rate e.g. "1M"'),
+      pcq_burst_threshold: z.string().optional().describe('PCQ burst threshold e.g. "512k"'),
+      pcq_burst_time: z.string().optional().describe('PCQ burst time e.g. "10s"'),
+      pcq_src_address_mask: z
+        .number()
+        .int()
+        .optional()
+        .describe("IPv4 src classifier mask bits (0-32)"),
+      pcq_dst_address_mask: z
+        .number()
+        .int()
+        .optional()
+        .describe("IPv4 dst classifier mask bits (0-32)"),
+      pcq_src_address6_mask: z
+        .number()
+        .int()
+        .optional()
+        .describe("IPv6 src classifier mask bits (0-128)"),
+      pcq_dst_address6_mask: z
+        .number()
+        .int()
+        .optional()
+        .describe("IPv6 dst classifier mask bits (0-128)"),
       pfifo_limit: z.number().int().optional(),
       bfifo_limit: z.number().int().optional(),
       sfq_perturb: z.number().int().optional(),
@@ -115,10 +153,22 @@ export const queueTools: ToolModule = [
         .opt("cake-rtt", a.cake_rtt)
         .bool("cake-wash", a.cake_wash)
         .opt("cake-overhead-scheme", a.cake_overhead_scheme)
+        .opt("cake-bandwidth", a.cake_bandwidth)
+        .opt("cake-atm", a.cake_atm)
+        .bool("cake-autorate-ingress", a.cake_autorate_ingress)
+        .opt("cake-memlimit", a.cake_memlimit)
         // PCQ parameters
         .opt("pcq-rate", a.pcq_rate)
         .opt("pcq-limit", a.pcq_limit)
         .opt("pcq-classifier", a.pcq_classifier)
+        .opt("pcq-total-limit", a.pcq_total_limit)
+        .opt("pcq-burst-rate", a.pcq_burst_rate)
+        .opt("pcq-burst-threshold", a.pcq_burst_threshold)
+        .opt("pcq-burst-time", a.pcq_burst_time)
+        .opt("pcq-src-address-mask", a.pcq_src_address_mask)
+        .opt("pcq-dst-address-mask", a.pcq_dst_address_mask)
+        .opt("pcq-src-address6-mask", a.pcq_src_address6_mask)
+        .opt("pcq-dst-address6-mask", a.pcq_dst_address6_mask)
         // PFIFO/BFIFO parameters
         .opt("pfifo-limit", a.pfifo_limit)
         .opt("bfifo-limit", a.bfifo_limit)
@@ -206,9 +256,21 @@ export const queueTools: ToolModule = [
       cake_rtt: z.string().optional(),
       cake_wash: z.boolean().optional(),
       cake_overhead_scheme: z.string().optional(),
+      cake_bandwidth: z.string().optional(),
+      cake_atm: z.string().optional(),
+      cake_autorate_ingress: z.boolean().optional(),
+      cake_memlimit: z.string().optional(),
       pcq_rate: z.string().optional(),
       pcq_limit: z.number().int().optional(),
       pcq_classifier: z.string().optional(),
+      pcq_total_limit: z.number().int().optional(),
+      pcq_burst_rate: z.string().optional(),
+      pcq_burst_threshold: z.string().optional(),
+      pcq_burst_time: z.string().optional(),
+      pcq_src_address_mask: z.number().int().optional(),
+      pcq_dst_address_mask: z.number().int().optional(),
+      pcq_src_address6_mask: z.number().int().optional(),
+      pcq_dst_address6_mask: z.number().int().optional(),
     },
     async handler(a, ctx) {
       ctx.info(`Updating queue type: name=${a.name}`);
@@ -223,9 +285,21 @@ export const queueTools: ToolModule = [
         .opt("cake-rtt", a.cake_rtt)
         .bool("cake-wash", a.cake_wash)
         .opt("cake-overhead-scheme", a.cake_overhead_scheme)
+        .opt("cake-bandwidth", a.cake_bandwidth)
+        .opt("cake-atm", a.cake_atm)
+        .bool("cake-autorate-ingress", a.cake_autorate_ingress)
+        .opt("cake-memlimit", a.cake_memlimit)
         .opt("pcq-rate", a.pcq_rate)
         .opt("pcq-limit", a.pcq_limit)
         .opt("pcq-classifier", a.pcq_classifier)
+        .opt("pcq-total-limit", a.pcq_total_limit)
+        .opt("pcq-burst-rate", a.pcq_burst_rate)
+        .opt("pcq-burst-threshold", a.pcq_burst_threshold)
+        .opt("pcq-burst-time", a.pcq_burst_time)
+        .opt("pcq-src-address-mask", a.pcq_src_address_mask)
+        .opt("pcq-dst-address-mask", a.pcq_dst_address_mask)
+        .opt("pcq-src-address6-mask", a.pcq_src_address6_mask)
+        .opt("pcq-dst-address6-mask", a.pcq_dst_address6_mask)
         .build();
 
       if (!cmd.includes("=", cmd.indexOf("]"))) return "No updates specified.";
@@ -513,6 +587,10 @@ export const queueTools: ToolModule = [
       parent: z.string().optional(),
       priority: z.string().optional().describe("1 (highest) – 8 (lowest)"),
       packet_marks: z.string().optional(),
+      time: z
+        .string()
+        .optional()
+        .describe('Active time/days e.g. "0s-1d,sun,mon,tue,wed,thu,fri,sat"'),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -532,6 +610,7 @@ export const queueTools: ToolModule = [
         .opt("parent", a.parent)
         .opt("priority", a.priority)
         .opt("packet-marks", a.packet_marks)
+        .opt("time", a.time)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -634,6 +713,10 @@ export const queueTools: ToolModule = [
       parent: z.string().optional(),
       priority: z.string().optional().describe("1 (highest) – 8 (lowest)"),
       packet_marks: z.string().optional(),
+      time: z
+        .string()
+        .optional()
+        .describe('Active time/days e.g. "0s-1d,sun,mon,tue,wed,thu,fri,sat"'),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -653,6 +736,7 @@ export const queueTools: ToolModule = [
         .opt("parent", a.parent)
         .opt("priority", a.priority)
         .opt("packet-marks", a.packet_marks)
+        .opt("time", a.time)
         .opt("comment", a.comment)
         .bool("disabled", a.disabled)
         .build();

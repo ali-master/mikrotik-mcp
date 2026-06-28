@@ -7,6 +7,8 @@ import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
 import { redactSecrets } from "../utils";
 
 const UseEncryption = z.enum(["default", "yes", "no", "required"]);
+const UseMpls = z.enum(["default", "yes", "no", "required"]);
+const UseCompression = z.enum(["default", "yes", "no"]);
 const ChangeTcpMss = z.enum(["default", "yes", "no"]);
 const OnlyOne = z.enum(["default", "yes", "no"]);
 const Service = z.enum(["any", "l2tp", "pptp", "sstp", "ovpn", "pppoe"]);
@@ -27,11 +29,25 @@ export const pppTools: ToolModule = [
       local_address: z.string().optional().describe("Server-side tunnel IP or pool name"),
       remote_address: z.string().optional().describe("Client IP or address pool name"),
       dns_server: z.string().optional(),
+      wins_server: z.string().optional().describe("WINS server IP(s) pushed to clients"),
+      address_list: z.string().optional().describe("Address list to add the remote address to"),
+      incoming_filter: z.string().optional().describe("Firewall chain for incoming packets"),
+      outgoing_filter: z.string().optional().describe("Firewall chain for outgoing packets"),
       rate_limit: z.string().optional().describe("Rate limit, e.g. '10M/10M'"),
+      session_timeout: z.string().optional().describe("Max session duration, e.g. '1h'"),
+      idle_timeout: z.string().optional().describe("Disconnect after this idle time, e.g. '5m'"),
       use_encryption: UseEncryption.optional(),
+      use_mpls: UseMpls.optional().describe("MPLS over the link policy"),
+      use_compression: UseCompression.optional().describe("Compression policy"),
       change_tcp_mss: ChangeTcpMss.optional(),
       only_one: OnlyOne.optional().describe("Allow only one session per user"),
       bridge: z.string().optional(),
+      bridge_horizon: z.number().int().optional().describe("Bridge split-horizon group"),
+      bridge_path_cost: z.number().int().optional().describe("Bridge port path cost"),
+      bridge_port_priority: z.number().int().optional().describe("Bridge port priority"),
+      dhcpv6_pd_pool: z.string().optional().describe("IPv6 prefix delegation pool name"),
+      on_up: z.string().optional().describe("Script to run when the session connects"),
+      on_down: z.string().optional().describe("Script to run when the session disconnects"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -41,11 +57,25 @@ export const pppTools: ToolModule = [
         .opt("local-address", a.local_address)
         .opt("remote-address", a.remote_address)
         .opt("dns-server", a.dns_server)
+        .opt("wins-server", a.wins_server)
+        .opt("address-list", a.address_list)
+        .opt("incoming-filter", a.incoming_filter)
+        .opt("outgoing-filter", a.outgoing_filter)
         .opt("rate-limit", a.rate_limit)
+        .opt("session-timeout", a.session_timeout)
+        .opt("idle-timeout", a.idle_timeout)
         .opt("use-encryption", a.use_encryption)
+        .opt("use-mpls", a.use_mpls)
+        .opt("use-compression", a.use_compression)
         .opt("change-tcp-mss", a.change_tcp_mss)
         .opt("only-one", a.only_one)
         .opt("bridge", a.bridge)
+        .opt("bridge-horizon", a.bridge_horizon)
+        .opt("bridge-path-cost", a.bridge_path_cost)
+        .opt("bridge-port-priority", a.bridge_port_priority)
+        .opt("dhcpv6-pd-pool", a.dhcpv6_pd_pool)
+        .opt("on-up", a.on_up)
+        .opt("on-down", a.on_down)
         .opt("comment", a.comment)
         .build();
 
@@ -123,11 +153,25 @@ export const pppTools: ToolModule = [
       local_address: z.string().optional(),
       remote_address: z.string().optional(),
       dns_server: z.string().optional(),
+      wins_server: z.string().optional().describe("WINS server IP(s) pushed to clients"),
+      address_list: z.string().optional().describe("Address list to add the remote address to"),
+      incoming_filter: z.string().optional().describe("Firewall chain for incoming packets"),
+      outgoing_filter: z.string().optional().describe("Firewall chain for outgoing packets"),
       rate_limit: z.string().optional(),
+      session_timeout: z.string().optional().describe("Max session duration, e.g. '1h'"),
+      idle_timeout: z.string().optional().describe("Disconnect after this idle time, e.g. '5m'"),
       use_encryption: UseEncryption.optional(),
+      use_mpls: UseMpls.optional().describe("MPLS over the link policy"),
+      use_compression: UseCompression.optional().describe("Compression policy"),
       change_tcp_mss: ChangeTcpMss.optional(),
       only_one: OnlyOne.optional(),
       bridge: z.string().optional(),
+      bridge_horizon: z.number().int().optional().describe("Bridge split-horizon group"),
+      bridge_path_cost: z.number().int().optional().describe("Bridge port path cost"),
+      bridge_port_priority: z.number().int().optional().describe("Bridge port priority"),
+      dhcpv6_pd_pool: z.string().optional().describe("IPv6 prefix delegation pool name"),
+      on_up: z.string().optional().describe("Script to run when the session connects"),
+      on_down: z.string().optional().describe("Script to run when the session disconnects"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -137,11 +181,25 @@ export const pppTools: ToolModule = [
         .opt("local-address", a.local_address)
         .opt("remote-address", a.remote_address)
         .opt("dns-server", a.dns_server)
+        .opt("wins-server", a.wins_server)
+        .opt("address-list", a.address_list)
+        .opt("incoming-filter", a.incoming_filter)
+        .opt("outgoing-filter", a.outgoing_filter)
         .opt("rate-limit", a.rate_limit)
+        .opt("session-timeout", a.session_timeout)
+        .opt("idle-timeout", a.idle_timeout)
         .opt("use-encryption", a.use_encryption)
+        .opt("use-mpls", a.use_mpls)
+        .opt("use-compression", a.use_compression)
         .opt("change-tcp-mss", a.change_tcp_mss)
         .opt("only-one", a.only_one)
         .opt("bridge", a.bridge)
+        .opt("bridge-horizon", a.bridge_horizon)
+        .opt("bridge-path-cost", a.bridge_path_cost)
+        .opt("bridge-port-priority", a.bridge_port_priority)
+        .opt("dhcpv6-pd-pool", a.dhcpv6_pd_pool)
+        .opt("on-up", a.on_up)
+        .opt("on-down", a.on_down)
         .opt("comment", a.comment)
         .build();
 
@@ -204,7 +262,10 @@ export const pppTools: ToolModule = [
       profile: z.string().optional(),
       local_address: z.string().optional(),
       remote_address: z.string().optional(),
+      routes: z.string().optional().describe("Routes added while this client is connected"),
       caller_id: z.string().optional(),
+      limit_bytes_in: z.number().int().optional().describe("Max bytes the client may upload"),
+      limit_bytes_out: z.number().int().optional().describe("Max bytes the client may download"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -217,7 +278,10 @@ export const pppTools: ToolModule = [
         .opt("profile", a.profile)
         .opt("local-address", a.local_address)
         .opt("remote-address", a.remote_address)
+        .opt("routes", a.routes)
         .opt("caller-id", a.caller_id)
+        .opt("limit-bytes-in", a.limit_bytes_in)
+        .opt("limit-bytes-out", a.limit_bytes_out)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -301,7 +365,10 @@ export const pppTools: ToolModule = [
       profile: z.string().optional(),
       local_address: z.string().optional(),
       remote_address: z.string().optional(),
+      routes: z.string().optional().describe("Routes added while this client is connected"),
       caller_id: z.string().optional(),
+      limit_bytes_in: z.number().int().optional().describe("Max bytes the client may upload"),
+      limit_bytes_out: z.number().int().optional().describe("Max bytes the client may download"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -314,7 +381,10 @@ export const pppTools: ToolModule = [
         .opt("profile", a.profile)
         .opt("local-address", a.local_address)
         .opt("remote-address", a.remote_address)
+        .opt("routes", a.routes)
         .opt("caller-id", a.caller_id)
+        .opt("limit-bytes-in", a.limit_bytes_in)
+        .opt("limit-bytes-out", a.limit_bytes_out)
         .opt("comment", a.comment)
         .bool("disabled", a.disabled)
         .build();

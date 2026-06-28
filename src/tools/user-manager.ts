@@ -50,6 +50,16 @@ export const userManagerTools: ToolModule = [
     inputSchema: {
       enabled: z.boolean().optional().describe("Enable or disable the User Manager server"),
       certificate: z.string().optional().describe("TLS certificate name for RADIUS over TLS"),
+      radsec_certificate: z
+        .string()
+        .optional()
+        .describe("Certificate name for RadSec (RADIUS over TLS)"),
+      accounting_port: z.number().int().optional().describe("UDP port for RADIUS accounting"),
+      authentication_port: z
+        .number()
+        .int()
+        .optional()
+        .describe("UDP port for RADIUS authentication"),
       use_profiles: z.boolean().optional().describe("Enable the profile/payment subsystem"),
     },
     async handler(a, ctx) {
@@ -57,6 +67,9 @@ export const userManagerTools: ToolModule = [
       const cmd = new Cmd("/user-manager set")
         .bool("enabled", a.enabled)
         .opt("certificate", a.certificate)
+        .opt("radsec-certificate", a.radsec_certificate)
+        .opt("accounting-port", a.accounting_port)
+        .opt("authentication-port", a.authentication_port)
         .bool("use-profiles", a.use_profiles)
         .build();
       if (cmd === "/user-manager set") return "No updates specified.";
@@ -87,6 +100,8 @@ export const userManagerTools: ToolModule = [
       group: z.string().optional(),
       shared_users: z.number().int().optional().describe("Max simultaneous sessions"),
       attributes: z.string().optional().describe("Custom RADIUS attributes"),
+      caller_id: z.string().optional().describe("Caller ID the user is restricted to (e.g. MAC)"),
+      otp_secret: z.string().optional().describe("Base32 OTP shared secret for two-factor auth"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -98,6 +113,8 @@ export const userManagerTools: ToolModule = [
         .opt("group", a.group)
         .opt("shared-users", a.shared_users)
         .opt("attributes", a.attributes)
+        .opt("caller-id", a.caller_id)
+        .opt("otp-secret", a.otp_secret)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -186,6 +203,8 @@ export const userManagerTools: ToolModule = [
       group: z.string().optional(),
       shared_users: z.number().int().optional(),
       attributes: z.string().optional(),
+      caller_id: z.string().optional().describe("Caller ID the user is restricted to (e.g. MAC)"),
+      otp_secret: z.string().optional().describe("Base32 OTP shared secret for two-factor auth"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -197,6 +216,8 @@ export const userManagerTools: ToolModule = [
         .opt("group", a.group)
         .opt("shared-users", a.shared_users)
         .opt("attributes", a.attributes)
+        .opt("caller-id", a.caller_id)
+        .opt("otp-secret", a.otp_secret)
         .opt("comment", a.comment)
         .bool("disabled", a.disabled)
         .build();
@@ -421,6 +442,11 @@ export const userManagerTools: ToolModule = [
       address: z.string().describe("IP address of the RADIUS client"),
       shared_secret: z.string().describe("Shared secret for the RADIUS client"),
       coa_port: z.number().int().optional().describe("Change-of-Authorization port"),
+      protocol: z
+        .string()
+        .optional()
+        .describe("RADIUS transport protocol for this client (e.g. radius, radsec)"),
+      comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
     async handler(a, ctx) {
@@ -430,6 +456,8 @@ export const userManagerTools: ToolModule = [
         .set("address", a.address)
         .set("shared-secret", a.shared_secret)
         .opt("coa-port", a.coa_port)
+        .opt("protocol", a.protocol)
+        .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
 
@@ -520,8 +548,33 @@ export const userManagerTools: ToolModule = [
       name: z.string().describe("Limitation name"),
       rate_limit_rx: z.string().optional().describe("Download rate limit, e.g. '10M'"),
       rate_limit_tx: z.string().optional().describe("Upload rate limit, e.g. '10M'"),
+      rate_limit_min_rx: z
+        .string()
+        .optional()
+        .describe("Guaranteed (CIR) download rate, e.g. '2M'"),
+      rate_limit_min_tx: z.string().optional().describe("Guaranteed (CIR) upload rate, e.g. '2M'"),
+      rate_limit_burst_rx: z.string().optional().describe("Download burst rate, e.g. '20M'"),
+      rate_limit_burst_tx: z.string().optional().describe("Upload burst rate, e.g. '20M'"),
+      rate_limit_burst_threshold_rx: z
+        .string()
+        .optional()
+        .describe("Download burst threshold rate"),
+      rate_limit_burst_threshold_tx: z.string().optional().describe("Upload burst threshold rate"),
+      rate_limit_burst_time_rx: z.string().optional().describe("Download burst time, e.g. '10s'"),
+      rate_limit_burst_time_tx: z.string().optional().describe("Upload burst time, e.g. '10s'"),
+      rate_limit_priority: z.number().int().optional().describe("Queue priority (1-8)"),
+      download_limit: z.string().optional().describe("Download transfer cap in bytes, e.g. '5G'"),
+      upload_limit: z.string().optional().describe("Upload transfer cap in bytes, e.g. '5G'"),
       transfer_limit: z.string().optional().describe("Total transfer cap, e.g. '10G'"),
       uptime_limit: z.string().optional().describe("Uptime cap, e.g. '1d'"),
+      reset_counters_interval: z
+        .string()
+        .optional()
+        .describe("Interval to auto-reset usage counters"),
+      reset_counters_start_time: z
+        .string()
+        .optional()
+        .describe("Start time for counter reset interval"),
       comment: z.string().optional(),
     },
     async handler(a, ctx) {
@@ -530,8 +583,21 @@ export const userManagerTools: ToolModule = [
         .set("name", a.name)
         .opt("rate-limit-rx", a.rate_limit_rx)
         .opt("rate-limit-tx", a.rate_limit_tx)
+        .opt("rate-limit-min-rx", a.rate_limit_min_rx)
+        .opt("rate-limit-min-tx", a.rate_limit_min_tx)
+        .opt("rate-limit-burst-rx", a.rate_limit_burst_rx)
+        .opt("rate-limit-burst-tx", a.rate_limit_burst_tx)
+        .opt("rate-limit-burst-threshold-rx", a.rate_limit_burst_threshold_rx)
+        .opt("rate-limit-burst-threshold-tx", a.rate_limit_burst_threshold_tx)
+        .opt("rate-limit-burst-time-rx", a.rate_limit_burst_time_rx)
+        .opt("rate-limit-burst-time-tx", a.rate_limit_burst_time_tx)
+        .opt("rate-limit-priority", a.rate_limit_priority)
+        .opt("download-limit", a.download_limit)
+        .opt("upload-limit", a.upload_limit)
         .opt("transfer-limit", a.transfer_limit)
         .opt("uptime-limit", a.uptime_limit)
+        .opt("reset-counters-interval", a.reset_counters_interval)
+        .opt("reset-counters-start-time", a.reset_counters_start_time)
         .opt("comment", a.comment)
         .build();
 

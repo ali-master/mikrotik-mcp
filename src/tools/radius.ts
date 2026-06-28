@@ -33,6 +33,18 @@ export const radiusTools: ToolModule = [
       realm: z.string().optional(),
       called_id: z.string().optional(),
       domain: z.string().optional(),
+      protocol: z
+        .enum(["udp", "radsec"])
+        .optional()
+        .describe("Transport protocol used to reach the server (default udp)"),
+      certificate: z
+        .string()
+        .optional()
+        .describe("Certificate name to present when protocol is radsec"),
+      accounting_backup: z
+        .boolean()
+        .default(false)
+        .describe("Mark this entry as a backup accounting server"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
     },
@@ -49,6 +61,9 @@ export const radiusTools: ToolModule = [
         .opt("realm", a.realm)
         .opt("called-id", a.called_id)
         .opt("domain", a.domain)
+        .opt("protocol", a.protocol)
+        .opt("certificate", a.certificate)
+        .flag("accounting-backup", a.accounting_backup)
         .opt("comment", a.comment)
         .flag("disabled", a.disabled)
         .build();
@@ -141,6 +156,18 @@ export const radiusTools: ToolModule = [
       realm: z.string().optional(),
       called_id: z.string().optional(),
       domain: z.string().optional(),
+      protocol: z
+        .enum(["udp", "radsec"])
+        .optional()
+        .describe("Transport protocol used to reach the server (default udp)"),
+      certificate: z
+        .string()
+        .optional()
+        .describe("Certificate name to present when protocol is radsec"),
+      accounting_backup: z
+        .boolean()
+        .optional()
+        .describe("Mark this entry as a backup accounting server"),
       comment: z.string().optional(),
       disabled: z.boolean().optional(),
     },
@@ -157,6 +184,9 @@ export const radiusTools: ToolModule = [
         .opt("realm", a.realm)
         .opt("called-id", a.called_id)
         .opt("domain", a.domain)
+        .opt("protocol", a.protocol)
+        .opt("certificate", a.certificate)
+        .bool("accounting-backup", a.accounting_backup)
         .opt("comment", a.comment)
         .bool("disabled", a.disabled)
         .build();
