@@ -50,11 +50,74 @@ MIKROTIK_DEVICES='{"defaultDevice":"site-a","devices":{"site-a":{"host":"203.0.1
 
 Each device accepts the same fields as the single-device config: `host`,
 `username`, `password`, `port`, `keyFilename`, `privateKey`, `keyPassphrase`,
-`timeoutMs`, plus an optional `description`. A bare `{ "name": { … } }` map (no
+`timeoutMs`, plus an optional `description` — and the SSH jump-host fields
+`jumpVia` / `jumpHost` (see below). A bare `{ "name": { … } }` map (no
 `defaultDevice`) is also accepted — the first key becomes the default.
 
 You can also combine: the legacy `MIKROTIK_*` vars contribute a `default` device
 alongside the named ones from the file/env.
+
+## SSH jump hosts (bastion / ProxyJump)
+
+Reach a router that has **no exposed SSH port** by tunnelling through another one
+the server can already reach — the classic bastion pattern, the same as OpenSSH's
+`ProxyJump`. Nothing new is opened to the internet: only the bastion is
+reachable, and the target rides an SSH channel forwarded from it.
+
+Point a device at its bastion with **`jumpVia`** — the **name of another
+configured device** — so the bastion's credentials are reused, not duplicated:
+
+```jsonc
+{
+  "defaultDevice": "hex",
+  "devices": {
+    "hex": { "host": "192.168.88.1", "username": "admin", "password": "••••" },
+    "home-ax3": {
+      "host": "10.10.30.100", // only reachable from the hEX's LAN
+      "port": 22,
+      "username": "admin",
+      "password": "••••",
+      "jumpVia": "hex", // ← tunnel in through the hEX
+    },
+  },
+}
+```
+
+Every tool then targets `home-ax3` normally (`{ "device": "home-ax3", … }`)
+and the connection is transparently routed through the hEX — SSH commands, Safe
+Mode, **and SFTP file upload** all work through the jump.
+
+When the bastion isn't a configured device, use **`jumpHost`** with inline SSH
+fields instead (`host`, `port`, `username`, `password`/`keyFilename`/`privateKey`,
+`keyPassphrase`, `timeoutMs`):
+
+```jsonc
+"home-ax3": {
+  "host": "10.10.30.100",
+  "username": "admin",
+  "password": "••••",
+  "jumpHost": { "host": "203.0.113.9", "port": 22, "username": "ops", "keyFilename": "/keys/bastion" }
+}
+```
+
+Chains are supported: a bastion may itself set `jumpVia`, so the server hops
+A → B → target. A cycle (or a device jumping through itself) is rejected with a
+clear error, and a **MAC-Telnet device can't be a bastion** (a jump needs SSH TCP
+forwarding, which Layer-2 MAC-Telnet has no notion of).
+
+> **RouterOS prerequisite.** The SSH server on the **bastion** must allow TCP
+> forwarding, which RouterOS disables by default. Enable it on the jump router:
+>
+> ```
+> /ip ssh set forwarding-enabled=local      # or "both"
+> ```
+>
+> Without it the jump fails with _"jump host could not open a tunnel … enable SSH
+> TCP forwarding"_. Only the bastion needs this; the target router does not.
+
+For a **single device** (no `devices` map), an inline jump host is also available
+via env/flags — `MIKROTIK_JUMP_HOST` / `--jump-host` (plus `…_JUMP_PORT`,
+`…_JUMP_USERNAME`, `…_JUMP_PASSWORD`, `…_JUMP_KEY_FILENAME`).
 
 ## How the AI targets a device
 

@@ -53,6 +53,46 @@
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
+          "jumpVia": {
+            "type": "string"
+          },
+          "jumpHost": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "port": {
+                "default": 22,
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "username": {
+                "default": "admin",
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              },
+              "keyFilename": {
+                "type": "string"
+              },
+              "privateKey": {
+                "type": "string"
+              },
+              "keyPassphrase": {
+                "type": "string"
+              },
+              "timeoutMs": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": ["host", "port", "username"],
+            "additionalProperties": false
+          },
           "mac": {
             "type": "string"
           },

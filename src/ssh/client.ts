@@ -15,6 +15,7 @@
  * surface from this module.
  */
 import { readFileSync } from "node:fs";
+import type { Readable } from "node:stream";
 import { Client } from "ssh2";
 import type { ConnectConfig, ClientChannel } from "ssh2";
 import { logger } from "../logger";
@@ -38,6 +39,15 @@ export interface SSHClientOptions {
   /** Passphrase for an encrypted private key. */
   keyPassphrase?: string;
   timeoutMs?: number;
+  /**
+   * Optional SSH jump host (bastion / ProxyJump). When set, `connect()` reaches
+   * `host:port` THROUGH this hop: it opens an SSH session to the hop, asks it to
+   * `forwardOut` a TCP channel to the target, then runs the real SSH session
+   * over that channel. So the target never needs a port exposed to the network —
+   * only the bastion is reachable. The hop is itself an SSH endpoint and may
+   * carry its own `jump` for a multi-hop chain (A → B → target).
+   */
+  jump?: SSHClientOptions;
 }
 
 /**
@@ -64,6 +74,12 @@ export function decodeOutput(data: Buffer): string {
 
 export class MikroTikSSHClient {
   private client: Client | null = null;
+  /**
+   * Open bastion connections, outermost-first, kept alive for the lifetime of
+   * the session (the target's transport rides a channel on the last one). Closed
+   * in reverse on `disconnect()`.
+   */
+  private bastions: Client[] = [];
   private readonly opts: Required<
     Pick<SSHClientOptions, "host" | "username" | "port" | "timeoutMs">
   > &
@@ -76,46 +92,106 @@ export class MikroTikSSHClient {
     this.opts = { port: 22, timeoutMs: 10_000, ...opts };
   }
 
-  /** Establish the SSH connection. Resolves `true` on success, `false` on failure. */
-  connect(): Promise<boolean> {
+  /**
+   * Establish the SSH connection — directly, or through one or more jump hosts
+   * when `opts.jump` is set. Resolves `true` on success, `false` on failure
+   * (with the reason on `lastError`).
+   */
+  async connect(): Promise<boolean> {
     this.lastError = undefined;
-    return new Promise((resolve) => {
+    try {
+      // Flatten the jump chain to the order it must be dialled: outermost
+      // bastion first, then inner bastions, then the target itself.
+      const hops: SSHClientOptions[] = [];
+      for (let j = this.opts.jump; j; j = j.jump) hops.unshift(j);
+      const sequence = [...hops, this.opts as SSHClientOptions];
+
+      // Dial each bastion in turn; each connection (after the first) rides a
+      // forwarded channel from the previous hop, and itself forwards onward to
+      // the NEXT address in the sequence.
+      let sock: Readable | undefined;
+      for (let i = 0; i < hops.length; i++) {
+        const client = await this.openClient(hops[i] as SSHClientOptions, sock);
+        this.bastions.push(client);
+        const next = sequence[i + 1] as SSHClientOptions;
+        sock = await this.forwardOut(client, next.host, next.port ?? 22);
+      }
+
+      // Finally open the real session to the target (over the last hop's channel
+      // when jumping, or directly when there were no hops).
+      this.client = await this.openClient(this.opts, sock);
+      return true;
+    } catch (e) {
+      this.lastError = e instanceof Error ? e.message : String(e);
+      logger.error(`Failed to connect to MikroTik: ${this.lastError}`);
+      this.disconnect();
+      return false;
+    }
+  }
+
+  /**
+   * Open one ssh2 connection. When `sock` is given the connection rides that
+   * stream (a forwarded channel from a jump host) instead of dialling the
+   * network directly. Resolves the ready `Client`; rejects with a clear reason.
+   */
+  private openClient(o: SSHClientOptions, sock?: Readable): Promise<Client> {
+    return new Promise((resolve, reject) => {
       const client = new Client();
       const cfg: ConnectConfig = {
-        host: this.opts.host,
-        port: this.opts.port,
-        username: this.opts.username,
-        readyTimeout: this.opts.timeoutMs,
+        host: o.host,
+        port: o.port ?? 22,
+        username: o.username,
+        readyTimeout: o.timeoutMs ?? 10_000,
       };
+      if (sock) cfg.sock = sock;
 
-      if (this.opts.privateKey) {
-        cfg.privateKey = this.opts.privateKey;
-      } else if (this.opts.keyFilename) {
+      if (o.privateKey) {
+        cfg.privateKey = o.privateKey;
+      } else if (o.keyFilename) {
         try {
-          cfg.privateKey = readFileSync(this.opts.keyFilename);
+          cfg.privateKey = readFileSync(o.keyFilename);
         } catch (e) {
-          this.lastError = `could not read key file ${this.opts.keyFilename}: ${e instanceof Error ? e.message : String(e)}`;
-          logger.error(`Failed to read SSH key file ${this.opts.keyFilename}: ${String(e)}`);
-          resolve(false);
+          reject(
+            new Error(
+              `could not read key file ${o.keyFilename}: ${e instanceof Error ? e.message : String(e)}`,
+            ),
+          );
           return;
         }
       }
       // Passphrase only applies to a private key; ssh2 ignores it otherwise.
-      if (cfg.privateKey && this.opts.keyPassphrase) cfg.passphrase = this.opts.keyPassphrase;
+      if (cfg.privateKey && o.keyPassphrase) cfg.passphrase = o.keyPassphrase;
       // A password may still be supplied as a fallback (ssh2 tries key first).
-      if (this.opts.password) cfg.password = this.opts.password;
+      if (o.password) cfg.password = o.password;
 
       client
-        .on("ready", () => {
-          this.client = client;
-          resolve(true);
-        })
-        .on("error", (err) => {
-          this.lastError = err.message;
-          logger.error(`Failed to connect to MikroTik: ${err.message}`);
-          resolve(false);
-        })
+        .on("ready", () => resolve(client))
+        .on("error", (err) => reject(err))
         .connect(cfg);
+    });
+  }
+
+  /**
+   * Ask a connected jump host to open a TCP channel to `host:port` and resolve
+   * the resulting stream (used as the next hop's transport `sock`). A RouterOS
+   * bastion rejects this unless SSH TCP forwarding is enabled, so the failure
+   * names the exact fix.
+   */
+  private forwardOut(via: Client, host: string, port: number): Promise<Readable> {
+    return new Promise((resolve, reject) => {
+      via.forwardOut("127.0.0.1", 0, host, port, (err, stream) => {
+        if (err) {
+          reject(
+            new Error(
+              `jump host could not open a tunnel to ${host}:${port}: ${err.message}. ` +
+                "If the jump router runs RouterOS, enable SSH TCP forwarding on it: " +
+                "/ip ssh set forwarding-enabled=local (or both).",
+            ),
+          );
+        } else {
+          resolve(stream as unknown as Readable);
+        }
+      });
     });
   }
 
@@ -268,7 +344,7 @@ export class MikroTikSSHClient {
     });
   }
 
-  /** Close the SSH connection. Safe to call multiple times. */
+  /** Close the SSH connection (and any jump hosts). Safe to call multiple times. */
   disconnect(): void {
     if (this.client) {
       try {
@@ -278,5 +354,15 @@ export class MikroTikSSHClient {
       }
       this.client = null;
     }
+    // Tear down bastions in reverse (inner-most first) so the target channel is
+    // gone before its carrier hop closes.
+    for (const b of this.bastions.reverse()) {
+      try {
+        b.end();
+      } catch {
+        /* already closed */
+      }
+    }
+    this.bastions = [];
   }
 }

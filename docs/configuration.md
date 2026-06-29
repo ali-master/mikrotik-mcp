@@ -29,6 +29,26 @@ a single device named `default`.
 | Private key passphrase   | `--key-passphrase` | `MIKROTIK_KEY_PASSPHRASE` | _(unset)_   |
 | SSH connect timeout (ms) | `--timeout-ms`     | `MIKROTIK_TIMEOUT_MS`     | `10000`     |
 
+### SSH jump host (bastion / ProxyJump)
+
+Reach a router with no exposed SSH port by tunnelling through another over SSH —
+only the bastion is reachable, no new port is opened on the target. For a single
+device, point it at an inline bastion:
+
+| Setting             | CLI flag                | Environment variable           | Default   |
+| ------------------- | ----------------------- | ------------------------------ | --------- |
+| Jump host / IP      | `--jump-host`           | `MIKROTIK_JUMP_HOST`           | _(unset)_ |
+| Jump SSH port       | `--jump-port`           | `MIKROTIK_JUMP_PORT`           | `22`      |
+| Jump username       | `--jump-username`       | `MIKROTIK_JUMP_USERNAME`       | `admin`   |
+| Jump password       | `--jump-password`       | `MIKROTIK_JUMP_PASSWORD`       | _(unset)_ |
+| Jump key file path  | `--jump-key-filename`   | `MIKROTIK_JUMP_KEY_FILENAME`   | _(unset)_ |
+| Jump key passphrase | `--jump-key-passphrase` | `MIKROTIK_JUMP_KEY_PASSPHRASE` | _(unset)_ |
+
+In a **multi-device** config, prefer a device's `jumpVia: "<device-name>"` to
+reuse an existing entry as the bastion (chains and the RouterOS
+`forwarding-enabled` prerequisite are covered in
+**[Multiple devices → SSH jump hosts](./multi-device.md#ssh-jump-hosts-bastion--proxyjump)**).
+
 ## Multiple devices
 
 To manage more than one router from a single server (e.g. to build a tunnel

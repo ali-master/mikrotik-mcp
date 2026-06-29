@@ -12,6 +12,8 @@
 import type { DeviceConfig } from "../config";
 import { MikroTikMacTelnetClient } from "../mac-telnet/client";
 import { MikroTikSSHClient } from "../ssh/client";
+import type { SSHClientOptions } from "../ssh/client";
+import { getDevice } from "./runtime";
 
 /** The minimal client surface shared by the SSH and MAC-Telnet transports. */
 export interface DeviceClient {
@@ -35,6 +37,59 @@ export function isMacTelnetDevice(dc: DeviceConfig): dc is DeviceConfig & { mac:
   return Boolean(dc.mac);
 }
 
+/** The SSH connection options for a device (no jump), used as one chain hop. */
+function sshOptionsOf(dc: DeviceConfig): SSHClientOptions {
+  return {
+    host: dc.host,
+    username: dc.username,
+    password: dc.password,
+    keyFilename: dc.keyFilename,
+    privateKey: dc.privateKey,
+    keyPassphrase: dc.keyPassphrase,
+    port: dc.port,
+    timeoutMs: dc.timeoutMs,
+  };
+}
+
+/**
+ * Resolve a device's bastion into the SSH client's `jump` option, recursively
+ * so a chain (`jumpVia` → `jumpVia` → …) is followed. An inline `jumpHost`
+ * wins; otherwise `jumpVia` references another configured device by name. Guards
+ * against a cycle and against using a MAC-Telnet device as a bastion (a jump
+ * needs SSH TCP forwarding, which Layer-2 MAC-Telnet has no notion of).
+ */
+function resolveJump(
+  dc: DeviceConfig,
+  seen: Set<string> = new Set(),
+): SSHClientOptions | undefined {
+  if (dc.jumpHost) {
+    return {
+      host: dc.jumpHost.host,
+      port: dc.jumpHost.port,
+      username: dc.jumpHost.username,
+      password: dc.jumpHost.password,
+      keyFilename: dc.jumpHost.keyFilename,
+      privateKey: dc.jumpHost.privateKey,
+      keyPassphrase: dc.jumpHost.keyPassphrase,
+      timeoutMs: dc.jumpHost.timeoutMs,
+    };
+  }
+  if (!dc.jumpVia) return undefined;
+  if (seen.has(dc.jumpVia)) {
+    throw new Error(
+      `SSH jump-host cycle detected at '${dc.jumpVia}' (a device can't jump through itself).`,
+    );
+  }
+  seen.add(dc.jumpVia);
+  const bastion = getDevice(dc.jumpVia);
+  if (isMacTelnetDevice(bastion)) {
+    throw new Error(
+      `Jump host '${dc.jumpVia}' is a MAC-Telnet device; an SSH bastion must be reachable over SSH.`,
+    );
+  }
+  return { ...sshOptionsOf(bastion), jump: resolveJump(bastion, seen) };
+}
+
 /** Build the right transport client for a device config. */
 export function createDeviceClient(dc: DeviceConfig): DeviceClient {
   if (isMacTelnetDevice(dc)) {
@@ -49,16 +104,7 @@ export function createDeviceClient(dc: DeviceConfig): DeviceClient {
     });
   }
 
-  return new MikroTikSSHClient({
-    host: dc.host,
-    username: dc.username,
-    password: dc.password,
-    keyFilename: dc.keyFilename,
-    privateKey: dc.privateKey,
-    keyPassphrase: dc.keyPassphrase,
-    port: dc.port,
-    timeoutMs: dc.timeoutMs,
-  });
+  return new MikroTikSSHClient({ ...sshOptionsOf(dc), jump: resolveJump(dc) });
 }
 
 /** How a device is addressed, for logs/errors (e.g. `MAC 48:…` or `1.2.3.4:22`). */

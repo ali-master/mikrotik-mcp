@@ -84,6 +84,23 @@ export const McpServerSettingsSchema = z.object({
 export type McpServerSettings = z.infer<typeof McpServerSettingsSchema>;
 
 /** Connection details for a single MikroTik device. */
+/**
+ * Inline SSH jump host (bastion) — the same SSH connection fields a device has.
+ * Used by a device's `jumpHost` when the bastion is NOT itself a configured
+ * device; prefer a device's `jumpVia` to reuse an existing entry's credentials.
+ */
+export const JumpHostSchema = z.object({
+  host: z.string(),
+  port: z.coerce.number().int().positive().default(22),
+  username: z.string().default("admin"),
+  password: z.string().optional(),
+  keyFilename: z.string().optional(),
+  privateKey: z.string().optional(),
+  keyPassphrase: z.string().optional(),
+  timeoutMs: z.coerce.number().int().positive().optional(),
+});
+export type JumpHostConfig = z.infer<typeof JumpHostSchema>;
+
 export const DeviceConfigSchema = z.object({
   host: z.string().default("127.0.0.1"),
   username: z.string().default("admin"),
@@ -96,6 +113,23 @@ export const DeviceConfigSchema = z.object({
   keyPassphrase: z.string().optional(),
   /** SSH connect timeout in milliseconds. */
   timeoutMs: z.coerce.number().int().positive().default(10_000),
+  /**
+   * SSH jump host: reach this device THROUGH another configured device used as a
+   * bastion (SSH ProxyJump). Set to the NAME of another device in this config —
+   * the MCP opens an SSH session to that router and tunnels onward to this
+   * device's `host:port`, so this device needs no port exposed to the network.
+   * The bastion must be an SSH device (not MAC-Telnet) and may itself set
+   * `jumpVia` for a multi-hop chain. SSH-only; ignored for a MAC-Telnet device.
+   * Requires SSH TCP forwarding on the bastion (`/ip ssh set
+   * forwarding-enabled=local`). Use `jumpHost` instead for a non-device bastion.
+   */
+  jumpVia: z.string().optional(),
+  /**
+   * Inline SSH jump host (bastion) for when it isn't a configured device — same
+   * SSH connection fields as a device. Prefer `jumpVia` to reuse an existing
+   * device entry. Ignored when `jumpVia` is also set.
+   */
+  jumpHost: JumpHostSchema.optional(),
   /**
    * Target MAC address (e.g. `48:A9:8A:C6:42:F7`). When set, this device is
    * reached over **MAC-Telnet** (Layer-2, UDP 20561) instead of SSH — no IP is
@@ -346,6 +380,20 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   const flags = parseFlags(argv);
   const pick = (flag: string, ...envNames: string[]) => flags[flag] ?? env(...envNames);
 
+  // Optional inline SSH jump host for the single-device path. Built only when a
+  // jump host is named; the schema fills the rest (port 22, user admin).
+  const jumpHostName = pick("jump-host", "MIKROTIK_JUMP_HOST");
+  const jumpHost = jumpHostName
+    ? {
+        host: jumpHostName,
+        port: pick("jump-port", "MIKROTIK_JUMP_PORT"),
+        username: pick("jump-username", "MIKROTIK_JUMP_USERNAME"),
+        password: pick("jump-password", "MIKROTIK_JUMP_PASSWORD"),
+        keyFilename: pick("jump-key-filename", "MIKROTIK_JUMP_KEY_FILENAME"),
+        keyPassphrase: pick("jump-key-passphrase", "MIKROTIK_JUMP_KEY_PASSPHRASE"),
+      }
+    : undefined;
+
   // 1) Single-device fields (legacy MIKROTIK_* / flags) → the "default" device.
   const single = {
     host: pick("host", "MIKROTIK_HOST"),
@@ -356,6 +404,8 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     privateKey: pick("private-key", "MIKROTIK_PRIVATE_KEY"),
     keyPassphrase: pick("key-passphrase", "MIKROTIK_KEY_PASSPHRASE"),
     timeoutMs: pick("timeout-ms", "MIKROTIK_TIMEOUT_MS"),
+    // SSH jump host (bastion / ProxyJump): reach the device through this hop.
+    jumpHost,
     // MAC-Telnet (Layer-2, no IP): when `mac` is set the device is reached over
     // UDP 20561 instead of SSH. See DeviceConfigSchema.mac.
     mac: pick("mac", "MIKROTIK_MAC"),

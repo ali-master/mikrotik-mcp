@@ -89,3 +89,8 @@ form is in [`schemas/tool-catalog.json`](../schemas/tool-catalog.json).
   do, put it behind a TLS-terminating reverse proxy with an explicit allow-list.
 - Keep credentials out of shell history and image layers; prefer keys and
   secrets over inline passwords.
+- **Don't expose a router's SSH port to the internet to manage it remotely** —
+  put it behind a bastion and reach it with `jumpVia` (SSH ProxyJump). Only the
+  bastion is reachable; the target rides a forwarded channel, so no extra port is
+  opened. See [Multiple devices → SSH jump hosts](./multi-device.md#ssh-jump-hosts-bastion--proxyjump).
+  Enable forwarding narrowly on the bastion (`/ip ssh set forwarding-enabled=local`).

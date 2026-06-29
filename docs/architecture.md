@@ -28,6 +28,12 @@ RouterOS CLI over SSH. Each layer has one job and pushes everything else down.
           talks to the device over the SSH protocol (ssh2)
 ```
 
+`src/core/transport.ts` picks the device transport (SSH vs. Layer-2 MAC-Telnet)
+and, for an SSH device with a `jumpVia`/`jumpHost`, resolves the bastion chain so
+`MikroTikSSHClient` dials the target through one or more jump hosts (ssh2
+`forwardOut` + `sock`) — commands, Safe Mode and SFTP all ride the same hop. See
+[Multiple devices → SSH jump hosts](./multi-device.md#ssh-jump-hosts-bastion--proxyjump).
+
 A transport (`src/transport/stdio.ts` or `src/transport/http.ts`) wraps the
 assembled server and connects it to the outside world. See
 [Transports](./transports.md).

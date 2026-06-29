@@ -63,6 +63,9 @@ in memory and auto-reverts if your session drops, so you can't lock yourself out
 - 🖧 **Multiple devices** — define named routers and the AI targets one per call
   (a validated `device` argument). Configure **both ends of a tunnel** from one
   conversation. See **[docs/multi-device.md](docs/multi-device.md)**.
+- 🪜 **SSH jump hosts** — reach a router with no exposed port by tunnelling
+  through another via `jumpVia` (ProxyJump/bastion) — commands, Safe Mode and
+  file upload all ride the hop. No new WAN port.
 - 🤖 **Guided prompts** — 9 built-in workflows (harden, diagnose, guest Wi-Fi, VPNs,
   cross-device tunnels, backup & document) that turn an intent into tool calls.
 
@@ -179,6 +182,17 @@ drives the whole both-ends flow. Full guide: **[docs/multi-device.md](docs/multi
 // create_wireguard_interface { "device": "site-a", "name": "wg-to-b", "listen_port": 13231 }
 ```
 
+**Behind a bastion?** Reach a router with no exposed SSH port by jumping through
+another (OpenSSH-style ProxyJump) — `jumpVia` names a configured device to tunnel
+through; commands, Safe Mode and SFTP upload all ride the hop:
+
+```jsonc
+"home-ax3": { "host": "10.10.30.100", "username": "admin", "jumpVia": "hex" }
+```
+
+The bastion router needs SSH TCP forwarding enabled (`/ip ssh set
+forwarding-enabled=local`). See **[docs/multi-device.md](docs/multi-device.md#ssh-jump-hosts-bastion--proxyjump)**.
+
 ## Built-in prompts
 
 MCP **prompts** are one-click guided workflows. This server ships 9 — authored as
@@ -220,20 +234,21 @@ See **[docs/safe-mode.md](docs/safe-mode.md)**.
 Connection and transport settings come from `MIKROTIK_*` env vars or matching CLI
 flags (highest precedence last: defaults → env → flags).
 
-| Variable                      | Flag               | Default     | Purpose                                                           |
-| ----------------------------- | ------------------ | ----------- | ----------------------------------------------------------------- |
-| `MIKROTIK_HOST`               | `--host`           | `127.0.0.1` | RouterOS host                                                     |
-| `MIKROTIK_USERNAME`           | `--username`       | `admin`     | SSH user                                                          |
-| `MIKROTIK_PORT`               | `--port`           | `22`        | SSH port                                                          |
-| `MIKROTIK_PASSWORD`           | `--password`       | —           | SSH password _(or use a key →)_                                   |
-| `MIKROTIK_KEY_FILENAME`       | `--key-filename`   | —           | SSH private-key file path                                         |
-| `MIKROTIK_PRIVATE_KEY`        | `--private-key`    | —           | Inline private key (PEM)                                          |
-| `MIKROTIK_KEY_PASSPHRASE`     | `--key-passphrase` | —           | Passphrase for an encrypted key                                   |
-| `MIKROTIK_CONFIG_FILE`        | `--config`         | —           | JSON file of named devices ([multi-device](docs/multi-device.md)) |
-| `MIKROTIK_DEVICES`            | `--devices`        | —           | Inline JSON of named devices                                      |
-| `MIKROTIK_MCP__TRANSPORT`     | `--transport`      | `stdio`     | `stdio` / `streamable-http` / `sse`                               |
-| `MIKROTIK_MCP__PORT`          | `--mcp-port`       | `8000`      | HTTP bind port                                                    |
-| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard`      | `false`     | Real-time observability dashboard ([docs](docs/observability.md)) |
+| Variable                      | Flag               | Default     | Purpose                                                                                              |
+| ----------------------------- | ------------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `MIKROTIK_HOST`               | `--host`           | `127.0.0.1` | RouterOS host                                                                                        |
+| `MIKROTIK_USERNAME`           | `--username`       | `admin`     | SSH user                                                                                             |
+| `MIKROTIK_PORT`               | `--port`           | `22`        | SSH port                                                                                             |
+| `MIKROTIK_PASSWORD`           | `--password`       | —           | SSH password _(or use a key →)_                                                                      |
+| `MIKROTIK_KEY_FILENAME`       | `--key-filename`   | —           | SSH private-key file path                                                                            |
+| `MIKROTIK_PRIVATE_KEY`        | `--private-key`    | —           | Inline private key (PEM)                                                                             |
+| `MIKROTIK_KEY_PASSPHRASE`     | `--key-passphrase` | —           | Passphrase for an encrypted key                                                                      |
+| `MIKROTIK_JUMP_HOST`          | `--jump-host`      | —           | SSH bastion to tunnel through ([jump hosts](docs/multi-device.md#ssh-jump-hosts-bastion--proxyjump)) |
+| `MIKROTIK_CONFIG_FILE`        | `--config`         | —           | JSON file of named devices ([multi-device](docs/multi-device.md))                                    |
+| `MIKROTIK_DEVICES`            | `--devices`        | —           | Inline JSON of named devices                                                                         |
+| `MIKROTIK_MCP__TRANSPORT`     | `--transport`      | `stdio`     | `stdio` / `streamable-http` / `sse`                                                                  |
+| `MIKROTIK_MCP__PORT`          | `--mcp-port`       | `8000`      | HTTP bind port                                                                                       |
+| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard`      | `false`     | Real-time observability dashboard ([docs](docs/observability.md))                                    |
 
 Full table (incl. HTTP host, allow-lists, timeouts, `MIKROTIK_LOG_LEVEL`):
 **[docs/configuration.md](docs/configuration.md)**.
