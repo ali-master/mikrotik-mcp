@@ -99,15 +99,21 @@ export const changePlanTools: ToolModule = [
       if (commands.length === 0) return "No commands provided to apply.";
 
       const device = resolveDeviceName(ctx.device);
+      // Genuine failures THROW so the registry reports the tool result as an
+      // error (isError). Only the intended outcomes — a dry-run rollback and a
+      // successful commit — return normally (status ok). A rolled-back apply is
+      // a failure, not a success, so it must never come back as ok.
       if (getDevice(ctx.device).mac) {
-        return "Safe Mode (and therefore apply_plan) requires SSH; it is not available on a MAC-Telnet device.";
+        throw new Error(
+          "Safe Mode (and therefore apply_plan) requires SSH; it is not available on a MAC-Telnet device.",
+        );
       }
 
       const plan = buildChangePlan(commands);
       const safe = getSafeModeManager(device);
 
       const enabled = await safe.enable();
-      if (enabled.startsWith("Error")) return enabled;
+      if (enabled.startsWith("Error")) throw new Error(enabled);
 
       // Overall time budget so apply_plan can never approach the MCP client's
       // patience (it gave up around 4 min). A wedged Safe-Mode shell now aborts
@@ -117,67 +123,70 @@ export const changePlanTools: ToolModule = [
       const startedAt = Date.now();
       const overBudget = (): boolean => Date.now() - startedAt > APPLY_BUDGET_MS;
 
-      try {
-        const before = normalizeExport(await safe.execute("/export terse"));
+      // Apply every step in Safe Mode and compute the diff. Any failure here
+      // rolls back and throws, so the result is a real error — never a
+      // success-looking "rolled back" string.
+      const applyAndDiff = async (): Promise<{ header: string; reachable: boolean }> => {
+        try {
+          const before = normalizeExport(await safe.execute("/export terse"));
 
-        const log: string[] = [];
-        for (const step of plan.steps) {
-          if (overBudget()) {
-            await safe.rollback();
-            return (
-              `Aborted after ${Math.round((Date.now() - startedAt) / 1000)}s (time budget exceeded) — ` +
-              "the plan was ROLLED BACK (nothing committed). Safe Mode is slow/unresponsive on this " +
-              "device; apply the change with the direct write tools instead."
-            );
+          const log: string[] = [];
+          for (const step of plan.steps) {
+            if (overBudget()) {
+              throw new Error(
+                `aborted after ${Math.round((Date.now() - startedAt) / 1000)}s (time budget exceeded). ` +
+                  "Safe Mode is slow/unresponsive on this device; apply the change with the direct write tools instead",
+              );
+            }
+            const out = await safe.execute(step.command);
+            if (looksLikeError(out)) {
+              throw new Error(`step ${step.index} failed:\n  ${step.command}\n  → ${out.trim()}`);
+            }
+            log.push(`  ✓ ${step.command}`);
           }
-          const out = await safe.execute(step.command);
-          if (looksLikeError(out)) {
-            await safe.rollback();
-            return (
-              `Step ${step.index} failed and the plan was ROLLED BACK (nothing committed):\n` +
-              `  ${step.command}\n  → ${out.trim()}`
-            );
-          }
-          log.push(`  ✓ ${step.command}`);
-        }
 
-        const after = normalizeExport(await safe.execute("/export terse"));
-        const diff = diffLines(before, after, { fromLabel: "before", toLabel: "after" });
+          const after = normalizeExport(await safe.execute("/export terse"));
+          const diff = diffLines(before, after, { fromLabel: "before", toLabel: "after" });
 
-        // Reachability gate: if the device still answers, committing is safe.
-        const reachable = !looksLikeError(await safe.execute("/system identity print"));
+          // Reachability gate: if the device still answers, committing is safe.
+          const reachable = !looksLikeError(await safe.execute("/system identity print"));
 
-        const planBody = renderPlan(plan).split("\n").slice(2).join("\n");
-        const header =
-          `APPLY PLAN — ${device}\n\n${planBody}\n\n` +
-          `Executed ${plan.steps.length} step(s) in Safe Mode:\n${log.join("\n")}\n\n` +
-          `EXACT DIFF (+${diff.summary.added}/-${diff.summary.removed}):\n${diff.unified || "(no config change)"}`;
+          const planBody = renderPlan(plan).split("\n").slice(2).join("\n");
+          const header =
+            `APPLY PLAN — ${device}\n\n${planBody}\n\n` +
+            `Executed ${plan.steps.length} step(s) in Safe Mode:\n${log.join("\n")}\n\n` +
+            `EXACT DIFF (+${diff.summary.added}/-${diff.summary.removed}):\n${diff.unified || "(no config change)"}`;
+          return { header, reachable };
+        } catch (e) {
+          await safe.rollback().catch(() => {});
+          const msg = e instanceof Error ? e.message : String(e);
+          throw new Error(`apply_plan failed and was rolled back (nothing committed): ${msg}`);
+        }
+      };
 
-        if (!a.confirm) {
-          await safe.rollback();
-          return `${header}\n\nDRY-RUN: all changes rolled back. Re-run with confirm=true to commit.`;
-        }
-        if (!reachable) {
-          await safe.rollback();
-          return `${header}\n\nABORTED: the device stopped responding after applying — changes rolled back to avoid a lock-out.`;
-        }
-        const committed = await safe.commit();
-        if (!committed.ok) {
-          // Commit did NOT take — the changes are still pending in Safe Mode and
-          // will revert if the session drops. Report honestly; never claim
-          // "committed". The session is left open so the caller can retry
-          // commit_safe_mode or rollback_safe_mode.
-          return (
-            `${header}\n\nCOMMIT FAILED — changes are NOT saved (still pending in Safe Mode). ` +
-            `${committed.message}`
-          );
-        }
-        return `${header}\n\nCOMMITTED: changes are now permanent. ${committed.message}`;
-      } catch (e) {
+      const { header, reachable } = await applyAndDiff();
+
+      if (!a.confirm) {
         await safe.rollback();
-        const msg = e instanceof Error ? e.message : String(e);
-        return `apply_plan failed and was rolled back: ${msg}`;
+        return `${header}\n\nDRY-RUN: all changes rolled back. Re-run with confirm=true to commit.`;
       }
+      if (!reachable) {
+        await safe.rollback();
+        throw new Error(
+          `${header}\n\nABORTED: the device stopped responding after applying — changes rolled back to avoid a lock-out.`,
+        );
+      }
+      const committed = await safe.commit();
+      if (!committed.ok) {
+        // Commit did NOT take — the changes are still pending in Safe Mode and
+        // will revert if the session drops. It is left open so the caller can
+        // retry commit_safe_mode / rollback_safe_mode. Nothing was saved, so
+        // this is an error, not a success.
+        throw new Error(
+          `${header}\n\nCOMMIT FAILED — changes are NOT saved (still pending in Safe Mode). ${committed.message}`,
+        );
+      }
+      return `${header}\n\nCOMMITTED: changes are now permanent. ${committed.message}`;
     },
   }),
 ];
