@@ -30,6 +30,7 @@ import { Note, Spinner } from "./geist";
 import { DeviceHealthCard } from "./health";
 import { JsonView } from "./highlight";
 import { useLiveStream, useReveals } from "./hooks";
+import { ModulesView } from "./modules";
 import { PacketCapture } from "./packet-capture";
 import { S3Manage } from "./s3";
 import { SnapshotsView } from "./snapshots";
@@ -73,6 +74,7 @@ type ViewId =
   | "plan"
   | "s3"
   | "backups"
+  | "modules"
   | "config"
   | "feed";
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
@@ -86,6 +88,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "plan", label: "Change Plan", sub: "Dry-run intended RouterOS commands" },
   { id: "s3", label: "S3 Backups", sub: "List, download & delete S3 backup objects" },
   { id: "backups", label: "Backups", sub: "Local config vault — create, restore, manage" },
+  { id: "modules", label: "Modules", sub: "Enable/disable tool modules — curate the surface" },
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
@@ -142,6 +145,7 @@ const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   plan: MONO_ACCENT,
   s3: MONO_ACCENT,
   backups: MONO_ACCENT,
+  modules: MONO_ACCENT,
   config: MONO_ACCENT,
   feed: MONO_ACCENT,
 };
@@ -231,6 +235,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Restore offers a dry-run (applies then rolls back) before you commit for real.",
       "Edit the vault path inline in the header — it’s saved to your config.",
       "Filenames are stamped in the device’s local 24-hour clock.",
+    ],
+  },
+  modules: {
+    what: "Every tool module in the catalog with a live on/off switch. Toggling one writes your config file's `tools` block (disabledModules / enabledModules) and applies it immediately, so you can curate exactly which scopes the MCP server exposes.",
+    tips: [
+      "MCP clients search-rank tools and degrade past ~100; trim the surface below ~150–200 tools so every remaining tool is reliably findable.",
+      "Disable adds the module to tools.disabledModules; enable removes it (or adds it to an active allow-list) — your config file is updated live on each toggle.",
+      "Changes need an MCP client reconnect (or a server restart) to actually shrink/grow the visible tool list.",
     ],
   },
   config: {
@@ -338,6 +350,14 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <path d="M3 6.5 5 3.5h14l2 3" />
         <rect x="3" y="6.5" width="18" height="14" rx="2" />
         <path d="M9.5 12h5" />
+      </>
+    ),
+    modules: (
+      <>
+        <rect x="3" y="5" width="18" height="6" rx="3" />
+        <circle cx="8" cy="8" r="1.5" />
+        <rect x="3" y="13" width="18" height="6" rx="3" />
+        <circle cx="16" cy="16" r="1.5" />
       </>
     ),
     config: (
@@ -1041,6 +1061,9 @@ function App(): ReactNode {
 
         {/* ── Local Backups ── */}
         {view === "backups" && <BackupsView />}
+
+        {/* ── Tool Modules ── */}
+        {view === "modules" && <ModulesView />}
 
         {/* ── Config ── */}
         {view === "config" &&

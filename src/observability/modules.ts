@@ -1,0 +1,119 @@
+/**
+ * Tool-module surface helpers for the dashboard's Modules page.
+ *
+ * The dashboard lets you see every catalog module and toggle each one on/off,
+ * persisting the choice to the config file's `tools` block. Two pure functions
+ * back that page:
+ *   • {@link moduleSurface} — every module with its live enabled/disabled state.
+ *   • {@link applyModuleToggle} — a new `tools` filter with one module flipped.
+ *
+ * Both mirror `selectToolModules` (src/tools/index.ts) exactly, so the checkbox
+ * the user sees always matches the surface the MCP server would actually
+ * register. They are pure (no I/O) so the route stays a thin persistence wrapper
+ * and the semantics are unit-testable.
+ */
+import type { ToolFilter } from "../config";
+import { moduleCatalog } from "../tools";
+import type { ModuleInfo } from "../tools";
+
+export interface ModuleSurfaceItem {
+  slug: string;
+  label: string;
+  group: string;
+  description: string;
+  toolCount: number;
+  /** True when this module would register under the current `tools` filter. */
+  enabled: boolean;
+}
+
+export interface ModuleSurface {
+  modules: ModuleSurfaceItem[];
+  /** Number of modules in the catalog. */
+  total: number;
+  /** Modules currently exposed. */
+  enabledModules: number;
+  /** Tools currently exposed (sum of enabled modules' tool counts). */
+  enabledTools: number;
+  /** Tools in the full catalog. */
+  totalTools: number;
+  /**
+   * True when an allow-list is in force (any `enabledModules`/`enabledGroups`).
+   * In that mode, unlisted modules are hidden — useful context for the UI.
+   */
+  hasAllowList: boolean;
+}
+
+const lcSet = (xs?: string[]): Set<string> => new Set((xs ?? []).map((s) => s.toLowerCase()));
+
+/**
+ * Whether a module is exposed under `filter` — the exact predicate
+ * `selectToolModules` applies (deny-lists win; a non-empty allow-list gates).
+ */
+export function isModuleEnabled(filter: ToolFilter, slug: string, group: string): boolean {
+  const enabledModules = lcSet(filter.enabledModules);
+  const disabledModules = lcSet(filter.disabledModules);
+  const enabledGroups = lcSet(filter.enabledGroups);
+  const disabledGroups = lcSet(filter.disabledGroups);
+  const hasAllow = enabledModules.size > 0 || enabledGroups.size > 0;
+  const s = slug.toLowerCase();
+  const g = group.toLowerCase();
+  if (disabledModules.has(s) || disabledGroups.has(g)) return false;
+  if (hasAllow && !(enabledModules.has(s) || enabledGroups.has(g))) return false;
+  return true;
+}
+
+/** Build the full module list with each module's live enabled/disabled state. */
+export function moduleSurface(
+  filter: ToolFilter,
+  catalog: ModuleInfo[] = moduleCatalog,
+): ModuleSurface {
+  const modules = catalog.map((m) => ({
+    slug: m.slug,
+    label: m.label,
+    group: m.group,
+    description: m.description,
+    toolCount: m.tools.length,
+    enabled: isModuleEnabled(filter, m.slug, m.group),
+  }));
+  const hasAllowList =
+    (filter.enabledModules?.length ?? 0) > 0 || (filter.enabledGroups?.length ?? 0) > 0;
+  return {
+    modules,
+    total: modules.length,
+    enabledModules: modules.filter((m) => m.enabled).length,
+    enabledTools: modules.reduce((n, m) => n + (m.enabled ? m.toolCount : 0), 0),
+    totalTools: modules.reduce((n, m) => n + m.toolCount, 0),
+    hasAllowList,
+  };
+}
+
+/**
+ * Return a new `tools` filter with `slug` flipped to `enabled`. Pure — neither
+ * the input nor the catalog is mutated. Operates on the module allow/deny lists
+ * only (group lists pass through untouched), matching the user's mental model:
+ *   • disable → add the slug to `disabledModules` (deny wins, so it's always
+ *     hidden) and drop it from `enabledModules` (tidy under allow-list mode).
+ *   • enable  → drop the slug from `disabledModules`; and when an allow-list is
+ *     in force (so unlisted modules would stay hidden), add it to
+ *     `enabledModules` so it actually surfaces.
+ *
+ * Idempotent: toggling to a state the filter already yields returns an
+ * equivalent filter (no duplicate entries).
+ */
+export function applyModuleToggle(filter: ToolFilter, slug: string, enabled: boolean): ToolFilter {
+  const eq = (x: string): boolean => x.toLowerCase() === slug.toLowerCase();
+  let enabledModules = [...(filter.enabledModules ?? [])];
+  let disabledModules = [...(filter.disabledModules ?? [])];
+  const enabledGroups = [...(filter.enabledGroups ?? [])];
+  const disabledGroups = [...(filter.disabledGroups ?? [])];
+  const hasAllow = enabledModules.length > 0 || enabledGroups.length > 0;
+
+  if (enabled) {
+    disabledModules = disabledModules.filter((x) => !eq(x));
+    if (hasAllow && !enabledModules.some(eq)) enabledModules.push(slug);
+  } else {
+    enabledModules = enabledModules.filter((x) => !eq(x));
+    if (!disabledModules.some(eq)) disabledModules.push(slug);
+  }
+  return { enabledModules, disabledModules, enabledGroups, disabledGroups };
+}

@@ -28,9 +28,12 @@ import {
   DEFAULT_SNAPSHOT_DB,
   DeviceConfigSchema,
   MikrotikConfigSchema,
+  ToolFilterSchema,
   getConfigSource,
 } from "../config";
 import type { DashboardConfig } from "../config";
+import { moduleCatalog } from "../tools";
+import { applyModuleToggle, moduleSurface } from "./modules";
 import { atomicWrite, mergeSecrets, serializeConfig } from "../config-write";
 import { buildChangePlan, renderPlan, splitCommands } from "../core/change-plan";
 import { diffLines } from "../core/diff";
@@ -491,6 +494,79 @@ async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise
     const b = (await readJson(req)) as { id?: string };
     if (!b?.id) return json({ error: "id required" }, 400);
     return deleteVersion(b.id) ? json({ ok: true }) : json({ error: "not found" }, 404);
+  }
+
+  return null;
+}
+
+// ── Tool Modules API ─────────────────────────────────────────────────────────
+/**
+ * Routes for the Modules page — see every catalog module and toggle each on/off.
+ *
+ *   • `GET  /api/modules`        — all modules + their live enabled/disabled state.
+ *   • `POST /api/modules/toggle` — `{ slug, enabled }`: flip one module's
+ *     exposure, apply it live (`setConfig`) and persist it to the config file's
+ *     `tools` block. The change re-curates the surface the MCP server registers,
+ *     so an MCP client must reconnect (or the server restart) for the tool list
+ *     to actually shrink/grow — flagged via `requiresReconnect` so the UI warns.
+ *
+ * The persist path mirrors the Backups page: write the live config back to its
+ * source file; if that fails (read-only fs, env-assembled config) the toggle
+ * still applies for this process and we report `persisted:false` rather than
+ * failing the request.
+ */
+async function modulesRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+  if (p !== "/api/modules" && p !== "/api/modules/toggle") return null;
+
+  if (p === "/api/modules" && req.method === "GET") {
+    const cfg = getConfig();
+    const src = getConfigSource();
+    return json({ ...moduleSurface(cfg.tools), filter: cfg.tools, source: src });
+  }
+
+  if (p === "/api/modules/toggle" && req.method === "POST") {
+    const b = (await readJson(req)) as { slug?: string; enabled?: boolean };
+    if (typeof b?.slug !== "string" || typeof b?.enabled !== "boolean") {
+      return json({ error: "slug (string) and enabled (boolean) are required" }, 400);
+    }
+    const mod = moduleCatalog.find((m) => m.slug.toLowerCase() === b.slug!.toLowerCase());
+    if (!mod) return json({ error: `unknown module: ${b.slug}` }, 404);
+
+    const cfg = getConfig();
+    // Re-validate the toggled filter through the schema so the persisted shape is
+    // always canonical (defaults filled, types coerced).
+    const nextTools = ToolFilterSchema.parse(applyModuleToggle(cfg.tools, mod.slug, b.enabled));
+    const next = { ...cfg, tools: nextTools };
+    setConfig(next);
+
+    let persisted = true;
+    let warning: string | undefined;
+    try {
+      atomicWrite(getConfigSource().path, serializeConfig(next));
+    } catch (e) {
+      persisted = false;
+      warning = `applied live but not saved to disk: ${e instanceof Error ? e.message : String(e)}`;
+    }
+    if (persisted) {
+      recordVersion(
+        getConfig(),
+        "auto",
+        Date.now(),
+        `module ${b.enabled ? "enabled" : "disabled"}: ${mod.slug}`,
+      );
+    }
+    return json({
+      ok: true,
+      persisted,
+      requiresReconnect: true,
+      warning,
+      slug: mod.slug,
+      enabled: b.enabled,
+      ...moduleSurface(getConfig().tools),
+      filter: getConfig().tools,
+      source: getConfigSource(),
+    });
   }
 
   return null;
@@ -1078,6 +1154,9 @@ export async function runDashboard(
       // them before the recorder guard below.
       const configResp = await configRoutes(req, url, configAdmin);
       if (configResp) return configResp;
+
+      const modulesResp = await modulesRoutes(req, url);
+      if (modulesResp) return modulesResp;
 
       const captureResp = await captureRoutes(req, url);
       if (captureResp) return captureResp;

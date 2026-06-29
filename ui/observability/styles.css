@@ -3285,3 +3285,113 @@ pre.body.ros .ros-comment {
   border-radius: 2px;
   display: inline-block;
 }
+
+/* ── Tool Modules page ─────────────────────────────────────────────────────── */
+.input {
+  font: 12px var(--mt-mono);
+  color: var(--mt-text);
+  background: var(--mt-surface-2);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  padding: 6px 10px;
+  width: min(52vw, 420px);
+}
+.input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--mt-accent) 55%, var(--mt-border));
+}
+.btn-sm {
+  font-size: 10px;
+  padding: 3px 8px;
+}
+.mod-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.mod-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 12px;
+}
+.mod-group__hd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--mt-border);
+}
+.mod-group__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mt-text);
+}
+.mod-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 8px;
+}
+.mod-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  background: var(--mt-surface-2);
+  border: 1px solid var(--mt-border);
+  border-radius: var(--mt-radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
+}
+.mod-row:hover {
+  border-color: color-mix(in srgb, var(--mt-accent) 35%, var(--mt-border));
+}
+.mod-row[data-on] {
+  border-color: color-mix(in srgb, var(--mt-accent) 50%, var(--mt-border));
+  background: color-mix(in srgb, var(--mt-accent) 10%, var(--mt-surface-2));
+}
+.mod-row input {
+  accent-color: var(--mt-accent);
+  cursor: pointer;
+  margin: 2px 0 0;
+}
+.mod-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.mod-row__name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mt-text);
+}
+.mod-row__slug {
+  font: 10px var(--mt-mono);
+  color: var(--mt-text-dim);
+  background: var(--mt-bg);
+  border: 1px solid var(--mt-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.mod-row__desc {
+  font-size: 11px;
+  line-height: 1.35;
+}
+.mod-row__count {
+  font: 10px var(--mt-mono);
+  white-space: nowrap;
+  padding-top: 1px;
+}
