@@ -184,9 +184,11 @@ async function main(): Promise<void> {
   );
 
   // Optional real-time observability dashboard — runs alongside whichever MCP
-  // transport is active, on its own host/port. Must start before the transport
-  // so the recorder is installed before any tool call is served.
-  if (cfg.dashboard.enabled) {
+  // transport is active, on its own host/port. It opens local stores and kicks
+  // off an immediate SSH health probe of every device, which can take seconds
+  // on an unreachable/slow router; never let that delay the protocol handshake.
+  const startDashboard = async (): Promise<void> => {
+    if (!cfg.dashboard.enabled) return;
     try {
       await runDashboard(cfg.dashboard, cfg.mcp.transport);
     } catch (e) {
@@ -195,11 +197,19 @@ async function main(): Promise<void> {
           "Continuing without it.",
       );
     }
-  }
+  };
 
   if (cfg.mcp.transport === "stdio") {
+    // Connect the stdio transport FIRST so `initialize` is answered immediately
+    // (Claude Desktop times out the handshake after ~60s). runStdio() resolves
+    // right after `server.connect()` and the process stays alive on the stdin
+    // handle, so the dashboard starts afterwards without blocking the handshake.
+    // The recorder installs a beat later — tool calls never arrive that early.
     await runStdio();
+    await startDashboard();
   } else {
+    // HTTP serves until exit, so start the dashboard before it.
+    await startDashboard();
     await runHttp(cfg.mcp);
   }
 }
