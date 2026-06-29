@@ -50,6 +50,17 @@ export function qAngle(
 
 export const FLOW_CMD = "#e4e4e7"; // command: LLM → device
 export const FLOW_RES = "#d4d4d8"; // response: device → LLM
+export const JUMP_HUE = "#f59e0b"; // SSH jump tunnel (ProxyJump) — amber accent
+
+/**
+ * The bastion a device is reached through, or null. A `jumpVia` names another
+ * configured device; an inline `jumpHost` is shown as `host:port`.
+ */
+export function jumpLabel(d: DeviceInfo): string | null {
+  if (d.jumpVia) return d.jumpVia;
+  if (d.jumpHost) return `${d.jumpHost.host}:${d.jumpHost.port}`;
+  return null;
+}
 
 /**
  * Animated "radar hub" connectivity map that shows **traffic direction**. Each
@@ -131,6 +142,18 @@ export function ConnectivityGraph({
             <stop offset="0.5" stopColor="#e4e4e7" />
             <stop offset="1" stopColor="#a1a1aa" stopOpacity="0" />
           </radialGradient>
+          <linearGradient id="conn-tunnel-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor={JUMP_HUE} stopOpacity="0.15" />
+            <stop offset="0.5" stopColor={JUMP_HUE} stopOpacity="0.95" />
+            <stop offset="1" stopColor={JUMP_HUE} stopOpacity="0.15" />
+          </linearGradient>
+          <filter id="conn-tunnel-glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
         {/* faint concentric range rings for depth */}
@@ -266,6 +289,98 @@ export function ConnectivityGraph({
           );
         })}
 
+        {/* ── SSH ProxyJump tunnels ─────────────────────────────────────────
+            A device reached THROUGH a bastion gets an encrypted side-channel
+            drawn around the rim: an amber, glowing, animated conduit from its
+            jump host to it, with a padlock that physically travels the tunnel in
+            the jump direction. When the bastion is a configured device the arc
+            links the two orbs; an inline jumpHost gets its own satellite lock. */}
+        {nodes.map((nd) => {
+          const via = nd.d.jumpVia;
+          const bastion = via ? nodes.find((m) => m.d.name === via) : undefined;
+          const inline = !bastion && nd.d.jumpHost ? nd.d.jumpHost : undefined;
+          if (!bastion && !inline) return null;
+
+          // Endpoints: bastion orb → this orb, or external satellite → this orb.
+          const to = { x: nd.x, y: nd.y };
+          const dirL = Math.hypot(nd.x - cx, nd.y - cy) || 1;
+          const ux = (nd.x - cx) / dirL;
+          const uy = (nd.y - cy) / dirL;
+          const from = bastion
+            ? { x: bastion.x, y: bastion.y }
+            : { x: nd.x + ux * (nd.r + 46), y: nd.y + uy * (nd.r + 46) };
+
+          // Bow the arc OUTWARD (away from the core) so it rides the rim, clear
+          // of the central command/response lanes.
+          const mx = (from.x + to.x) / 2;
+          const my = (from.y + to.y) / 2;
+          const ol = Math.hypot(mx - cx, my - cy) || 1;
+          const bow = bastion ? 50 : 16;
+          const ctrl = { x: mx + ((mx - cx) / ol) * bow, y: my + ((my - cy) / ol) * bow };
+          const path = `M${from.x.toFixed(1)},${from.y.toFixed(1)} Q${ctrl.x.toFixed(1)},${ctrl.y.toFixed(1)} ${to.x.toFixed(1)},${to.y.toFixed(1)}`;
+          const label = jumpLabel(nd.d) ?? "";
+          const badge = qPoint(from, ctrl, to, 0.5);
+          const pid = `conn-tunnel-${nd.i}`;
+
+          return (
+            <g key={`jump-${nd.d.name}`} className="conn-tunnel-g">
+              {/* soft amber halo under the conduit */}
+              <path className="conn-tunnel-halo" d={path} stroke={JUMP_HUE} />
+              {/* the encrypted conduit: animated dashed gradient stroke */}
+              <path
+                id={pid}
+                className="conn-tunnel"
+                d={path}
+                stroke="url(#conn-tunnel-grad)"
+                filter="url(#conn-tunnel-glow)"
+              />
+              {/* external-bastion satellite (no device orb to anchor to) */}
+              {inline && (
+                <>
+                  <circle
+                    className="conn-tunnel-sat"
+                    cx={from.x}
+                    cy={from.y}
+                    r={11}
+                    fill="#1c1917"
+                    stroke={JUMP_HUE}
+                  />
+                  <text x={from.x} y={from.y + 3.5} textAnchor="middle" fontSize={11}>
+                    🛡️
+                  </text>
+                </>
+              )}
+              {/* the padlock that travels the tunnel (bastion → device) */}
+              <text className="conn-tunnel-lock" fontSize={13} textAnchor="middle">
+                🔒
+                <animateMotion dur="2.4s" repeatCount="indefinite" calcMode="linear" rotate="auto">
+                  <mpath href={`#${pid}`} />
+                </animateMotion>
+              </text>
+              {/* midpoint "via" badge */}
+              <g transform={`translate(${badge.x.toFixed(1)},${badge.y.toFixed(1)})`}>
+                <rect
+                  className="conn-tunnel-badge"
+                  x={-Math.max(24, label.length * 3.3 + 14)}
+                  y={-9}
+                  rx={9}
+                  width={Math.max(48, label.length * 6.6 + 28)}
+                  height={18}
+                />
+                <text
+                  className="conn-tunnel-badge-tx"
+                  x={0}
+                  y={3.5}
+                  textAnchor="middle"
+                  fontSize={9}
+                >
+                  ⤳ via {label}
+                </text>
+              </g>
+            </g>
+          );
+        })}
+
         {/* core hub */}
         <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
         <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
@@ -341,6 +456,11 @@ export function ConnectivityGraph({
         <span>
           <i style={{ background: "#e4e4e7" }} /> live call (round-trip)
         </span>
+        {payload.devices.some((d) => jumpLabel(d)) && (
+          <span>
+            <i style={{ background: JUMP_HUE }} /> 🔒 SSH jump tunnel (ProxyJump)
+          </span>
+        )}
       </div>
     </>
   );
@@ -384,6 +504,33 @@ export function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
           </>
         )}
       </div>
+      {jumpLabel(d) && (
+        <div
+          className="jump-route"
+          title={`Reached over SSH through the bastion ${jumpLabel(d)} (ProxyJump) — no port exposed on ${d.name}.`}
+        >
+          <span className="jump-route__hop jump-route__hop--src" title="MCP server">
+            🛰️
+          </span>
+          <span className="jump-route__wire" />
+          <span className="jump-route__hop jump-route__hop--bastion">
+            🛡️ {jumpLabel(d)}
+            {d.jumpVia ? <i className="jump-route__tag">jump</i> : null}
+          </span>
+          <span className="jump-route__wire jump-route__wire--enc">
+            <span className="jump-route__lock" aria-hidden>
+              🔒
+            </span>
+          </span>
+          <span
+            className="jump-route__hop jump-route__hop--dest"
+            style={{ borderColor: col }}
+            title={d.name}
+          >
+            📡 {d.name}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

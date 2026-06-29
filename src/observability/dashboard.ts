@@ -231,6 +231,11 @@ function devicesPayload(store: EventStore): unknown {
           : "none",
     isDefault: name === cfg.defaultDevice,
     description: dc.description,
+    // SSH jump host (ProxyJump): the bastion this device is reached THROUGH —
+    // either another configured device (`jumpVia`) or an inline host (no secrets,
+    // just host:port). Surfaced so the dashboard can draw the tunnel.
+    jumpVia: dc.jumpVia,
+    jumpHost: dc.jumpHost ? { host: dc.jumpHost.host, port: dc.jumpHost.port } : undefined,
     status: getDeviceStatus(name),
     history: getDeviceHistory(name),
     activity: activity.get(name) ?? {

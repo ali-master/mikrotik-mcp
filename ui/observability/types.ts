@@ -92,6 +92,10 @@ export interface DeviceInfo {
   authMode: string;
   isDefault: boolean;
   description?: string;
+  /** Name of another configured device used as an SSH jump host (bastion). */
+  jumpVia?: string;
+  /** Inline SSH bastion (host/port only; no secrets) when not a named device. */
+  jumpHost?: { host: string; port: number };
   status: DeviceStatus;
   history?: MetricSample[];
   activity: { calls: number; errors: number; lastSeen: number; avgMs: number };

@@ -3395,3 +3395,139 @@ pre.body.ros .ros-comment {
   white-space: nowrap;
   padding-top: 1px;
 }
+
+/* ── SSH ProxyJump — radar tunnel + device-card route ──────────────────────── */
+/* Encrypted conduit drawn between a device and its bastion on the radar. */
+.conn-tunnel-halo {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.1;
+}
+.conn-tunnel {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 6 6;
+  animation: conn-tunnel-flow 0.9s linear infinite;
+}
+@keyframes conn-tunnel-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.conn-tunnel-lock {
+  filter: drop-shadow(0 0 4px #f59e0bcc);
+}
+.conn-tunnel-sat {
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 5px #f59e0b88);
+}
+.conn-tunnel-badge {
+  fill: color-mix(in srgb, #f59e0b 16%, #0a0a0a);
+  stroke: color-mix(in srgb, #f59e0b 60%, var(--mt-border));
+  stroke-width: 1;
+}
+.conn-tunnel-badge-tx {
+  fill: #fbbf24;
+  font-family: var(--mt-mono);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Device-card mini route: 🛰️ MCP → 🛡️ bastion ⟿🔒⟿ 📡 device. */
+.jump-route {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 2px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #f59e0b 7%, var(--mt-surface-2));
+  border: 1px solid color-mix(in srgb, #f59e0b 28%, var(--mt-border));
+  font: 10px var(--mt-mono);
+  overflow: hidden;
+}
+.jump-route__hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: var(--mt-bg);
+  border: 1px solid var(--mt-border);
+  color: var(--mt-text);
+  white-space: nowrap;
+}
+.jump-route__hop--src {
+  font-size: 12px;
+  padding: 3px 7px;
+}
+.jump-route__hop--bastion {
+  border-color: color-mix(in srgb, #f59e0b 60%, var(--mt-border));
+  color: #fbbf24;
+  box-shadow: 0 0 10px -3px #f59e0b99;
+}
+.jump-route__tag {
+  font-size: 7px;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0a0a0a;
+  background: #f59e0b;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.jump-route__wire {
+  flex: 1;
+  height: 2px;
+  min-width: 18px;
+  border-radius: 2px;
+  background-image: linear-gradient(90deg, var(--mt-border) 0 50%, transparent 50% 100%);
+  background-size: 8px 2px;
+  animation: jump-wire 0.7s linear infinite;
+}
+.jump-route__wire--enc {
+  position: relative;
+  height: 3px;
+  min-width: 34px;
+  background-image: linear-gradient(90deg, #f59e0b 0 55%, transparent 55% 100%);
+  background-size: 10px 3px;
+  box-shadow: 0 0 8px -1px #f59e0b88;
+}
+.jump-route__lock {
+  position: absolute;
+  top: 50%;
+  font-size: 11px;
+  filter: drop-shadow(0 0 3px #f59e0b);
+  animation: jump-lock 2.2s linear infinite;
+}
+@keyframes jump-wire {
+  to {
+    background-position: 8px 0;
+  }
+}
+@keyframes jump-lock {
+  0% {
+    left: -4px;
+    transform: translateY(-50%) scale(0.9);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.1);
+  }
+  100% {
+    left: calc(100% - 8px);
+    transform: translateY(-50%) scale(0.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .conn-tunnel,
+  .jump-route__wire,
+  .jump-route__wire--enc,
+  .jump-route__lock {
+    animation: none;
+  }
+  .conn-tunnel-lock animatemotion {
+    display: none;
+  }
+}
