@@ -1,9 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.29.0",
+  "version": "3.31.1",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 758,
+  "toolCount": 759,
   "tools": [
+    {
+      "name": "run_routeros_command",
+      "title": "Run a RouterOS Command (raw CLI)",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Execute ANY single RouterOS / MikroTik CLI command on the device and return its console output — the universal primitive to read or change anything when no dedicated tool fits, for uncommon or bulk operations, or simply when you can't quickly find the specific tool among the catalog. Pass the command EXACTLY as typed in the RouterOS terminal, e.g. `/system identity set name=Router1`, `/ip dns set servers=1.1.1.1,8.8.8.8 allow-remote-requests=yes`, `/ip address print`, `/ip firewall filter print`, `/interface print`, `/ip service print`, `/system resource print`. Works for reads (`… print`) and writes (`… set` / `add` / `remove`). Runs one command per call — call again with a `… print` to verify a change. Prefer a dedicated tool when you know its name (better validation and structured output); use this whenever discovery is the bottleneck. WARNING: the command is run as-is and is NOT validated — it can be destructive (e.g. `/system reset-configuration`, removing the management address), so review it before running. For a stored multi-command script use add_script then run_script.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Full RouterOS CLI command exactly as typed, e.g. '/ip address print'"
+          }
+        },
+        "required": ["command"],
+        "additionalProperties": false
+      }
+    },
     {
       "name": "list_interfaces",
       "title": "List All Network Interfaces",

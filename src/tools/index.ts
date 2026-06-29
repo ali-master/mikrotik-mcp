@@ -22,6 +22,7 @@ import { dhcpTools } from "./dhcp";
 import { hotspotBuilderTools } from "./hotspot-builder";
 import { containerTools } from "./container";
 import { diskTools } from "./disk";
+import { rawCommandTools } from "./raw-command";
 import { dnsTools } from "./dns";
 import { parentalControlsTools } from "./parental-controls";
 import { dot1xServerTools } from "./dot1x-server";
@@ -135,6 +136,16 @@ export interface ModuleInfo {
 }
 
 export const moduleCatalog: ModuleInfo[] = [
+  // ── Universal primitive (the reliable dispatcher for any RouterOS command) ─
+  {
+    label: "RouterOS CLI",
+    slug: "raw-command",
+    group: "System & Ops",
+    description:
+      "Universal escape hatch — run any raw RouterOS CLI command (read or write) when a dedicated tool " +
+      "isn't found (`run_routeros_command`).",
+    tools: rawCommandTools,
+  },
   // ── Layer 2 / interfaces ─────────────────────────────────────────────────
   {
     label: "Interfaces",
