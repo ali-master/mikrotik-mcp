@@ -23,6 +23,7 @@ import { hotspotBuilderTools } from "./hotspot-builder";
 import { containerTools } from "./container";
 import { diskTools } from "./disk";
 import { rawCommandTools } from "./raw-command";
+import { toolGatewayTools } from "./tool-gateway";
 import { dnsTools } from "./dns";
 import { parentalControlsTools } from "./parental-controls";
 import { dot1xServerTools } from "./dot1x-server";
@@ -136,6 +137,17 @@ export interface ModuleInfo {
 }
 
 export const moduleCatalog: ModuleInfo[] = [
+  // ── Tool gateway (always-discoverable search + dispatch over the full catalog) ─
+  {
+    label: "Tool Gateway",
+    slug: "tool-gateway",
+    group: "Discovery & Meta",
+    description:
+      "Always-discoverable meta-tools that make the whole catalog reachable when the host can't " +
+      "surface a specific tool: search by intent (`find_tools`), inspect a schema (`describe_tool`), " +
+      "and run any tool by name with full validation (`invoke_tool`).",
+    tools: toolGatewayTools,
+  },
   // ── Universal primitive (the reliable dispatcher for any RouterOS command) ─
   {
     label: "RouterOS CLI",
@@ -1046,6 +1058,14 @@ export const moduleCatalog: ModuleInfo[] = [
 
 export const allToolModules: ToolModule[] = moduleCatalog.map((m) => m.tools);
 
+/**
+ * Module slugs that survive an allow-list (`enabledModules`) so the tool gateway
+ * — the search + dispatch backbone that makes the rest of the catalog reachable
+ * — is always present even in a tightly scoped deployment. An explicit
+ * `disabledModules`/`disabledGroups` opt-out still removes them.
+ */
+export const ALWAYS_ON_MODULES = new Set(["tool-gateway"]);
+
 /** Shape of the tool-surface filter (mirrors `ToolFilter` in config.ts). */
 export interface ToolModuleFilter {
   enabledModules?: string[];
@@ -1064,6 +1084,9 @@ export interface ToolModuleFilter {
  *   • The deny-lists are then subtracted and WIN: a module whose slug is in
  *     `disabledModules` or whose group is in `disabledGroups` is excluded even if
  *     it was allowed.
+ *   • {@link ALWAYS_ON_MODULES} (the tool gateway) bypass the allow-list gate so
+ *     discovery never breaks when a deployment scopes down — but an EXPLICIT
+ *     `disabledModules`/`disabledGroups` entry still removes them (opt-out wins).
  *   • Empty everywhere → the full catalog (the default, zero behaviour change).
  */
 export function selectToolModules(
@@ -1082,6 +1105,9 @@ export function selectToolModules(
       const slug = m.slug.toLowerCase();
       const group = m.group.toLowerCase();
       if (disabledModules.has(slug) || disabledGroups.has(group)) return false;
+      // The tool gateway is the discovery safety net — keep it even under an
+      // allow-list that forgot it, so `find_tools`/`invoke_tool` always work.
+      if (ALWAYS_ON_MODULES.has(slug)) return true;
       if (hasAllow && !(enabledModules.has(slug) || enabledGroups.has(group))) return false;
       return true;
     })

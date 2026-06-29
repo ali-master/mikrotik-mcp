@@ -13,7 +13,7 @@
  * and the semantics are unit-testable.
  */
 import type { ToolFilter } from "../config";
-import { moduleCatalog } from "../tools";
+import { ALWAYS_ON_MODULES, moduleCatalog } from "../tools";
 import type { ModuleInfo } from "../tools";
 
 export interface ModuleSurfaceItem {
@@ -58,6 +58,9 @@ export function isModuleEnabled(filter: ToolFilter, slug: string, group: string)
   const s = slug.toLowerCase();
   const g = group.toLowerCase();
   if (disabledModules.has(s) || disabledGroups.has(g)) return false;
+  // The tool gateway bypasses the allow-list gate (mirrors selectToolModules),
+  // so the dashboard shows it as on unless explicitly disabled above.
+  if (ALWAYS_ON_MODULES.has(s)) return true;
   if (hasAllow && !(enabledModules.has(s) || enabledGroups.has(g))) return false;
   return true;
 }

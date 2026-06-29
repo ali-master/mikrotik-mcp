@@ -191,6 +191,13 @@ export interface RegisterableTool {
   description: string;
   /** Present when the tool renders an MCP App view. */
   ui?: UiLink;
+  /**
+   * The raw handler (pre-`device`-injection, pre-validation). Exposed so the
+   * tool-gateway dispatcher (`invoke_tool`) can run any tool by name through its
+   * own Zod schema + handler — the precise alternative to the raw-CLI escape
+   * hatch. Normal registration never touches this; it goes through `register`.
+   */
+  handler: (args: any, ctx: ToolContext) => Promise<HandlerOutput> | HandlerOutput;
   register: (server: McpServer, opts?: RegisterOptions) => void;
 }
 
@@ -202,6 +209,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
     annotations: def.annotations,
     inputSchema: def.inputSchema,
     ui: def.ui,
+    handler: def.handler,
     register(server: McpServer, opts: RegisterOptions = {}) {
       const { sendLog, deviceNames, deviceAliases, deviceDirectory, appViews } = opts;
       // The single-vs-multi decision is keyed on the device COUNT, never the

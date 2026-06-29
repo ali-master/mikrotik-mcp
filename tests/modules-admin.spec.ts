@@ -27,17 +27,17 @@ describe("moduleSurface", () => {
     expect(s.enabledModules).toBe(s.total - 1);
   });
 
-  test("enabledModules allow-list hides everything else", () => {
+  test("enabledModules allow-list hides everything else (but keeps the always-on gateway)", () => {
     const f = ToolFilterSchema.parse({ enabledModules: ["dns", "routes"] });
     const s = moduleSurface(f);
     expect(s.hasAllowList).toBe(true);
-    expect(s.enabledModules).toBe(2);
+    // The allow-listed two PLUS the always-on tool-gateway survive.
     expect(
       s.modules
         .filter((m) => m.enabled)
         .map((m) => m.slug)
         .sort(),
-    ).toEqual(["dns", "routes"]);
+    ).toEqual(["dns", "routes", "tool-gateway"]);
   });
 });
 

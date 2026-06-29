@@ -81,4 +81,19 @@ describe("selectToolModules", () => {
   test("an allow-list that matches nothing yields an empty surface", () => {
     expect(selectToolModules({ enabledModules: ["does-not-exist"] }, CATALOG)).toEqual([]);
   });
+
+  test("the tool gateway survives an allow-list that omits it", () => {
+    // On the REAL catalog, a tight allow-list still keeps tool-gateway so
+    // find_tools/invoke_tool remain available as the discovery safety net.
+    const out = selectToolModules({ enabledModules: ["dns"] });
+    const names = out.flat().map((t) => (t as unknown as { name: string }).name);
+    expect(names).toContain("find_tools");
+    expect(names).toContain("invoke_tool");
+  });
+
+  test("an explicit disable still removes the gateway (opt-out wins)", () => {
+    const out = selectToolModules({ disabledModules: ["tool-gateway"] });
+    const names = out.flat().map((t) => (t as unknown as { name: string }).name);
+    expect(names).not.toContain("find_tools");
+  });
 });
