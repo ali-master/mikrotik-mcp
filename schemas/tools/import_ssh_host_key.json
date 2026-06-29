@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "import_ssh_host_key",
+  "type": "object",
+  "properties": {
+    "private_key_file": {
+      "type": "string",
+      "description": "Private-key filename on the device, e.g. 'host_key'."
+    },
+    "public_key_file": {
+      "description": "Public-key filename on the device (e.g. 'host_key.pub'), if required.",
+      "type": "string"
+    }
+  },
+  "required": ["private_key_file"],
+  "additionalProperties": false
+}

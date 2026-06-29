@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "find_tools",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What you want to do, in words or keywords (e.g. 'add ipv4 nat masquerade rule')."
+    },
+    "limit": {
+      "description": "Max results to return (default 8).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 25
+    }
+  },
+  "required": ["query"],
+  "additionalProperties": false
+}

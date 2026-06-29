@@ -1,9 +1,94 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.31.1",
+  "version": "3.34.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 759,
+  "toolCount": 767,
   "tools": [
+    {
+      "name": "find_tools",
+      "title": "Find Tools (catalog search)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Search the FULL MikroTik tool catalog by intent and get back the tools that best match — use this FIRST whenever you can't immediately see the specific tool you need among the listed tools (the host only surfaces a subset of the several-hundred-tool catalog). Describe the task in natural language or keywords, e.g. 'block a LAN client by MAC', 'add an IPv4 firewall filter rule', 'import a TLS certificate', 'list DHCP leases', 'create a WireGuard peer'. Returns each match's exact tool name, what it does, and its parameter names — then call it directly if it's already available, or run it via `invoke_tool`. For IPv4 vs IPv6, say which: 'ipv4'/'ipv6' disambiguates the result.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What you want to do, in words or keywords (e.g. 'add ipv4 nat masquerade rule')."
+          },
+          "limit": {
+            "description": "Max results to return (default 8).",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25
+          }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "describe_tool",
+      "title": "Describe a Tool (exact schema)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Return the exact input schema, parameters (name · required · description), risk level and purpose of ONE tool by its exact name — use it after find_tools to build a correct call before running a tool you can't see listed. Pass the tool's snake_case name, e.g. 'create_filter_rule'.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact tool name, e.g. 'add_dhcp_lease'."
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "invoke_tool",
+      "title": "Invoke a Tool by Name",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Execute ANY tool in the catalog by its exact name with the given arguments — the precise way to run a tool you found via find_tools but the host hasn't surfaced for a direct call. The arguments are validated against that tool's real schema and run through its real handler, so this is exactly as safe/accurate as calling the tool directly (unlike raw CLI). To target a specific device in a multi-device setup, set the top-level `device` parameter on THIS call — not inside `arguments`. If validation fails you get the expected parameters back; fix and retry. For a one-off raw command with no dedicated tool, prefer run_routeros_command.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact tool name to run, e.g. 'create_filter_rule'."
+          },
+          "arguments": {
+            "description": "The tool's arguments as an object (omit for a no-argument tool).",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
     {
       "name": "run_routeros_command",
       "title": "Run a RouterOS Command (raw CLI)",
@@ -14582,6 +14667,133 @@
           }
         },
         "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_ssh_settings",
+      "title": "Get SSH Server Settings",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Show the RouterOS SSH **server** configuration (`/ip ssh print`) — TCP forwarding policy (`forwarding-enabled`), crypto strength (`strong-crypto`, `allow-none-crypto`), password-vs-key policy (`always-allow-password-login`), and the host key (`host-key-type`, `host-key-size`). This is the SSH SERVER's behaviour, separate from `/ip service ssh` (which only sets the SSH port and source-address ACL — see get_ip_service). Use this to check, for example, whether a router can act as an SSH jump host (`forwarding-enabled` must be `local` or `both`).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_ssh_settings",
+      "title": "Configure SSH Server Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Update the RouterOS SSH **server** settings (`/ip ssh set`). Covers every option of the `/ip ssh` submenu — pass only what you want to change:\n• `forwarding_enabled` — TCP forwarding policy: `no` | `local` | `remote` | `both`. **Set to `local` (or `both`) to let this router act as an SSH jump host / bastion** for ProxyJump (`jumpVia`); `remote` allows reverse forwarding.\n• `strong_crypto` — use stronger crypto: prefer 256-bit+ ciphers, bigger DH primes, stronger HMACs, and disable weak/legacy algorithms (recommended for hardening).\n• `always_allow_password_login` — allow password auth even when the user has an SSH public key set.\n• `allow_none_crypto` — allow connecting with NO encryption (insecure; almost always keep off).\n• `host_key_type` — host key algorithm: `rsa` or `ed25519`. Changing it regenerates the host key, so existing clients will see a changed key and must re-trust it.\n• `host_key_size` — RSA host-key size in bits (e.g. 2048 or 4096); applies to `rsa` host keys.\nNote: this is NOT the SSH port/ACL — for that use set_ip_service on the `ssh` service.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "forwarding_enabled": {
+            "description": "TCP forwarding policy. `local`/`both` are required for this router to be a jump host.",
+            "type": "string",
+            "enum": ["no", "local", "remote", "both"]
+          },
+          "strong_crypto": {
+            "description": "Prefer strong ciphers/MACs/DH and disable weak ones (hardening).",
+            "type": "boolean"
+          },
+          "always_allow_password_login": {
+            "description": "Allow password login even when the user has an SSH public key configured.",
+            "type": "boolean"
+          },
+          "allow_none_crypto": {
+            "description": "Allow unencrypted connections (insecure — keep off unless you must).",
+            "type": "boolean"
+          },
+          "host_key_type": {
+            "description": "Host key algorithm. Changing it regenerates the host key (clients must re-trust).",
+            "type": "string",
+            "enum": ["rsa", "ed25519"]
+          },
+          "host_key_size": {
+            "description": "RSA host-key size in bits (e.g. 2048, 4096). Applies to rsa host keys.",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "regenerate_ssh_host_key",
+      "title": "Regenerate SSH Host Key",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Regenerate the router's SSH host key (`/ip ssh regenerate-host-key`), using the current `host-key-type`/`host-key-size`. WARNING: this changes the server's identity — EVERY existing SSH client will get a host-key-mismatch warning and must re-trust the router (remove its old entry from `~/.ssh/known_hosts`). Do this only when rotating keys or after changing `host_key_type`. It does not drop the current session.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "export_ssh_host_key",
+      "title": "Export SSH Host Public Key",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Export the router's SSH host public key to file(s) on the device (`/ip ssh export-host-key`), named with the given prefix (e.g. prefix `myrouter` → `myrouter_*` files in `/file`). Useful to pin/distribute the host key. Download the resulting file with download_file.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "key_file_prefix": {
+            "type": "string",
+            "description": "Filename prefix for the exported key file(s), e.g. 'myrouter'."
+          }
+        },
+        "required": ["key_file_prefix"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "import_ssh_host_key",
+      "title": "Import SSH Host Key",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Import an SSH host key onto the router from key files already on the device (`/ip ssh import-host-key`). Provide the private-key file and its matching public-key file (upload them first with upload_file). WARNING: this replaces the server's host identity — existing clients will see a changed host key and must re-trust the router.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "private_key_file": {
+            "type": "string",
+            "description": "Private-key filename on the device, e.g. 'host_key'."
+          },
+          "public_key_file": {
+            "description": "Public-key filename on the device (e.g. 'host_key.pub'), if required.",
+            "type": "string"
+          }
+        },
+        "required": ["private_key_file"],
         "additionalProperties": false
       }
     },

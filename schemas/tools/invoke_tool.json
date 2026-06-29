@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "invoke_tool",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exact tool name to run, e.g. 'create_filter_rule'."
+    },
+    "arguments": {
+      "description": "The tool's arguments as an object (omit for a no-argument tool).",
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}

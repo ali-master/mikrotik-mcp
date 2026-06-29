@@ -39,6 +39,7 @@ import { interfaceTools } from "./interfaces";
 import { ipAddressTools } from "./ip-address";
 import { ipPoolTools } from "./ip-pool";
 import { ipServiceTools } from "./ip-service";
+import { ipSshTools } from "./ip-ssh";
 import { ipCloudTools } from "./ip-cloud";
 import { ipDhcpClientTools } from "./ip-dhcp-client";
 import { ipv6AddressTools } from "./ipv6-address";
@@ -617,6 +618,15 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "Security",
     description: "Management service ports — ssh/www/api/telnet (`/ip service`).",
     tools: ipServiceTools,
+  },
+  {
+    label: "SSH Server",
+    slug: "ip-ssh",
+    group: "Security",
+    description:
+      "SSH server settings (`/ip ssh`) — TCP forwarding (jump-host/ProxyJump), crypto strength, " +
+      "password-vs-key policy, host-key regenerate/import/export.",
+    tools: ipSshTools,
   },
   {
     label: "IP Cloud (DDNS)",

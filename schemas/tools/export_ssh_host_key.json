@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "export_ssh_host_key",
+  "type": "object",
+  "properties": {
+    "key_file_prefix": {
+      "type": "string",
+      "description": "Filename prefix for the exported key file(s), e.g. 'myrouter'."
+    }
+  },
+  "required": ["key_file_prefix"],
+  "additionalProperties": false
+}

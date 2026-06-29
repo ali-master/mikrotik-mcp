@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "set_ssh_settings",
+  "type": "object",
+  "properties": {
+    "forwarding_enabled": {
+      "description": "TCP forwarding policy. `local`/`both` are required for this router to be a jump host.",
+      "type": "string",
+      "enum": ["no", "local", "remote", "both"]
+    },
+    "strong_crypto": {
+      "description": "Prefer strong ciphers/MACs/DH and disable weak ones (hardening).",
+      "type": "boolean"
+    },
+    "always_allow_password_login": {
+      "description": "Allow password login even when the user has an SSH public key configured.",
+      "type": "boolean"
+    },
+    "allow_none_crypto": {
+      "description": "Allow unencrypted connections (insecure — keep off unless you must).",
+      "type": "boolean"
+    },
+    "host_key_type": {
+      "description": "Host key algorithm. Changing it regenerates the host key (clients must re-trust).",
+      "type": "string",
+      "enum": ["rsa", "ed25519"]
+    },
+    "host_key_size": {
+      "description": "RSA host-key size in bits (e.g. 2048, 4096). Applies to rsa host keys.",
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "additionalProperties": false
+}
