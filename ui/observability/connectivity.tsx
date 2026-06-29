@@ -1,7 +1,56 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ms } from "./format";
 import { Badge } from "./geist";
 import type { DeviceInfo, DevicesPayload, DeviceStatus } from "./types";
+
+/**
+ * A pill-backed SVG label whose rounded rect is sized to the REAL rendered text
+ * width (`getComputedTextLength`) rather than a character-count guess — so the
+ * "⤳ via …" jump badge fits its content exactly, whatever the bastion name and
+ * however the arrow/space glyphs render. Falls back to an estimate for the first
+ * paint, then snaps to the measured width on mount/text change.
+ */
+function PillLabel({
+  x,
+  y,
+  text,
+  className,
+  textClassName,
+  padX = 9,
+  fontSize = 9,
+}: {
+  x: number;
+  y: number;
+  text: string;
+  className: string;
+  textClassName: string;
+  padX?: number;
+  fontSize?: number;
+}): ReactNode {
+  const ref = useRef<SVGTextElement>(null);
+  const [w, setW] = useState(() => text.length * fontSize * 0.62);
+  useLayoutEffect(() => {
+    const measured = ref.current?.getComputedTextLength();
+    if (measured && measured > 0) setW(measured);
+  }, [text, fontSize]);
+  const bw = Math.round(w + padX * 2);
+  return (
+    <g transform={`translate(${x.toFixed(1)},${y.toFixed(1)})`}>
+      <rect className={className} x={-bw / 2} y={-9} rx={9} width={bw} height={18} />
+      <text
+        ref={ref}
+        className={textClassName}
+        x={0}
+        y={3.5}
+        textAnchor="middle"
+        fontSize={fontSize}
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
 
 // ── connectivity graph ───────────────────────────────────────────────────────
 export function statusInfo(s: DeviceStatus): { label: string; color: string } {
@@ -357,26 +406,14 @@ export function ConnectivityGraph({
                   <mpath href={`#${pid}`} />
                 </animateMotion>
               </text>
-              {/* midpoint "via" badge */}
-              <g transform={`translate(${badge.x.toFixed(1)},${badge.y.toFixed(1)})`}>
-                <rect
-                  className="conn-tunnel-badge"
-                  x={-Math.max(24, label.length * 3.3 + 14)}
-                  y={-9}
-                  rx={9}
-                  width={Math.max(48, label.length * 6.6 + 28)}
-                  height={18}
-                />
-                <text
-                  className="conn-tunnel-badge-tx"
-                  x={0}
-                  y={3.5}
-                  textAnchor="middle"
-                  fontSize={9}
-                >
-                  ⤳ via {label}
-                </text>
-              </g>
+              {/* midpoint "via" badge — pill sized to the real text width */}
+              <PillLabel
+                x={badge.x}
+                y={badge.y}
+                text={`⤳ via ${label}`}
+                className="conn-tunnel-badge"
+                textClassName="conn-tunnel-badge-tx"
+              />
             </g>
           );
         })}
