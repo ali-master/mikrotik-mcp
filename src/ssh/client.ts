@@ -111,10 +111,12 @@ export class MikroTikSSHClient {
       // the NEXT address in the sequence.
       let sock: Readable | undefined;
       for (let i = 0; i < hops.length; i++) {
-        const client = await this.openClient(hops[i] as SSHClientOptions, sock);
+        const hop = hops[i] as SSHClientOptions;
+        const client = await this.openClient(hop, sock);
         this.bastions.push(client);
         const next = sequence[i + 1] as SSHClientOptions;
-        sock = await this.forwardOut(client, next.host, next.port ?? 22);
+        const hopTimeout = hop.timeoutMs ?? this.opts.timeoutMs ?? 10_000;
+        sock = await this.forwardOut(client, next.host, next.port ?? 22, hopTimeout);
       }
 
       // Finally open the real session to the target (over the last hop's channel
@@ -173,19 +175,42 @@ export class MikroTikSSHClient {
 
   /**
    * Ask a connected jump host to open a TCP channel to `host:port` and resolve
-   * the resulting stream (used as the next hop's transport `sock`). A RouterOS
-   * bastion rejects this unless SSH TCP forwarding is enabled, so the failure
-   * names the exact fix.
+   * the resulting stream (used as the next hop's transport `sock`).
+   *
+   * A RouterOS bastion with SSH TCP forwarding disabled (the default) often
+   * NEVER answers the channel-open request instead of rejecting it cleanly, so
+   * without a timeout this would hang the whole connection (the dashboard sits
+   * forever at "connecting…"). The `timeoutMs` guard turns that silent stall
+   * into a fast, actionable error; an explicit rejection gets the same hint.
    */
-  private forwardOut(via: Client, host: string, port: number): Promise<Readable> {
+  private forwardOut(
+    via: Client,
+    host: string,
+    port: number,
+    timeoutMs: number,
+  ): Promise<Readable> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const enableHint =
+        "If the jump router runs RouterOS, enable SSH TCP forwarding on it " +
+        "(`/ip ssh set forwarding-enabled=local`, or `both`) and confirm the bastion can reach the target.";
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(
+          new Error(
+            `jump host did not open a tunnel to ${host}:${port} within ${Math.round(timeoutMs / 1000)}s. ${enableHint}`,
+          ),
+        );
+      }, timeoutMs);
       via.forwardOut("127.0.0.1", 0, host, port, (err, stream) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         if (err) {
           reject(
             new Error(
-              `jump host could not open a tunnel to ${host}:${port}: ${err.message}. ` +
-                "If the jump router runs RouterOS, enable SSH TCP forwarding on it: " +
-                "/ip ssh set forwarding-enabled=local (or both).",
+              `jump host could not open a tunnel to ${host}:${port}: ${err.message}. ${enableHint}`,
             ),
           );
         } else {
