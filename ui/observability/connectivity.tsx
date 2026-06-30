@@ -365,7 +365,10 @@ export function ConnectivityGraph({
           const my = (from.y + to.y) / 2;
           const ol = Math.hypot(mx - cx, my - cy) || 1;
           const bow = bastion ? 50 : 16;
-          const ctrl = { x: mx + ((mx - cx) / ol) * bow, y: my + ((my - cy) / ol) * bow };
+          const ctrl = {
+            x: mx + ((mx - cx) / ol) * bow,
+            y: my + ((my - cy) / ol) * bow,
+          };
           const path = `M${from.x.toFixed(1)},${from.y.toFixed(1)} Q${ctrl.x.toFixed(1)},${ctrl.y.toFixed(1)} ${to.x.toFixed(1)},${to.y.toFixed(1)}`;
           const label = jumpLabel(nd.d) ?? "";
           const badge = qPoint(from, ctrl, to, 0.5);
@@ -546,10 +549,6 @@ export function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
           className="jump-route"
           title={`Reached over SSH through the bastion ${jumpLabel(d)} (ProxyJump) — no port exposed on ${d.name}.`}
         >
-          <span className="jump-route__hop jump-route__hop--src" title="MCP server">
-            🛰️
-          </span>
-          <span className="jump-route__wire" />
           <span className="jump-route__hop jump-route__hop--bastion">
             🛡️ {jumpLabel(d)}
             {d.jumpVia ? <i className="jump-route__tag">jump</i> : null}
