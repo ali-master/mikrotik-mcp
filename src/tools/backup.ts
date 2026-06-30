@@ -5,11 +5,20 @@
  * importing scripts, and moving files on and off the device filesystem.
  */
 import { z } from "zod";
-import { executeMikrotikCommand, uploadFileToDevice } from "../core/connector";
+import { checkDiskSpace } from "../backups/disk-check";
+import { backupDir, writeBinaryBackup, writeBackup } from "../backups/vault";
+import {
+  downloadFileFromDevice,
+  executeMikrotikCommand,
+  uploadFileToDevice,
+} from "../core/connector";
 import { deviceDateStamp } from "../core/datestamp";
 import { WRITE, READ, defineTool, DANGEROUS } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { isEmpty, Cmd } from "../core/routeros";
+import { Cmd, isEmpty, looksLikeError } from "../core/routeros";
+import { getDevice, resolveDeviceName } from "../core/runtime";
+import { deviceSlug } from "../core/slug";
+import { isMacTelnetDevice } from "../core/transport";
 
 export const backupTools: ToolModule = [
   defineTool({
@@ -36,6 +45,8 @@ export const backupTools: ToolModule = [
       const name = a.name || `backup_${await deviceDateStamp(ctx)}`;
       ctx.info(`Creating backup: name=${name}`);
 
+      const disk = await checkDiskSpace(ctx);
+
       const cmd = new Cmd("/system backup save").set("name", name);
       if (a.dont_encrypt) cmd.raw("dont-encrypt=yes");
       else cmd.set("password", ""); // Empty password for encryption
@@ -43,16 +54,57 @@ export const backupTools: ToolModule = [
 
       const result = await executeMikrotikCommand(cmd.build(), ctx);
 
-      if (result.includes("saved") || result.trim() === "") {
-        const fileDetails = await executeMikrotikCommand(
-          `/file print detail where name=${name}.backup`,
-          ctx,
-        );
-        return fileDetails
-          ? `Backup created successfully:\n\n${fileDetails}`
-          : `Backup '${name}.backup' created successfully.`;
+      if (!(result.includes("saved") || result.trim() === "")) {
+        if (disk.low) {
+          return (
+            `Failed to create backup (device disk is ${disk.usedPct?.toFixed(0)}% used): ${result}\n\n` +
+            "Tip: use create_local_backup or create_export instead — text exports can be captured " +
+            "directly to the local vault without using any device disk space."
+          );
+        }
+        return `Failed to create backup: ${result}`;
       }
-      return `Failed to create backup: ${result}`;
+
+      // Backup created. If disk is low, download it locally and clean up.
+      if (disk.low) {
+        const dc = getDevice(ctx.device);
+        if (isMacTelnetDevice(dc)) {
+          // MAC-Telnet has no SFTP — leave the file on device with a warning.
+          return (
+            `Backup '${name}.backup' created on device, but disk is ${disk.usedPct?.toFixed(0)}% used. ` +
+            "This is a MAC-Telnet device (no SFTP), so the file cannot be downloaded automatically. " +
+            "Free disk space manually or use create_local_backup for a text export that bypasses device storage."
+          );
+        }
+        const deviceFile = `${name}.backup`;
+        try {
+          ctx.info(`Low disk (${disk.usedPct?.toFixed(0)}%) — downloading backup to local vault`);
+          const data = await downloadFileFromDevice(ctx.device, deviceFile);
+          const device = resolveDeviceName(ctx.device);
+          const vaultName = writeBinaryBackup(`${deviceSlug(device)}_${deviceFile}`, data);
+          // Remove the file from the device to free space.
+          await executeMikrotikCommand(`/file remove ${deviceFile}`, ctx);
+          return (
+            `[LOW DISK — ${disk.usedPct?.toFixed(0)}% used] Backup '${deviceFile}' created, downloaded to ` +
+            `local vault as '${vaultName}' (${data.length} bytes) at ${backupDir()}, and removed from ` +
+            "the device to free disk space."
+          );
+        } catch (e) {
+          // Download/cleanup failed — the backup is still on device, report both.
+          return (
+            `Backup '${name}.backup' created on device, but the automatic download-and-cleanup ` +
+            `failed: ${e instanceof Error ? e.message : String(e)}. The file is still on the device.`
+          );
+        }
+      }
+
+      const fileDetails = await executeMikrotikCommand(
+        `/file print detail where name=${name}.backup`,
+        ctx,
+      );
+      return fileDetails
+        ? `Backup created successfully:\n\n${fileDetails}`
+        : `Backup '${name}.backup' created successfully.`;
     },
   }),
 
@@ -120,6 +172,28 @@ export const backupTools: ToolModule = [
       const name = a.name || `export_${await deviceDateStamp(ctx)}`;
       ctx.info(`Creating export: name=${name}, format=${a.file_format}`);
 
+      const disk = await checkDiskSpace(ctx);
+
+      // When disk is low, capture stdout (no file= arg) and save to local vault.
+      if (disk.low) {
+        ctx.info(`Low disk (${disk.usedPct?.toFixed(0)}%) — redirecting export to local vault`);
+        const cmd = new Cmd("/export");
+        cmd.raw(a.verbose ? "verbose" : null);
+        cmd.raw(a.compact ? "compact" : null);
+        cmd.raw(!a.hide_sensitive ? "show-sensitive" : null);
+        // No file= parameter — output goes to stdout.
+        const body = await executeMikrotikCommand(cmd.build(), ctx);
+        if (isEmpty(body) || looksLikeError(body)) {
+          return `Failed to create export: ${body}`;
+        }
+        const device = resolveDeviceName(ctx.device);
+        const vaultName = writeBackup(`${deviceSlug(device)}_${name}.rsc`, body);
+        return (
+          `[LOW DISK — ${disk.usedPct?.toFixed(0)}% used] Export saved to LOCAL VAULT as '${vaultName}' ` +
+          `(${Buffer.byteLength(body)} bytes) at ${backupDir()} — no file was written to the device.`
+        );
+      }
+
       // Determine file extension based on format
       const extension = a.file_format === "json" || a.file_format === "xml" ? a.file_format : "rsc";
       const fullName = `${name}.${extension}`;
@@ -171,6 +245,30 @@ export const backupTools: ToolModule = [
       }
 
       ctx.info(`Exporting section: section=${a.section}, name=${name}`);
+
+      const disk = await checkDiskSpace(ctx);
+
+      // When disk is low, capture stdout (no file= arg) and save to local vault.
+      if (disk.low) {
+        ctx.info(
+          `Low disk (${disk.usedPct?.toFixed(0)}%) — redirecting section export to local vault`,
+        );
+        const cmd = new Cmd(`/${a.section} export`);
+        cmd.raw(!a.hide_sensitive ? "show-sensitive" : null);
+        cmd.raw(a.compact ? "compact" : null);
+        // No file= parameter — output goes to stdout.
+        const body = await executeMikrotikCommand(cmd.build(), ctx);
+        if (isEmpty(body) || looksLikeError(body)) {
+          return `Failed to export section: ${body}`;
+        }
+        const device = resolveDeviceName(ctx.device);
+        const vaultName = writeBackup(`${deviceSlug(device)}_${name}.rsc`, body);
+        return (
+          `[LOW DISK — ${disk.usedPct?.toFixed(0)}% used] Section export saved to LOCAL VAULT as ` +
+          `'${vaultName}' (${Buffer.byteLength(body)} bytes) at ${backupDir()} — no file was written ` +
+          "to the device."
+        );
+      }
 
       const cmd = new Cmd(`/${a.section} export`).set("file", name);
       cmd.raw(!a.hide_sensitive ? "show-sensitive" : null);

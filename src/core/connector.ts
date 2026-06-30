@@ -104,3 +104,32 @@ export async function uploadFileToDevice(
     ssh.disconnect();
   }
 }
+
+/**
+ * Pull a file's bytes from the device filesystem over SFTP. Opens a dedicated
+ * SSH connection (like {@link uploadFileToDevice}, the transfer is its own
+ * channel). Throws a clear error for a MAC-Telnet device, which has no SFTP.
+ */
+export async function downloadFileFromDevice(
+  deviceName: string | undefined,
+  remotePath: string,
+): Promise<Buffer> {
+  const name = resolveDeviceName(deviceName);
+  const dc = getDevice(deviceName);
+  if (isMacTelnetDevice(dc)) {
+    throw new Error(
+      `Cannot download a file from '${name}': it is reached over Layer-2 MAC-Telnet, which has no ` +
+        "file transfer. Configure SSH (host + credentials) for this device, or use a text export " +
+        "(stdout mode) instead of a binary backup.",
+    );
+  }
+  const ssh = new MikroTikSSHClient({ ...sshOptionsOf(dc), jump: resolveJump(dc) });
+  if (!(await ssh.connect())) {
+    throw new Error(connectErrorMessage(name, dc, ssh.lastError));
+  }
+  try {
+    return await ssh.downloadFile(remotePath);
+  } finally {
+    ssh.disconnect();
+  }
+}

@@ -32,6 +32,8 @@ export interface BackupFile {
   modified: number;
   /** Device name parsed from the `<device>_…` filename prefix, when present. */
   device?: string;
+  /** `"rsc"` for text exports, `"backup"` for binary snapshots. */
+  type: "rsc" | "backup";
 }
 
 /**
@@ -67,12 +69,12 @@ export function safeName(name: string): string {
   return base;
 }
 
-/** List vault backups, newest first. */
+/** List vault backups, newest first. Includes both text `.rsc` and binary `.backup` files. */
 export function listBackups(): BackupFile[] {
   const dir = backupDir();
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith(".rsc"))
+    .filter((f) => f.endsWith(".rsc") || f.endsWith(".backup"))
     .map((f) => {
       const st = statSync(join(dir, f));
       const us = f.indexOf("_");
@@ -81,6 +83,7 @@ export function listBackups(): BackupFile[] {
         bytes: st.size,
         modified: st.mtimeMs,
         device: us > 0 ? f.slice(0, us) : undefined,
+        type: (f.endsWith(".backup") ? "backup" : "rsc") as "rsc" | "backup",
       };
     })
     .sort((a, b) => b.modified - a.modified);
@@ -118,6 +121,27 @@ export function writeBackup(name: string, content: string): string {
     final = `${stem}_${n}${ext}`;
   }
   writeFileSync(join(dir, final), content, "utf8");
+  return final;
+}
+
+/**
+ * Write a binary `.backup` file to the vault. Same collision-avoidance as
+ * {@link writeBackup}, but writes raw bytes (no encoding). Returns the final
+ * filename written.
+ */
+export function writeBinaryBackup(name: string, data: Buffer): string {
+  const dir = backupDir();
+  mkdirSync(dir, { recursive: true });
+  let final = safeName(name);
+  if (existsSync(join(dir, final))) {
+    const dot = final.lastIndexOf(".");
+    const stem = dot > 0 ? final.slice(0, dot) : final;
+    const ext = dot > 0 ? final.slice(dot) : "";
+    let n = 2;
+    while (existsSync(join(dir, `${stem}_${n}${ext}`))) n++;
+    final = `${stem}_${n}${ext}`;
+  }
+  writeFileSync(join(dir, final), data);
   return final;
 }
 

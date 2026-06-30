@@ -351,6 +351,35 @@ export class MikroTikSSHClient {
     });
   }
 
+  /**
+   * Download a file's bytes from the device over SFTP. `remotePath` is relative
+   * to the SFTP default directory (the flash root). Resolves with the raw file
+   * contents; rejects with a clear reason on failure.
+   */
+  downloadFile(remotePath: string): Promise<Buffer> {
+    if (!this.client) {
+      return Promise.reject(new Error("Not connected to MikroTik device"));
+    }
+    const openSftp = this.client.sftp.bind(this.client);
+    return new Promise((resolve, reject) => {
+      openSftp((err, sftp) => {
+        if (err) {
+          reject(new Error(`SFTP subsystem unavailable: ${err.message}`));
+          return;
+        }
+        sftp.readFile(remotePath, (rerr, data) => {
+          try {
+            sftp.end();
+          } catch {
+            /* already closed */
+          }
+          if (rerr) reject(new Error(`SFTP read failed: ${rerr.message}`));
+          else resolve(data);
+        });
+      });
+    });
+  }
+
   /** Open a persistent interactive shell channel (used by Safe Mode). */
   shell(opts: { term?: string; cols?: number; rows?: number } = {}): Promise<ClientChannel> {
     if (!this.client) {
