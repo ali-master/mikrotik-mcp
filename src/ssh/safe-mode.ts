@@ -14,6 +14,7 @@
 import type { ClientChannel } from "ssh2";
 import { MikroTikSSHClient, decodeOutput } from "./client";
 import { getDevice } from "../core/runtime";
+import { resolveJump, sshOptionsOf } from "../core/transport";
 
 /** Matches RouterOS prompts in both normal and safe mode:
  *   [admin@MikroTik] >
@@ -133,16 +134,7 @@ export class SafeModeManager {
           "Connect over SSH (configure host/credentials) to use Safe Mode."
         );
       }
-      const ssh = new MikroTikSSHClient({
-        host: dc.host,
-        username: dc.username,
-        password: dc.password,
-        keyFilename: dc.keyFilename,
-        privateKey: dc.privateKey,
-        keyPassphrase: dc.keyPassphrase,
-        port: dc.port,
-        timeoutMs: dc.timeoutMs,
-      });
+      const ssh = new MikroTikSSHClient({ ...sshOptionsOf(dc), jump: resolveJump(dc) });
       if (!(await ssh.connect())) {
         return "Error: Failed to connect to MikroTik device for safe mode session.";
       }

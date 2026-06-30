@@ -38,7 +38,7 @@ export function isMacTelnetDevice(dc: DeviceConfig): dc is DeviceConfig & { mac:
 }
 
 /** The SSH connection options for a device (no jump), used as one chain hop. */
-function sshOptionsOf(dc: DeviceConfig): SSHClientOptions {
+export function sshOptionsOf(dc: DeviceConfig): SSHClientOptions {
   return {
     host: dc.host,
     username: dc.username,
@@ -58,7 +58,7 @@ function sshOptionsOf(dc: DeviceConfig): SSHClientOptions {
  * against a cycle and against using a MAC-Telnet device as a bastion (a jump
  * needs SSH TCP forwarding, which Layer-2 MAC-Telnet has no notion of).
  */
-function resolveJump(
+export function resolveJump(
   dc: DeviceConfig,
   seen: Set<string> = new Set(),
 ): SSHClientOptions | undefined {

@@ -20,6 +20,7 @@ import type { ToolModule } from "../core/registry";
 import { getDevice, resolveDeviceName } from "../core/runtime";
 import { parseKeyValues } from "../core/routeros-parse";
 import { Cmd } from "../core/routeros";
+import { resolveJump, sshOptionsOf } from "../core/transport";
 import { MikroTikSSHClient } from "../ssh/client";
 
 /** Open an SSH connection from the MCP host, run one read command, report. */
@@ -72,13 +73,8 @@ export const sshTestTools: ToolModule = [
       ctx.info(`Testing SSH from MCP host to configured device '${name}' (${dc.host}:${dc.port})`);
       return probe(
         {
-          host: dc.host,
-          port: dc.port,
-          username: dc.username,
-          password: dc.password,
-          keyFilename: dc.keyFilename,
-          privateKey: dc.privateKey,
-          keyPassphrase: dc.keyPassphrase,
+          ...sshOptionsOf(dc),
+          jump: resolveJump(dc),
           timeoutMs: Math.min(dc.timeoutMs ?? 10_000, 10_000),
         },
         `'${name}' (${dc.host}:${dc.port})`,

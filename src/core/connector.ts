@@ -9,7 +9,13 @@
  */
 import type { ToolContext } from "./context";
 import { resolveDeviceName, getDevice } from "./runtime";
-import { connectErrorMessage, createDeviceClient, isMacTelnetDevice } from "./transport";
+import {
+  connectErrorMessage,
+  createDeviceClient,
+  isMacTelnetDevice,
+  resolveJump,
+  sshOptionsOf,
+} from "./transport";
 import { getSafeModeManager } from "../ssh/safe-mode";
 import { MikroTikSSHClient } from "../ssh/client";
 
@@ -88,16 +94,7 @@ export async function uploadFileToDevice(
         "itself with /tool fetch from a URL it can reach.",
     );
   }
-  const ssh = new MikroTikSSHClient({
-    host: dc.host,
-    username: dc.username,
-    password: dc.password,
-    keyFilename: dc.keyFilename,
-    privateKey: dc.privateKey,
-    keyPassphrase: dc.keyPassphrase,
-    port: dc.port,
-    timeoutMs: dc.timeoutMs,
-  });
+  const ssh = new MikroTikSSHClient({ ...sshOptionsOf(dc), jump: resolveJump(dc) });
   if (!(await ssh.connect())) {
     throw new Error(connectErrorMessage(name, dc, ssh.lastError));
   }
