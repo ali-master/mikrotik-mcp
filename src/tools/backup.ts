@@ -65,7 +65,9 @@ export const backupTools: ToolModule = [
         return `Failed to create backup: ${result}`;
       }
 
-      // Backup created. If disk is low, download it locally and clean up.
+      // Backup created on device. If disk is low, download it to the local vault
+      // over SFTP and remove from the device to free space. The SSH user needs the
+      // `read` (and `sensitive` for .backup files) policy for SFTP downloads to work.
       if (disk.low) {
         const dc = getDevice(ctx.device);
         if (isMacTelnetDevice(dc)) {
@@ -90,10 +92,12 @@ export const backupTools: ToolModule = [
             "the device to free disk space."
           );
         } catch (e) {
-          // Download/cleanup failed — the backup is still on device, report both.
+          // Download/cleanup failed — the backup is still on device. A common cause
+          // is the SSH user missing the `read` or `sensitive` policy on RouterOS.
           return (
             `Backup '${name}.backup' created on device, but the automatic download-and-cleanup ` +
-            `failed: ${e instanceof Error ? e.message : String(e)}. The file is still on the device.`
+            `failed: ${e instanceof Error ? e.message : String(e)}. The file is still on the device. ` +
+            "Ensure the SSH user has the 'read' and 'sensitive' policies for SFTP downloads to work."
           );
         }
       }
