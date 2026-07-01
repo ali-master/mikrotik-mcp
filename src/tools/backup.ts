@@ -295,41 +295,41 @@ export const backupTools: ToolModule = [
 
   defineTool({
     name: "download_file",
-    title: "Download File as Base64",
+    title: "Download File from Device",
     annotations: READ,
     description:
-      "Attempts to read a file from the device filesystem via `/file print file=<filename>` and" +
-      " returns the RouterOS API text response base64-encoded as `FILE_CONTENT_BASE64:<data>`." +
-      " NOTE: this is a simplified implementation. RouterOS has no file-content-read API over SSH;" +
-      " `/file print file=<name>` saves the directory-listing output to a file named `<name>` rather" +
-      " than streaming an existing file's bytes. The returned base64 payload is the RouterOS text" +
-      " response to that command — not the actual file contents. Binary `.backup` files cannot be" +
-      " reliably retrieved this way. Verifies file existence first" +
-      " (`/file print count-only where name=<filename>`); returns a not-found message if absent." +
-      " To list available files use `list_backups`; for file metadata only use `backup_info`.",
+      "Downloads a file from the device filesystem over SFTP and returns its raw bytes base64-encoded" +
+      " as `FILE_CONTENT_BASE64:<data>`. Works for any file type — `.backup`, `.rsc`, `.p12`" +
+      " certificates, keys, etc. Verifies file existence first (`/file print count-only`). The SSH" +
+      " user MUST have the `read` policy (and `sensitive` for `.backup` / certificate files) on" +
+      " RouterOS for SFTP downloads to work. NOT available on MAC-Telnet devices (Layer-2 has no" +
+      " file transfer). To list available files use `list_backups`; for file metadata use" +
+      " `backup_info`; to push a file onto the device use `upload_file`.",
     inputSchema: {
-      filename: z.string(),
-      file_type: z.enum(["backup", "export"]).default("backup"),
+      filename: z
+        .string()
+        .describe("Name of the file on the device, e.g. 'cert.p12' or 'backup.backup'"),
     },
     async handler(a, ctx) {
-      ctx.info(`Downloading file: filename=${a.filename}, type=${a.file_type}`);
+      ctx.info(`Downloading file: filename=${a.filename}`);
 
-      // First, check if file exists
+      // Verify file exists on device before attempting SFTP download.
       const count = await executeMikrotikCommand(
         `/file print count-only where name=${a.filename}`,
         ctx,
       );
-      if (count.trim() === "0") return `File '${a.filename}' not found.`;
+      if (count.trim() === "0") return `File '${a.filename}' not found on the device.`;
 
-      // Get file content (this is a simplified version)
-      const content = await executeMikrotikCommand(`/file print file=${a.filename}`, ctx);
-
-      if (content) {
-        // Encode content to base64 for safe transmission
-        const encoded = Buffer.from(content, "utf8").toString("base64");
+      try {
+        const data = await downloadFileFromDevice(ctx.device, a.filename);
+        const encoded = data.toString("base64");
         return `FILE_CONTENT_BASE64:${encoded}`;
+      } catch (e) {
+        return (
+          `Failed to download '${a.filename}': ${e instanceof Error ? e.message : String(e)}. ` +
+          "Ensure the SSH user has the 'read' and 'sensitive' policies on RouterOS."
+        );
       }
-      return `Failed to download file '${a.filename}'.`;
     },
   }),
 
