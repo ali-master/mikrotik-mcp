@@ -102,6 +102,16 @@ describe("RouterOS command builder", () => {
     expect(quoteValue("a\tb")).toBe('"a\\tb"');
   });
 
+  test("quoteValue escapes $ so RouterOS does not expand variables at set-time", () => {
+    // RouterOS interprets $var inside double quotes — a script source like
+    // `:local ok true; :if ($ok) do={...}` would silently lose all `$` tokens
+    // unless they're escaped as `\$`.
+    expect(quoteValue(":local ok true; :put $ok")).toBe('":local ok true; :put \\$ok"');
+    expect(quoteValue("$var")).toBe('"\\$var"');
+    // Multiple $ and combined escapes
+    expect(quoteValue('$a and "$b"')).toBe('"\\$a and \\"\\$b\\""');
+  });
+
   test("flattenLiveOutput collapses \\r live redraws to the final value", () => {
     // Interactive tools (ping / bandwidth-test) overwrite one line with \r.
     expect(flattenLiveOutput("rx: 1Mbps\rrx: 50Mbps\rrx: 92Mbps")).toBe("rx: 92Mbps");

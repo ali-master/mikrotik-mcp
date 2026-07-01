@@ -28,15 +28,19 @@ const BARE_SAFE = /^[\w.\-:/,*@!]+$/;
 export function quoteValue(value: string | number | boolean): string {
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (value !== "" && BARE_SAFE.test(value)) return value;
-  // Escape, in order: backslash, double-quote, then control chars into their
-  // RouterOS escape sequences. Literal newlines/tabs must become `\n`/`\r`/`\t`
-  // because the command is sent over the SSH `exec` channel as a single line —
-  // a raw newline would terminate the console command mid-string (e.g. a
-  // multi-line `/system script add source=...`) rather than stay inside the
-  // quotes.
+  // Escape, in order: backslash, double-quote, dollar sign, then control chars
+  // into their RouterOS escape sequences. Literal newlines/tabs must become
+  // `\n`/`\r`/`\t` because the command is sent over the SSH `exec` channel as a
+  // single line — a raw newline would terminate the console command mid-string
+  // (e.g. a multi-line `/system script add source=...`) rather than stay inside
+  // the quotes.  `$` MUST be escaped as `\$` because RouterOS interprets a bare
+  // `$` inside double-quoted strings as variable substitution — an unescaped
+  // `$var` is silently replaced with the (usually empty) value of that variable,
+  // corrupting scripts and expressions.
   const escaped = value
     .replace(/\\/g, "\\\\")
     .replace(/"/g, '\\"')
+    .replace(/\$/g, "\\$")
     .replace(/\r/g, "\\r")
     .replace(/\n/g, "\\n")
     .replace(/\t/g, "\\t");
