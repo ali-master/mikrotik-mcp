@@ -1130,6 +1130,119 @@ export async function runDashboard(
     return bearer === cfg.token || url.searchParams.get("token") === cfg.token;
   };
 
+  /** Route all dashboard API requests; exceptions bubble to the caller. */
+  async function dashboardRoute(
+    req: Request,
+    url: URL,
+    srv: Server<SocketData>,
+    ca: typeof configAdmin,
+    tl: string,
+  ): Promise<Response> {
+    // Live event stream — Bun-native WebSocket (preferred).
+    if (url.pathname === "/api/stream") {
+      if (srv.upgrade(req, { data: {} })) return undefined as unknown as Response;
+      return new Response("WebSocket upgrade failed", { status: 400 });
+    }
+
+    // Live event stream — Server-Sent Events (the front-end's automatic
+    // fallback when WebSocket can't connect, e.g. through some proxies).
+    if (url.pathname === "/api/sse") {
+      return sseResponse(tl);
+    }
+
+    // Config Studio routes are independent of the event store, so dispatch
+    // them before the recorder guard below.
+    const configResp = await configRoutes(req, url, ca);
+    if (configResp) return configResp;
+
+    const modulesResp = await modulesRoutes(req, url);
+    if (modulesResp) return modulesResp;
+
+    const captureResp = await captureRoutes(req, url);
+    if (captureResp) return captureResp;
+
+    const clientsResp = await clientsRoutes(req, url);
+    if (clientsResp) return clientsResp;
+
+    const aaaResp = await aaaRoutes(req, url);
+    if (aaaResp) return aaaResp;
+
+    const usageResp = await usageRoutes(req, url);
+    if (usageResp) return usageResp;
+
+    const featureResp = await featureRoutes(req, url);
+    if (featureResp) return featureResp;
+
+    const db = getEventStore();
+    if (!db) return json({ error: "recorder not active" }, 503);
+
+    // Delete selected events (`{ ids: [...] }`) or every event (`{ all: true }`).
+    // Gated by the same bearer token as every other route (checked above).
+    if (url.pathname === "/api/events" && req.method === "DELETE") {
+      let body: { ids?: unknown; all?: unknown } = {};
+      try {
+        body = (await req.json()) as typeof body;
+      } catch {
+        /* empty / invalid body → no-op selection */
+      }
+      const ids = Array.isArray(body.ids)
+        ? body.ids.filter((x): x is string => typeof x === "string")
+        : [];
+      const removed = body.all === true ? db.clear() : db.delete(ids);
+      return json({ removed, total: db.total() });
+    }
+
+    if (url.pathname === "/api/devices") {
+      return json(devicesPayload(db));
+    }
+
+    if (url.pathname === "/api/topology") {
+      return json(topologyPayload());
+    }
+
+    if (url.pathname === "/api/config") {
+      return json(configPayload());
+    }
+
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      return new Response(dashboardHtml(), {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+
+    if (url.pathname === "/api/meta") {
+      const f = facets(db);
+      return json({
+        ...f,
+        risks: ["READ", "WRITE", "WRITE_IDEMPOTENT", "DESTRUCTIVE", "DANGEROUS"],
+        total: db.total(),
+        liveClients: subscriberCount(),
+        transport: tl,
+      });
+    }
+
+    if (url.pathname === "/api/events") {
+      const filter = filterFromQuery(url);
+      return json({ events: db.query(filter), total: db.total() });
+    }
+
+    const eventMatch = url.pathname.match(/^\/api\/event\/(.+)$/);
+    if (eventMatch) {
+      const e = db.get(decodeURIComponent(eventMatch[1]));
+      return e ? json(e) : json({ error: "not found" }, 404);
+    }
+
+    if (url.pathname === "/api/stats") {
+      const now = Date.now();
+      const windowMs = Number(url.searchParams.get("window") ?? 3_600_000);
+      const buckets = Number(url.searchParams.get("buckets") ?? 60);
+      const events = db.query({ since: now - windowMs, limit: 5000 });
+      return json(computeStats(events, { now, windowMs, buckets }));
+    }
+
+    return new Response("Not Found", { status: 404 });
+  }
+
   const server = serve<SocketData>({
     hostname: cfg.host,
     port: cfg.port,
@@ -1143,109 +1256,13 @@ export async function runDashboard(
         return new Response("Unauthorized", { status: 401 });
       }
 
-      // Live event stream — Bun-native WebSocket (preferred).
-      if (url.pathname === "/api/stream") {
-        if (srv.upgrade(req, { data: {} })) return undefined;
-        return new Response("WebSocket upgrade failed", { status: 400 });
+      try {
+        return await dashboardRoute(req, url, srv, configAdmin, transportLabel);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logger.error(`Dashboard request failed (${url.pathname}): ${msg}`);
+        return json({ error: msg }, 502);
       }
-
-      // Live event stream — Server-Sent Events (the front-end's automatic
-      // fallback when WebSocket can't connect, e.g. through some proxies).
-      if (url.pathname === "/api/sse") {
-        return sseResponse(transportLabel);
-      }
-
-      // Config Studio routes are independent of the event store, so dispatch
-      // them before the recorder guard below.
-      const configResp = await configRoutes(req, url, configAdmin);
-      if (configResp) return configResp;
-
-      const modulesResp = await modulesRoutes(req, url);
-      if (modulesResp) return modulesResp;
-
-      const captureResp = await captureRoutes(req, url);
-      if (captureResp) return captureResp;
-
-      const clientsResp = await clientsRoutes(req, url);
-      if (clientsResp) return clientsResp;
-
-      const aaaResp = await aaaRoutes(req, url);
-      if (aaaResp) return aaaResp;
-
-      const usageResp = await usageRoutes(req, url);
-      if (usageResp) return usageResp;
-
-      const featureResp = await featureRoutes(req, url);
-      if (featureResp) return featureResp;
-
-      const db = getEventStore();
-      if (!db) return json({ error: "recorder not active" }, 503);
-
-      // Delete selected events (`{ ids: [...] }`) or every event (`{ all: true }`).
-      // Gated by the same bearer token as every other route (checked above).
-      if (url.pathname === "/api/events" && req.method === "DELETE") {
-        let body: { ids?: unknown; all?: unknown } = {};
-        try {
-          body = (await req.json()) as typeof body;
-        } catch {
-          /* empty / invalid body → no-op selection */
-        }
-        const ids = Array.isArray(body.ids)
-          ? body.ids.filter((x): x is string => typeof x === "string")
-          : [];
-        const removed = body.all === true ? db.clear() : db.delete(ids);
-        return json({ removed, total: db.total() });
-      }
-
-      if (url.pathname === "/api/devices") {
-        return json(devicesPayload(db));
-      }
-
-      if (url.pathname === "/api/topology") {
-        return json(topologyPayload());
-      }
-
-      if (url.pathname === "/api/config") {
-        return json(configPayload());
-      }
-
-      if (url.pathname === "/" || url.pathname === "/index.html") {
-        return new Response(dashboardHtml(), {
-          headers: { "content-type": "text/html; charset=utf-8" },
-        });
-      }
-
-      if (url.pathname === "/api/meta") {
-        const f = facets(db);
-        return json({
-          ...f,
-          risks: ["READ", "WRITE", "WRITE_IDEMPOTENT", "DESTRUCTIVE", "DANGEROUS"],
-          total: db.total(),
-          liveClients: subscriberCount(),
-          transport: transportLabel,
-        });
-      }
-
-      if (url.pathname === "/api/events") {
-        const filter = filterFromQuery(url);
-        return json({ events: db.query(filter), total: db.total() });
-      }
-
-      const eventMatch = url.pathname.match(/^\/api\/event\/(.+)$/);
-      if (eventMatch) {
-        const e = db.get(decodeURIComponent(eventMatch[1]));
-        return e ? json(e) : json({ error: "not found" }, 404);
-      }
-
-      if (url.pathname === "/api/stats") {
-        const now = Date.now();
-        const windowMs = Number(url.searchParams.get("window") ?? 3_600_000);
-        const buckets = Number(url.searchParams.get("buckets") ?? 60);
-        const events = db.query({ since: now - windowMs, limit: 5000 });
-        return json(computeStats(events, { now, windowMs, buckets }));
-      }
-
-      return new Response("Not Found", { status: 404 });
     },
     websocket: {
       open(ws: ServerWebSocket<SocketData>) {
