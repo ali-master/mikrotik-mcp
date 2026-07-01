@@ -390,26 +390,42 @@ export const routeTools: ToolModule = [
     title: "Check IPv4 Route Path",
     annotations: READ,
     description:
-      "Resolves which nexthop RouterOS would use for a given IPv4 destination (`/ip route check`) " +
+      "Resolves which nexthop RouterOS would use for a given IPv4 destination " +
       '— answers "which gateway will this packet take?" without sending any traffic. ' +
-      "Optionally scoped by `source` address and `routing_mark` for policy-routing table lookups. " +
+      "Version-aware: uses `/ip route check` on v6, falls back to " +
+      "`/ip route print where dst-address in <dest> active=yes` on v7+ where the check " +
+      "command was removed. Optionally scoped by `routing_table` (v7) / `routing_mark` (v6) " +
+      "for policy-routing table lookups. " +
       "For listing all known routes use list_routes; for a named-table view use get_routing_table. " +
       "Returns the resolved nexthop and interface detail.",
     inputSchema: {
       destination: z.string(),
-      source: z.string().optional(),
-      routing_mark: z.string().optional(),
+      routing_table: z
+        .string()
+        .optional()
+        .describe('Policy-routing table name (v7) or routing-mark (v6), e.g. "VPN"'),
     },
     async handler(a, ctx) {
       ctx.info(`Checking route path to: ${a.destination}`);
-      const cmd = new Cmd(`/ip route check ${a.destination}`)
-        .opt("src-address", a.source)
-        .opt("routing-mark", a.routing_mark)
-        .build();
+      const table = a.routing_table;
 
-      const result = await executeMikrotikCommand(cmd, ctx);
-      if (!result) return `Unable to check route to ${a.destination}`;
-      return `ROUTE PATH TO ${a.destination}:\n\n${result}`;
+      // v6: `/ip route check <dest>` — simple, no src-address parameter.
+      const v6Cmd = new Cmd(`/ip route check ${a.destination}`).opt("routing-mark", table).build();
+      const v6Result = await executeMikrotikCommand(v6Cmd, ctx);
+      if (!commandUnsupported(v6Result) && !looksLikeError(v6Result) && !isEmpty(v6Result)) {
+        return `ROUTE PATH TO ${a.destination}:\n\n${v6Result}`;
+      }
+
+      // v7+: `/ip route check` was removed — query active routes instead.
+      const where = [`dst-address in ${a.destination}`, "active=yes"];
+      if (table) where.push(`routing-table=${quoteValue(table)}`);
+      const v7Cmd = `/ip route print detail where ${where.join(" ")}`;
+      const v7Result = await executeMikrotikCommand(v7Cmd, ctx);
+      if (looksLikeError(v7Result)) return `Failed to check route to ${a.destination}: ${v7Result}`;
+      if (isEmpty(v7Result)) {
+        return `No active route to ${a.destination}${table ? ` in table '${table}'` : ""}.`;
+      }
+      return `ROUTE PATH TO ${a.destination}:\n\n${v7Result}`;
     },
   }),
 
