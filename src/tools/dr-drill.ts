@@ -1,15 +1,20 @@
 /**
  * DR Drill — Chaos Engineering for routers. Safely rehearse a failure before it
- * happens: inside Safe Mode the tool disables a WAN/tunnel/link, pings a verify
- * host to check whether the backup path actually carries traffic, then rolls the
- * change back (Safe Mode auto-reverts) — proving resilience without waiting for a
- * real 2 a.m. outage.
+ * happens: the tool disables a WAN/tunnel/link, pings a verify host to check
+ * whether the backup path actually carries traffic, then re-enables the target
+ * — proving resilience without waiting for a real 2 a.m. outage.
  *
- * SSH-only (Safe Mode). The `parsePingSummary` helper is unit-tested.
+ * Prefers Safe Mode (auto-revert on disconnect), but falls back to direct
+ * disable → ping → re-enable when the interactive PTY wedges (some RouterOS
+ * builds don't support Safe Mode over SSH exec channels).
+ *
+ * The `parsePingSummary` helper is unit-tested.
  */
 import { z } from "zod";
+import { executeMikrotikCommand } from "../core/connector";
 import { DANGEROUS, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
+import { looksLikeError } from "../core/routeros";
 import { getDevice, resolveDeviceName } from "../core/runtime";
 import { getSafeModeManager } from "../ssh/safe-mode";
 
@@ -39,12 +44,12 @@ export const drDrillTools: ToolModule = [
     title: "Run Failover DR Drill",
     annotations: DANGEROUS,
     description:
-      "Rehearses a disaster safely: INSIDE SAFE MODE it disables a target (a WAN/tunnel interface, or " +
-      "a route), pings `verify_host` to check the backup path actually carries traffic, then ROLLS " +
-      "BACK — Safe Mode auto-reverts, so the change is never committed. Proves your failover works " +
-      "without a real outage. Requires `confirm=true` to run (it briefly disrupts traffic on the " +
-      "target); with confirm=false it just describes the drill. SSH-only (Safe Mode is unavailable on " +
-      "MAC-Telnet). Returns whether connectivity held during the simulated failure.",
+      "Rehearses a disaster: disables a target (a WAN/tunnel interface, or a route), pings " +
+      "`verify_host` to check the backup path actually carries traffic, then RE-ENABLES the target. " +
+      "Prefers Safe Mode (auto-revert on disconnect) but falls back to direct commands when Safe " +
+      "Mode is unavailable. Proves your failover works without a real outage. Requires `confirm=true` " +
+      "to run (it briefly disrupts traffic on the target); with confirm=false it just describes the " +
+      "drill. Returns whether connectivity held during the simulated failure.",
     inputSchema: {
       target_type: z.enum(["interface", "route"]).default("interface"),
       target: z
@@ -57,40 +62,98 @@ export const drDrillTools: ToolModule = [
       confirm: z.boolean().default(false).describe("Must be true to actually run the drill"),
     },
     async handler(a, ctx) {
+      const findExpr = a.target.startsWith("*") ? `.id=${a.target}` : a.target;
       const disableCmd =
         a.target_type === "interface"
           ? `/interface disable "${a.target}"`
-          : `/ip route disable [find ${a.target.startsWith("*") ? `.id=${a.target}` : a.target}]`;
+          : `/ip route disable [find ${findExpr}]`;
+      const enableCmd =
+        a.target_type === "interface"
+          ? `/interface enable "${a.target}"`
+          : `/ip route enable [find ${findExpr}]`;
+      const pingCmd = `/ping address=${a.verify_host} count=${a.ping_count}`;
 
       if (!a.confirm) {
-        return `DRY RUN — would, inside Safe Mode: (1) ${disableCmd}; (2) /ping address=${a.verify_host} count=${a.ping_count}; (3) roll back (auto-revert). Set confirm=true to run the drill.`;
+        return (
+          `DRY RUN — would: (1) ${disableCmd}; (2) ${pingCmd}; (3) re-enable. ` +
+          "Set confirm=true to run the drill."
+        );
       }
 
       const device = resolveDeviceName(ctx.device);
-      if (getDevice(device).mac) {
-        return "DR Drill needs Safe Mode, which is SSH-only — this device is reached over MAC-Telnet.";
-      }
-      const mgr = getSafeModeManager(device);
-      const en = await mgr.enable();
-      if (en.startsWith("Error")) return `Could not enter Safe Mode: ${en}`;
-      try {
-        const disableOut = await mgr.execute(disableCmd);
-        if (/no such item|failure:|syntax error/i.test(disableOut)) {
-          return `Could not disable target '${a.target}': ${disableOut.trim()} (Safe Mode rolled back).`;
+
+      // ── Try Safe Mode first (auto-reverts on disconnect) ──────────────
+      const isMac = !!getDevice(device).mac;
+      let usedSafeMode = false;
+      if (!isMac) {
+        const mgr = getSafeModeManager(device);
+        try {
+          const en = await mgr.enable();
+          if (!en.startsWith("Error")) {
+            usedSafeMode = true;
+            try {
+              const disableOut = await mgr.execute(disableCmd);
+              if (/no such item|failure:|syntax error/i.test(disableOut)) {
+                return `Could not disable target '${a.target}': ${disableOut.trim()} (Safe Mode rolled back).`;
+              }
+              const pingOut = await mgr.execute(pingCmd);
+              return formatResult(
+                a,
+                pingOut,
+                "The change has been rolled back (Safe Mode); nothing was committed.",
+              );
+            } finally {
+              await mgr.rollback();
+            }
+          }
+        } catch {
+          // Safe Mode unavailable (PTY wedged / timeout) — fall through to direct path.
+          try {
+            await mgr.rollback();
+          } catch {
+            /* already torn down */
+          }
         }
-        const pingOut = await mgr.execute(`/ping address=${a.verify_host} count=${a.ping_count}`);
-        const summary = parsePingSummary(pingOut);
-        const held = summary != null && summary.received > 0;
-        const detail = summary
-          ? `${summary.received}/${summary.sent} replies (${summary.lossPct}% loss)`
-          : "could not parse ping result";
-        const verdict = held
-          ? "✅ Backup path HELD — failover works."
-          : "⛔ NO connectivity during the outage — failover did NOT carry traffic.";
-        return `DR DRILL — disabled ${a.target_type} '${a.target}', pinged ${a.verify_host}: ${detail}.\n${verdict}\nThe change has been rolled back (Safe Mode); nothing was committed.`;
+      }
+
+      // ── Direct fallback: disable → ping → re-enable ──────────────────
+      if (!usedSafeMode) {
+        ctx.info("Safe Mode unavailable — using direct disable/enable fallback");
+      }
+      const disableOut = await executeMikrotikCommand(disableCmd, ctx);
+      if (looksLikeError(disableOut) || /no such item/i.test(disableOut)) {
+        return `Could not disable target '${a.target}': ${disableOut.trim()}`;
+      }
+      try {
+        const pingOut = await executeMikrotikCommand(pingCmd, ctx, {
+          maxMs: (a.ping_count + 2) * 1500,
+        });
+        return formatResult(
+          a,
+          pingOut,
+          "The target has been re-enabled (direct command); the drill is complete.",
+        );
       } finally {
-        await mgr.rollback();
+        // Always re-enable, even if the ping command fails.
+        await executeMikrotikCommand(enableCmd, ctx);
       }
     },
   }),
 ];
+
+/** Build the human-readable drill result from a ping output. */
+function formatResult(
+  a: { target_type: string; target: string; verify_host: string },
+  pingOut: string,
+  footer: string,
+): string {
+  const summary = parsePingSummary(pingOut);
+  const held = summary != null && summary.received > 0;
+  const detail = summary
+    ? `${summary.received}/${summary.sent} replies (${summary.lossPct}% loss)`
+    : "could not parse ping result";
+  const verdict = held
+    ? "PASS — Backup path HELD, failover works."
+    : "FAIL — NO connectivity during the outage, failover did NOT carry traffic.";
+  return `DR DRILL — disabled ${a.target_type} '${a.target}', pinged ${a.verify_host}: ${detail}.\n${verdict}\n${footer}`;
+}
