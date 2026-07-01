@@ -35,12 +35,14 @@ import { PacketCapture } from "./packet-capture";
 import { S3Manage } from "./s3";
 import { SnapshotsView } from "./snapshots";
 import { TopologyMap } from "./topology";
+import { SSHPoolPanel } from "./ssh-pool";
 import type {
   DevicesPayload,
   Filter,
   LiveMode,
   Meta,
   Risk,
+  SSHPoolPayload,
   Stats,
   ToolEvent,
   TopologyPayload,
@@ -170,6 +172,7 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Each device gets a stable colour so you can track it across the connectivity radar.",
       "Health (CPU/Mem/Disk) is probed periodically; MAC-Telnet devices are probed on a slower cadence.",
       "Latency tiers are colour-coded green → amber → red; a grey node is currently unreachable.",
+      "The SSH Connection Pool panel shows persistent connections: green = idle/ready, blue = busy with inflight channels, red = reconnecting.",
     ],
   },
   clients: {
@@ -389,6 +392,7 @@ function App(): ReactNode {
   const [stats, setStats] = useState<Stats | null>(null);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [devices, setDevices] = useState<DevicesPayload | null>(null);
+  const [sshPool, setSshPool] = useState<SSHPoolPayload | null>(null);
   const [topology, setTopology] = useState<TopologyPayload | null>(null);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [editingConfig, setEditingConfig] = useState(false);
@@ -529,6 +533,9 @@ function App(): ReactNode {
         .catch(() => {});
       void api<DevicesPayload>("/api/devices")
         .then(setDevices)
+        .catch(() => {});
+      void api<SSHPoolPayload>("/api/ssh-pool")
+        .then(setSshPool)
         .catch(() => {});
       void api<TopologyPayload>("/api/topology")
         .then(setTopology)
@@ -679,6 +686,7 @@ function App(): ReactNode {
     : "";
   const mcp = (config?.mcp ?? {}) as Record<string, unknown>;
   const dash = (config?.dashboard ?? {}) as Record<string, unknown>;
+  const ssh = (config?.ssh ?? {}) as Record<string, unknown>;
   const sel = (key: keyof Filter, label: string, opts: string[]): ReactNode => (
     <select
       className="btn"
@@ -958,6 +966,9 @@ function App(): ReactNode {
                 <ConnectivityGraph payload={devices} pulses={pulses} />
               </details>
 
+              {/* SSH connection pool panel */}
+              <SSHPoolPanel devices={shownDevices} poolPayload={sshPool} />
+
               {/* responsive device grid (filtered) */}
               {shownDevices.length === 0 ? (
                 <div className="feed-empty reveal">
@@ -1117,6 +1128,7 @@ function App(): ReactNode {
                       </span>
                       <span>capture: {dash.captureBody ? "on" : "off"}</span>
                       <span>s3: {config.s3 ? "configured" : "off"}</span>
+                      <span>ssh pool: {ssh.keepAlive !== false ? "on" : "off"}</span>
                     </div>
                     <details className="cfg">
                       <summary>Full effective configuration (secrets redacted)</summary>

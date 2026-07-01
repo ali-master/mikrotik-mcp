@@ -66,6 +66,9 @@ in memory and auto-reverts if your session drops, so you can't lock yourself out
 - 🪜 **SSH jump hosts** — reach a router with no exposed port by tunnelling
   through another via `jumpVia` (ProxyJump/bastion) — commands, Safe Mode and
   file upload all ride the hop. No new WAN port.
+- ⚡ **Connection pooling** — one persistent SSH session per device, reused
+  across tool calls. Saves ~200-500 ms handshake per command (double through
+  jump hosts). Idle connections auto-close after 30 s.
 - 🤖 **Guided prompts** — 9 built-in workflows (harden, diagnose, guest Wi-Fi, VPNs,
   cross-device tunnels, backup & document) that turn an intent into tool calls.
 
@@ -217,6 +220,37 @@ HTTP transports expose `POST /mcp` and a `GET /health` check, with DNS-rebinding
 protection that reconciles with your bind host automatically. See
 **[docs/transports.md](docs/transports.md)**.
 
+## SSH connection pooling
+
+By default the server keeps **one persistent SSH connection per device** and
+opens a fresh exec channel for each tool call — eliminating the ~200-500 ms
+handshake overhead that a one-shot connection incurs on every command. Through
+a jump host the savings double (two handshakes avoided). Idle connections are
+closed automatically after 30 s.
+
+```bash
+# Disable pooling (revert to one-shot per tool call)
+MIKROTIK_SSH__KEEP_ALIVE=false mikrotik-mcp serve
+
+# Tune the idle timeout (ms)
+mikrotik-mcp serve --ssh-idle-timeout 60000
+```
+
+In a JSON config file:
+
+```jsonc
+{
+  "ssh": {
+    "keepAlive": true, // default — set false to disable
+    "keepAliveInterval": 10000, // SSH keepalive packet interval (ms)
+    "idleTimeout": 30000, // close idle connections after (ms)
+  },
+}
+```
+
+Connection pooling is SSH-only; MAC-Telnet devices always use one-shot
+connections. Safe Mode still uses its own dedicated persistent session.
+
 ## Safe Mode
 
 ```text
@@ -234,21 +268,23 @@ See **[docs/safe-mode.md](docs/safe-mode.md)**.
 Connection and transport settings come from `MIKROTIK_*` env vars or matching CLI
 flags (highest precedence last: defaults → env → flags).
 
-| Variable                      | Flag               | Default     | Purpose                                                                                              |
-| ----------------------------- | ------------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
-| `MIKROTIK_HOST`               | `--host`           | `127.0.0.1` | RouterOS host                                                                                        |
-| `MIKROTIK_USERNAME`           | `--username`       | `admin`     | SSH user                                                                                             |
-| `MIKROTIK_PORT`               | `--port`           | `22`        | SSH port                                                                                             |
-| `MIKROTIK_PASSWORD`           | `--password`       | —           | SSH password _(or use a key →)_                                                                      |
-| `MIKROTIK_KEY_FILENAME`       | `--key-filename`   | —           | SSH private-key file path                                                                            |
-| `MIKROTIK_PRIVATE_KEY`        | `--private-key`    | —           | Inline private key (PEM)                                                                             |
-| `MIKROTIK_KEY_PASSPHRASE`     | `--key-passphrase` | —           | Passphrase for an encrypted key                                                                      |
-| `MIKROTIK_JUMP_HOST`          | `--jump-host`      | —           | SSH bastion to tunnel through ([jump hosts](docs/multi-device.md#ssh-jump-hosts-bastion--proxyjump)) |
-| `MIKROTIK_CONFIG_FILE`        | `--config`         | —           | JSON file of named devices ([multi-device](docs/multi-device.md))                                    |
-| `MIKROTIK_DEVICES`            | `--devices`        | —           | Inline JSON of named devices                                                                         |
-| `MIKROTIK_MCP__TRANSPORT`     | `--transport`      | `stdio`     | `stdio` / `streamable-http` / `sse`                                                                  |
-| `MIKROTIK_MCP__PORT`          | `--mcp-port`       | `8000`      | HTTP bind port                                                                                       |
-| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard`      | `false`     | Real-time observability dashboard ([docs](docs/observability.md))                                    |
+| Variable                      | Flag                 | Default     | Purpose                                                                                              |
+| ----------------------------- | -------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `MIKROTIK_HOST`               | `--host`             | `127.0.0.1` | RouterOS host                                                                                        |
+| `MIKROTIK_USERNAME`           | `--username`         | `admin`     | SSH user                                                                                             |
+| `MIKROTIK_PORT`               | `--port`             | `22`        | SSH port                                                                                             |
+| `MIKROTIK_PASSWORD`           | `--password`         | —           | SSH password _(or use a key →)_                                                                      |
+| `MIKROTIK_KEY_FILENAME`       | `--key-filename`     | —           | SSH private-key file path                                                                            |
+| `MIKROTIK_PRIVATE_KEY`        | `--private-key`      | —           | Inline private key (PEM)                                                                             |
+| `MIKROTIK_KEY_PASSPHRASE`     | `--key-passphrase`   | —           | Passphrase for an encrypted key                                                                      |
+| `MIKROTIK_JUMP_HOST`          | `--jump-host`        | —           | SSH bastion to tunnel through ([jump hosts](docs/multi-device.md#ssh-jump-hosts-bastion--proxyjump)) |
+| `MIKROTIK_CONFIG_FILE`        | `--config`           | —           | JSON file of named devices ([multi-device](docs/multi-device.md))                                    |
+| `MIKROTIK_DEVICES`            | `--devices`          | —           | Inline JSON of named devices                                                                         |
+| `MIKROTIK_MCP__TRANSPORT`     | `--transport`        | `stdio`     | `stdio` / `streamable-http` / `sse`                                                                  |
+| `MIKROTIK_MCP__PORT`          | `--mcp-port`         | `8000`      | HTTP bind port                                                                                       |
+| `MIKROTIK_SSH__KEEP_ALIVE`    | `--ssh-keep-alive`   | `true`      | SSH connection pooling (reuse connections across tool calls)                                         |
+| `MIKROTIK_SSH__IDLE_TIMEOUT`  | `--ssh-idle-timeout` | `30000`     | Close idle pooled connections after (ms)                                                             |
+| `MIKROTIK_DASHBOARD__ENABLED` | `--dashboard`        | `false`     | Real-time observability dashboard ([docs](docs/observability.md))                                    |
 
 Full table (incl. HTTP host, allow-lists, timeouts, `MIKROTIK_LOG_LEVEL`):
 **[docs/configuration.md](docs/configuration.md)**.

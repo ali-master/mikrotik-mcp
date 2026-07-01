@@ -48,6 +48,10 @@ export interface SSHClientOptions {
    * carry its own `jump` for a multi-hop chain (A → B → target).
    */
   jump?: SSHClientOptions;
+  /** Interval (ms) for SSH keepalive packets. 0 disables (default). */
+  keepAliveInterval?: number;
+  /** Max consecutive keepalive failures before disconnect. Default: 3. */
+  keepAliveCountMax?: number;
 }
 
 /**
@@ -146,6 +150,8 @@ export class MikroTikSSHClient {
         readyTimeout: o.timeoutMs ?? 10_000,
       };
       if (sock) cfg.sock = sock;
+      if (o.keepAliveInterval) cfg.keepaliveInterval = o.keepAliveInterval;
+      if (o.keepAliveCountMax) cfg.keepaliveCountMax = o.keepAliveCountMax;
 
       if (o.privateKey) {
         cfg.privateKey = o.privateKey;

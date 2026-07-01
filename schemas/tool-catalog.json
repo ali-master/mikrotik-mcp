@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.34.0",
+  "version": "3.42.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 767,
   "tools": [
@@ -3117,7 +3117,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Resolves which nexthop RouterOS would use for a given IPv4 destination (`/ip route check`) — answers \"which gateway will this packet take?\" without sending any traffic. Optionally scoped by `source` address and `routing_mark` for policy-routing table lookups. For listing all known routes use list_routes; for a named-table view use get_routing_table. Returns the resolved nexthop and interface detail.",
+      "description": "Resolves which nexthop RouterOS would use for a given IPv4 destination — answers \"which gateway will this packet take?\" without sending any traffic. Version-aware: uses `/ip route check` on v6, falls back to `/ip route print where dst-address in <dest> active=yes` on v7+ where the check command was removed. Optionally scoped by `routing_table` (v7) / `routing_mark` (v6) for policy-routing table lookups. For listing all known routes use list_routes; for a named-table view use get_routing_table. Returns the resolved nexthop and interface detail.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -3125,10 +3125,8 @@
           "destination": {
             "type": "string"
           },
-          "source": {
-            "type": "string"
-          },
-          "routing_mark": {
+          "routing_table": {
+            "description": "Policy-routing table name (v7) or routing-mark (v6), e.g. \"VPN\"",
             "type": "string"
           }
         },
@@ -25759,28 +25757,24 @@
     },
     {
       "name": "download_file",
-      "title": "Download File as Base64",
+      "title": "Download File from Device",
       "risk": "read",
       "annotations": {
         "readOnlyHint": true,
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Attempts to read a file from the device filesystem via `/file print file=<filename>` and returns the RouterOS API text response base64-encoded as `FILE_CONTENT_BASE64:<data>`. NOTE: this is a simplified implementation. RouterOS has no file-content-read API over SSH; `/file print file=<name>` saves the directory-listing output to a file named `<name>` rather than streaming an existing file's bytes. The returned base64 payload is the RouterOS text response to that command — not the actual file contents. Binary `.backup` files cannot be reliably retrieved this way. Verifies file existence first (`/file print count-only where name=<filename>`); returns a not-found message if absent. To list available files use `list_backups`; for file metadata only use `backup_info`.",
+      "description": "Downloads a file from the device filesystem over SFTP and returns its raw bytes base64-encoded as `FILE_CONTENT_BASE64:<data>`. Works for any file type — `.backup`, `.rsc`, `.p12` certificates, keys, etc. Verifies file existence first (`/file print count-only`). The SSH user MUST have the `read` policy (and `sensitive` for `.backup` / certificate files) on RouterOS for SFTP downloads to work. NOT available on MAC-Telnet devices (Layer-2 has no file transfer). To list available files use `list_backups`; for file metadata use `backup_info`; to push a file onto the device use `upload_file`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "filename": {
-            "type": "string"
-          },
-          "file_type": {
-            "default": "backup",
             "type": "string",
-            "enum": ["backup", "export"]
+            "description": "Name of the file on the device, e.g. 'cert.p12' or 'backup.backup'"
           }
         },
-        "required": ["filename", "file_type"],
+        "required": ["filename"],
         "additionalProperties": false
       }
     },
@@ -27256,7 +27250,7 @@
         "destructiveHint": true,
         "openWorldHint": false
       },
-      "description": "Rehearses a disaster safely: INSIDE SAFE MODE it disables a target (a WAN/tunnel interface, or a route), pings `verify_host` to check the backup path actually carries traffic, then ROLLS BACK — Safe Mode auto-reverts, so the change is never committed. Proves your failover works without a real outage. Requires `confirm=true` to run (it briefly disrupts traffic on the target); with confirm=false it just describes the drill. SSH-only (Safe Mode is unavailable on MAC-Telnet). Returns whether connectivity held during the simulated failure.",
+      "description": "Rehearses a disaster: disables a target (a WAN/tunnel interface, or a route), pings `verify_host` to check the backup path actually carries traffic, then RE-ENABLES the target. Prefers Safe Mode (auto-revert on disconnect) but falls back to direct commands when Safe Mode is unavailable. Proves your failover works without a real outage. Requires `confirm=true` to run (it briefly disrupts traffic on the target); with confirm=false it just describes the drill. Returns whether connectivity held during the simulated failure.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

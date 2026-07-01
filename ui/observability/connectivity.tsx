@@ -446,6 +446,20 @@ export function ConnectivityGraph({
           return (
             <g key={`n-${d.name}`} className="conn-node">
               {online && <circle className="conn-node-halo" cx={x} cy={y} r={r + 1} stroke={col} />}
+              {/* pool halo: dashed when idle, solid+blink when busy */}
+              {d.pool?.pooled && (
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={r + 5}
+                  fill="none"
+                  stroke={d.pool.inflight > 0 ? "#3b82f6" : "#22c55e"}
+                  strokeWidth={1.5}
+                  strokeDasharray={d.pool.inflight > 0 ? undefined : "4 4"}
+                  opacity={0.5}
+                  className={d.pool.inflight > 0 ? "conn-blink" : undefined}
+                />
+              )}
               {/* subtle fill tint in the device's colour, over the dark orb */}
               <circle cx={x} cy={y} r={r} fill="url(#conn-orb)" />
               <circle cx={x} cy={y} r={r} fill={col} opacity={0.16} />
@@ -501,6 +515,11 @@ export function ConnectivityGraph({
             <i style={{ background: JUMP_HUE }} /> 🔒 SSH jump tunnel (ProxyJump)
           </span>
         )}
+        {payload.devices.some((d) => d.pool?.pooled) && (
+          <span>
+            <i style={{ background: "#22c55e" }} /> pooled SSH connection
+          </span>
+        )}
       </div>
     </>
   );
@@ -537,6 +556,28 @@ export function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
           {d.activity.calls} calls · {d.activity.errors} err
           {d.activity.avgMs ? ` · ${ms(d.activity.avgMs)} avg` : ""}
         </b>
+        {d.pool && (
+          <>
+            <span>pool</span>
+            <b
+              style={{
+                color: d.pool.dead
+                  ? "#ef4444"
+                  : d.pool.inflight > 0
+                    ? "#3b82f6"
+                    : d.pool.pooled
+                      ? "#22c55e"
+                      : "#52525b",
+              }}
+            >
+              {d.pool.pooled
+                ? d.pool.inflight > 0
+                  ? `${d.pool.inflight} inflight`
+                  : "connected"
+                : "\u2014"}
+            </b>
+          </>
+        )}
         {d.description && (
           <>
             <span>note</span>

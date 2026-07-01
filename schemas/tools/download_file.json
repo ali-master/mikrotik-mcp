@@ -4,14 +4,10 @@
   "type": "object",
   "properties": {
     "filename": {
-      "type": "string"
-    },
-    "file_type": {
-      "default": "backup",
       "type": "string",
-      "enum": ["backup", "export"]
+      "description": "Name of the file on the device, e.g. 'cert.p12' or 'backup.backup'"
     }
   },
-  "required": ["filename", "file_type"],
+  "required": ["filename"],
   "additionalProperties": false
 }

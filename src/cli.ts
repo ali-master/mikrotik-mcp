@@ -15,6 +15,7 @@
  */
 import { existsSync } from "node:fs";
 import { loadConfig } from "./config";
+import { closeAll as closeConnectionPool } from "./core/connection-pool";
 import { setConfig } from "./core/runtime";
 import { createDeviceClient, describeTransport } from "./core/transport";
 import { logger } from "./logger";
@@ -59,6 +60,11 @@ TRANSPORT OPTIONS
   --mcp-host           HTTP bind host                   (MIKROTIK_MCP__HOST)
   --mcp-port           HTTP bind port                   (MIKROTIK_MCP__PORT)
   --mcp-allowed-hosts  Host header allow-list (DNS-rebinding protection)
+
+SSH CONNECTION POOLING  (persistent connections, on by default)
+  --ssh-keep-alive          Enable/disable pooling   (MIKROTIK_SSH__KEEP_ALIVE, default true)
+  --ssh-keepalive-interval  Keepalive packet interval (ms) (MIKROTIK_SSH__KEEPALIVE_INTERVAL)
+  --ssh-idle-timeout        Close idle connections after (ms) (MIKROTIK_SSH__IDLE_TIMEOUT)
 
 OBSERVABILITY DASHBOARD  (optional; real-time feed + analytics of every tool call)
   --dashboard               Enable the dashboard     (MIKROTIK_DASHBOARD__ENABLED)
@@ -180,8 +186,18 @@ async function main(): Promise<void> {
   const deviceNames = Object.keys(cfg.devices);
   logger.info(
     `Starting ${SERVER_NAME} v${VERSION} (transport=${cfg.mcp.transport}, ` +
-      `devices=${deviceNames.length === 1 ? deviceNames[0] : deviceNames.join("/")})`,
+      `devices=${deviceNames.length === 1 ? deviceNames[0] : deviceNames.join("/")}, ` +
+      `ssh-pool=${cfg.ssh.keepAlive ? "on" : "off"})`,
   );
+
+  // Close pooled SSH connections on process exit so the device sees a clean
+  // disconnect (vs. a TCP RST that RouterOS logs as a broken session).
+  const cleanup = (): void => {
+    closeConnectionPool();
+  };
+  process.on("SIGINT", cleanup);
+  process.on("SIGTERM", cleanup);
+  process.on("exit", cleanup);
 
   // Optional real-time observability dashboard — runs alongside whichever MCP
   // transport is active, on its own host/port. It opens local stores and kicks

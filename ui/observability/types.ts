@@ -79,6 +79,25 @@ export interface MetricSample {
   hddUsedPct: number | null;
   latencyMs: number | null;
 }
+export interface DevicePoolStatus {
+  device: string;
+  /** True when there is a live pooled SSH connection for this device. */
+  pooled: boolean;
+  inflight: number;
+  idle: boolean;
+  dead: boolean;
+}
+export interface SSHPoolPayload {
+  enabled: boolean;
+  config: { keepAlive: boolean; keepAliveInterval: number; idleTimeout: number };
+  aggregate: {
+    totalConnections: number;
+    totalInflight: number;
+    totalIdle: number;
+    totalBusy: number;
+  };
+  devices: Array<{ device: string; inflight: number; idle: boolean; dead: boolean }>;
+}
 export interface DeviceInfo {
   name: string;
   host: string;
@@ -99,6 +118,8 @@ export interface DeviceInfo {
   status: DeviceStatus;
   history?: MetricSample[];
   activity: { calls: number; errors: number; lastSeen: number; avgMs: number };
+  /** SSH connection pool status; null for MAC-Telnet devices or when pool is off. */
+  pool: DevicePoolStatus | null;
 }
 export interface DevicesPayload {
   server: string;

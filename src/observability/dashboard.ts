@@ -115,6 +115,8 @@ import {
 import { computeStats } from "./stats";
 import { buildTopology } from "./topology";
 import { capture, DEFAULT_TZSP_PORT } from "./capture";
+import { isPoolEnabled, poolStatus } from "../core/connection-pool";
+import { isMacTelnetDevice } from "../core/transport";
 
 const SERVER_TAG = "mikrotik-mcp";
 
@@ -212,39 +214,56 @@ function deviceActivity(
 function devicesPayload(store: EventStore): unknown {
   const cfg = getConfig();
   const activity = deviceActivity(store);
-  const devices = Object.entries(cfg.devices).map(([name, dc]) => ({
-    name,
-    host: dc.host,
-    port: dc.port,
-    // A `mac` device is reached over Layer-2 MAC-Telnet, not SSH — surface that
-    // so the dashboard shows the MAC instead of the unused default host:port.
-    mac: dc.mac,
-    transport: dc.mac ? "mac-telnet" : "ssh",
-    address: dc.mac ? dc.mac : `${dc.host}:${dc.port}`,
-    username: dc.username,
-    authMode: dc.mac
-      ? "mac-telnet"
-      : dc.keyFilename || dc.privateKey
-        ? "key"
-        : dc.password
-          ? "password"
-          : "none",
-    isDefault: name === cfg.defaultDevice,
-    description: dc.description,
-    // SSH jump host (ProxyJump): the bastion this device is reached THROUGH —
-    // either another configured device (`jumpVia`) or an inline host (no secrets,
-    // just host:port). Surfaced so the dashboard can draw the tunnel.
-    jumpVia: dc.jumpVia,
-    jumpHost: dc.jumpHost ? { host: dc.jumpHost.host, port: dc.jumpHost.port } : undefined,
-    status: getDeviceStatus(name),
-    history: getDeviceHistory(name),
-    activity: activity.get(name) ?? {
-      calls: 0,
-      errors: 0,
-      lastSeen: 0,
-      avgMs: 0,
-    },
-  }));
+  const poolEnabled = isPoolEnabled();
+  const poolMap = new Map(poolStatus().map((p) => [p.device, p]));
+  const devices = Object.entries(cfg.devices).map(([name, dc]) => {
+    const isMac = isMacTelnetDevice(dc);
+    const ps = poolMap.get(name);
+    return {
+      name,
+      host: dc.host,
+      port: dc.port,
+      // A `mac` device is reached over Layer-2 MAC-Telnet, not SSH — surface that
+      // so the dashboard shows the MAC instead of the unused default host:port.
+      mac: dc.mac,
+      transport: dc.mac ? "mac-telnet" : "ssh",
+      address: dc.mac ? dc.mac : `${dc.host}:${dc.port}`,
+      username: dc.username,
+      authMode: dc.mac
+        ? "mac-telnet"
+        : dc.keyFilename || dc.privateKey
+          ? "key"
+          : dc.password
+            ? "password"
+            : "none",
+      isDefault: name === cfg.defaultDevice,
+      description: dc.description,
+      // SSH jump host (ProxyJump): the bastion this device is reached THROUGH —
+      // either another configured device (`jumpVia`) or an inline host (no secrets,
+      // just host:port). Surfaced so the dashboard can draw the tunnel.
+      jumpVia: dc.jumpVia,
+      jumpHost: dc.jumpHost ? { host: dc.jumpHost.host, port: dc.jumpHost.port } : undefined,
+      status: getDeviceStatus(name),
+      history: getDeviceHistory(name),
+      activity: activity.get(name) ?? {
+        calls: 0,
+        errors: 0,
+        lastSeen: 0,
+        avgMs: 0,
+      },
+      // SSH connection pool: null for MAC-Telnet devices or when pooling is off.
+      pool:
+        isMac || !poolEnabled
+          ? null
+          : {
+              device: name,
+              pooled: !!ps,
+              inflight: ps?.inflight ?? 0,
+              idle: ps?.idle ?? false,
+              dead: ps?.dead ?? false,
+            },
+    };
+  });
   return { server: SERVER_TAG, defaultDevice: cfg.defaultDevice, devices };
 }
 
@@ -1190,6 +1209,30 @@ export async function runDashboard(
         : [];
       const removed = body.all === true ? db.clear() : db.delete(ids);
       return json({ removed, total: db.total() });
+    }
+
+    if (url.pathname === "/api/ssh-pool") {
+      const cfg = getConfig();
+      const enabled = isPoolEnabled();
+      const ps = poolStatus();
+      const totalInflight = ps.reduce((s, p) => s + p.inflight, 0);
+      const totalIdle = ps.filter((p) => p.idle).length;
+      const totalBusy = ps.filter((p) => p.inflight > 0).length;
+      return json({
+        enabled,
+        config: {
+          keepAlive: cfg.ssh.keepAlive,
+          keepAliveInterval: cfg.ssh.keepAliveInterval,
+          idleTimeout: cfg.ssh.idleTimeout,
+        },
+        aggregate: {
+          totalConnections: ps.length,
+          totalInflight,
+          totalIdle,
+          totalBusy,
+        },
+        devices: ps,
+      });
     }
 
     if (url.pathname === "/api/devices") {

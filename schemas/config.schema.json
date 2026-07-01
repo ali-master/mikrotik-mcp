@@ -284,6 +284,34 @@
       ],
       "additionalProperties": false
     },
+    "ssh": {
+      "default": {
+        "keepAlive": true,
+        "keepAliveInterval": 10000,
+        "idleTimeout": 30000
+      },
+      "type": "object",
+      "properties": {
+        "keepAlive": {
+          "default": true,
+          "type": "boolean"
+        },
+        "keepAliveInterval": {
+          "default": 10000,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "idleTimeout": {
+          "default": 30000,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": ["keepAlive", "keepAliveInterval", "idleTimeout"],
+      "additionalProperties": false
+    },
     "readOnly": {
       "default": false,
       "type": "boolean"
@@ -333,6 +361,6 @@
       "type": "string"
     }
   },
-  "required": ["devices", "defaultDevice", "mcp", "dashboard", "readOnly", "tools"],
+  "required": ["devices", "defaultDevice", "mcp", "dashboard", "ssh", "readOnly", "tools"],
   "additionalProperties": false
 }

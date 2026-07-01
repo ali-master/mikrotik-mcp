@@ -6,10 +6,8 @@
     "destination": {
       "type": "string"
     },
-    "source": {
-      "type": "string"
-    },
-    "routing_mark": {
+    "routing_table": {
+      "description": "Policy-routing table name (v7) or routing-mark (v6), e.g. \"VPN\"",
       "type": "string"
     }
   },

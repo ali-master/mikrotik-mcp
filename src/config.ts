@@ -228,6 +228,22 @@ export type DashboardConfig = z.infer<typeof DashboardConfigSchema>;
  * a module named in both an allow- and a deny-list is excluded. All matching is
  * case-insensitive. Empty everywhere = the full surface (the default).
  */
+/**
+ * SSH connection pooling. When enabled (the default), the server keeps one
+ * persistent SSH connection per device and opens a fresh exec channel for each
+ * command — eliminating the ~200-500 ms handshake overhead per tool call.
+ * Especially valuable through jump hosts, where the handshake cost doubles.
+ */
+export const SSHConfigSchema = z.object({
+  /** Reuse SSH connections across tool calls (connection pooling). Default: true. */
+  keepAlive: z.boolean().default(true),
+  /** Interval (ms) for SSH keepalive packets on persistent connections. Default: 10 000. */
+  keepAliveInterval: z.coerce.number().int().nonnegative().default(10_000),
+  /** Close idle persistent connections after this duration (ms). Default: 30 000. */
+  idleTimeout: z.coerce.number().int().positive().default(30_000),
+});
+export type SSHConfig = z.infer<typeof SSHConfigSchema>;
+
 export const ToolFilterSchema = z.object({
   /** Module slugs to expose (allow-list). Empty = all modules. */
   enabledModules: z.array(z.string()).default([]),
@@ -252,6 +268,11 @@ export const MikrotikConfigSchema = z.object({
   s3: S3ConfigSchema.optional(),
   /** Real-time observability dashboard (opt-in; off by default). */
   dashboard: DashboardConfigSchema.default(() => DashboardConfigSchema.parse({})),
+  /**
+   * SSH connection pooling — keeps one persistent connection per device and
+   * reuses it across tool calls, saving the handshake cost. Enabled by default.
+   */
+  ssh: SSHConfigSchema.default(() => SSHConfigSchema.parse({})),
   /**
    * Read-only mode: register only `readOnlyHint` tools (inspection, no changes).
    * Recommended whenever the server is exposed publicly (e.g. a ChatGPT Apps
@@ -320,6 +341,7 @@ function parseDevicesSource(
   dashboard?: Record<string, unknown>;
   tools?: Record<string, unknown>;
   mcp?: Record<string, unknown>;
+  ssh?: Record<string, unknown>;
 } {
   let json: unknown;
   try {
@@ -354,7 +376,11 @@ function parseDevicesSource(
     structured && obj.mcp && typeof obj.mcp === "object"
       ? (obj.mcp as Record<string, unknown>)
       : undefined;
-  return { devices, defaultDevice, s3, dashboard, tools, mcp };
+  const ssh =
+    structured && obj.ssh && typeof obj.ssh === "object"
+      ? (obj.ssh as Record<string, unknown>)
+      : undefined;
+  return { devices, defaultDevice, s3, dashboard, tools, mcp, ssh };
 }
 
 /**
@@ -434,6 +460,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   let fileDashboard: Record<string, unknown> | undefined = {};
   let fileTools: Record<string, unknown> | undefined;
   let fileMcp: Record<string, unknown> | undefined;
+  let fileSsh: Record<string, unknown> | undefined;
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -445,6 +472,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     fileDashboard = src.dashboard;
     fileTools = src.tools;
     fileMcp = src.mcp;
+    fileSsh = src.ssh;
   }
 
   // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
@@ -525,6 +553,14 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     ...fileDashboard,
   };
 
+  // 5) SSH connection pooling. Env/flags → config-file block override.
+  const ssh = {
+    keepAlive: boolOpt(pick("ssh-keep-alive", "MIKROTIK_SSH__KEEP_ALIVE")),
+    keepAliveInterval: pick("ssh-keepalive-interval", "MIKROTIK_SSH__KEEPALIVE_INTERVAL"),
+    idleTimeout: pick("ssh-idle-timeout", "MIKROTIK_SSH__IDLE_TIMEOUT"),
+    ...fileSsh,
+  };
+
   // S3 is opt-in: only attach the block when something meaningful is set, so an
   // unconfigured deployment leaves `config.s3` undefined and the tools inert.
   const hasS3 = !!(s3.accessKeyId || s3.bucket || s3.endpoint);
@@ -536,6 +572,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     dashboard,
     readOnly,
     tools,
+    ssh,
     ...(hasS3 ? { s3 } : {}),
   };
 

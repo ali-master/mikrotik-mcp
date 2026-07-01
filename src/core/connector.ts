@@ -8,6 +8,7 @@
  * fresh one-shot SSH channel is opened, used, and closed.
  */
 import type { ToolContext } from "./context";
+import { isPoolEnabled, runPooled } from "./connection-pool";
 import { resolveDeviceName, getDevice } from "./runtime";
 import {
   connectErrorMessage,
@@ -26,14 +27,18 @@ async function runOnce(
 ): Promise<string> {
   const name = resolveDeviceName(deviceName);
   const dc = getDevice(deviceName);
-  // The transport (SSH or Layer-2 MAC-Telnet) is chosen once, by config, in
-  // createDeviceClient — never re-decided here.
+
+  // Use the persistent connection pool for SSH devices when pooling is enabled.
+  // MAC-Telnet has no SSH transport to pool; the one-shot path handles it.
+  if (!isMacTelnetDevice(dc) && isPoolEnabled()) {
+    return runPooled(command, name, opts);
+  }
+
+  // One-shot: create, connect, run, disconnect. Used for MAC-Telnet devices and
+  // when connection pooling is disabled.
   const client = createDeviceClient(dc);
   try {
     if (!(await client.connect())) {
-      // Throwing (vs. returning an "Error:" string) makes this a real tool
-      // error: the registry catches it and marks the result isError, instead of
-      // a handler wrapping it in a success message like "INTERFACES: …".
       throw new Error(connectErrorMessage(name, dc, client.lastError));
     }
     return await client.run(command, opts);
