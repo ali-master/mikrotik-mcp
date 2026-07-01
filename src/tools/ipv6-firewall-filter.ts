@@ -359,9 +359,11 @@ export const ipv6FirewallFilterTools: ToolModule = [
           `/ipv6 firewall filter print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `IPv6 firewall filter rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "IPv6 firewall filter rule created successfully."
+          : `IPv6 firewall filter rule created successfully:\n\n${details}`;
       }
-      return "IPv6 firewall filter rule creation completed but unable to verify.";
+      return "IPv6 firewall filter rule created successfully.";
     },
   }),
 

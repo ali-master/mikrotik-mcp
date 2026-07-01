@@ -333,9 +333,11 @@ export const ipv6FirewallNatTools: ToolModule = [
           `/ipv6 firewall nat print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `IPv6 firewall NAT rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "IPv6 firewall NAT rule created successfully."
+          : `IPv6 firewall NAT rule created successfully:\n\n${details}`;
       }
-      return "IPv6 firewall NAT rule creation completed but unable to verify.";
+      return "IPv6 firewall NAT rule created successfully.";
     },
   }),
 

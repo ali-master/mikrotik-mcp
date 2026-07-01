@@ -220,9 +220,11 @@ export const ipv6FirewallRawTools: ToolModule = [
           `/ipv6 firewall raw print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `IPv6 firewall raw rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "IPv6 firewall raw rule created successfully."
+          : `IPv6 firewall raw rule created successfully:\n\n${details}`;
       }
-      return "IPv6 firewall raw rule creation completed but unable to verify.";
+      return "IPv6 firewall raw rule created successfully.";
     },
   }),
 

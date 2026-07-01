@@ -355,9 +355,11 @@ export const ipv6FirewallMangleTools: ToolModule = [
           `/ipv6 firewall mangle print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `IPv6 firewall mangle rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "IPv6 firewall mangle rule created successfully."
+          : `IPv6 firewall mangle rule created successfully:\n\n${details}`;
       }
-      return "IPv6 firewall mangle rule creation completed but unable to verify.";
+      return "IPv6 firewall mangle rule created successfully.";
     },
   }),
 

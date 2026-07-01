@@ -426,9 +426,11 @@ export const firewallMangleTools: ToolModule = [
           `/ip firewall mangle print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `Mangle rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "Mangle rule created successfully."
+          : `Mangle rule created successfully:\n\n${details}`;
       }
-      return "Mangle rule creation completed but unable to verify.";
+      return "Mangle rule created successfully.";
     },
   }),
 

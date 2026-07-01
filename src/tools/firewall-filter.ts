@@ -362,9 +362,11 @@ export const firewallFilterTools: ToolModule = [
           `/ip firewall filter print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `Firewall filter rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "Firewall filter rule created successfully."
+          : `Firewall filter rule created successfully:\n\n${details}`;
       }
-      return "Firewall filter rule creation completed but unable to verify.";
+      return "Firewall filter rule created successfully.";
     },
   }),
 

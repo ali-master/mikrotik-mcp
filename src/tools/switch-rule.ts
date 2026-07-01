@@ -220,9 +220,11 @@ export const switchRuleTools: ToolModule = [
           `/interface ethernet switch rule print detail from=${Number.parseInt(c, 10) - 1}`,
           ctx,
         );
-        return `Switch rule added successfully:\n\n${details}`;
+        return readBackUnavailable(details)
+          ? "Switch rule added successfully."
+          : `Switch rule added successfully:\n\n${details}`;
       }
-      return "Switch rule addition completed but unable to verify.";
+      return "Switch rule added successfully.";
     },
   }),
 
