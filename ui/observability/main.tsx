@@ -659,7 +659,7 @@ function App(): ReactNode {
       download("mcp-events.json", JSON.stringify(visible, null, 2), "application/json");
       return;
     }
-    const cols = ["ts", "tool", "risk", "device", "durationMs", "isError", "error"];
+    const cols = ["ts", "tool", "risk", "device", "durationMs", "isError", "error", "reason"];
     const esc = (v: string): string => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
     const body = visible
       .map((e) =>
@@ -671,6 +671,7 @@ function App(): ReactNode {
           String(e.durationMs),
           String(e.isError),
           e.error ?? "",
+          e.reason ?? "",
         ]
           .map(esc)
           .join(","),
@@ -1339,7 +1340,13 @@ function App(): ReactNode {
                           </span>
                         </td>
                         <td className="preview">
-                          {e.isError ? (e.error ?? "error") : e.output || "—"}
+                          {e.isError ? (
+                            (e.error ?? "error")
+                          ) : e.reason ? (
+                            <span className="reason-preview">{e.reason}</span>
+                          ) : (
+                            e.output || "—"
+                          )}
                         </td>
                       </tr>
                     ))}

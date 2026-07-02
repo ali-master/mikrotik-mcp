@@ -856,6 +856,24 @@ body::after {
 .status-err {
   color: var(--mt-bad);
 }
+
+/* ── Reason field (audit trail for dangerous actions) ──────────────────── */
+.reason-preview {
+  font-style: italic;
+  color: color-mix(in srgb, var(--mt-warn, #f59e0b) 85%, var(--mt-text));
+}
+.reason-preview::before {
+  content: "⚑ ";
+  font-style: normal;
+}
+.kv__k--reason {
+  color: var(--mt-warn, #f59e0b);
+}
+.kv__v--reason {
+  font-style: italic;
+  color: var(--mt-text);
+}
+
 .feedwrap {
   max-height: 60vh;
   overflow: auto;

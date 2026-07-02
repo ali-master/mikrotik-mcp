@@ -16,6 +16,7 @@ export interface ToolEvent {
   outputBytes: number;
   hasStructured: boolean;
   truncated: boolean;
+  reason?: string;
 }
 export interface Bucket {
   t: number;

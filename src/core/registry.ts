@@ -228,7 +228,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
       // Single-device setups are untouched.
       const selectorNames =
         multiDevice && deviceNames ? [...new Set([...deviceNames, ...(deviceAliases ?? [])])] : [];
-      const inputSchema = multiDevice
+      let inputSchema: ZodRawShape | undefined = multiDevice
         ? {
             ...def.inputSchema,
             device: z
@@ -239,9 +239,26 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
         : def.inputSchema;
 
       const risk = riskOf(def.annotations);
+
+      // For DANGEROUS (high-blast-radius, non-repeatable) tools, inject a
+      // required `reason` field so the model must explain *why* it chose this
+      // action. Peeled off before the handler runs and logged as an audit trail
+      // in the observability dashboard.
+      const requiresReason = risk === "DANGEROUS";
+      if (requiresReason) {
+        inputSchema = {
+          ...inputSchema,
+          reason: z
+            .string()
+            .describe(
+              "Your rationale for performing this high-impact action — explain in one concise " +
+                "sentence why this operation is necessary. Logged for audit and accountability.",
+            ),
+        };
+      }
       const callback = async (args: Record<string, unknown>): Promise<CallToolResult> => {
-        // Peel the injected selector off before handing args to the handler.
-        const { device, ...rest } = args as { device?: unknown };
+        // Peel injected selectors off before handing args to the handler.
+        const { device, reason, ...rest } = args as { device?: unknown; reason?: unknown };
         const deviceName = typeof device === "string" ? device : undefined;
         const ctx = createContext(sendLog, deviceName);
         // For state-changing tools on a multi-device server, stamp the result
@@ -334,6 +351,7 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
               args: rest,
               output: outText,
               hasStructured,
+              reason: typeof reason === "string" ? reason : undefined,
             });
           }
         }

@@ -45,6 +45,12 @@ export function DetailDrawer({
         <div className="kv__body">
           <div className="kv__k">title</div>
           <div className="kv__v">{event.title}</div>
+          {event.reason && (
+            <>
+              <div className="kv__k kv__k--reason">reason</div>
+              <div className="kv__v kv__v--reason">{event.reason}</div>
+            </>
+          )}
           <div className="kv__k">time</div>
           <div className="kv__v">
             {new Date(event.ts).toLocaleString(undefined, { hour12: false })}

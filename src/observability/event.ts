@@ -48,6 +48,8 @@ export interface ToolEvent {
   hasStructured: boolean;
   /** True when either body was truncated to the byte budget. */
   truncated: boolean;
+  /** LLM-provided rationale for dangerous actions (auto-injected audit field). */
+  reason?: string;
 }
 
 /** Map MCP annotations to a coarse risk class (mirrors the registry presets). */
@@ -114,6 +116,7 @@ export interface RawCall {
   args: unknown;
   output: string;
   hasStructured: boolean;
+  reason?: string;
 }
 
 /** Build a sanitised {@link ToolEvent} (sans id) from a finished call. */
@@ -146,5 +149,6 @@ export function buildEvent(raw: RawCall, id: string, opts: CaptureOptions): Tool
     outputBytes,
     hasStructured: raw.hasStructured,
     truncated,
+    reason: raw.reason,
   };
 }

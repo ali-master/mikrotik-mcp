@@ -64,6 +64,7 @@ interface Row {
   output_bytes: number;
   has_structured: number;
   truncated: number;
+  reason: string | null;
 }
 
 function rowToEvent(r: Row): ToolEvent {
@@ -83,6 +84,7 @@ function rowToEvent(r: Row): ToolEvent {
     outputBytes: r.output_bytes,
     hasStructured: r.has_structured === 1,
     truncated: r.truncated === 1,
+    reason: r.reason ?? undefined,
   };
 }
 
@@ -103,12 +105,16 @@ const SCHEMA_STATEMENTS = [
      output TEXT NOT NULL,
      output_bytes INTEGER NOT NULL,
      has_structured INTEGER NOT NULL,
-     truncated INTEGER NOT NULL
+     truncated INTEGER NOT NULL,
+     reason TEXT
    )`,
   "CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts)",
   "CREATE INDEX IF NOT EXISTS idx_events_tool ON events(tool)",
   "CREATE INDEX IF NOT EXISTS idx_events_error ON events(is_error)",
 ];
+
+/** Column additions for existing databases (idempotent — new DBs already have them). */
+const MIGRATIONS = ["ALTER TABLE events ADD COLUMN reason TEXT"];
 
 class SqliteEventStore implements EventStore {
   private readonly db: Database;
@@ -117,6 +123,13 @@ class SqliteEventStore implements EventStore {
     db.run("PRAGMA journal_mode = WAL");
     db.run("PRAGMA synchronous = NORMAL");
     for (const stmt of SCHEMA_STATEMENTS) db.run(stmt);
+    for (const m of MIGRATIONS) {
+      try {
+        db.run(m);
+      } catch {
+        /* column already exists */
+      }
+    }
   }
 
   insert(e: ToolEvent): void {
@@ -124,9 +137,9 @@ class SqliteEventStore implements EventStore {
       .query(
         `INSERT OR REPLACE INTO events
          (id, ts, tool, title, risk, device, transport, duration_ms, is_error, error,
-          input, output, output_bytes, has_structured, truncated)
+          input, output, output_bytes, has_structured, truncated, reason)
          VALUES ($id,$ts,$tool,$title,$risk,$device,$transport,$dur,$err,$errmsg,
-          $input,$output,$obytes,$structured,$trunc)`,
+          $input,$output,$obytes,$structured,$trunc,$reason)`,
       )
       .run({
         $id: e.id,
@@ -144,6 +157,7 @@ class SqliteEventStore implements EventStore {
         $obytes: e.outputBytes,
         $structured: e.hasStructured ? 1 : 0,
         $trunc: e.truncated ? 1 : 0,
+        $reason: e.reason ?? null,
       });
   }
 
@@ -176,7 +190,7 @@ class SqliteEventStore implements EventStore {
     }
     if (filter.q) {
       where.push(
-        "(tool LIKE $q OR title LIKE $q OR input LIKE $q OR output LIKE $q OR error LIKE $q)",
+        "(tool LIKE $q OR title LIKE $q OR input LIKE $q OR output LIKE $q OR error LIKE $q OR reason LIKE $q)",
       );
       params.$q = `%${filter.q}%`;
     }
