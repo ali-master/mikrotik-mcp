@@ -23,6 +23,7 @@ interface ReleaseInfo {
 // ── localStorage helpers ─────────────────────────────────────────────────────
 
 const LS_KEY = "mt-whats-new-dismissed";
+const LS_SEEN_KEY = "mt-whats-new-seen-version";
 
 function isDismissed(version: string): boolean {
   try {
@@ -37,6 +38,17 @@ function dismiss(version: string): void {
     localStorage.setItem(LS_KEY, version);
   } catch {
     /* storage unavailable */
+  }
+}
+
+/** Returns true when the running version changed since the last dashboard visit. */
+function checkVersionChanged(version: string): boolean {
+  try {
+    const prev = localStorage.getItem(LS_SEEN_KEY);
+    localStorage.setItem(LS_SEEN_KEY, version);
+    return prev !== null && prev !== version;
+  } catch {
+    return false;
   }
 }
 
@@ -132,6 +144,7 @@ function renderMarkdown(md: string): string {
 
   // 12. Ordered lists: 1. item
   html = html.replace(/^(\d+)\. (.+)$/gm, "<oli>$2</oli>");
+  html = html.replace(/<\/oli>\n\n+<oli>/g, "</oli>\n<oli>");
   html = html.replace(
     /((?:<oli>.*<\/oli>\n?)+)/g,
     (m) => `<ol>${m.replace(/<\/?oli>/g, (tag) => tag.replace("oli", "li"))}</ol>`,
@@ -139,6 +152,7 @@ function renderMarkdown(md: string): string {
 
   // 13. Unordered lists: - item or * item
   html = html.replace(/^[-*] (.+)$/gm, "<li>$1</li>");
+  html = html.replace(/<\/li>\n\n+<li>/g, "</li>\n<li>");
   html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, "<ul>$1</ul>");
 
   // 14. Task lists: - [x] or - [ ]
@@ -195,6 +209,8 @@ const PARTICLES = Array.from({ length: PARTICLE_COUNT }, (_, i) => i);
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 
+const POLL_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
 export function useWhatsNew(currentVersion: string | undefined): {
   release: ReleaseInfo | null;
   showModal: boolean;
@@ -204,24 +220,41 @@ export function useWhatsNew(currentVersion: string | undefined): {
 } {
   const [release, setRelease] = useState<ReleaseInfo | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const fetched = useRef(false);
 
   useEffect(() => {
-    if (!currentVersion || fetched.current) return;
-    fetched.current = true;
+    if (!currentVersion) return;
 
-    api<ReleaseInfo>("/api/releases/latest")
-      .then((r) => {
-        // Always store the release so the user can view current release notes
-        setRelease(r);
-        // Auto-show modal only for newer versions that haven't been dismissed
-        if (r.isNewer && !isDismissed(r.version)) {
-          setTimeout(() => setShowModal(true), 1200);
-        }
-      })
-      .catch(() => {
-        /* silent — update check is best-effort */
-      });
+    // Detect if the running server version changed since the last visit (user updated)
+    const justUpdated = checkVersionChanged(currentVersion);
+    let prevFetchedVersion: string | null = null;
+
+    const fetchRelease = (): void => {
+      api<ReleaseInfo>("/api/releases/latest")
+        .then((r) => {
+          setRelease(r);
+
+          const isFirst = prevFetchedVersion === null;
+          const newRemoteVersion = prevFetchedVersion !== null && r.version !== prevFetchedVersion;
+          prevFetchedVersion = r.version;
+
+          // Auto-show when user just updated the project (show current changelog)
+          if (isFirst && justUpdated) {
+            setTimeout(() => setShowModal(true), 1200);
+            return;
+          }
+          // Auto-show when a newer version is discovered (on load or via poll)
+          if (r.isNewer && !isDismissed(r.version) && (isFirst || newRemoteVersion)) {
+            setTimeout(() => setShowModal(true), isFirst ? 1200 : 0);
+          }
+        })
+        .catch(() => {
+          /* silent — update check is best-effort */
+        });
+    };
+
+    fetchRelease();
+    const id = setInterval(fetchRelease, POLL_INTERVAL);
+    return () => clearInterval(id);
   }, [currentVersion]);
 
   const dismissRelease = useCallback(() => {
