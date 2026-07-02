@@ -36,6 +36,7 @@ import { S3Manage } from "./s3";
 import { SnapshotsView } from "./snapshots";
 import { TopologyMap } from "./topology";
 import { SSHPoolPanel } from "./ssh-pool";
+import { useWhatsNew, WhatsNewModal } from "./whats-new";
 import type {
   DevicesPayload,
   Filter,
@@ -393,6 +394,7 @@ function App(): ReactNode {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [devices, setDevices] = useState<DevicesPayload | null>(null);
   const [sshPool, setSshPool] = useState<SSHPoolPayload | null>(null);
+  const whatsNew = useWhatsNew(meta?.version);
   const [topology, setTopology] = useState<TopologyPayload | null>(null);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [editingConfig, setEditingConfig] = useState(false);
@@ -557,7 +559,7 @@ function App(): ReactNode {
     return () => clearInterval(t);
   }, []);
 
-  // Esc closes the drawer.
+  // Esc closes the drawer (the What's New modal handles its own Escape key).
   useEffect(() => {
     const h = (e: KeyboardEvent): void => {
       if (e.key === "Escape") setSelected(null);
@@ -732,7 +734,19 @@ function App(): ReactNode {
           </div>
           <div className="nav__brandtext">
             <b>MikroTik MCP</b>
-            <small>{meta?.version ? `v${meta.version}` : "Observability"}</small>
+            <small
+              className={whatsNew.release ? "nav__version-link" : undefined}
+              title={whatsNew.release ? "View release notes" : undefined}
+              onClick={whatsNew.release ? () => whatsNew.openModal() : undefined}
+            >
+              {meta?.version ? `v${meta.version}` : "Observability"}
+              {whatsNew.showIndicator && (
+                <span
+                  className="nav__update-dot"
+                  title={`v${whatsNew.release?.version} available`}
+                />
+              )}
+            </small>
           </div>
         </div>
         <nav className="nav__items">
@@ -1337,6 +1351,9 @@ function App(): ReactNode {
         )}
       </main>
 
+      {whatsNew.showModal && whatsNew.release && (
+        <WhatsNewModal release={whatsNew.release} onDismiss={whatsNew.dismissRelease} />
+      )}
       {selected && <DetailDrawer event={selected} onClose={() => setSelected(null)} />}
     </div>
   );

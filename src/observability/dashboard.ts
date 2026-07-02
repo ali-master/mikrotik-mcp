@@ -122,6 +122,62 @@ import { VERSION } from "../version";
 
 const SERVER_TAG = "mikrotik-mcp";
 
+// ── GitHub release check (proxied to avoid CORS) ────────────────────────────
+let releaseCache: { data: ReleasePayload; fetchedAt: number } | null = null;
+const RELEASE_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+interface ReleasePayload {
+  version: string;
+  name: string;
+  body: string;
+  publishedAt: string;
+  url: string;
+  isNewer: boolean;
+  currentVersion: string;
+}
+
+function compareVersions(a: string, b: string): number {
+  const pa = a.replace(/^v/, "").split(".").map(Number);
+  const pb = b.replace(/^v/, "").split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+async function fetchLatestRelease(): Promise<ReleasePayload> {
+  if (releaseCache && Date.now() - releaseCache.fetchedAt < RELEASE_CACHE_TTL) {
+    return releaseCache.data;
+  }
+  const res = await fetch("https://api.github.com/repos/ali-master/mikrotik-mcp/releases/latest", {
+    headers: {
+      accept: "application/vnd.github+json",
+      "user-agent": "mikrotik-mcp-dashboard",
+    },
+  });
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+  const gh = (await res.json()) as {
+    tag_name: string;
+    name: string;
+    body: string;
+    published_at: string;
+    html_url: string;
+  };
+  const latestVersion = gh.tag_name.replace(/^v/, "");
+  const data: ReleasePayload = {
+    version: latestVersion,
+    name: gh.name || `v${latestVersion}`,
+    body: gh.body || "",
+    publishedAt: gh.published_at,
+    url: gh.html_url,
+    isNewer: compareVersions(latestVersion, VERSION) > 0,
+    currentVersion: VERSION,
+  };
+  releaseCache = { data, fetchedAt: Date.now() };
+  return data;
+}
+
 interface SocketData {
   unsub?: () => void;
 }
@@ -1258,6 +1314,14 @@ export async function runDashboard(
       return new Response(dashboardHtml(), {
         headers: { "content-type": "text/html; charset=utf-8" },
       });
+    }
+
+    if (url.pathname === "/api/releases/latest") {
+      try {
+        return json(await fetchLatestRelease());
+      } catch (e) {
+        return json({ error: e instanceof Error ? e.message : "fetch failed" }, 502);
+      }
     }
 
     if (url.pathname === "/api/meta") {
