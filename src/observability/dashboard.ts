@@ -118,6 +118,7 @@ import { buildTopology } from "./topology";
 import { capture, DEFAULT_TZSP_PORT } from "./capture";
 import { isPoolEnabled, poolStatus } from "../core/connection-pool";
 import { isMacTelnetDevice } from "../core/transport";
+import { VERSION } from "../version";
 
 const SERVER_TAG = "mikrotik-mcp";
 
@@ -1263,6 +1264,7 @@ export async function runDashboard(
       const f = facets(db);
       return json({
         ...f,
+        version: VERSION,
         risks: ["READ", "WRITE", "WRITE_IDEMPOTENT", "DESTRUCTIVE", "DANGEROUS"],
         total: db.total(),
         liveClients: subscriberCount(),

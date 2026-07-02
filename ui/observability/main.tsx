@@ -732,7 +732,7 @@ function App(): ReactNode {
           </div>
           <div className="nav__brandtext">
             <b>MikroTik MCP</b>
-            <small>Observability</small>
+            <small>{meta?.version ? `v${meta.version}` : "Observability"}</small>
           </div>
         </div>
         <nav className="nav__items">

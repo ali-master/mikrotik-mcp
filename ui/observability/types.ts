@@ -46,6 +46,7 @@ export interface Stats {
   windowMs: number;
 }
 export interface Meta {
+  version: string;
   tools: string[];
   devices: string[];
   risks: Risk[];
