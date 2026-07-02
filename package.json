@@ -76,6 +76,8 @@
     "@modelcontextprotocol/ext-apps": "^1.7.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@tikoci/centrs": "^0.1.0",
+    "figlet": "^1.11.0",
+    "gradient-string": "^3.0.0",
     "ipaddr.js": "^2.4.0",
     "ssh2": "^1.17.0",
     "zod": "^4.4.3"
@@ -84,7 +86,8 @@
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.2",
     "@types/bun": "latest",
-    "@types/node": "^26.0.1",
+    "@types/figlet": "^1.7.0",
+    "@types/node": "^26.1.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/ssh2": "^1.15.5",
@@ -96,12 +99,12 @@
     "prettier": "^3.9.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "recharts": "^3.9.0",
+    "recharts": "^3.9.1",
     "release-it": "^20.2.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plus": "latest"
+    "vite-plus": "^0.2.2"
   },
   "peerDependencies": {
     "typescript": "^6.0.3"

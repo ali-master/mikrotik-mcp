@@ -24,6 +24,7 @@ import { runDashboard } from "./observability/dashboard";
 import { runHttp } from "./transport/http";
 import { runStdio } from "./transport/stdio";
 import { VERSION, SERVER_NAME } from "./version";
+import { printBanner } from "./cli-logo";
 
 const HELP = `${SERVER_NAME} v${VERSION} — MikroTik RouterOS MCP server
 
@@ -182,6 +183,7 @@ async function main(): Promise<void> {
   // serve
   const cfg = loadConfig();
   setConfig(cfg);
+  await printBanner();
   warnIfPlaintextPasswordInContainer(Object.values(cfg.devices).some((d) => !!d.password));
   const deviceNames = Object.keys(cfg.devices);
   logger.info(
