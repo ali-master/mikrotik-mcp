@@ -2784,7 +2784,7 @@ pre.body.ros .ros-comment {
 }
 .clients-row {
   display: grid;
-  grid-template-columns: 120px 1.3fr 150px 80px 130px minmax(280px, auto);
+  grid-template-columns: 120px 1.3fr 150px 80px 130px minmax(150px, 190px) minmax(240px, auto);
   gap: 10px;
   align-items: center;
   padding: 8px 10px;
@@ -2896,6 +2896,57 @@ pre.body.ros .ros-comment {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+
+/* inline traffic column (rate + mini sparkline) in each client row */
+.clients-traffic {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+.clients-traffic__rates {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  min-width: 48px;
+}
+.clients-traffic__rates .rx {
+  color: var(--lime, #84cc16);
+}
+.clients-traffic__rates .tx {
+  color: var(--amber, #f59e0b);
+}
+.mini-spark {
+  width: 80px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.mini-spark .line {
+  fill: none;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.mini-spark .rx.line {
+  stroke: var(--lime, #84cc16);
+}
+.mini-spark .tx.line {
+  stroke: var(--amber, #f59e0b);
+}
+.mini-spark .rx.area {
+  fill: var(--lime, #84cc16);
+  opacity: 0.18;
+}
+.mini-spark .tx.area {
+  fill: var(--amber, #f59e0b);
+  opacity: 0.14;
+}
+
 .clients-edit {
   display: flex;
   align-items: center;

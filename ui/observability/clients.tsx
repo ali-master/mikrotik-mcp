@@ -4,10 +4,11 @@
  *
  * Talks to the dashboard's `/api/clients*` routes, which call the very same
  * RouterOS operations the connected-device MCP tools wrap — so a block/allow/
- * pin from this page and from chat run identical commands. For the selected
- * device it polls `/api/clients/traffic` and draws a live Download/Upload chart
- * (hand-rolled SVG, no chart dependency). Mutations return a refreshed device
- * `view` so the table updates without a second request.
+ * pin from this page and from chat run identical commands. Traffic rates are
+ * computed from cumulative byte deltas (not the unreliable instantaneous `rate`
+ * field) and displayed inline in each row with a mini sparkline, polled every
+ * 1 second. Mutations return a refreshed device `view` so the table updates
+ * without a second request.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -36,15 +37,12 @@ interface DevicesView {
   counts: { total: number; blocked: number; static: number };
   generatedAt: string;
 }
-interface TrafficSample {
-  ip: string;
-  source: "queue" | "none";
-  rxBitsPerSec: number;
-  txBitsPerSec: number;
-  rxBytes: number;
-  txBytes: number;
-  downloadLimit: string;
-  uploadLimit: string;
+interface BulkTrafficSample {
+  ts: number;
+  queues: Record<
+    string,
+    { txBytes: number; rxBytes: number; downloadLimit: string; uploadLimit: string }
+  >;
 }
 interface OpResult {
   ok: boolean;
@@ -52,11 +50,30 @@ interface OpResult {
   view?: DevicesView;
 }
 
+/** Per-IP computed traffic state (delta rates + sparkline history). */
+interface IpTraffic {
+  rxRate: number; // bits/sec
+  txRate: number;
+  rxBytes: number;
+  txBytes: number;
+  downloadLimit: string;
+  uploadLimit: string;
+  history: { rx: number; tx: number }[];
+}
+
 const MAX_SAMPLES = 40;
-const POLL_MS = 2000;
+const MINI_SAMPLES = 30;
+const BULK_POLL_MS = 1000;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const mbps = (bits: number): string => `${(bits / 1e6).toFixed(2)} Mbps`;
+const compact = (bits: number): string => {
+  if (bits >= 1e6) return `${(bits / 1e6).toFixed(1)}M`;
+  if (bits >= 1e3) return `${(bits / 1e3).toFixed(0)}k`;
+  return bits > 0 ? `${Math.round(bits)}` : "0";
+};
+
+// ── Charts ──────────────────────────────────────────────────────────────────
 
 /** A live Download (green ↓) / Upload (amber ↑) area chart, hand-rolled in SVG. */
 function TrafficChart({ history }: { history: { rx: number; tx: number }[] }): ReactNode {
@@ -89,6 +106,35 @@ function TrafficChart({ history }: { history: { rx: number; tx: number }[] }): R
     </svg>
   );
 }
+
+/** Tiny inline sparkline (rx + tx stacked areas) for a client row. */
+function MiniSparkline({ history }: { history: { rx: number; tx: number }[] }): ReactNode {
+  const W = 80;
+  const H = 18;
+  const pad = 1;
+  if (history.length < 2) return <svg className="mini-spark" viewBox={`0 0 ${W} ${H}`} />;
+  const max = Math.max(1, ...history.flatMap((p) => [p.rx, p.tx]));
+  const x = (i: number): number => pad + (i * (W - 2 * pad)) / Math.max(1, MINI_SAMPLES - 1);
+  const y = (v: number): number => H - pad - (v / max) * (H - 2 * pad);
+  const pts = (pick: (p: { rx: number; tx: number }) => number): string =>
+    history.map((p, i) => `${x(i).toFixed(1)},${y(pick(p)).toFixed(1)}`).join(" ");
+  const filled = (pick: (p: { rx: number; tx: number }) => number): string => {
+    const first = x(0).toFixed(1);
+    const last = x(history.length - 1).toFixed(1);
+    const base = (H - pad).toFixed(1);
+    return `${first},${base} ${pts(pick)} ${last},${base}`;
+  };
+  return (
+    <svg className="mini-spark" viewBox={`0 0 ${W} ${H}`} xmlns={SVG_NS}>
+      <polygon className="rx area" points={filled((p) => p.rx)} />
+      <polygon className="tx area" points={filled((p) => p.tx)} />
+      <polyline className="rx line" points={pts((p) => p.rx)} />
+      <polyline className="tx line" points={pts((p) => p.tx)} />
+    </svg>
+  );
+}
+
+// ── Limits editor ───────────────────────────────────────────────────────────
 
 /** Set/clear a device's download & upload rate limits (a `/queue simple`). */
 function LimitsEditor({
@@ -194,38 +240,19 @@ function LimitsEditor({
   );
 }
 
+// ── Detail panel (selected device) ──────────────────────────────────────────
+
 /** Detail panel for the selected device: live ↓/↑ rates, chart, totals, limits. */
-function DeviceDetail({ device, deviceName }: { device: Device; deviceName: string }): ReactNode {
-  const [latest, setLatest] = useState<TrafficSample | null>(null);
-  const [history, setHistory] = useState<{ rx: number; tx: number }[]>([]);
-  const ipRef = useRef(device.ip);
-  ipRef.current = device.ip;
-
-  const pollOnce = useCallback(async (): Promise<void> => {
-    if (!device.ip) return;
-    try {
-      const q = deviceName ? `&device=${encodeURIComponent(deviceName)}` : "";
-      const s = await api<TrafficSample>(
-        `/api/clients/traffic?ip=${encodeURIComponent(device.ip)}${q}`,
-      );
-      if (s.ip !== ipRef.current) return;
-      setLatest(s);
-      setHistory((h) => [...h, { rx: s.rxBitsPerSec, tx: s.txBitsPerSec }].slice(-MAX_SAMPLES));
-    } catch {
-      /* transient poll error — keep the last good sample */
-    }
-  }, [device.ip, deviceName]);
-
-  // Reset and poll whenever the selected device's IP changes.
-  useEffect(() => {
-    setLatest(null);
-    setHistory([]);
-    if (!device.ip) return;
-    void pollOnce();
-    const t = setInterval(() => void pollOnce(), POLL_MS);
-    return () => clearInterval(t);
-  }, [pollOnce, device.ip]);
-
+function DeviceDetail({
+  device,
+  deviceName,
+  traffic,
+}: {
+  device: Device;
+  deviceName: string;
+  traffic: IpTraffic | undefined;
+}): ReactNode {
+  const hasQueue = traffic !== undefined;
   return (
     <div className="clients-detail">
       <div className="clients-detail__hd">
@@ -234,7 +261,7 @@ function DeviceDetail({ device, deviceName }: { device: Device; deviceName: stri
           {device.ip || "no IP"} · {device.mac} · {device.iface || "?"} · {device.status}
         </span>
       </div>
-      {latest && latest.source === "none" ? (
+      {!hasQueue ? (
         <Note type="secondary" label="No per-device counter">
           Set a rate limit below to start tracking this device's Download/Upload (it creates a
           simple queue targeting <code>{device.ip}</code>), or leave it unlimited.
@@ -242,23 +269,24 @@ function DeviceDetail({ device, deviceName }: { device: Device; deviceName: stri
       ) : (
         <>
           <div className="clients-rates">
-            <span className="rate rx">↓ {latest ? mbps(latest.rxBitsPerSec) : "…"}</span>
-            <span className="rate tx">↑ {latest ? mbps(latest.txBitsPerSec) : "…"}</span>
+            <span className="rate rx">↓ {mbps(traffic.rxRate)}</span>
+            <span className="rate tx">↑ {mbps(traffic.txRate)}</span>
           </div>
-          <TrafficChart history={history} />
-          {latest && (
-            <div className="muted clients-totals">
-              total ↓ {bytes(latest.rxBytes)} · ↑ {bytes(latest.txBytes)}
-            </div>
-          )}
+          <TrafficChart history={traffic.history} />
+          <div className="muted clients-totals">
+            total ↓ {bytes(traffic.rxBytes)} · ↑ {bytes(traffic.txBytes)}
+          </div>
         </>
       )}
       {device.ip && (
         <LimitsEditor
           ip={device.ip}
           deviceName={deviceName}
-          current={{ download: latest?.downloadLimit ?? "", upload: latest?.uploadLimit ?? "" }}
-          onSaved={() => void pollOnce()}
+          current={{
+            download: traffic?.downloadLimit ?? "",
+            upload: traffic?.uploadLimit ?? "",
+          }}
+          onSaved={() => {}}
         />
       )}
       {device.ip && (
@@ -276,6 +304,73 @@ function DeviceDetail({ device, deviceName }: { device: Device; deviceName: stri
   );
 }
 
+// ── Bulk traffic hook ───────────────────────────────────────────────────────
+
+/** Polls /api/clients/traffic-bulk every 1s and computes delta-rates per IP. */
+function useBulkTraffic(deviceName: string): Map<string, IpTraffic> {
+  const [trafficMap, setTrafficMap] = useState<Map<string, IpTraffic>>(new Map());
+  const prevRef = useRef<{ ts: number; queues: BulkTrafficSample["queues"] } | null>(null);
+
+  useEffect(() => {
+    prevRef.current = null;
+    setTrafficMap(new Map());
+  }, [deviceName]);
+
+  useEffect(() => {
+    if (!deviceName) return;
+    let cancelled = false;
+    const poll = async (): Promise<void> => {
+      try {
+        const q = deviceName ? `?device=${encodeURIComponent(deviceName)}` : "";
+        const sample = await api<BulkTrafficSample>(`/api/clients/traffic-bulk${q}`);
+        if (cancelled) return;
+        const prev = prevRef.current;
+        prevRef.current = { ts: sample.ts, queues: sample.queues };
+        if (!prev) return; // need two samples for deltas
+
+        const dtSec = Math.max(0.1, (sample.ts - prev.ts) / 1000);
+        setTrafficMap((old) => {
+          const next = new Map<string, IpTraffic>();
+          for (const [ip, cur] of Object.entries(sample.queues)) {
+            const p = prev.queues[ip];
+            const existing = old.get(ip);
+            // Compute byte deltas → bits/sec (× 8). Guard against counter reset.
+            const dRx = p ? Math.max(0, cur.rxBytes - p.rxBytes) : 0;
+            const dTx = p ? Math.max(0, cur.txBytes - p.txBytes) : 0;
+            const rxRate = (dRx / dtSec) * 8;
+            const txRate = (dTx / dtSec) * 8;
+            const history = [...(existing?.history ?? []), { rx: rxRate, tx: txRate }].slice(
+              -MINI_SAMPLES,
+            );
+            next.set(ip, {
+              rxRate,
+              txRate,
+              rxBytes: cur.rxBytes,
+              txBytes: cur.txBytes,
+              downloadLimit: cur.downloadLimit,
+              uploadLimit: cur.uploadLimit,
+              history,
+            });
+          }
+          return next;
+        });
+      } catch {
+        /* transient poll error */
+      }
+    };
+    void poll();
+    const t = setInterval(() => void poll(), BULK_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [deviceName]);
+
+  return trafficMap;
+}
+
+// ── Main view ───────────────────────────────────────────────────────────────
+
 /** Connected LAN devices for one router: usage charts, block/allow, pin/relabel IP. */
 export function ClientsView(): ReactNode {
   const [routers, setRouters] = useState<DevicesPayload | null>(null);
@@ -289,6 +384,9 @@ export function ClientsView(): ReactNode {
   const [edit, setEdit] = useState<{ mac: string; field: "ip" | "label"; value: string } | null>(
     null,
   );
+
+  // Bulk traffic: polls every 1s, returns computed delta-rates per IP.
+  const trafficMap = useBulkTraffic(deviceName);
 
   // Discover the configured routers so the user can pick which one to inspect.
   useEffect(() => {
@@ -440,11 +538,13 @@ export function ClientsView(): ReactNode {
               <span>MAC</span>
               <span>Iface</span>
               <span>Status</span>
+              <span>Traffic</span>
               <span className="clients-actions-h">Actions</span>
             </div>
             {shown.map((d) => {
               const isSel = d.mac === selected;
               const isBusy = busy === d.mac;
+              const t = d.ip ? trafficMap.get(d.ip) : undefined;
               return (
                 <div
                   key={d.mac}
@@ -457,7 +557,7 @@ export function ClientsView(): ReactNode {
                     .join(" ")}
                   onClick={() => setSelected(isSel ? null : d.mac)}
                 >
-                  <span className="clients-ip">{d.ip || "—"}</span>
+                  <span className="clients-ip">{d.ip || "\u2014"}</span>
                   <span className="clients-name">{d.host || d.comment || "(unknown)"}</span>
                   <span className="clients-mac">{d.mac}</span>
                   <span className="muted">{d.iface || ""}</span>
@@ -467,6 +567,19 @@ export function ClientsView(): ReactNode {
                       <Badge type="error">blocked</Badge>
                     ) : (
                       <span className="muted">{d.status}</span>
+                    )}
+                  </span>
+                  <span className="clients-traffic">
+                    {t ? (
+                      <>
+                        <span className="clients-traffic__rates">
+                          <span className="rx">↓{compact(t.rxRate)}</span>
+                          <span className="tx">↑{compact(t.txRate)}</span>
+                        </span>
+                        <MiniSparkline history={t.history} />
+                      </>
+                    ) : (
+                      <span className="muted">{d.ip ? "\u2014" : ""}</span>
                     )}
                   </span>
                   <span
@@ -548,7 +661,13 @@ export function ClientsView(): ReactNode {
           </div>
         )}
 
-        {selectedDevice && <DeviceDetail device={selectedDevice} deviceName={deviceName} />}
+        {selectedDevice && (
+          <DeviceDetail
+            device={selectedDevice}
+            deviceName={deviceName}
+            traffic={selectedDevice.ip ? trafficMap.get(selectedDevice.ip) : undefined}
+          />
+        )}
       </Panel>
     </section>
   );

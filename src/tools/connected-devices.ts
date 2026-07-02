@@ -61,6 +61,15 @@ export interface DeviceTraffic {
   uploadLimit: string;
 }
 
+/** Bulk traffic snapshot: cumulative bytes per IP, for delta-rate computation. */
+export interface BulkTrafficPayload {
+  ts: number;
+  queues: Record<
+    string,
+    { txBytes: number; rxBytes: number; downloadLimit: string; uploadLimit: string }
+  >;
+}
+
 /** Result of a device mutation, shared by the tools (text) and dashboard (JSON). */
 export interface OpResult {
   ok: boolean;
@@ -153,6 +162,35 @@ export async function sampleDeviceTraffic(ctx: ToolContext, ip: string): Promise
     downloadLimit: limit(downLim),
     uploadLimit: limit(upLim),
   };
+}
+
+/**
+ * Bulk-sample ALL simple queues' cumulative byte counters in one command.
+ * Returns a `{ ts, queues }` payload keyed by IP, designed for the frontend to
+ * compute delta-rate (bytes difference / time difference × 8 → bits/sec).
+ *
+ * This avoids the unreliable instantaneous `rate` field: cumulative `bytes`
+ * only ever increases, so two consecutive samples always yield a meaningful rate.
+ */
+export async function sampleAllTraffic(ctx: ToolContext): Promise<BulkTrafficPayload> {
+  const ts = Date.now();
+  const out = await executeMikrotikCommand("/queue simple print stats detail", ctx);
+  if (isEmpty(out) || looksLikeError(out)) return { ts, queues: {} };
+  const queues: BulkTrafficPayload["queues"] = {};
+  const limit = (v: string | undefined): string => (v && v !== "0" ? v : "");
+  for (const row of parseRecords(out).rows) {
+    const ip = (row.target ?? "").split("/")[0]?.trim();
+    if (!ip) continue;
+    const [txB, rxB] = (row.bytes ?? "0/0").split("/");
+    const [upLim, downLim] = (row["max-limit"] ?? "0/0").split("/");
+    queues[ip] = {
+      txBytes: parseLeadingNumber(txB) ?? 0,
+      rxBytes: parseLeadingNumber(rxB) ?? 0,
+      downloadLimit: limit(downLim),
+      uploadLimit: limit(upLim),
+    };
+  }
+  return { ts, queues };
 }
 
 /**

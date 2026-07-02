@@ -56,6 +56,7 @@ import {
   fetchDevices,
   makeDeviceStatic,
   removeDeviceLease,
+  sampleAllTraffic,
   sampleDeviceTraffic,
   setDeviceIp,
   setDeviceLabel,
@@ -657,6 +658,11 @@ async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
     if (!ip) return json({ error: "ip required" }, 400);
     const ctx = createContext(undefined, deviceFromQuery());
     return json(await sampleDeviceTraffic(ctx, ip));
+  }
+
+  if (p === "/api/clients/traffic-bulk" && req.method === "GET") {
+    const ctx = createContext(undefined, deviceFromQuery());
+    return json(await sampleAllTraffic(ctx));
   }
 
   // Mutations: each takes { mac, device?, ... } and returns { ok, message, view? }.
