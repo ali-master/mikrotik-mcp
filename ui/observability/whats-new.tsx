@@ -55,8 +55,11 @@ function checkVersionChanged(version: string): boolean {
 // ── Lightweight markdown → HTML ──────────────────────────────────────────────
 
 function renderMarkdown(md: string): string {
+  // 0. Normalize line endings (GitHub API may return \r\n)
+  let html = md.replace(/\r\n?/g, "\n");
+
   // 1. Escape HTML entities
-  let html = md.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   // 2. Fenced code blocks — extract before inline processing
   const codeBlocks: string[] = [];
@@ -82,6 +85,12 @@ function renderMarkdown(md: string): string {
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener">$1</a>',
+  );
+
+  // 5b. Auto-link bare URLs not already inside an href or src attribute
+  html = html.replace(
+    /(?<!=["'])(https?:\/\/[^\s<>")\]]+)/g,
+    '<a href="$1" target="_blank" rel="noopener">$1</a>',
   );
 
   // 6. Bold + italic
@@ -117,7 +126,7 @@ function renderMarkdown(md: string): string {
         .map((c) => c.trim());
     const headerCells = parseRow(rows[0]);
     // Check if second row is alignment (all dashes/colons)
-    const isAlign = /^\|[\s:*-]+\|$/.test(rows[1].replace(/[^|:*-\s]/g, ""));
+    const isAlign = /^(\|[\s:*-]+)+\|$/.test(rows[1].replace(/[^|:*-\s]/g, ""));
     const alignRow = isAlign ? parseRow(rows[1]) : null;
     const aligns = alignRow
       ? alignRow.map((c) => {
@@ -147,13 +156,13 @@ function renderMarkdown(md: string): string {
   html = html.replace(/<\/oli>\n\n+<oli>/g, "</oli>\n<oli>");
   html = html.replace(
     /((?:<oli>.*<\/oli>\n?)+)/g,
-    (m) => `<ol>${m.replace(/<\/?oli>/g, (tag) => tag.replace("oli", "li"))}</ol>`,
+    (m) => `<ol>${m.trimEnd().replace(/<\/?oli>/g, (tag) => tag.replace("oli", "li"))}</ol>`,
   );
 
   // 13. Unordered lists: - item or * item
   html = html.replace(/^[-*] (.+)$/gm, "<li>$1</li>");
   html = html.replace(/<\/li>\n\n+<li>/g, "</li>\n<li>");
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, "<ul>$1</ul>");
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (m) => `<ul>${m.trimEnd()}</ul>`);
 
   // 14. Task lists: - [x] or - [ ]
   html = html.replace(
@@ -172,7 +181,7 @@ function renderMarkdown(md: string): string {
     const t = line.trim();
     if (!t) {
       result.push("");
-    } else if (/^<(h[2-5]|ul|ol|li|pre|blockquote|hr|div|table|img)/.test(t)) {
+    } else if (/^<\/?(h[2-5]|ul|ol|li|pre|blockquote|hr|div|table|img)/.test(t)) {
       result.push(t);
     } else {
       result.push(`<p>${t}</p>`);
