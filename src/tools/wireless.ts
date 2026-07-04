@@ -814,21 +814,32 @@ For legacy systems:
     async handler(a, ctx) {
       ctx.info("Listing Wi-Fi regulatory countries");
 
-      const interfaceType = await detectWirelessInterfaceType(ctx);
-      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+      // The country list is reference data that may live under a different
+      // command tree than the active wifi driver.  On v7 `/interface wifi` the
+      // `country` submenu often doesn't exist; it only lives under the legacy
+      // `/interface wireless` path — even when the device runs the new driver.
+      // Try every known path until one succeeds.
+      const countryPaths = [
+        "/interface wireless",
+        "/interface wifi",
+        "/interface wifiwave2",
+        "/interface wlan",
+      ];
 
-      // On v7 wifi the country list lives under /interface/wifi/country
-      // On legacy wireless it's /interface/wireless/country
-      const cmd = a.search
-        ? `${interfaceType} country print where name~${quoteValue(a.search)}`
-        : `${interfaceType} country print`;
+      const filter = a.search ? ` where name~${quoteValue(a.search)}` : "";
 
-      const result = await executeMikrotikCommand(cmd, ctx);
-      if (looksLikeError(result)) return `Failed to list Wi-Fi countries: ${result}`;
-      if (isEmpty(result))
-        return `No countries found${a.search ? ` matching "${a.search}".` : "."}`;
+      for (const path of countryPaths) {
+        const result = await executeMikrotikCommand(`${path} country print${filter}`, ctx);
+        if (result && !commandUnsupported(result) && !looksLikeError(result)) {
+          if (isEmpty(result)) continue;
+          return `WI-FI REGULATORY COUNTRIES:\n\n${result}`;
+        }
+      }
 
-      return `WI-FI REGULATORY COUNTRIES:\n\n${result}`;
+      return (
+        `No countries found${a.search ? ` matching "${a.search}"` : ""} — ` +
+        "the device may not expose a country list under any known wireless path."
+      );
     },
   }),
 ];
