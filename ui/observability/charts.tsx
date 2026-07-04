@@ -79,8 +79,8 @@ export function ActivityChart({
         <AreaChart data={series} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
           <defs>
             <linearGradient id="fillOk" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--page-accent)" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="var(--page-accent)" stopOpacity={0.04} />
+              <stop offset="0%" stopColor="var(--sky)" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="var(--sky)" stopOpacity={0.04} />
             </linearGradient>
             <linearGradient id="fillErr" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--mt-bad)" stopOpacity={0.55} />
@@ -112,7 +112,7 @@ export function ActivityChart({
             dataKey="ok"
             name="ok"
             stackId="1"
-            stroke="var(--page-accent)"
+            stroke="var(--sky)"
             fill="url(#fillOk)"
             strokeWidth={2}
             isAnimationActive={false}
