@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "audit_remediate",
+  "type": "object",
+  "properties": {
+    "categories": {
+      "description": "Narrow remediation to specific categories.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "ssh_security",
+          "management_services",
+          "firewall_posture",
+          "user_security",
+          "dns_security",
+          "certificate_health",
+          "network_services",
+          "snmp_security",
+          "system_hardening",
+          "vpn_security"
+        ],
+        "description": "Category slug to filter by."
+      }
+    },
+    "severity_threshold": {
+      "description": "Only remediate checks at or above this severity.",
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "dry_run": {
+      "default": true,
+      "description": "Preview fix commands without applying (default: true). Set false to apply.",
+      "type": "boolean"
+    }
+  },
+  "required": ["dry_run"],
+  "additionalProperties": false
+}

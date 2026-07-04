@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_compliance_audit",
+  "type": "object",
+  "properties": {
+    "categories": {
+      "description": "Narrow the audit to specific categories. Available: ssh_security, management_services, firewall_posture, user_security, dns_security, certificate_health, network_services, snmp_security, system_hardening, vpn_security. Omit to audit all.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "ssh_security",
+          "management_services",
+          "firewall_posture",
+          "user_security",
+          "dns_security",
+          "certificate_health",
+          "network_services",
+          "snmp_security",
+          "system_hardening",
+          "vpn_security"
+        ],
+        "description": "Category slug to filter by."
+      }
+    },
+    "severity_threshold": {
+      "description": "Only report checks at or above this severity (default: all).",
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "generate_fix_script": {
+      "default": false,
+      "description": "Append a combined RouterOS fix script for all failing checks.",
+      "type": "boolean"
+    }
+  },
+  "required": ["generate_fix_script"],
+  "additionalProperties": false
+}

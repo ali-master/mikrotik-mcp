@@ -16,6 +16,7 @@ import { bridgeTools } from "./bridge";
 import { certificateTools } from "./certificate";
 import { certStewardTools } from "./cert-steward";
 import { changePlanTools } from "./change-plan";
+import { complianceAuditTools } from "./compliance-audit";
 import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
@@ -611,6 +612,16 @@ export const moduleCatalog: ModuleInfo[] = [
       "Certificate lifecycle helpers: a one-call expiry audit and Let's Encrypt issuance/renewal " +
       "via RouterOS's ACME client — so a TLS cert never silently lapses.",
     tools: certStewardTools,
+  },
+  {
+    label: "Compliance Auditor",
+    slug: "compliance-audit",
+    group: "Security",
+    description:
+      "Comprehensive device security posture audit — SSH, services, firewall, users, DNS, " +
+      "certificates, network services, system hardening, VPN — scored A+ through F with " +
+      "per-check pass/fail/warn and fix commands.",
+    tools: complianceAuditTools,
   },
   {
     label: "IP Services",

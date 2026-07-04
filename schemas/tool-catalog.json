@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.49.0",
+  "version": "3.50.1",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 768,
+  "toolCount": 772,
   "tools": [
     {
       "name": "find_tools",
@@ -14556,6 +14556,173 @@
           }
         },
         "required": ["dns_name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "run_compliance_audit",
+      "title": "Run Network Compliance Audit",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Deep-scan a single device's security posture across SSH, management services, firewall, users, DNS, certificates, network services, SNMP, system hardening and VPN — 36 checks scored A+ through F with per-check pass/fail/warn and fix commands. Returns a scored compliance report. Optionally narrow by category or severity, and generate a combined RouterOS fix script. For fleet-wide audit across all devices use `audit_fleet`. For firewall-specific analysis use `firewall_audit`; for certificate lifecycle use `cert_expiry_audit`; for hardening use `security_shield`. This tool ties them all together into a unified compliance grade.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "categories": {
+            "description": "Narrow the audit to specific categories. Available: ssh_security, management_services, firewall_posture, user_security, dns_security, certificate_health, network_services, snmp_security, system_hardening, vpn_security. Omit to audit all.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ssh_security",
+                "management_services",
+                "firewall_posture",
+                "user_security",
+                "dns_security",
+                "certificate_health",
+                "network_services",
+                "snmp_security",
+                "system_hardening",
+                "vpn_security"
+              ],
+              "description": "Category slug to filter by."
+            }
+          },
+          "severity_threshold": {
+            "description": "Only report checks at or above this severity (default: all).",
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "generate_fix_script": {
+            "default": false,
+            "description": "Append a combined RouterOS fix script for all failing checks.",
+            "type": "boolean"
+          }
+        },
+        "required": ["generate_fix_script"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_fleet",
+      "title": "Fleet-wide Compliance Audit",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Run the compliance audit across ALL configured devices (or a specified subset) and return a consolidated fleet report with per-device grades, an aggregate fleet score, and a summary of the most common failures across the fleet. For single-device audit use `run_compliance_audit`.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "devices": {
+            "description": "Subset of device names to audit. Omit to audit all configured devices.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "severity_threshold": {
+            "description": "Only report checks at or above this severity (default: all).",
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "generate_fix_script": {
+            "default": false,
+            "description": "Append per-device fix scripts.",
+            "type": "boolean"
+          }
+        },
+        "required": ["generate_fix_script"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_remediate",
+      "title": "Apply Compliance Fixes",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Run the compliance audit on a device and automatically apply fix commands for all failing/warning checks that have a known fix. Returns the audit report followed by the result of each applied fix command. Use `run_compliance_audit` with `generate_fix_script=true` first to preview fixes, then call this tool to apply them. Only applies fixes for checks that actually fail; checks that already pass are untouched.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "categories": {
+            "description": "Narrow remediation to specific categories.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ssh_security",
+                "management_services",
+                "firewall_posture",
+                "user_security",
+                "dns_security",
+                "certificate_health",
+                "network_services",
+                "snmp_security",
+                "system_hardening",
+                "vpn_security"
+              ],
+              "description": "Category slug to filter by."
+            }
+          },
+          "severity_threshold": {
+            "description": "Only remediate checks at or above this severity.",
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "dry_run": {
+            "default": true,
+            "description": "Preview fix commands without applying (default: true). Set false to apply.",
+            "type": "boolean"
+          }
+        },
+        "required": ["dry_run"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_compliance_checks",
+      "title": "List Compliance Checks",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reference listing of all compliance checks — ID, category, severity and title. No device connection needed. Use to understand available checks before running `run_compliance_audit` with category or severity filters.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "category": {
+            "description": "Filter to a single category.",
+            "type": "string",
+            "enum": [
+              "ssh_security",
+              "management_services",
+              "firewall_posture",
+              "user_security",
+              "dns_security",
+              "certificate_health",
+              "network_services",
+              "snmp_security",
+              "system_hardening",
+              "vpn_security"
+            ]
+          }
+        },
         "additionalProperties": false
       }
     },

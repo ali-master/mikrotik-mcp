@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_compliance_checks",
+  "type": "object",
+  "properties": {
+    "category": {
+      "description": "Filter to a single category.",
+      "type": "string",
+      "enum": [
+        "ssh_security",
+        "management_services",
+        "firewall_posture",
+        "user_security",
+        "dns_security",
+        "certificate_health",
+        "network_services",
+        "snmp_security",
+        "system_hardening",
+        "vpn_security"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
