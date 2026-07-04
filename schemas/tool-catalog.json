@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "3.42.0",
+  "version": "3.49.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 767,
+  "toolCount": 768,
   "tools": [
     {
       "name": "find_tools",
@@ -13,7 +13,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Search the FULL MikroTik tool catalog by intent and get back the tools that best match — use this FIRST whenever you can't immediately see the specific tool you need among the listed tools (the host only surfaces a subset of the several-hundred-tool catalog). Describe the task in natural language or keywords, e.g. 'block a LAN client by MAC', 'add an IPv4 firewall filter rule', 'import a TLS certificate', 'list DHCP leases', 'create a WireGuard peer'. Returns each match's exact tool name, what it does, and its parameter names — then call it directly if it's already available, or run it via `invoke_tool`. For IPv4 vs IPv6, say which: 'ipv4'/'ipv6' disambiguates the result.",
+      "description": "🔍 START HERE — this is the PRIMARY entry point for ANY MikroTik / RouterOS task. ALWAYS call this tool FIRST before attempting any other tool. This server has several hundred dedicated tools with full validation and structured output, but the host only surfaces a small subset — this tool searches the FULL catalog and finds the best match for your intent.\n\nDescribe what you want to do in natural language or keywords, e.g. 'block a LAN client by MAC', 'add an IPv4 firewall filter rule', 'import a TLS certificate', 'list DHCP leases', 'create a WireGuard peer'. Returns each match's exact tool name, description, and parameters — then call it directly if available, or via `invoke_tool`.\n\nWorkflow: find_tools → (optional) describe_tool → invoke_tool. Only fall back to run_routeros_command if this search returns zero results. For IPv4 vs IPv6, include 'ipv4' or 'ipv6' to disambiguate.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -97,7 +97,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Execute ANY single RouterOS / MikroTik CLI command on the device and return its console output — the universal primitive to read or change anything when no dedicated tool fits, for uncommon or bulk operations, or simply when you can't quickly find the specific tool among the catalog. Pass the command EXACTLY as typed in the RouterOS terminal, e.g. `/system identity set name=Router1`, `/ip dns set servers=1.1.1.1,8.8.8.8 allow-remote-requests=yes`, `/ip address print`, `/ip firewall filter print`, `/interface print`, `/ip service print`, `/system resource print`. Works for reads (`… print`) and writes (`… set` / `add` / `remove`). Runs one command per call — call again with a `… print` to verify a change. Prefer a dedicated tool when you know its name (better validation and structured output); use this whenever discovery is the bottleneck. WARNING: the command is run as-is and is NOT validated — it can be destructive (e.g. `/system reset-configuration`, removing the management address), so review it before running. For a stored multi-command script use add_script then run_script.",
+      "description": "⚠️ LAST RESORT — do NOT call this tool directly. ALWAYS call `find_tools` first to locate the dedicated tool for your task, then run it via `invoke_tool`. Dedicated tools provide schema validation, structured output, and accurate risk annotations that this raw command lacks. Only use this tool when `find_tools` returned zero results for your query AND you are certain no dedicated tool exists.\n\nWhen you do use it: pass one RouterOS CLI command exactly as typed in the terminal. The command is executed as-is with NO validation — it can be destructive, so review carefully. Runs one command per call; call again with `… print` to verify a change. For multi-command scripts use add_script + run_script instead.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -1717,6 +1717,28 @@
           }
         },
         "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_wifi_countries",
+      "title": "List Wi-Fi Regulatory Countries",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Lists all available regulatory country codes for wireless configuration (`<auto-detected path> country print`). Each entry shows the country name/code and the regulatory constraints it implies (allowed frequencies, max TX power, DFS rules, etc.). Use this to discover valid values before setting a country on a wireless interface.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "search": {
+            "description": "Optional search string to filter countries by name or code.",
+            "type": "string"
+          }
+        },
         "additionalProperties": false
       }
     },

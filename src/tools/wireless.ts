@@ -795,4 +795,40 @@ For legacy systems:
       return `Wireless interface updated successfully:\n\n${details}`;
     },
   }),
+
+  defineTool({
+    name: "list_wifi_countries",
+    title: "List Wi-Fi Regulatory Countries",
+    annotations: READ,
+    description:
+      "Lists all available regulatory country codes for wireless configuration " +
+      "(`<auto-detected path> country print`). Each entry shows the country name/code and the " +
+      "regulatory constraints it implies (allowed frequencies, max TX power, DFS rules, etc.). " +
+      "Use this to discover valid values before setting a country on a wireless interface.",
+    inputSchema: {
+      search: z
+        .string()
+        .optional()
+        .describe("Optional search string to filter countries by name or code."),
+    },
+    async handler(a, ctx) {
+      ctx.info("Listing Wi-Fi regulatory countries");
+
+      const interfaceType = await detectWirelessInterfaceType(ctx);
+      if (!interfaceType) return "Error: No wireless interface support detected on this device.";
+
+      // On v7 wifi the country list lives under /interface/wifi/country
+      // On legacy wireless it's /interface/wireless/country
+      const cmd = a.search
+        ? `${interfaceType} country print where name~${quoteValue(a.search)}`
+        : `${interfaceType} country print`;
+
+      const result = await executeMikrotikCommand(cmd, ctx);
+      if (looksLikeError(result)) return `Failed to list Wi-Fi countries: ${result}`;
+      if (isEmpty(result))
+        return `No countries found${a.search ? ` matching "${a.search}".` : "."}`;
+
+      return `WI-FI REGULATORY COUNTRIES:\n\n${result}`;
+    },
+  }),
 ];

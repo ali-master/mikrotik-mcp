@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "list_wifi_countries",
+  "type": "object",
+  "properties": {
+    "search": {
+      "description": "Optional search string to filter countries by name or code.",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
