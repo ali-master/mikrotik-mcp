@@ -10,7 +10,7 @@ import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { looksLikeError, isEmpty, Cmd, quoteValue } from "../core/routeros";
 import type { ToolContext } from "../core/context";
 
 /** The v7-era wifi command paths where security profiles / access lists no longer apply. */
@@ -422,7 +422,7 @@ NOTE: If you see wireless interfaces above, they might be using a different comm
       if (!interfaceType) return "Error: No wireless interface support detected on this device.";
 
       const scanCmd = new Cmd(`${interfaceType} scan`)
-        .raw(a.interface)
+        .raw(quoteValue(a.interface))
         .set("duration", a.duration)
         .build();
 
