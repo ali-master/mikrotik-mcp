@@ -89,6 +89,7 @@ import { queueTools } from "./queue";
 import { queueInterfaceTools } from "./queue-interface";
 import { aaaViewTools } from "./aaa-view";
 import { radiusTools } from "./radius";
+import { rootCauseTools } from "./root-cause";
 import { multiwanTools } from "./multiwan";
 import { routeTools } from "./routes";
 import { routingBfdTools } from "./routing-bfd";
@@ -832,6 +833,16 @@ export const moduleCatalog: ModuleInfo[] = [
     group: "System & Ops",
     description: "ping, traceroute, bandwidth-test, DNS resolve, netwatch (`/tool`).",
     tools: networkToolTools,
+  },
+  {
+    label: "Root-Cause Analyzer",
+    slug: "root-cause",
+    group: "System & Ops",
+    description:
+      "Intelligent root-cause diagnosis: autonomously investigates across connectivity, " +
+      "interfaces, routing (BGP/OSPF), firewall, NAT, ARP/DHCP, DNS, system resources, " +
+      "logs, and VPN — correlates evidence into ranked hypotheses with fix commands.",
+    tools: rootCauseTools,
   },
   {
     label: "SSH Connectivity Tests",

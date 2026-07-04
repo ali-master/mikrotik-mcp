@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "trace_path",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "description": "Destination IP or hostname to trace to."
+    },
+    "count": {
+      "default": 3,
+      "description": "Probes per hop (default: 3).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "use_dns": {
+      "default": true,
+      "description": "Resolve hop addresses to hostnames.",
+      "type": "boolean"
+    }
+  },
+  "required": ["target", "count", "use_dns"],
+  "additionalProperties": false
+}

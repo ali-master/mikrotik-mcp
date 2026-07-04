@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "suggest_fix",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "description": "Target to investigate (IP, hostname, or subnet)."
+    },
+    "dimensions": {
+      "description": "Limit investigation to specific dimensions.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "connectivity",
+          "interfaces",
+          "routing",
+          "firewall",
+          "nat",
+          "arp_dhcp",
+          "dns",
+          "resources",
+          "logs",
+          "vpn"
+        ],
+        "description": "Diagnostic dimension to investigate."
+      }
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}
