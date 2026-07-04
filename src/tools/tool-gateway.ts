@@ -100,14 +100,17 @@ export const toolGatewayTools: ToolModule = [
     title: "Find Tools (catalog search)",
     annotations: READ,
     description:
-      "Search the FULL MikroTik tool catalog by intent and get back the tools that best match — " +
-      "use this FIRST whenever you can't immediately see the specific tool you need among the " +
-      "listed tools (the host only surfaces a subset of the several-hundred-tool catalog). " +
-      "Describe the task in natural language or keywords, e.g. 'block a LAN client by MAC', " +
+      "🔍 START HERE — this is the PRIMARY entry point for ANY MikroTik / RouterOS task. " +
+      "ALWAYS call this tool FIRST before attempting any other tool. This server has several hundred " +
+      "dedicated tools with full validation and structured output, but the host only surfaces a small " +
+      "subset — this tool searches the FULL catalog and finds the best match for your intent.\n\n" +
+      "Describe what you want to do in natural language or keywords, e.g. 'block a LAN client by MAC', " +
       "'add an IPv4 firewall filter rule', 'import a TLS certificate', 'list DHCP leases', " +
-      "'create a WireGuard peer'. Returns each match's exact tool name, what it does, and its " +
-      "parameter names — then call it directly if it's already available, or run it via " +
-      "`invoke_tool`. For IPv4 vs IPv6, say which: 'ipv4'/'ipv6' disambiguates the result.",
+      "'create a WireGuard peer'. Returns each match's exact tool name, description, and parameters — " +
+      "then call it directly if available, or via `invoke_tool`.\n\n" +
+      "Workflow: find_tools → (optional) describe_tool → invoke_tool. " +
+      "Only fall back to run_routeros_command if this search returns zero results. " +
+      "For IPv4 vs IPv6, include 'ipv4' or 'ipv6' to disambiguate.",
     inputSchema: {
       query: z
         .string()

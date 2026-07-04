@@ -1,12 +1,10 @@
 /**
- * Raw RouterOS CLI — a single, always-discoverable dispatcher tool.
+ * Raw RouterOS CLI — last-resort fallback when `find_tools` returns nothing.
  *
- * With several hundred granular tools, an MCP host's tool search can struggle to
- * surface the one specific tool the model wants (selection accuracy falls off a
- * cliff past ~100 tools). This tool is the reliable escape hatch: ONE
- * distinctively-named primitive that runs any RouterOS command, so the model can
- * always accomplish a task even when it can't find the dedicated tool — the
- * "consolidation / dispatcher" pattern recommended for large tool catalogs.
+ * Models should ALWAYS try `find_tools` → `invoke_tool` first: dedicated tools
+ * have schema validation, structured output, and correct risk annotations.
+ * This raw escape hatch skips all of that and runs an unvalidated CLI string,
+ * so it should only fire when the gateway search genuinely found no match.
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
@@ -20,20 +18,15 @@ export const rawCommandTools: ToolModule = [
     title: "Run a RouterOS Command (raw CLI)",
     annotations: WRITE,
     description:
-      "Execute ANY single RouterOS / MikroTik CLI command on the device and return its console output — the " +
-      "universal primitive to read or change anything when no dedicated tool fits, for uncommon or bulk " +
-      "operations, or simply when you can't quickly find the specific tool among the catalog. " +
-      "Pass the command EXACTLY as typed in the RouterOS terminal, e.g. " +
-      "`/system identity set name=Router1`, " +
-      "`/ip dns set servers=1.1.1.1,8.8.8.8 allow-remote-requests=yes`, " +
-      "`/ip address print`, `/ip firewall filter print`, `/interface print`, `/ip service print`, " +
-      "`/system resource print`. " +
-      "Works for reads (`… print`) and writes (`… set` / `add` / `remove`). Runs one command per call — " +
-      "call again with a `… print` to verify a change. Prefer a dedicated tool when you know its name " +
-      "(better validation and structured output); use this whenever discovery is the bottleneck. " +
-      "WARNING: the command is run as-is and is NOT validated — it can be destructive (e.g. " +
-      "`/system reset-configuration`, removing the management address), so review it before running. " +
-      "For a stored multi-command script use add_script then run_script.",
+      "⚠️ LAST RESORT — do NOT call this tool directly. ALWAYS call `find_tools` first to locate the " +
+      "dedicated tool for your task, then run it via `invoke_tool`. Dedicated tools provide schema " +
+      "validation, structured output, and accurate risk annotations that this raw command lacks. " +
+      "Only use this tool when `find_tools` returned zero results for your query AND you are certain " +
+      "no dedicated tool exists.\n\n" +
+      "When you do use it: pass one RouterOS CLI command exactly as typed in the terminal. " +
+      "The command is executed as-is with NO validation — it can be destructive, so review carefully. " +
+      "Runs one command per call; call again with `… print` to verify a change. " +
+      "For multi-command scripts use add_script + run_script instead.",
     inputSchema: {
       command: z
         .string()

@@ -27,6 +27,19 @@ interfaces, IP addressing, DHCP, DNS, firewall (filter + NAT), routing, VLANs,
 wireless, WireGuard, queues/QoS, users, logs, backups, PoE, system, network
 tools, bridges, address-lists, scheduler/scripts and certificates.
 
+Tool discovery — MANDATORY workflow:
+  This server has several hundred dedicated tools, but the host only surfaces a
+  small subset at a time. You MUST follow this order:
+    1. ALWAYS call \`find_tools\` FIRST — describe what you want to do and it
+       searches the full catalog for the best-matching dedicated tool.
+    2. (Optional) Call \`describe_tool\` to get the exact parameter schema.
+    3. Call the tool directly if it is listed, or via \`invoke_tool\` if not.
+    4. ONLY if \`find_tools\` returned ZERO results, fall back to
+       \`run_routeros_command\` as a last resort.
+  Dedicated tools have schema validation, structured output, and correct risk
+  annotations — \`run_routeros_command\` has none of these. Always prefer the
+  dedicated tool path.
+
 Safety model — tools are annotated by risk:
   • readOnlyHint     → inspection only, no changes
   • destructiveHint  → removes or replaces configuration
