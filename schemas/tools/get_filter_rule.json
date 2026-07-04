@@ -8,6 +8,8 @@
       "description": "Rule ID from list output e.g. \"*1\" or \"0\""
     }
   },
-  "required": ["rule_id"],
+  "required": [
+    "rule_id"
+  ],
   "additionalProperties": false
 }

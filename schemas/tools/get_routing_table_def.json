@@ -8,6 +8,8 @@
       "description": "Routing table name"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

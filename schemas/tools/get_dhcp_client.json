@@ -8,6 +8,8 @@
       "description": "Interface name, e.g. 'ether1'"
     }
   },
-  "required": ["interface"],
+  "required": [
+    "interface"
+  ],
   "additionalProperties": false
 }

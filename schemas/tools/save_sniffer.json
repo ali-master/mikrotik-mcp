@@ -8,6 +8,8 @@
       "description": "Output file name, e.g. 'capture'"
     }
   },
-  "required": ["file_name"],
+  "required": [
+    "file_name"
+  ],
   "additionalProperties": false
 }

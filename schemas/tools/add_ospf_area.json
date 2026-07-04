@@ -17,7 +17,11 @@
     },
     "type": {
       "type": "string",
-      "enum": ["default", "stub", "nssa"]
+      "enum": [
+        "default",
+        "stub",
+        "nssa"
+      ]
     },
     "no_summaries": {
       "description": "Make a totally-stubby/NSSA area (block summary LSAs)",
@@ -37,6 +41,11 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "area_id", "instance", "disabled"],
+  "required": [
+    "name",
+    "area_id",
+    "instance",
+    "disabled"
+  ],
   "additionalProperties": false
 }

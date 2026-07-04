@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "firmware_status",
+  "type": "object",
+  "properties": {
+    "post_check": {
+      "default": false,
+      "description": "Capture a health snapshot and compare against the pre-upgrade baseline. Use after an upgrade to verify the device came back healthy.",
+      "type": "boolean"
+    },
+    "pre_snapshot_version": {
+      "description": "The version that was running before the upgrade (for comparison context). If not provided, the post-check captures the snapshot without comparison.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "post_check"
+  ],
+  "additionalProperties": false
+}

@@ -7,6 +7,8 @@
       "type": "string"
     }
   },
-  "required": ["entry_id"],
+  "required": [
+    "entry_id"
+  ],
   "additionalProperties": false
 }

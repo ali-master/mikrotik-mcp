@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "firmware_check",
+  "type": "object",
+  "properties": {
+    "channel": {
+      "description": "Set the update channel before checking (default: keep current).",
+      "type": "string",
+      "enum": [
+        "stable",
+        "long-term",
+        "testing"
+      ]
+    },
+    "fleet": {
+      "default": false,
+      "description": "Check all configured devices instead of just one.",
+      "type": "boolean"
+    },
+    "devices": {
+      "description": "Specific device names to check (fleet mode). Omit to check all.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "fleet"
+  ],
+  "additionalProperties": false
+}

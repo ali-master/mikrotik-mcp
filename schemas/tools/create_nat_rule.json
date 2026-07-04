@@ -5,7 +5,10 @@
   "properties": {
     "chain": {
       "type": "string",
-      "enum": ["srcnat", "dstnat"]
+      "enum": [
+        "srcnat",
+        "dstnat"
+      ]
     },
     "action": {
       "type": "string"
@@ -225,6 +228,11 @@
       "type": "string"
     }
   },
-  "required": ["chain", "action", "disabled", "log"],
+  "required": [
+    "chain",
+    "action",
+    "disabled",
+    "log"
+  ],
   "additionalProperties": false
 }

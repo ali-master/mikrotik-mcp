@@ -26,7 +26,12 @@
     "severity_threshold": {
       "description": "Only remediate checks at or above this severity.",
       "type": "string",
-      "enum": ["critical", "high", "medium", "low"]
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ]
     },
     "dry_run": {
       "default": true,
@@ -34,6 +39,8 @@
       "type": "boolean"
     }
   },
-  "required": ["dry_run"],
+  "required": [
+    "dry_run"
+  ],
   "additionalProperties": false
 }

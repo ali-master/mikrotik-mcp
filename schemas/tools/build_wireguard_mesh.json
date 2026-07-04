@@ -30,7 +30,10 @@
     "topology": {
       "default": "full-mesh",
       "type": "string",
-      "enum": ["full-mesh", "hub-spoke"]
+      "enum": [
+        "full-mesh",
+        "hub-spoke"
+      ]
     },
     "hub": {
       "description": "Hub device name (required when topology=hub-spoke)",

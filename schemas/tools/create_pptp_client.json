@@ -65,6 +65,12 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "connect_to", "user", "password", "disabled"],
+  "required": [
+    "name",
+    "connect_to",
+    "user",
+    "password",
+    "disabled"
+  ],
   "additionalProperties": false
 }

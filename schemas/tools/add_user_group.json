@@ -19,6 +19,9 @@
       "type": "string"
     }
   },
-  "required": ["name", "policy"],
+  "required": [
+    "name",
+    "policy"
+  ],
   "additionalProperties": false
 }

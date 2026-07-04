@@ -8,6 +8,8 @@
       "description": "Interface name or '.id'"
     }
   },
-  "required": ["nd_id"],
+  "required": [
+    "nd_id"
+  ],
   "additionalProperties": false
 }

@@ -60,6 +60,15 @@
       "type": "boolean"
     }
   },
-  "required": ["vlan_id", "name", "subnet", "gateway", "bridge", "dhcp", "internet", "apply"],
+  "required": [
+    "vlan_id",
+    "name",
+    "subnet",
+    "gateway",
+    "bridge",
+    "dhcp",
+    "internet",
+    "apply"
+  ],
   "additionalProperties": false
 }

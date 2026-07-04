@@ -8,6 +8,8 @@
       "description": "BGP template name to remove"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

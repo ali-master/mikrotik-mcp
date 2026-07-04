@@ -8,6 +8,8 @@
       "description": "Interface name (e.g. 'ether2') or RouterOS '.id'"
     }
   },
-  "required": ["server_id"],
+  "required": [
+    "server_id"
+  ],
   "additionalProperties": false
 }

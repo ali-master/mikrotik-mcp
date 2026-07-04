@@ -8,6 +8,8 @@
       "description": "RouterOS .id (e.g. '*1') or the DUID"
     }
   },
-  "required": ["binding_id"],
+  "required": [
+    "binding_id"
+  ],
   "additionalProperties": false
 }

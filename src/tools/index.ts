@@ -35,6 +35,7 @@ import { portKnockTools } from "./port-knock";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
 import { firewallMangleTools } from "./firewall-mangle";
+import { firmwareLifecycleTools } from "./firmware-lifecycle";
 import { portForwardTools } from "./port-forward";
 import { interfaceTools } from "./interfaces";
 import { ipAddressTools } from "./ip-address";
@@ -813,6 +814,17 @@ export const moduleCatalog: ModuleInfo[] = [
     description:
       "Console, LEDs, license, note, NTP server, password, ports, regulatory, reset, special-login, watchdog.",
     tools: systemConfigTools,
+  },
+  {
+    label: "Firmware Lifecycle",
+    slug: "firmware-lifecycle",
+    group: "System & Ops",
+    description:
+      "Zero-touch RouterOS upgrade pipeline: discover available releases, compare versions, " +
+      "stage packages, capture pre-upgrade health snapshots, execute upgrades with optional " +
+      "maintenance-window scheduling, and verify post-upgrade health — with automatic " +
+      "RouterOS fallback on failure.",
+    tools: firmwareLifecycleTools,
   },
   {
     label: "Network Tools",

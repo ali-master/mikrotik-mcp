@@ -32,6 +32,13 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "url", "address_list", "interval", "drop", "apply"],
+  "required": [
+    "name",
+    "url",
+    "address_list",
+    "interval",
+    "drop",
+    "apply"
+  ],
   "additionalProperties": false
 }

@@ -15,6 +15,9 @@
       "type": "string"
     }
   },
-  "required": ["list", "range"],
+  "required": [
+    "list",
+    "range"
+  ],
   "additionalProperties": false
 }

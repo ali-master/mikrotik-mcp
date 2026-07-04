@@ -15,6 +15,9 @@
       "type": "string"
     }
   },
-  "required": ["port", "forwarding_override_ports"],
+  "required": [
+    "port",
+    "forwarding_override_ports"
+  ],
   "additionalProperties": false
 }

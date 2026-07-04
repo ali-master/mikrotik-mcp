@@ -8,6 +8,8 @@
       "description": "RouterOS .id (e.g. '*1') or the IPv6 address"
     }
   },
-  "required": ["neighbor_id"],
+  "required": [
+    "neighbor_id"
+  ],
   "additionalProperties": false
 }

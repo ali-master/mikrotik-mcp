@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "firmware_upgrade",
+  "type": "object",
+  "properties": {
+    "confirm": {
+      "type": "boolean",
+      "description": "Must be true to execute the upgrade. Device will reboot."
+    },
+    "schedule_time": {
+      "description": "Schedule the upgrade for a future time instead of immediate execution. Format: HH:MM:SS (e.g. '03:00:00' for 3 AM). The device will reboot at this time.",
+      "type": "string"
+    },
+    "schedule_date": {
+      "description": "Date for scheduled upgrade. Format: 'jan/01/2026'. Omit to use today (or the next occurrence of schedule_time).",
+      "type": "string"
+    },
+    "upgrade_routerboard": {
+      "default": false,
+      "description": "Also upgrade RouterBOARD firmware after RouterOS upgrade (`/system routerboard upgrade`). Requires a second reboot.",
+      "type": "boolean"
+    },
+    "capture_health": {
+      "default": true,
+      "description": "Capture a pre-upgrade health snapshot for later comparison.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "confirm",
+    "upgrade_routerboard",
+    "capture_health"
+  ],
+  "additionalProperties": false
+}

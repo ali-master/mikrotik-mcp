@@ -28,6 +28,10 @@
       "type": "boolean"
     }
   },
-  "required": ["area", "prefix", "advertise"],
+  "required": [
+    "area",
+    "prefix",
+    "advertise"
+  ],
   "additionalProperties": false
 }

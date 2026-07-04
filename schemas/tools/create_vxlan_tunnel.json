@@ -35,7 +35,10 @@
     "vteps_ip_version": {
       "description": "IP version used for VTEP addressing",
       "type": "string",
-      "enum": ["ipv4", "ipv6"]
+      "enum": [
+        "ipv4",
+        "ipv6"
+      ]
     },
     "mac_address": {
       "description": "MAC address of the VXLAN interface",
@@ -44,7 +47,13 @@
     "arp": {
       "description": "Address Resolution Protocol mode for the interface",
       "type": "string",
-      "enum": ["disabled", "enabled", "local-proxy-arp", "proxy-arp", "reply-only"]
+      "enum": [
+        "disabled",
+        "enabled",
+        "local-proxy-arp",
+        "proxy-arp",
+        "reply-only"
+      ]
     },
     "arp_timeout": {
       "description": "ARP entry timeout, e.g. '30s' or 'auto'",
@@ -73,6 +82,11 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "vni", "port", "disabled"],
+  "required": [
+    "name",
+    "vni",
+    "port",
+    "disabled"
+  ],
   "additionalProperties": false
 }

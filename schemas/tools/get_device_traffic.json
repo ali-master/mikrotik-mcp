@@ -8,6 +8,8 @@
       "description": "Device IP address"
     }
   },
-  "required": ["ip"],
+  "required": [
+    "ip"
+  ],
   "additionalProperties": false
 }

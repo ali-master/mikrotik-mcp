@@ -35,6 +35,8 @@
       "type": "boolean"
     }
   },
-  "required": ["switch_id"],
+  "required": [
+    "switch_id"
+  ],
   "additionalProperties": false
 }

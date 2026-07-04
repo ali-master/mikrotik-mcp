@@ -54,7 +54,11 @@
     "vlan_header": {
       "description": "Match on VLAN tag presence",
       "type": "string",
-      "enum": ["any", "not-present", "present"]
+      "enum": [
+        "any",
+        "not-present",
+        "present"
+      ]
     },
     "vlan_id": {
       "type": "string"
@@ -100,6 +104,10 @@
       "type": "boolean"
     }
   },
-  "required": ["switch", "ports", "disabled"],
+  "required": [
+    "switch",
+    "ports",
+    "disabled"
+  ],
   "additionalProperties": false
 }

@@ -20,6 +20,10 @@
       "type": "string"
     }
   },
-  "required": ["name", "code", "value"],
+  "required": [
+    "name",
+    "code",
+    "value"
+  ],
   "additionalProperties": false
 }

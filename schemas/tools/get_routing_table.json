@@ -15,6 +15,9 @@
       "type": "boolean"
     }
   },
-  "required": ["table_name", "active_only"],
+  "required": [
+    "table_name",
+    "active_only"
+  ],
   "additionalProperties": false
 }

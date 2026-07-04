@@ -8,6 +8,8 @@
       "description": "RADIUS entry internal .id, e.g. '*1'"
     }
   },
-  "required": ["radius_id"],
+  "required": [
+    "radius_id"
+  ],
   "additionalProperties": false
 }

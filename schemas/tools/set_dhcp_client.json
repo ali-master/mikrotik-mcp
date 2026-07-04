@@ -41,6 +41,8 @@
       "type": "boolean"
     }
   },
-  "required": ["interface"],
+  "required": [
+    "interface"
+  ],
   "additionalProperties": false
 }

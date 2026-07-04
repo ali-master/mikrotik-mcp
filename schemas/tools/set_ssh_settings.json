@@ -6,7 +6,12 @@
     "forwarding_enabled": {
       "description": "TCP forwarding policy. `local`/`both` are required for this router to be a jump host.",
       "type": "string",
-      "enum": ["no", "local", "remote", "both"]
+      "enum": [
+        "no",
+        "local",
+        "remote",
+        "both"
+      ]
     },
     "strong_crypto": {
       "description": "Prefer strong ciphers/MACs/DH and disable weak ones (hardening).",
@@ -23,7 +28,10 @@
     "host_key_type": {
       "description": "Host key algorithm. Changing it regenerates the host key (clients must re-trust).",
       "type": "string",
-      "enum": ["rsa", "ed25519"]
+      "enum": [
+        "rsa",
+        "ed25519"
+      ]
     },
     "host_key_size": {
       "description": "RSA host-key size in bits (e.g. 2048, 4096). Applies to rsa host keys.",

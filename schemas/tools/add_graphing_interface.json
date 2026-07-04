@@ -24,6 +24,8 @@
       "type": "string"
     }
   },
-  "required": ["interface"],
+  "required": [
+    "interface"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "Comma-separated ethernet interface name(s), e.g. 'ether1' or 'ether9,ether10'"
     }
   },
-  "required": ["interfaces"],
+  "required": [
+    "interfaces"
+  ],
   "additionalProperties": false
 }

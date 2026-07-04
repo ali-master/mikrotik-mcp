@@ -8,6 +8,8 @@
       "description": "Stream name or RouterOS '.id'"
     }
   },
-  "required": ["stream_id"],
+  "required": [
+    "stream_id"
+  ],
   "additionalProperties": false
 }

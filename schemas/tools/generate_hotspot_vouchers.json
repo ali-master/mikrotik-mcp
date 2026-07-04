@@ -28,6 +28,10 @@
       "type": "boolean"
     }
   },
-  "required": ["count", "code_prefix", "apply"],
+  "required": [
+    "count",
+    "code_prefix",
+    "apply"
+  ],
   "additionalProperties": false
 }

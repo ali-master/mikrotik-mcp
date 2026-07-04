@@ -11,7 +11,13 @@
       "default": "pre-shared-key",
       "description": "Authentication method",
       "type": "string",
-      "enum": ["pre-shared-key", "rsa-signature", "digital-signature", "eap", "eap-radius"]
+      "enum": [
+        "pre-shared-key",
+        "rsa-signature",
+        "digital-signature",
+        "eap",
+        "eap-radius"
+      ]
     },
     "secret": {
       "description": "Pre-shared key secret",
@@ -26,11 +32,18 @@
     "match_by": {
       "description": "How the remote peer is matched to this identity",
       "type": "string",
-      "enum": ["remote-id", "certificate"]
+      "enum": [
+        "remote-id",
+        "certificate"
+      ]
     },
     "generate_policy": {
       "type": "string",
-      "enum": ["no", "port-override", "port-strict"]
+      "enum": [
+        "no",
+        "port-override",
+        "port-strict"
+      ]
     },
     "mode_config": {
       "type": "string"
@@ -61,6 +74,10 @@
       "type": "boolean"
     }
   },
-  "required": ["peer", "auth_method", "disabled"],
+  "required": [
+    "peer",
+    "auth_method",
+    "disabled"
+  ],
   "additionalProperties": false
 }

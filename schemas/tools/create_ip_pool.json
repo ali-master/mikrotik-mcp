@@ -17,6 +17,9 @@
       "type": "string"
     }
   },
-  "required": ["name", "ranges"],
+  "required": [
+    "name",
+    "ranges"
+  ],
   "additionalProperties": false
 }

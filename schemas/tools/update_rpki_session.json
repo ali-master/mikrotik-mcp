@@ -31,6 +31,8 @@
       "type": "boolean"
     }
   },
-  "required": ["session_id"],
+  "required": [
+    "session_id"
+  ],
   "additionalProperties": false
 }

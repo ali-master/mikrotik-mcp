@@ -34,6 +34,8 @@
       "type": "boolean"
     }
   },
-  "required": ["config_id"],
+  "required": [
+    "config_id"
+  ],
   "additionalProperties": false
 }

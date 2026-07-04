@@ -8,6 +8,8 @@
       "description": "PIM-SM instance name to remove"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

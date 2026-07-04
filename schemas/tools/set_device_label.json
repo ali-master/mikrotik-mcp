@@ -12,6 +12,9 @@
       "description": "Friendly name, e.g. \"Ali phone\". Pass \"\" to clear."
     }
   },
-  "required": ["mac", "label"],
+  "required": [
+    "mac",
+    "label"
+  ],
   "additionalProperties": false
 }

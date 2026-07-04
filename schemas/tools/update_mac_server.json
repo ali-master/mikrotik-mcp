@@ -8,6 +8,8 @@
       "description": "Interface-list name, or 'all' / 'none'"
     }
   },
-  "required": ["allowed_interface_list"],
+  "required": [
+    "allowed_interface_list"
+  ],
   "additionalProperties": false
 }

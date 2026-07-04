@@ -11,6 +11,9 @@
       "type": "boolean"
     }
   },
-  "required": ["rule_id", "enabled"],
+  "required": [
+    "rule_id",
+    "enabled"
+  ],
   "additionalProperties": false
 }

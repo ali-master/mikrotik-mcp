@@ -8,6 +8,8 @@
       "description": "Router-ID instance name"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

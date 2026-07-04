@@ -5,7 +5,13 @@
   "properties": {
     "severity": {
       "type": "string",
-      "enum": ["debug", "info", "warning", "error", "critical"]
+      "enum": [
+        "debug",
+        "info",
+        "warning",
+        "error",
+        "critical"
+      ]
     },
     "time_filter": {
       "type": "string"
@@ -16,6 +22,8 @@
       "maximum": 9007199254740991
     }
   },
-  "required": ["severity"],
+  "required": [
+    "severity"
+  ],
   "additionalProperties": false
 }

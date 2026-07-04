@@ -5,11 +5,19 @@
   "properties": {
     "ipv4_multipath_hash_policy": {
       "type": "string",
-      "enum": ["l3", "l3-inner", "l4"]
+      "enum": [
+        "l3",
+        "l3-inner",
+        "l4"
+      ]
     },
     "ipv6_multipath_hash_policy": {
       "type": "string",
-      "enum": ["l3", "l3-inner", "l4"]
+      "enum": [
+        "l3",
+        "l3-inner",
+        "l4"
+      ]
     },
     "ipv4_vrf_as_interface": {
       "type": "boolean"

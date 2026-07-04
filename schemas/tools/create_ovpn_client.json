@@ -35,15 +35,24 @@
     "tls_version": {
       "description": "Accepted TLS version",
       "type": "string",
-      "enum": ["any", "only-1.2"]
+      "enum": [
+        "any",
+        "only-1.2"
+      ]
     },
     "mode": {
       "type": "string",
-      "enum": ["ip", "ethernet"]
+      "enum": [
+        "ip",
+        "ethernet"
+      ]
     },
     "protocol": {
       "type": "string",
-      "enum": ["tcp", "udp"]
+      "enum": [
+        "tcp",
+        "udp"
+      ]
     },
     "mac_address": {
       "description": "Client MAC for ethernet mode",
@@ -79,6 +88,11 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "connect_to", "port", "disabled"],
+  "required": [
+    "name",
+    "connect_to",
+    "port",
+    "disabled"
+  ],
   "additionalProperties": false
 }

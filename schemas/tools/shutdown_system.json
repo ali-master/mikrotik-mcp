@@ -8,6 +8,8 @@
       "description": "Must be true to actually shut down the device"
     }
   },
-  "required": ["confirm"],
+  "required": [
+    "confirm"
+  ],
   "additionalProperties": false
 }

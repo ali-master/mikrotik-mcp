@@ -34,6 +34,13 @@
       "type": "string"
     }
   },
-  "required": ["interface", "user", "address", "endpoint", "allowed_ips", "keepalive"],
+  "required": [
+    "interface",
+    "user",
+    "address",
+    "endpoint",
+    "allowed_ips",
+    "keepalive"
+  ],
   "additionalProperties": false
 }

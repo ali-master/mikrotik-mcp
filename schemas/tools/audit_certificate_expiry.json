@@ -11,6 +11,8 @@
       "maximum": 9007199254740991
     }
   },
-  "required": ["warn_within_days"],
+  "required": [
+    "warn_within_days"
+  ],
   "additionalProperties": false
 }

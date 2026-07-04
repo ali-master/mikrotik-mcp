@@ -8,6 +8,8 @@
       "description": "Disk slot, e.g. 'nvme1', 'usb1'"
     }
   },
-  "required": ["slot"],
+  "required": [
+    "slot"
+  ],
   "additionalProperties": false
 }

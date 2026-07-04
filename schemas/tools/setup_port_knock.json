@@ -34,6 +34,12 @@
       "type": "boolean"
     }
   },
-  "required": ["sequence", "protect_ports", "open_timeout", "stage_timeout", "apply"],
+  "required": [
+    "sequence",
+    "protect_ports",
+    "open_timeout",
+    "stage_timeout",
+    "apply"
+  ],
   "additionalProperties": false
 }

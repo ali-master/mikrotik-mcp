@@ -20,7 +20,10 @@
     },
     "starts_when": {
       "type": "string",
-      "enum": ["assigned", "first-auth"]
+      "enum": [
+        "assigned",
+        "first-auth"
+      ]
     },
     "override_shared_users": {
       "type": "string"
@@ -29,6 +32,8 @@
       "type": "string"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

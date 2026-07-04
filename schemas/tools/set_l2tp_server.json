@@ -16,7 +16,11 @@
     },
     "use_ipsec": {
       "type": "string",
-      "enum": ["yes", "no", "required"]
+      "enum": [
+        "yes",
+        "no",
+        "required"
+      ]
     },
     "ipsec_secret": {
       "description": "Pre-shared key for L2TP/IPsec",
@@ -57,7 +61,10 @@
     "caller_id_type": {
       "description": "Caller ID format: ip-address or number",
       "type": "string",
-      "enum": ["ip-address", "number"]
+      "enum": [
+        "ip-address",
+        "number"
+      ]
     }
   },
   "additionalProperties": false

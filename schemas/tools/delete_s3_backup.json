@@ -8,6 +8,8 @@
       "description": "S3 object key to delete"
     }
   },
-  "required": ["key"],
+  "required": [
+    "key"
+  ],
   "additionalProperties": false
 }

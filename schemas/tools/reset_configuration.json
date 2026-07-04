@@ -28,6 +28,8 @@
       "type": "string"
     }
   },
-  "required": ["confirm"],
+  "required": [
+    "confirm"
+  ],
   "additionalProperties": false
 }

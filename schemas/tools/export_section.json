@@ -18,6 +18,10 @@
       "type": "boolean"
     }
   },
-  "required": ["section", "hide_sensitive", "compact"],
+  "required": [
+    "section",
+    "hide_sensitive",
+    "compact"
+  ],
   "additionalProperties": false
 }

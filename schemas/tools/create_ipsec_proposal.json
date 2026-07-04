@@ -31,6 +31,12 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "auth_algorithms", "enc_algorithms", "pfs_group", "disabled"],
+  "required": [
+    "name",
+    "auth_algorithms",
+    "enc_algorithms",
+    "pfs_group",
+    "disabled"
+  ],
   "additionalProperties": false
 }

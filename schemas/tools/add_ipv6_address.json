@@ -34,6 +34,10 @@
       "type": "boolean"
     }
   },
-  "required": ["address", "interface", "disabled"],
+  "required": [
+    "address",
+    "interface",
+    "disabled"
+  ],
   "additionalProperties": false
 }

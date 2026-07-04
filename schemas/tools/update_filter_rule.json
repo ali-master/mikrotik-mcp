@@ -157,6 +157,8 @@
       "type": "string"
     }
   },
-  "required": ["rule_id"],
+  "required": [
+    "rule_id"
+  ],
   "additionalProperties": false
 }

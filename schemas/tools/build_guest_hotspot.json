@@ -43,6 +43,12 @@
       "type": "boolean"
     }
   },
-  "required": ["interface", "subnet", "gateway", "rate_limit", "apply"],
+  "required": [
+    "interface",
+    "subnet",
+    "gateway",
+    "rate_limit",
+    "apply"
+  ],
   "additionalProperties": false
 }

@@ -13,6 +13,9 @@
       "description": "0-based target position index"
     }
   },
-  "required": ["rule_id", "destination"],
+  "required": [
+    "rule_id",
+    "destination"
+  ],
   "additionalProperties": false
 }

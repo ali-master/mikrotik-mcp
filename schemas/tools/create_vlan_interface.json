@@ -37,7 +37,12 @@
     "arp": {
       "default": "enabled",
       "type": "string",
-      "enum": ["enabled", "disabled", "proxy-arp", "reply-only"]
+      "enum": [
+        "enabled",
+        "disabled",
+        "proxy-arp",
+        "reply-only"
+      ]
     },
     "arp_timeout": {
       "type": "string"
@@ -45,7 +50,11 @@
     "loop_protect": {
       "description": "Loop protection: default, on, off",
       "type": "string",
-      "enum": ["default", "on", "off"]
+      "enum": [
+        "default",
+        "on",
+        "off"
+      ]
     },
     "loop_protect_disable_time": {
       "description": "Time to disable interface on loop detection, e.g. '5m' (0 = forever)",
@@ -56,6 +65,13 @@
       "type": "string"
     }
   },
-  "required": ["name", "vlan_id", "interface", "disabled", "use_service_tag", "arp"],
+  "required": [
+    "name",
+    "vlan_id",
+    "interface",
+    "disabled",
+    "use_service_tag",
+    "arp"
+  ],
   "additionalProperties": false
 }

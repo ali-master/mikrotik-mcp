@@ -13,7 +13,12 @@
     },
     "type": {
       "type": "string",
-      "enum": ["unicast", "blackhole", "unreachable", "prohibit"]
+      "enum": [
+        "unicast",
+        "blackhole",
+        "unreachable",
+        "prohibit"
+      ]
     },
     "distance": {
       "type": "integer",
@@ -61,6 +66,9 @@
       "type": "boolean"
     }
   },
-  "required": ["dst_address", "disabled"],
+  "required": [
+    "dst_address",
+    "disabled"
+  ],
   "additionalProperties": false
 }

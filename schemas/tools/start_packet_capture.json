@@ -26,6 +26,9 @@
       "type": "string"
     }
   },
-  "required": ["receiver_host", "port"],
+  "required": [
+    "receiver_host",
+    "port"
+  ],
   "additionalProperties": false
 }
