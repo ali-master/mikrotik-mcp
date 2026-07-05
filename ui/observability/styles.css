@@ -2164,12 +2164,17 @@ pre.body.ros .ros-comment {
   position: relative;
   justify-self: center;
 }
+.cfgver__row + .cfgver__row {
+  border-top: 1px solid color-mix(in srgb, var(--mt-border) 40%, transparent);
+}
 .cfgver__row.is-head .cfgver__dot {
   width: 14px;
   height: 14px;
   border-color: var(--page-accent);
   background: var(--page-accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--page-accent) 25%, transparent);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--page-accent) 25%, transparent),
+    0 0 8px color-mix(in srgb, var(--page-accent) 35%, transparent);
 }
 .cfgver__main {
   min-width: 0;
