@@ -38,6 +38,19 @@ export interface Snapshot {
   sha: string;
 }
 
+/** A golden-config baseline pointer for a device. */
+export interface Baseline {
+  device: string;
+  /** The snapshot id designated as the golden config. */
+  snapshotId: string;
+  /** When the baseline was set (epoch ms). */
+  setAt: number;
+  /** Who/what set the baseline (e.g. "agent", "dashboard"). */
+  setBy: string;
+  label?: string;
+  notes?: string;
+}
+
 /** Storage interface (a SQLite implementation today; a fake in tests). */
 export interface SnapshotStore {
   insert(s: Snapshot): void;
@@ -50,6 +63,23 @@ export interface SnapshotStore {
   count(device: string): number;
   /** Delete specific snapshots by id. Returns the number of rows removed. */
   delete(ids: string[]): number;
+
+  // ── Baselines (golden config) ───────────────────────────────────────────
+  /** Designate a snapshot as the golden baseline for a device (upsert). */
+  setBaseline(
+    device: string,
+    snapshotId: string,
+    setBy?: string,
+    label?: string,
+    notes?: string,
+  ): void;
+  /** Get the golden baseline for a device, or null if none is set. */
+  getBaseline(device: string): Baseline | null;
+  /** Remove the golden baseline for a device. Returns true if one was removed. */
+  removeBaseline(device: string): boolean;
+  /** List all golden baselines across all devices. */
+  listBaselines(): Baseline[];
+
   close(): void;
 }
 
@@ -63,6 +93,26 @@ interface Row {
   bytes: number;
   lines: number;
   sha: string;
+}
+
+interface BaselineRow {
+  device: string;
+  snapshot_id: string;
+  set_at: number;
+  set_by: string;
+  label: string | null;
+  notes: string | null;
+}
+
+function rowToBaseline(r: BaselineRow): Baseline {
+  return {
+    device: r.device,
+    snapshotId: r.snapshot_id,
+    setAt: r.set_at,
+    setBy: r.set_by,
+    label: r.label ?? undefined,
+    notes: r.notes ?? undefined,
+  };
 }
 
 function rowToSnapshot(r: Row, body: string): Snapshot {
@@ -92,6 +142,14 @@ const SCHEMA_STATEMENTS = [
      sha TEXT NOT NULL
    )`,
   "CREATE INDEX IF NOT EXISTS idx_snapshots_device_ts ON snapshots(device, ts)",
+  `CREATE TABLE IF NOT EXISTS baselines (
+     device       TEXT PRIMARY KEY,
+     snapshot_id  TEXT NOT NULL,
+     set_at       INTEGER NOT NULL,
+     set_by       TEXT NOT NULL DEFAULT 'agent',
+     label        TEXT,
+     notes        TEXT
+   )`,
 ];
 
 class SqliteSnapshotStore implements SnapshotStore {
@@ -163,6 +221,49 @@ class SqliteSnapshotStore implements SnapshotStore {
     });
     const res = this.db.query(`DELETE FROM snapshots WHERE id IN (${placeholders})`).run(params);
     return Number(res.changes ?? 0);
+  }
+
+  // ── Baselines ──────────────────────────────────────────────────────────
+
+  setBaseline(
+    device: string,
+    snapshotId: string,
+    setBy = "agent",
+    label?: string,
+    notes?: string,
+  ): void {
+    this.db
+      .query(
+        `INSERT OR REPLACE INTO baselines (device, snapshot_id, set_at, set_by, label, notes)
+         VALUES ($device, $snapId, $setAt, $setBy, $label, $notes)`,
+      )
+      .run({
+        $device: device,
+        $snapId: snapshotId,
+        $setAt: Date.now(),
+        $setBy: setBy,
+        $label: label ?? null,
+        $notes: notes ?? null,
+      });
+  }
+
+  getBaseline(device: string): Baseline | null {
+    const row = this.db
+      .query("SELECT * FROM baselines WHERE device = $d")
+      .get({ $d: device }) as BaselineRow | null;
+    return row ? rowToBaseline(row) : null;
+  }
+
+  removeBaseline(device: string): boolean {
+    const res = this.db.query("DELETE FROM baselines WHERE device = $d").run({ $d: device });
+    return (res.changes ?? 0) > 0;
+  }
+
+  listBaselines(): Baseline[] {
+    const rows = this.db
+      .query("SELECT * FROM baselines ORDER BY set_at DESC")
+      .all() as BaselineRow[];
+    return rows.map(rowToBaseline);
   }
 
   close(): void {

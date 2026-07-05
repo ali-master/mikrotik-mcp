@@ -30,6 +30,7 @@ import { Note, Spinner } from "./geist";
 import { DeviceHealthCard } from "./health";
 import { JsonView } from "./highlight";
 import { useLiveStream, useReveals } from "./hooks";
+import { DriftView } from "./drift";
 import { MemoryView } from "./memory";
 import { ModulesView } from "./modules";
 import { PacketCapture } from "./packet-capture";
@@ -75,6 +76,7 @@ type ViewId =
   | "topology"
   | "packets"
   | "snapshots"
+  | "drift"
   | "plan"
   | "s3"
   | "backups"
@@ -90,6 +92,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "topology", label: "Topology", sub: "Layer-2 neighbours via MNDP / CDP / LLDP" },
   { id: "packets", label: "Packets", sub: "Live TZSP capture & decode" },
   { id: "snapshots", label: "Snapshots", sub: "Config history & time-travel diff" },
+  { id: "drift", label: "Drift Guard", sub: "Golden config baselines & live drift detection" },
   { id: "plan", label: "Change Plan", sub: "Dry-run intended RouterOS commands" },
   { id: "s3", label: "S3 Backups", sub: "List, download & delete S3 backup objects" },
   { id: "backups", label: "Backups", sub: "Local config vault — create, restore, manage" },
@@ -148,6 +151,7 @@ const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   topology: MONO_ACCENT,
   packets: MONO_ACCENT,
   snapshots: MONO_ACCENT,
+  drift: MONO_ACCENT,
   plan: MONO_ACCENT,
   s3: MONO_ACCENT,
   backups: MONO_ACCENT,
@@ -219,6 +223,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Capture a snapshot before a risky change, then diff after to audit the delta.",
       "The diff is line-level: green added, red removed.",
       "Snapshots are device config exports — for the dashboard’s OWN config history see the Config page.",
+    ],
+  },
+  drift: {
+    what: "Detect when router configs drift from their golden baseline — with change attribution and one-click reconciliation.",
+    tips: [
+      "Set a baseline via MCP tools (config_set_baseline) or the Baseline Manager below.",
+      "Click a device card to run a live drift check against its golden config.",
+      "Promote accepted changes as the new baseline, or reconcile to roll back.",
     ],
   },
   plan: {
@@ -344,6 +356,13 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <path d="M12 3 3 7.5 12 12 21 7.5 12 3Z" />
         <path d="M3 12 12 16.5 21 12" />
         <path d="M3 16.5 12 21 21 16.5" />
+      </>
+    ),
+    drift: (
+      <>
+        <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10Z" />
+        <path d="M9 12l2 2 4-4" />
+        <path d="M12 6v2M12 16v2M6 12h2M16 12h2" />
       </>
     ),
     plan: (
@@ -1099,6 +1118,9 @@ function App(): ReactNode {
 
         {/* ── Snapshots ── */}
         {view === "snapshots" && <SnapshotsView />}
+
+        {/* ── Drift Guard ── */}
+        {view === "drift" && <DriftView />}
 
         {/* ── Change Plan ── */}
         {view === "plan" && <ChangePlanView />}

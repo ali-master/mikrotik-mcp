@@ -17,6 +17,7 @@ import { certificateTools } from "./certificate";
 import { certStewardTools } from "./cert-steward";
 import { changePlanTools } from "./change-plan";
 import { complianceAuditTools } from "./compliance-audit";
+import { configDriftTools } from "./config-drift";
 import { configSnapshotTools } from "./config-snapshot";
 import { deviceTools } from "./devices";
 import { dhcpTools } from "./dhcp";
@@ -1027,6 +1028,15 @@ export const moduleCatalog: ModuleInfo[] = [
       "Capture point-in-time `/export` snapshots locally and time-travel diff any two (or against " +
       "the live device) to see exactly what changed.",
     tools: configSnapshotTools,
+  },
+  {
+    label: "Config Drift Guardian",
+    slug: "config-drift",
+    group: "System & Ops",
+    description:
+      "Golden-config baselines with drift detection, change attribution via system logs, " +
+      "and Safe Mode reconciliation.",
+    tools: configDriftTools,
   },
   {
     label: "S3 Backup",

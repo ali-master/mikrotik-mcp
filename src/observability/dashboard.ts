@@ -119,6 +119,7 @@ import { capture, DEFAULT_TZSP_PORT } from "./capture";
 import { isPoolEnabled, poolStatus } from "../core/connection-pool";
 import { isMacTelnetDevice } from "../core/transport";
 import { VERSION } from "../version";
+import { driftRoutes } from "./drift-routes";
 import { closeMemoryStore, memoryRoutes } from "./memory-routes";
 
 const SERVER_TAG = "mikrotik-mcp";
@@ -1255,6 +1256,9 @@ export async function runDashboard(
 
     const featureResp = await featureRoutes(req, url);
     if (featureResp) return featureResp;
+
+    const driftResp = await driftRoutes(req, url);
+    if (driftResp) return driftResp;
 
     const memoryResp = await memoryRoutes(req, url);
     if (memoryResp) return memoryResp;

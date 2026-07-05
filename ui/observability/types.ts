@@ -229,3 +229,47 @@ export interface MemoryConfig {
   dbPath: string;
   stats: MemoryStats | null;
 }
+
+// ── Config Drift Guardian ──────────────────────────────────────────────────
+export interface DriftBaseline {
+  device: string;
+  snapshotId: string;
+  setAt: number;
+  setBy: string;
+  label?: string;
+  notes?: string;
+  snapshot?: { lines: number; bytes: number; sha: string; rosVersion?: string } | null;
+}
+export interface DriftDeviceStatus {
+  device: string;
+  status: "in-sync" | "drifted" | "unknown" | "no-baseline";
+  baseline: DriftBaseline | null;
+  latestSnapshotId?: string;
+  latestSnapshotTs?: number;
+  error?: string;
+}
+export interface DriftSection {
+  path: string;
+  added: number;
+  removed: number;
+  hunks: string;
+}
+export interface DriftAttribution {
+  section: string;
+  timestamp?: string;
+  user?: string;
+  action?: string;
+  logLine: string;
+}
+export interface DriftReport {
+  device: string;
+  baselineId: string;
+  baselineTs: number;
+  capturedAt: number;
+  identical: boolean;
+  score: number;
+  summary: { added: number; removed: number; unchanged: number };
+  sections: DriftSection[];
+  attributions: DriftAttribution[];
+  unified: string;
+}
