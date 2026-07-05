@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "3.50.1",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 780,
+  "toolCount": 793,
   "tools": [
     {
       "name": "find_tools",
@@ -26537,6 +26537,129 @@
       }
     },
     {
+      "name": "config_set_baseline",
+      "title": "Set Golden Config Baseline",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Capture the current device `/export` and designate it as the golden-config baseline — the known-good reference point for drift detection. A device can have exactly one baseline; setting a new one replaces the previous. The export is also stored as a regular config snapshot in `~/.mikrotik-mcp/snapshots.db`. Use `config_check_drift` to compare the live config against this baseline; use `config_promote_drift` to accept the current (drifted) config as the new baseline. Optionally limit to one RouterOS section via `section` (e.g. 'ip firewall filter').",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Human label for this baseline, e.g. 'production-v2'.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Free-text notes about why this baseline was set.",
+            "type": "string"
+          },
+          "section": {
+            "description": "RouterOS path without leading slash. Omit for full config.",
+            "type": "string"
+          },
+          "terse": {
+            "default": true,
+            "description": "Use `/export terse` for cleaner diffs. Default true.",
+            "type": "boolean"
+          },
+          "show_sensitive": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": ["terse", "show_sensitive"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "config_check_drift",
+      "title": "Check Config Drift Against Baseline",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Compare the live device configuration against its golden baseline and return a drift report with: severity score (0–100), per-section breakdown of what changed, change attribution from system logs (who changed what and when), and a unified diff. Requires a baseline to be set first via `config_set_baseline`. Set `include_logs=false` to skip log-based change attribution (faster). Use `config_reconcile` to push the baseline back onto the device, or `config_promote_drift` to accept the drift.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "include_logs": {
+            "default": true,
+            "description": "Fetch system logs for change attribution. Default true.",
+            "type": "boolean"
+          },
+          "log_duration": {
+            "default": "7d",
+            "description": "How far back to search logs. RouterOS duration (e.g. '7d', '24h').",
+            "type": "string"
+          },
+          "max_output_lines": {
+            "default": 800,
+            "description": "Truncate the unified diff beyond this many lines.",
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 5000
+          }
+        },
+        "required": ["include_logs", "log_duration", "max_output_lines"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "config_reconcile",
+      "title": "Reconcile Device to Golden Baseline",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Push the golden baseline configuration back onto the device, reverting all drift. Replays the baseline's `/export` commands through RouterOS Safe Mode — if any command fails or the device becomes unreachable, all changes are automatically rolled back. With `confirm=false` (default) this is a DRY RUN: commands are applied and then rolled back, showing what would change. Set `confirm=true` to actually commit. Requires SSH (not MAC-Telnet). After a successful commit, a verification snapshot is captured to confirm the state.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "default": false,
+            "description": "false = dry-run (apply + rollback); true = commit for real.",
+            "type": "boolean"
+          }
+        },
+        "required": ["confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "config_promote_drift",
+      "title": "Promote Current Config as New Baseline",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Accept the device's current (drifted) configuration as the new golden baseline. Captures a fresh `/export` snapshot and replaces the existing baseline pointer. Use this after reviewing drift with `config_check_drift` and deciding the changes are intentional. The old baseline snapshot is preserved in snapshot history.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "Label for the new baseline.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Why the drift is being accepted.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "s3_backup_status",
       "title": "Check S3 Backup Configuration Status",
       "risk": "read",
@@ -27821,6 +27944,319 @@
           }
         },
         "required": ["confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_create_entities",
+      "title": "Create Knowledge Graph Entities",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Create one or more new entities in the persistent knowledge graph. Each entity has a unique name, a type (e.g. 'router', 'subnet', 'vlan', 'person', 'config_pattern'), and optional initial observations. Entities that already exist are silently skipped. Use this to record things the AI learns about the network, devices, users, or patterns.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "entities": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Unique name of the entity"
+                },
+                "entityType": {
+                  "type": "string",
+                  "description": "Type/category of the entity (e.g. 'router', 'subnet', 'person')"
+                },
+                "observations": {
+                  "description": "Initial observations (facts) to attach",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["name", "entityType"],
+              "additionalProperties": false
+            },
+            "description": "Entities to create"
+          }
+        },
+        "required": ["entities"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_create_relations",
+      "title": "Create Knowledge Graph Relations",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Create directed relations between existing entities in the knowledge graph. Both endpoint entities must already exist. Use active voice for relation types (e.g. 'manages', 'connects_to', 'provides_dhcp_for', 'part_of'). Duplicate relations are silently skipped.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "relations": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "description": "Source entity name"
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Target entity name"
+                },
+                "relationType": {
+                  "type": "string",
+                  "description": "Relation type in active voice (e.g. 'manages', 'connects_to', 'depends_on')"
+                }
+              },
+              "required": ["from", "to", "relationType"],
+              "additionalProperties": false
+            },
+            "description": "Relations to create"
+          }
+        },
+        "required": ["relations"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_add_observations",
+      "title": "Add Observations to Entities",
+      "risk": "write",
+      "annotations": {
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "description": "Add new observations (discrete facts) to existing entities in the knowledge graph. Each observation is a string (e.g. 'runs RouterOS 7.16', 'has 4 ether ports', 'managed by John'). Duplicate observations on the same entity are silently skipped. The entity must already exist.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "observations": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityName": {
+                  "type": "string",
+                  "description": "Name of the existing entity"
+                },
+                "contents": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Observations to add"
+                }
+              },
+              "required": ["entityName", "contents"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["observations"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_delete_entities",
+      "title": "Delete Knowledge Graph Entities",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Remove entities from the knowledge graph. This also deletes all their observations and any relations where they appear as an endpoint (cascade delete).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "entityNames": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names of entities to delete"
+          }
+        },
+        "required": ["entityNames"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_delete_observations",
+      "title": "Delete Observations from Entities",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Remove specific observations from entities in the knowledge graph. The entity itself is kept; only the named observation strings are removed.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "deletions": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityName": {
+                  "type": "string",
+                  "description": "Entity to remove observations from"
+                },
+                "observations": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Exact observation strings to delete"
+                }
+              },
+              "required": ["entityName", "observations"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["deletions"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_delete_relations",
+      "title": "Delete Knowledge Graph Relations",
+      "risk": "destructive",
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Remove specific relations from the knowledge graph. Each relation is identified by its (from, to, relationType) triple.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "relations": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "description": "Source entity name"
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Target entity name"
+                },
+                "relationType": {
+                  "type": "string",
+                  "description": "Relation type in active voice (e.g. 'manages', 'connects_to', 'depends_on')"
+                }
+              },
+              "required": ["from", "to", "relationType"],
+              "additionalProperties": false
+            },
+            "description": "Relations to delete"
+          }
+        },
+        "required": ["relations"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_read_graph",
+      "title": "Read Entire Knowledge Graph",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read the entire knowledge graph — all entities with their observations, plus all relations. Use this to get a complete picture of accumulated knowledge. For large graphs, prefer memory_search_nodes or memory_open_nodes.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_search_nodes",
+      "title": "Search Knowledge Graph",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Search for entities in the knowledge graph by name, type, or observation content. Returns matching entities with their observations, plus any relations where at least one endpoint is in the result set.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search term — matched against entity names, types, and observation content"
+          },
+          "limit": {
+            "description": "Max entities to return (default 50)",
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "memory_open_nodes",
+      "title": "Open Knowledge Graph Nodes",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Retrieve specific entities by exact name from the knowledge graph, with all their observations and any relations where at least one endpoint is in the requested set.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "names": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Exact entity names to retrieve"
+          }
+        },
+        "required": ["names"],
         "additionalProperties": false
       }
     },

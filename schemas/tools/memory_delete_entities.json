@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory_delete_entities",
+  "type": "object",
+  "properties": {
+    "entityNames": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of entities to delete"
+    }
+  },
+  "required": ["entityNames"],
+  "additionalProperties": false
+}

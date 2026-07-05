@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory_delete_observations",
+  "type": "object",
+  "properties": {
+    "deletions": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityName": {
+            "type": "string",
+            "description": "Entity to remove observations from"
+          },
+          "observations": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Exact observation strings to delete"
+          }
+        },
+        "required": ["entityName", "observations"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["deletions"],
+  "additionalProperties": false
+}

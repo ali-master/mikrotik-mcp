@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory_create_entities",
+  "type": "object",
+  "properties": {
+    "entities": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name of the entity"
+          },
+          "entityType": {
+            "type": "string",
+            "description": "Type/category of the entity (e.g. 'router', 'subnet', 'person')"
+          },
+          "observations": {
+            "description": "Initial observations (facts) to attach",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "entityType"],
+        "additionalProperties": false
+      },
+      "description": "Entities to create"
+    }
+  },
+  "required": ["entities"],
+  "additionalProperties": false
+}

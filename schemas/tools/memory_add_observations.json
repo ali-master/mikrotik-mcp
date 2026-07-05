@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory_add_observations",
+  "type": "object",
+  "properties": {
+    "observations": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "entityName": {
+            "type": "string",
+            "description": "Name of the existing entity"
+          },
+          "contents": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Observations to add"
+          }
+        },
+        "required": ["entityName", "contents"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["observations"],
+  "additionalProperties": false
+}

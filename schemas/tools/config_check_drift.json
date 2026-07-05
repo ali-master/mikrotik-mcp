@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config_check_drift",
+  "type": "object",
+  "properties": {
+    "include_logs": {
+      "default": true,
+      "description": "Fetch system logs for change attribution. Default true.",
+      "type": "boolean"
+    },
+    "log_duration": {
+      "default": "7d",
+      "description": "How far back to search logs. RouterOS duration (e.g. '7d', '24h').",
+      "type": "string"
+    },
+    "max_output_lines": {
+      "default": 800,
+      "description": "Truncate the unified diff beyond this many lines.",
+      "type": "integer",
+      "minimum": 50,
+      "maximum": 5000
+    }
+  },
+  "required": ["include_logs", "log_duration", "max_output_lines"],
+  "additionalProperties": false
+}

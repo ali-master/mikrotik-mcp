@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory_create_relations",
+  "type": "object",
+  "properties": {
+    "relations": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Source entity name"
+          },
+          "to": {
+            "type": "string",
+            "description": "Target entity name"
+          },
+          "relationType": {
+            "type": "string",
+            "description": "Relation type in active voice (e.g. 'manages', 'connects_to', 'depends_on')"
+          }
+        },
+        "required": ["from", "to", "relationType"],
+        "additionalProperties": false
+      },
+      "description": "Relations to create"
+    }
+  },
+  "required": ["relations"],
+  "additionalProperties": false
+}

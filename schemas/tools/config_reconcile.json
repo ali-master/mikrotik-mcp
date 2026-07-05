@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config_reconcile",
+  "type": "object",
+  "properties": {
+    "confirm": {
+      "default": false,
+      "description": "false = dry-run (apply + rollback); true = commit for real.",
+      "type": "boolean"
+    }
+  },
+  "required": ["confirm"],
+  "additionalProperties": false
+}

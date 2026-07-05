@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "config_set_baseline",
+  "type": "object",
+  "properties": {
+    "label": {
+      "description": "Human label for this baseline, e.g. 'production-v2'.",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Free-text notes about why this baseline was set.",
+      "type": "string"
+    },
+    "section": {
+      "description": "RouterOS path without leading slash. Omit for full config.",
+      "type": "string"
+    },
+    "terse": {
+      "default": true,
+      "description": "Use `/export terse` for cleaner diffs. Default true.",
+      "type": "boolean"
+    },
+    "show_sensitive": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": ["terse", "show_sensitive"],
+  "additionalProperties": false
+}

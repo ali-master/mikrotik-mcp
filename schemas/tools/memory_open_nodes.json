@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "memory_open_nodes",
+  "type": "object",
+  "properties": {
+    "names": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Exact entity names to retrieve"
+    }
+  },
+  "required": ["names"],
+  "additionalProperties": false
+}
