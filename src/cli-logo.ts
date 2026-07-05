@@ -9,9 +9,8 @@
  * crashes under React 19 because react-reconciler expects v18 internals).
  */
 import figlet from "figlet";
-import pkg from "../package.json" with { type: "json" };
-import { VERSION } from "./version";
 import gradient from "gradient-string";
+import { PKG_META, VERSION, WEBSITE_URL } from "./version";
 
 /* ── Brand palette (matches observability dashboard accents) ─────────────── */
 const BRAND = gradient(["#9d7bff", "#3291ff", "#2dd4bf"]);
@@ -41,8 +40,9 @@ export async function printBanner(): Promise<void> {
     process.stderr.write(`${colored}\n`);
 
     // ── Info box ────────────────────────────────────────────────────────
-    const author = typeof pkg.author === "object" ? pkg.author : { name: String(pkg.author) };
-    const site = (pkg.homepage ?? "").replace(/^https?:\/\//, "");
+    const author =
+      typeof PKG_META.author === "object" ? PKG_META.author : { name: PKG_META.author };
+    const site = WEBSITE_URL.replace(/^https?:\/\//, "");
 
     const w = 56; // inner width
     const hr = "─".repeat(w);
@@ -57,7 +57,7 @@ export async function printBanner(): Promise<void> {
 
     // Row 2: author · license · website
     const r2Name = author.name ?? "Unknown";
-    const r2License = pkg.license ?? "MIT";
+    const r2License = PKG_META.license ?? "MIT";
     const r2Text = `  ${CA}${r2Name}${R}${DIM}  ·  ${ITALIC}${r2License}${R}${DIM}  ·  ${CS}${site}${R}`;
     const r2Vis = r2Name.length + 2 + r2License.length + 4 + site.length + 4;
 
