@@ -157,6 +157,7 @@ async function authCheck(): Promise<number> {
 }
 
 async function main(): Promise<void> {
+  process.title = `MikroTik-MCP (${VERSION})`;
   const argv = process.argv.slice(2);
   const command = argv.find((a) => !a.startsWith("--")) ?? "serve";
 
@@ -164,7 +165,7 @@ async function main(): Promise<void> {
     process.stdout.write(HELP);
     return;
   }
-  if (argv.includes("--version") || command === "version") {
+  if (argv.includes("--version") || argv.includes("-v") || command === "version") {
     process.stdout.write(`${VERSION}\n`);
     return;
   }
@@ -192,14 +193,19 @@ async function main(): Promise<void> {
       `ssh-pool=${cfg.ssh.keepAlive ? "on" : "off"})`,
   );
 
-  // Close pooled SSH connections on process exit so the device sees a clean
+  // Close pooled SSH connections on shutdown so the device sees a clean
   // disconnect (vs. a TCP RST that RouterOS logs as a broken session).
-  const cleanup = (): void => {
+  let shuttingDown = false;
+  const shutdown = (signal: string): void => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info(`Received ${signal}, shutting down…`);
     closeConnectionPool();
+    process.exit(0);
   };
-  process.on("SIGINT", cleanup);
-  process.on("SIGTERM", cleanup);
-  process.on("exit", cleanup);
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("exit", closeConnectionPool);
 
   // Optional real-time observability dashboard — runs alongside whichever MCP
   // transport is active, on its own host/port. It opens local stores and kicks
@@ -221,7 +227,7 @@ async function main(): Promise<void> {
     // Connect the stdio transport FIRST so `initialize` is answered immediately
     // (Claude Desktop times out the handshake after ~60s). runStdio() resolves
     // right after `server.connect()` and the process stays alive on the stdin
-    // handle, so the dashboard starts afterwards without blocking the handshake.
+    // handle, so the dashboard starts afterward without blocking the handshake.
     // The recorder installs a beat later — tool calls never arrive that early.
     await runStdio();
     await startDashboard();
