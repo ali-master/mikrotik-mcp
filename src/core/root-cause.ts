@@ -10,6 +10,7 @@
  * this module stays import-free of `connector.ts` so it's testable without a
  * live device.
  */
+import { isIpAddress, isPrivateIp } from "../utils/ip";
 
 // ── Diagnostic dimensions ───────────────────────────────────────────────────
 
@@ -400,8 +401,10 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
     });
   }
 
-  // Target-specific DHCP/ARP check
-  if (isIpAddress(data.target)) {
+  // Target-specific DHCP/ARP check — only meaningful for local (private) IPs.
+  // External IPs like 8.8.8.8 are routed, so they'll never have a local ARP
+  // entry or DHCP lease — checking them would produce false "may be offline".
+  if (isIpAddress(data.target) && isPrivateIp(data.target)) {
     const lease = data.dhcpLeases.find((l) => l.address === data.target);
     const arp = data.arpEntries.find((e) => e.address === data.target);
 
@@ -750,8 +753,8 @@ function correlateRootCauses(
     });
   }
 
-  // ── Pattern: ARP incomplete → L2 issue
-  if (isIpAddress(data.target)) {
+  // ── Pattern: ARP incomplete → L2 issue (only for local/private targets)
+  if (isIpAddress(data.target) && isPrivateIp(data.target)) {
     const arp = data.arpEntries.find((e) => e.address === data.target);
     if (arp && !arp.complete && data.ping?.lossPct === 100) {
       causes.push({
@@ -827,10 +830,6 @@ function correlateRootCauses(
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-function isIpAddress(s: string): boolean {
-  return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(s);
-}
 
 function formatRule(r: FirewallRuleSnapshot): string {
   const parts = [`chain=${r.chain}`, `action=${r.action}`];

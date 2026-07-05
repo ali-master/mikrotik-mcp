@@ -9,6 +9,7 @@
  * interaction; this module stays import-free of `connector.ts` so it's testable
  * without a live device.
  */
+import { parseSize } from "./routeros-parse";
 
 // ── Version parsing ─────────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ export interface RouterboardInfo {
 }
 
 export interface UpdateInfo {
-  channel: UpdateChannel | string;
+  channel: string;
   installedVersion: string;
   latestVersion: string;
   updateAvailable: boolean;
@@ -147,10 +148,7 @@ export interface HealthSnapshot {
 }
 
 /** Compare pre and post health snapshots, return a diff report. */
-export function compareHealthSnapshots(
-  pre: HealthSnapshot,
-  post: HealthSnapshot,
-): HealthDiff {
+export function compareHealthSnapshots(pre: HealthSnapshot, post: HealthSnapshot): HealthDiff {
   const issues: string[] = [];
   const improvements: string[] = [];
   const neutral: string[] = [];
@@ -169,9 +167,7 @@ export function compareHealthSnapshots(
         `(of ${post.totalInterfaces} total)`,
     );
   } else if (post.activeInterfaces > pre.activeInterfaces) {
-    improvements.push(
-      `Active interfaces: ${pre.activeInterfaces} → ${post.activeInterfaces}`,
-    );
+    improvements.push(`Active interfaces: ${pre.activeInterfaces} → ${post.activeInterfaces}`);
   }
 
   // Route count — allow ±10% tolerance
@@ -244,7 +240,7 @@ export function assessUpgradeReadiness(state: FirmwareState): ReadinessCheck[] {
 
   // 2. CPU load — warn if high
   const cpuNum = Number.parseInt(state.cpuLoad, 10);
-  if (!isNaN(cpuNum) && cpuNum > 80) {
+  if (!Number.isNaN(cpuNum) && cpuNum > 80) {
     checks.push({
       label: "CPU load",
       status: "caution",
@@ -259,8 +255,8 @@ export function assessUpgradeReadiness(state: FirmwareState): ReadinessCheck[] {
   }
 
   // 3. Memory — warn if < 20% free
-  const free = parseMem(state.freeMemory);
-  const total = parseMem(state.totalMemory);
+  const free = parseSize(state.freeMemory) ?? 0;
+  const total = parseSize(state.totalMemory) ?? 0;
   if (free > 0 && total > 0) {
     const pct = Math.round((free / total) * 100);
     if (pct < 20) {
@@ -303,25 +299,10 @@ export function assessUpgradeReadiness(state: FirmwareState): ReadinessCheck[] {
   return checks;
 }
 
-/** Parse RouterOS memory string (e.g. "256.0MiB", "1024.0MiB") to bytes. */
-function parseMem(s: string): number {
-  const m = s.match(/([\d.]+)\s*(MiB|GiB|KiB)?/i);
-  if (!m) return 0;
-  const val = Number.parseFloat(m[1]);
-  const unit = (m[2] ?? "").toLowerCase();
-  if (unit === "gib") return val * 1024 * 1024 * 1024;
-  if (unit === "mib") return val * 1024 * 1024;
-  if (unit === "kib") return val * 1024;
-  return val;
-}
-
 // ── Report renderers ────────────────────────────────────────────────────────
 
 /** Render a single-device firmware status report. */
-export function renderFirmwareStatus(
-  state: FirmwareState,
-  device: string,
-): string {
+export function renderFirmwareStatus(state: FirmwareState, device: string): string {
   const lines: string[] = [];
 
   lines.push(`FIRMWARE STATUS — ${device}`);
@@ -446,9 +427,7 @@ export function renderFleetFirmwareCheck(
       lines.push(`  ${d.name}: ${d.current} → ${d.available} (${d.channel})`);
     }
     lines.push("");
-    lines.push(
-      "Use `firmware_stage` to download packages, then `firmware_upgrade` to apply.",
-    );
+    lines.push("Use `firmware_stage` to download packages, then `firmware_upgrade` to apply.");
   }
 
   return lines.join("\n");
@@ -464,7 +443,9 @@ export function renderHealthSnapshot(snap: HealthSnapshot, label: string): strin
   lines.push(`  CPU load:          ${snap.cpuLoad}`);
   lines.push(`  Memory:            ${snap.freeMemory} free / ${snap.totalMemory} total`);
   lines.push(`  Routes:            ${snap.routeCount}`);
-  lines.push(`  Interfaces:        ${snap.activeInterfaces} active / ${snap.totalInterfaces} total`);
+  lines.push(
+    `  Interfaces:        ${snap.activeInterfaces} active / ${snap.totalInterfaces} total`,
+  );
   lines.push(`  PPP sessions:      ${snap.pppSessions}`);
   lines.push(`  DHCP leases:       ${snap.dhcpLeases}`);
   return lines.join("\n");
@@ -503,8 +484,7 @@ export function renderReadiness(checks: ReadinessCheck[]): string {
   lines.push("");
 
   for (const c of checks) {
-    const icon =
-      c.status === "ready" ? "OK  " : c.status === "caution" ? "WARN" : "STOP";
+    const icon = c.status === "ready" ? "OK  " : c.status === "caution" ? "WARN" : "STOP";
     lines.push(`  ${icon}  ${c.label}`);
     if (c.detail) lines.push(`        ${c.detail}`);
   }

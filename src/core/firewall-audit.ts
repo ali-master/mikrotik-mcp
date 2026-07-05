@@ -249,6 +249,8 @@ function matchSummary(rule: FirewallRule): string {
     "dst-port",
     "in-interface",
     "out-interface",
+    "in-interface-list",
+    "out-interface-list",
     "connection-state",
     "src-address-list",
     "dst-address-list",

@@ -16,7 +16,6 @@ import {
   assessUpgradeReadiness,
   renderFleetFirmwareCheck,
   renderFirmwareStatus,
-  renderHealthDiff,
   renderHealthSnapshot,
   renderReadiness,
 } from "../core/firmware-lifecycle";
@@ -25,27 +24,14 @@ import type {
   HealthSnapshot,
   PackageInfo,
   RouterboardInfo,
-  UpdateChannel,
   UpdateInfo,
 } from "../core/firmware-lifecycle";
-import { compareHealthSnapshots } from "../core/firmware-lifecycle";
 import { DANGEROUS, READ, WRITE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { listDevices, resolveDeviceName } from "../core/runtime";
-import { Cmd, isEmpty, looksLikeError, quoteValue } from "../core/routeros";
+import { Cmd, isEmpty, looksLikeError } from "../core/routeros";
 import { parseKeyValues, parseRecords } from "../core/routeros-parse";
-
-// ── Device state fetchers ───────────────────────────────────────────────────
-
-/** Run a command, returning `""` on error. */
-async function safe(cmd: string, ctx: ToolContext): Promise<string> {
-  try {
-    const out = await executeMikrotikCommand(cmd, ctx);
-    return looksLikeError(out) ? "" : out;
-  } catch {
-    return "";
-  }
-}
+import { safe } from "../utils/safe-exec";
 
 /** Parse `/system package print` into PackageInfo[]. */
 function parsePackages(raw: string): PackageInfo[] {
@@ -120,15 +106,14 @@ async function fetchFirmwareState(ctx: ToolContext): Promise<FirmwareState> {
 
 /** Capture a health snapshot for pre/post upgrade comparison. */
 async function captureHealthSnapshot(ctx: ToolContext): Promise<HealthSnapshot> {
-  const [resourceRaw, healthRaw, routesRaw, interfacesRaw, pppRaw, dhcpRaw] =
-    await Promise.all([
-      safe("/system resource print", ctx),
-      safe("/system health print", ctx),
-      safe("/ip route print count-only", ctx),
-      safe("/interface print detail", ctx),
-      safe("/ppp active print count-only", ctx),
-      safe("/ip dhcp-server lease print count-only where status=bound", ctx),
-    ]);
+  const [resourceRaw, healthRaw, routesRaw, interfacesRaw, pppRaw, dhcpRaw] = await Promise.all([
+    safe("/system resource print", ctx),
+    safe("/system health print", ctx),
+    safe("/ip route print count-only", ctx),
+    safe("/interface print detail", ctx),
+    safe("/ppp active print count-only", ctx),
+    safe("/ip dhcp-server lease print count-only where status=bound", ctx),
+  ]);
 
   const res = parseKeyValues(resourceRaw);
 
@@ -156,9 +141,7 @@ async function captureHealthSnapshot(ctx: ToolContext): Promise<HealthSnapshot> 
 
 // ── Tools ───────────────────────────────────────────────────────────────────
 
-const channelEnum = z
-  .enum(["stable", "long-term", "testing"])
-  .describe("RouterOS update channel.");
+const channelEnum = z.enum(["stable", "long-term", "testing"]).describe("RouterOS update channel.");
 
 export const firmwareLifecycleTools: ToolModule = [
   // ── firmware_check ────────────────────────────────────────────────────
@@ -194,17 +177,11 @@ export const firmwareLifecycleTools: ToolModule = [
 
         // Optionally set channel
         if (a.channel) {
-          await executeMikrotikCommand(
-            `/system package update set channel=${a.channel}`,
-            ctx,
-          );
+          await executeMikrotikCommand(`/system package update set channel=${a.channel}`, ctx);
         }
 
         // Trigger update check
-        await executeMikrotikCommand(
-          "/system package update check-for-updates once",
-          ctx,
-        );
+        await executeMikrotikCommand("/system package update check-for-updates once", ctx);
 
         const state = await fetchFirmwareState(ctx);
         const readiness = assessUpgradeReadiness(state);
@@ -232,23 +209,20 @@ export const firmwareLifecycleTools: ToolModule = [
 
       ctx.info(`Fleet firmware check: ${targets.length} device(s)`);
 
-      const results: { name: string; state: FirmwareState | null; error?: string }[] =
-        [];
+      const results: {
+        name: string;
+        state: FirmwareState | null;
+        error?: string;
+      }[] = [];
 
       for (const deviceName of targets) {
         const resolved = resolveDeviceName(deviceName);
         const dctx = createContext(undefined, deviceName);
         try {
           if (a.channel) {
-            await executeMikrotikCommand(
-              `/system package update set channel=${a.channel}`,
-              dctx,
-            );
+            await executeMikrotikCommand(`/system package update set channel=${a.channel}`, dctx);
           }
-          await executeMikrotikCommand(
-            "/system package update check-for-updates once",
-            dctx,
-          );
+          await executeMikrotikCommand("/system package update check-for-updates once", dctx);
           const state = await fetchFirmwareState(dctx);
           results.push({ name: resolved, state });
         } catch (err) {
@@ -291,15 +265,11 @@ export const firmwareLifecycleTools: ToolModule = [
           `/system package update set channel=${a.channel}`,
           ctx,
         );
-        if (looksLikeError(chResult))
-          return `Failed to set channel: ${chResult}`;
+        if (looksLikeError(chResult)) return `Failed to set channel: ${chResult}`;
       }
 
       // Check for updates first
-      const checkResult = await executeMikrotikCommand(
-        "/system package update check-for-updates once",
-        ctx,
-      );
+      await executeMikrotikCommand("/system package update check-for-updates once", ctx);
 
       // Read update status
       const updateRaw = await safe("/system package update print", ctx);
@@ -316,10 +286,7 @@ export const firmwareLifecycleTools: ToolModule = [
       }
 
       // Download packages
-      const dlResult = await executeMikrotikCommand(
-        "/system package update download",
-        ctx,
-      );
+      const dlResult = await executeMikrotikCommand("/system package update download", ctx);
 
       if (looksLikeError(dlResult)) {
         return `Failed to download update packages: ${dlResult}`;
@@ -337,9 +304,7 @@ export const firmwareLifecycleTools: ToolModule = [
       lines.push(`  Staged:      ${updateInfo.latestVersion}`);
       lines.push(`  Status:      ${postStatus.status ?? "downloaded"}`);
       lines.push("");
-      lines.push(
-        "Packages downloaded. Use `firmware_upgrade` to install (device will reboot).",
-      );
+      lines.push("Packages downloaded. Use `firmware_upgrade` to install (device will reboot).");
       lines.push(
         "To schedule the upgrade for a maintenance window, use `firmware_upgrade` with " +
           "`schedule_time`.",
@@ -365,9 +330,7 @@ export const firmwareLifecycleTools: ToolModule = [
       "verify the upgrade and run the post-upgrade health comparison. " +
       "Requires `confirm=true` — the device WILL REBOOT and be offline for 1-3 minutes.",
     inputSchema: {
-      confirm: z
-        .boolean()
-        .describe("Must be true to execute the upgrade. Device will reboot."),
+      confirm: z.boolean().describe("Must be true to execute the upgrade. Device will reboot."),
       schedule_time: z
         .string()
         .optional()
@@ -433,8 +396,7 @@ export const firmwareLifecycleTools: ToolModule = [
         // Build the upgrade script
         let script = "/system package update install";
         if (a.upgrade_routerboard) {
-          script =
-            `:delay 3s; /system routerboard upgrade; :delay 2s; ${  script}`;
+          script = `:delay 3s; /system routerboard upgrade; :delay 2s; ${script}`;
         }
 
         // Remove any existing upgrade scheduler
@@ -451,7 +413,10 @@ export const firmwareLifecycleTools: ToolModule = [
           .opt("start-date", a.schedule_date)
           .set("interval", "0")
           .set("policy", "ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon")
-          .set("comment", `MCP firmware upgrade: ${updateInfo.installedVersion} -> ${updateInfo.latestVersion}`)
+          .set(
+            "comment",
+            `MCP firmware upgrade: ${updateInfo.installedVersion} -> ${updateInfo.latestVersion}`,
+          )
           .build();
 
         const schResult = await executeMikrotikCommand(cmd, ctx);
@@ -463,7 +428,9 @@ export const firmwareLifecycleTools: ToolModule = [
         lines.push("");
         lines.push(`  Upgrade:     ${updateInfo.installedVersion} → ${updateInfo.latestVersion}`);
         lines.push(`  Channel:     ${updateInfo.channel}`);
-        lines.push(`  Scheduled:   ${a.schedule_time}${a.schedule_date ? ` on ${a.schedule_date}` : ""}`);
+        lines.push(
+          `  Scheduled:   ${a.schedule_time}${a.schedule_date ? ` on ${a.schedule_date}` : ""}`,
+        );
         lines.push(`  Scheduler:   ${schedulerName}`);
         if (a.upgrade_routerboard) {
           lines.push(`  RouterBOARD: Will also upgrade board firmware`);
@@ -486,10 +453,7 @@ export const firmwareLifecycleTools: ToolModule = [
 
       if (a.upgrade_routerboard) {
         ctx.info("Upgrading RouterBOARD firmware first");
-        const rbResult = await executeMikrotikCommand(
-          "/system routerboard upgrade",
-          ctx,
-        );
+        const rbResult = await executeMikrotikCommand("/system routerboard upgrade", ctx);
         if (looksLikeError(rbResult)) {
           lines.push(`  RouterBOARD upgrade warning: ${rbResult}`);
         } else {
@@ -569,9 +533,7 @@ export const firmwareLifecycleTools: ToolModule = [
         // If we know the pre-upgrade version, note the version change
         if (a.pre_snapshot_version && a.pre_snapshot_version !== postSnap.version) {
           lines.push("");
-          lines.push(
-            `Version upgraded: ${a.pre_snapshot_version} → ${postSnap.version}`,
-          );
+          lines.push(`Version upgraded: ${a.pre_snapshot_version} → ${postSnap.version}`);
         }
       }
 
@@ -582,9 +544,7 @@ export const firmwareLifecycleTools: ToolModule = [
         lines.push(
           `  Current: ${state.routerboard.currentFirmware}  →  Available: ${state.routerboard.upgradeFirmware}`,
         );
-        lines.push(
-          "  Use `firmware_upgrade` with `upgrade_routerboard=true` to include it.",
-        );
+        lines.push("  Use `firmware_upgrade` with `upgrade_routerboard=true` to include it.");
       }
 
       // Check for pending scheduled upgrade

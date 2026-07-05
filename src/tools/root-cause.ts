@@ -8,7 +8,6 @@
  * plain-language root-cause diagnosis with exact fix commands.
  */
 import { z } from "zod";
-import { executeMikrotikCommand } from "../core/connector";
 import type { ToolContext } from "../core/context";
 import { ALL_DIMENSIONS, analyzeRootCause, renderDiagnosisReport } from "../core/root-cause";
 import type {
@@ -25,24 +24,12 @@ import type {
 import { READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { resolveDeviceName } from "../core/runtime";
-import { isEmpty, looksLikeError, quoteValue } from "../core/routeros";
-import { parseKeyValues, parseRecords } from "../core/routeros-parse";
+import { isEmpty, quoteValue } from "../core/routeros";
+import { parseKeyValues, parsePercent, parseRecords, parseSize } from "../core/routeros-parse";
+import { isIpAddress, isIpLike } from "../utils/ip";
+import { num } from "../utils/num";
+import { safe } from "../utils/safe-exec";
 import { parsePingSummary } from "./dr-drill";
-
-// ── Device data collectors ──────────────────────────────────────────────────
-
-async function safe(cmd: string, ctx: ToolContext): Promise<string> {
-  try {
-    const out = await executeMikrotikCommand(cmd, ctx);
-    return looksLikeError(out) ? "" : out;
-  } catch {
-    return "";
-  }
-}
-
-function num(s: string | undefined): number {
-  return Number.parseInt(s ?? "0", 10) || 0;
-}
 
 /** Collect interface snapshots. */
 async function collectInterfaces(ctx: ToolContext): Promise<InterfaceSnapshot[]> {
@@ -131,7 +118,7 @@ async function collectFirewallRules(
   const all = rows.map(parseFirewallRow);
 
   // Filter rules that could affect the target
-  const isIp = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(target);
+  const isIp = isIpAddress(target);
   const matching = isIp
     ? all.filter(
         (r) => !r.srcAddress || r.srcAddress === target || !r.dstAddress || r.dstAddress === target,
@@ -286,10 +273,11 @@ async function collectDiagnosticData(
   // Parse DNS settings
   const dnsKv = parseKeyValues(dnsSettingsRaw);
 
-  // Parse resources
+  // Parse resources — use the battle-tested parsers from routeros-parse that
+  // handle "12%", "256.0MiB", "1.2 GiB" etc. correctly across RouterOS versions.
   const resKv = parseKeyValues(resourceRaw);
-  const totalMem = parseMemMiB(resKv["total-memory"]);
-  const freeMem = parseMemMiB(resKv["free-memory"]);
+  const totalMem = parseSize(resKv["total-memory"]) ?? 0;
+  const freeMem = parseSize(resKv["free-memory"]) ?? 0;
   const memUsedPct = totalMem > 0 ? Math.round(((totalMem - freeMem) / totalMem) * 100) : 0;
 
   return {
@@ -309,30 +297,15 @@ async function collectDiagnosticData(
     arpEntries,
     dhcpLeases,
     dnsResolveResult: dnsResult ?? undefined,
-    dnsServers: dnsKv.servers ?? "",
+    dnsServers: [dnsKv.servers, dnsKv["dynamic-servers"]].filter(Boolean).join(",") || "",
     dnsAllowRemote: (dnsKv["allow-remote-requests"] ?? "").toLowerCase() === "yes",
-    cpuLoad: num(resKv["cpu-load"]),
+    cpuLoad: parsePercent(resKv["cpu-load"]) ?? 0,
     memoryUsedPct: memUsedPct,
     uptime: resKv.uptime ?? "",
     rosVersion: resKv.version ?? "",
     relevantLogs: logs,
     tunnelInterfaces: tunnels,
   };
-}
-
-function isIpLike(s: string): boolean {
-  return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d+)?$/.test(s);
-}
-
-function parseMemMiB(s: string | undefined): number {
-  if (!s) return 0;
-  const m = s.match(/([\d.]+)\s*(MiB|GiB|KiB)?/i);
-  if (!m) return 0;
-  const v = Number.parseFloat(m[1]);
-  const u = (m[2] ?? "").toLowerCase();
-  if (u === "gib") return v * 1024;
-  if (u === "kib") return v / 1024;
-  return v; // MiB or unitless
 }
 
 // ── Tools ───────────────────────────────────────────────────────────────────

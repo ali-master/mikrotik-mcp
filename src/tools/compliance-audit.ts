@@ -30,18 +30,7 @@ import type { ToolModule } from "../core/registry";
 import { listDevices, resolveDeviceName } from "../core/runtime";
 import { looksLikeError } from "../core/routeros";
 import { parseCertExpiry, parseKeyValues, parseRecords } from "../core/routeros-parse";
-
-// ── Device state fetcher ────────────────────────────────────────────────────
-
-/** Run a RouterOS command, returning `""` on error so the engine can skip. */
-async function safe(cmd: string, ctx: ToolContext): Promise<string> {
-  try {
-    const out = await executeMikrotikCommand(cmd, ctx);
-    return looksLikeError(out) ? "" : out;
-  } catch {
-    return "";
-  }
-}
+import { safe } from "../utils/safe-exec";
 
 /** Fetch all device state slices needed by the compliance engine. */
 async function fetchComplianceState(ctx: ToolContext): Promise<DeviceComplianceState> {
