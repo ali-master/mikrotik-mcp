@@ -24,6 +24,50 @@ import type { ToolContext } from "../core/context";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
 
+/**
+ * Resolve a user-supplied rule identifier to a RouterOS `.id` value.
+ *
+ * If the input already carries the `*` prefix (e.g. `*1F`) it is verified and
+ * returned as-is. A bare number like `"3"` is ambiguous — it could be `.id=*3`
+ * or positional row 3. We try `.id=*N` first; on miss we query all rule `.id`s
+ * and pick by positional index.
+ *
+ * Returns `null` when neither interpretation matches a rule.
+ */
+async function resolveFilterRuleId(ruleId: string, ctx: ToolContext): Promise<string | null> {
+  if (/^\d+$/.test(ruleId)) {
+    // Try as .id first
+    const id = `*${ruleId}`;
+    const byId = await executeMikrotikCommand(
+      `/ip firewall filter print count-only where .id=${id}`,
+      ctx,
+    );
+    if (byId.trim() !== "0") return id;
+
+    // Fall back to positional: use `:put` to dump the .id at that index.
+    // `:foreach` + `get .id` lists all ids in order; we pick by index.
+    const idsRaw = await executeMikrotikCommand(
+      `:foreach i in=[/ip firewall filter find] do={:put $i}`,
+      ctx,
+    );
+    if (isEmpty(idsRaw)) return null;
+    const ids = idsRaw
+      .trim()
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const pos = Number.parseInt(ruleId, 10);
+    return pos >= 0 && pos < ids.length ? ids[pos] : null;
+  }
+
+  // Already prefixed — verify it exists.
+  const count = await executeMikrotikCommand(
+    `/ip firewall filter print count-only where .id=${ruleId}`,
+    ctx,
+  );
+  return count.trim() !== "0" ? ruleId : null;
+}
+
 /** Shared update routine — used by update/enable/disable. */
 async function updateFilterRule(
   a: {
@@ -145,7 +189,8 @@ async function updateFilterRule(
 
   if (updates.length === 0) return "No updates specified.";
 
-  const id = /^\d+$/.test(a.rule_id) ? `*${a.rule_id}` : a.rule_id;
+  const id = await resolveFilterRuleId(a.rule_id, ctx);
+  if (!id) return `Firewall filter rule '${a.rule_id}' not found.`;
   const cmd = `/ip firewall filter set ${id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
   if (looksLikeError(result)) return `Failed to update firewall filter rule: ${result}`;
@@ -412,8 +457,11 @@ export const firewallFilterTools: ToolModule = [
       if (a.invalid_only) filters.push("invalid=yes");
       if (a.dynamic_only) filters.push("dynamic=yes");
 
+      // Use `print detail` so the output includes `.id` values (e.g. *0, *1F).
+      // Plain `print` shows only positional row numbers in the `#` column, and
+      // users often mistake those for `.id` — leading to silent wrong-rule lookups.
       const result = await executeMikrotikCommand(
-        `/ip firewall filter print${whereClause(filters)}`,
+        `/ip firewall filter print detail${whereClause(filters)}`,
         ctx,
       );
       return isEmpty(result)
@@ -429,21 +477,23 @@ export const firewallFilterTools: ToolModule = [
     description:
       "Gets the full detail of one IPv4 firewall FILTER rule (`/ip firewall filter`) by id — " +
       "every matcher, action, counter and flag. For IPv6 use get_ipv6_filter_rule. " +
-      'rule_id: the `.id` from list_filter_rules e.g. "*1" or "0".',
+      'rule_id: preferably the `.id` from list_filter_rules e.g. "*1F". A bare number like "3" ' +
+      "is tried as `.id=*3` first, then as the positional row index if no `.id` matches.",
     inputSchema: {
-      rule_id: z.string().describe('Rule ID from list output e.g. "*1" or "0"'),
+      rule_id: z.string().describe('Rule .id e.g. "*1F", or bare position number e.g. "3"'),
     },
     async handler(a, ctx) {
       ctx.info(`Getting firewall filter rule details: rule_id=${a.rule_id}`);
-      // RouterOS .id values require a "*" prefix (e.g. *0, *1, *1F). A bare
-      // number like "1" won't match in a `where .id=` query — prefix it.
-      const id = /^\d+$/.test(a.rule_id) ? `*${a.rule_id}` : a.rule_id;
+
+      const id = await resolveFilterRuleId(a.rule_id, ctx);
+      if (!id) return `Firewall filter rule '${a.rule_id}' not found.`;
+
       const result = await executeMikrotikCommand(
         `/ip firewall filter print detail where .id=${id}`,
         ctx,
       );
       return isEmpty(result)
-        ? `Firewall filter rule with ID '${a.rule_id}' not found.`
+        ? `Firewall filter rule '${a.rule_id}' not found.`
         : `FIREWALL FILTER RULE DETAILS:\n\n${result}`;
     },
   }),
@@ -532,16 +582,13 @@ export const firewallFilterTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Removing firewall filter rule: rule_id=${a.rule_id}`);
 
-      const id = /^\d+$/.test(a.rule_id) ? `*${a.rule_id}` : a.rule_id;
-      const count = await executeMikrotikCommand(
-        `/ip firewall filter print count-only where .id=${id}`,
-        ctx,
-      );
-      if (count.trim() === "0") return `Firewall filter rule with ID '${a.rule_id}' not found.`;
+      // Resolve the rule id — bare numbers try .id=*N first, then positional.
+      const id = await resolveFilterRuleId(a.rule_id, ctx);
+      if (!id) return `Firewall filter rule '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(`/ip firewall filter remove ${id}`, ctx);
       if (looksLikeError(result)) return `Failed to remove firewall filter rule: ${result}`;
-      return `Firewall filter rule with ID '${a.rule_id}' removed successfully.`;
+      return `Firewall filter rule '${a.rule_id}' (${id}) removed successfully.`;
     },
   }),
 
@@ -562,19 +609,15 @@ export const firewallFilterTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Moving firewall filter rule: rule_id=${a.rule_id} to position ${a.destination}`);
 
-      const id = /^\d+$/.test(a.rule_id) ? `*${a.rule_id}` : a.rule_id;
-      const count = await executeMikrotikCommand(
-        `/ip firewall filter print count-only where .id=${id}`,
-        ctx,
-      );
-      if (count.trim() === "0") return `Firewall filter rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveFilterRuleId(a.rule_id, ctx);
+      if (!id) return `Firewall filter rule '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
         `/ip firewall filter move ${id} destination=${a.destination}`,
         ctx,
       );
       if (looksLikeError(result)) return `Failed to move firewall filter rule: ${result}`;
-      return `Firewall filter rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
+      return `Firewall filter rule '${a.rule_id}' (${id}) moved to position ${a.destination}.`;
     },
   }),
 

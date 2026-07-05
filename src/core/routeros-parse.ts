@@ -261,12 +261,13 @@ export interface ParsedRecords {
 /** A record-starting line: leading index, then the rest (flags + key=value run). */
 const INDEX_LINE = /^\s*(\d+)\s+(.*)$/;
 /**
- * Leading flag letters on a record line: an uppercase run that is its own token.
- * RouterOS flags are uppercase (R, X, D, S, I, …); requiring uppercase avoids
- * eating a lowercase `key=` name, and not requiring a following `key=` means we
- * still capture flags on rows whose next token is a `;;;` comment or nothing.
+ * Leading flag letters on a record line. RouterOS v6 flags are uppercase only
+ * (R, X, D); v7 mixes upper and lower case — routes use `As` (active+static),
+ * `DAd` (dynamic+active+dynamic-route), etc. The flag token is a contiguous run
+ * of ASCII letters that must start with an uppercase letter (so we don't eat a
+ * lowercase `key=value` name) and be followed by whitespace or end-of-string.
  */
-const LEADING_FLAGS = /^([A-Z]+)(?=\s|$)/;
+const LEADING_FLAGS = /^([A-Z][A-Za-z]*)(?=\s|$)/;
 
 /** Build the ordered union of keys seen across rows (first-seen order). */
 function unionColumns(rows: Record<string, string>[]): string[] {

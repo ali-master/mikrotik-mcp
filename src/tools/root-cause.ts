@@ -73,38 +73,44 @@ async function collectRoutes(ctx: ToolContext): Promise<{
 /** Collect OSPF neighbors. */
 async function collectOspfNeighbors(ctx: ToolContext): Promise<RoutingNeighbor[]> {
   const raw = await safe("/routing ospf neighbor print detail", ctx);
-  if (!raw) return [];
-  return parseRecords(raw).rows.map((r) => ({
-    id: r["neighbor-id"] ?? r.router ?? "",
-    address: r.address ?? "",
-    state: r.state ?? "",
-    interface: r.interface ?? "",
-    uptime: r.uptime,
-  }));
+  if (!raw || isEmpty(raw)) return [];
+  return parseRecords(raw)
+    .rows.map((r) => ({
+      id: r["neighbor-id"] ?? r.router ?? "",
+      address: r.address ?? "",
+      state: r.state ?? "",
+      interface: r.interface ?? "",
+      uptime: r.uptime,
+    }))
+    .filter((n) => n.id || n.address); // skip entries with no identifying fields
 }
 
 /** Collect BGP peers. */
 async function collectBgpPeers(ctx: ToolContext): Promise<RoutingNeighbor[]> {
   const raw = await safe("/routing bgp session print detail", ctx);
-  if (!raw) {
+  if (!raw || isEmpty(raw)) {
     // Try older v6 syntax
     const raw2 = await safe("/routing bgp peer print detail", ctx);
-    if (!raw2) return [];
-    return parseRecords(raw2).rows.map((r) => ({
-      id: r.name ?? "",
-      address: r["remote-address"] ?? "",
-      state: r.state ?? "",
+    if (!raw2 || isEmpty(raw2)) return [];
+    return parseRecords(raw2)
+      .rows.map((r) => ({
+        id: r.name ?? "",
+        address: r["remote-address"] ?? "",
+        state: r.state ?? "",
+        interface: r.interface ?? "",
+        uptime: r.uptime,
+      }))
+      .filter((p) => p.id || p.address);
+  }
+  return parseRecords(raw)
+    .rows.map((r) => ({
+      id: r.name ?? r["remote.address"] ?? "",
+      address: r["remote.address"] ?? r["remote-address"] ?? "",
+      state: r.state ?? r.established ?? "",
       interface: r.interface ?? "",
       uptime: r.uptime,
-    }));
-  }
-  return parseRecords(raw).rows.map((r) => ({
-    id: r.name ?? r["remote.address"] ?? "",
-    address: r["remote.address"] ?? r["remote-address"] ?? "",
-    state: r.state ?? r.established ?? "",
-    interface: r.interface ?? "",
-    uptime: r.uptime,
-  }));
+    }))
+    .filter((p) => p.id || p.address);
 }
 
 /** Collect firewall rules matching a target address. */
@@ -237,7 +243,7 @@ async function collectDiagnosticData(
     arpEntries,
     dhcpLeases,
     dnsResult,
-    dnsSettingsRaw,
+    dnsSettingsParts,
     resourceRaw,
     logs,
     tunnels,
@@ -261,7 +267,16 @@ async function collectDiagnosticData(
     dims.has("dns") && !isIpLike(target)
       ? safe(`[:resolve ${quoteValue(target)}]`, ctx)
       : Promise.resolve(undefined),
-    dims.has("dns") ? safe("/ip dns print", ctx) : Promise.resolve(""),
+    // Fetch DNS servers with `:put` for reliable single-line output. RouterOS
+    // 7.23+ wraps long values across continuation lines in `/ip dns print`, which
+    // the line-oriented parseKeyValues misses — `:put` always returns one line.
+    dims.has("dns")
+      ? Promise.all([
+          safe(":put [/ip dns get servers]", ctx),
+          safe(":put [/ip dns get dynamic-servers]", ctx),
+          safe(":put [/ip dns get allow-remote-requests]", ctx),
+        ])
+      : Promise.resolve(["", "", ""]),
     dims.has("resources") ? safe("/system resource print", ctx) : Promise.resolve(""),
     dims.has("logs") ? collectLogs(target, ctx) : Promise.resolve([]),
     dims.has("vpn") ? collectTunnels(ctx) : Promise.resolve([]),
@@ -270,8 +285,12 @@ async function collectDiagnosticData(
   // Parse ping
   const ping = pingResult ? (parsePingSummary(pingResult) ?? undefined) : undefined;
 
-  // Parse DNS settings
-  const dnsKv = parseKeyValues(dnsSettingsRaw);
+  // Parse DNS settings — now comes as three individual `:put` results.
+  const [dnsServersRaw, dnsDynamicRaw, dnsAllowRemoteRaw] = dnsSettingsParts as [
+    string,
+    string,
+    string,
+  ];
 
   // Parse resources — use the battle-tested parsers from routeros-parse that
   // handle "12%", "256.0MiB", "1.2 GiB" etc. correctly across RouterOS versions.
@@ -297,8 +316,10 @@ async function collectDiagnosticData(
     arpEntries,
     dhcpLeases,
     dnsResolveResult: dnsResult ?? undefined,
-    dnsServers: [dnsKv.servers, dnsKv["dynamic-servers"]].filter(Boolean).join(",") || "",
-    dnsAllowRemote: (dnsKv["allow-remote-requests"] ?? "").toLowerCase() === "yes",
+    dnsServers: [dnsServersRaw.trim(), dnsDynamicRaw.trim()].filter(Boolean).join(",") || "",
+    dnsAllowRemote:
+      dnsAllowRemoteRaw.trim().toLowerCase() === "yes" ||
+      dnsAllowRemoteRaw.trim().toLowerCase() === "true",
     cpuLoad: parsePercent(resKv["cpu-load"]) ?? 0,
     memoryUsedPct: memUsedPct,
     uptime: resKv.uptime ?? "",

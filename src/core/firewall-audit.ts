@@ -215,11 +215,67 @@ function covers(key: string, aVal: string, bVal: string): boolean {
   return false;
 }
 
+/**
+ * Cross-key pairs: `in-interface` ↔ `in-interface-list` (and `out-` variants).
+ * When rule A constrains one and rule B constrains the other, we can still
+ * determine coverage if we know which interfaces belong to which lists.
+ */
+const INTERFACE_LIST_PAIRS: [string, string][] = [
+  ["in-interface-list", "in-interface"],
+  ["out-interface-list", "out-interface"],
+];
+
+/** Module-level list membership, set before each audit run. */
+let _ifaceLists: Map<string, Set<string>> | undefined;
+
+/**
+ * Check whether A's interface-list condition covers B's concrete interface
+ * (or vice versa), using the resolved membership map.
+ *
+ * Returns `true` if A's condition provably matches every packet B's condition
+ * matches, `false` if it provably doesn't, and `undefined` when we can't tell
+ * (no membership data, or the pair doesn't apply).
+ */
+function interfaceListCovers(
+  aKey: string,
+  aVal: string,
+  bKey: string,
+  bVal: string,
+): boolean | undefined {
+  if (!_ifaceLists) return undefined;
+
+  for (const [listKey, ifaceKey] of INTERFACE_LIST_PAIRS) {
+    // A has an interface-list condition, B has a concrete interface.
+    if (aKey === listKey && bKey === ifaceKey) {
+      const negated = aVal.startsWith("!");
+      const listName = negated ? aVal.slice(1) : aVal;
+      const members = _ifaceLists.get(listName);
+      if (!members) return undefined; // unknown list
+      const isMember = members.has(bVal);
+      return negated ? !isMember : isMember;
+    }
+  }
+  return undefined;
+}
+
 /** True when rule A's packet set ⊇ rule B's (A matches everything B matches). */
 function aCoversB(a: FirewallRule, b: FirewallRule): boolean {
   for (const [k, v] of Object.entries(a.match)) {
     const bv = b.match[k];
-    if (bv === undefined || !covers(k, v, bv)) return false;
+    if (bv !== undefined) {
+      if (!covers(k, v, bv)) return false;
+      continue;
+    }
+    // B doesn't have the same key — check cross-key interface-list/interface pairs.
+    let crossCovered = false;
+    for (const [bk, bval] of Object.entries(b.match)) {
+      const result = interfaceListCovers(k, v, bk, bval);
+      if (result === true) {
+        crossCovered = true;
+        break;
+      }
+    }
+    if (!crossCovered) return false;
   }
   return true;
 }
@@ -440,7 +496,11 @@ export function auditFirewall(input: {
   filter?: FirewallRule[];
   nat?: FirewallRule[];
   mangle?: FirewallRule[];
+  /** Resolved interface list membership: list name → set of interface names. */
+  interfaceLists?: Map<string, Set<string>>;
 }): AuditReport {
+  // Install the membership map so aCoversB can use it for cross-key checks.
+  _ifaceLists = input.interfaceLists;
   const findings: AuditFinding[] = [];
   if (input.filter) findings.push(...auditFilter(input.filter));
   if (input.nat) findings.push(...auditTransform(input.nat, "nat"));

@@ -288,15 +288,38 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
   }
 
   if (downInterfaces.length === 0 && errorInterfaces.length === 0) {
-    evidence.push({
-      dimension: "interfaces",
-      severity: "ok",
-      summary: `All ${data.interfaces.length} interfaces healthy`,
-    });
+    // A live device always has at least one interface (loopback). Zero
+    // interfaces means the collector failed silently (e.g. a parse error on
+    // the RouterOS output) — flag it so the user doesn't see a clean bill of
+    // health when the data is actually missing.
+    if (data.interfaces.length === 0) {
+      evidence.push({
+        dimension: "interfaces",
+        severity: "warning",
+        summary:
+          "Interface data unavailable — the device returned no parseable interface records. " +
+          "Run `/interface print detail` manually to verify.",
+      });
+    } else {
+      evidence.push({
+        dimension: "interfaces",
+        severity: "ok",
+        summary: `All ${data.interfaces.length} interfaces healthy`,
+      });
+    }
   }
 
   // ── 3. Routing analysis ───────────────────────────────────────────────
-  if (!data.defaultRouteExists) {
+  if (data.routeCount === 0) {
+    // Zero routes on a live device means the collector returned nothing.
+    evidence.push({
+      dimension: "routing",
+      severity: "warning",
+      summary:
+        "Route data unavailable — the device returned no parseable route records. " +
+        "Run `/ip route print detail` manually to verify.",
+    });
+  } else if (!data.defaultRouteExists) {
     evidence.push({
       dimension: "routing",
       severity: "critical",
@@ -310,8 +333,11 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
     });
   }
 
-  // OSPF neighbor issues
-  const ospfDown = data.ospfNeighbors.filter((n) => n.state.toLowerCase() !== "full");
+  // OSPF neighbor issues — skip entries with empty id/address (parse artifacts from
+  // unconfigured OSPF returning empty or header-only output).
+  const ospfDown = data.ospfNeighbors.filter(
+    (n) => (n.id || n.address) && n.state.toLowerCase() !== "full",
+  );
   for (const n of ospfDown) {
     evidence.push({
       dimension: "routing",
@@ -321,8 +347,10 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
     });
   }
 
-  // BGP peer issues
-  const bgpDown = data.bgpPeers.filter((p) => !p.state.toLowerCase().includes("established"));
+  // BGP peer issues — skip entries with empty id/address (parse artifacts).
+  const bgpDown = data.bgpPeers.filter(
+    (p) => (p.id || p.address) && !p.state.toLowerCase().includes("established"),
+  );
   for (const p of bgpDown) {
     evidence.push({
       dimension: "routing",
@@ -450,7 +478,17 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
   }
 
   // ── 8. Resource analysis ──────────────────────────────────────────────
-  if (data.cpuLoad > 90) {
+  // If CPU and memory are both exactly 0 and no version/uptime was parsed, the
+  // resource collector likely failed silently — warn rather than reporting "ok".
+  if (data.cpuLoad === 0 && data.memoryUsedPct === 0 && !data.rosVersion && !data.uptime) {
+    evidence.push({
+      dimension: "resources",
+      severity: "warning",
+      summary:
+        "System resource data unavailable — CPU 0%, memory 0%, no version or uptime. " +
+        "The `/system resource print` output may not have been parsed correctly.",
+    });
+  } else if (data.cpuLoad > 90) {
     evidence.push({
       dimension: "resources",
       severity: "critical",
@@ -470,24 +508,27 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
     });
   }
 
-  if (data.memoryUsedPct > 90) {
-    evidence.push({
-      dimension: "resources",
-      severity: "critical",
-      summary: `Memory critically low: ${data.memoryUsedPct}% used`,
-    });
-  } else if (data.memoryUsedPct > 75) {
-    evidence.push({
-      dimension: "resources",
-      severity: "warning",
-      summary: `Memory pressure: ${data.memoryUsedPct}% used`,
-    });
-  } else {
-    evidence.push({
-      dimension: "resources",
-      severity: "ok",
-      summary: `Memory: ${data.memoryUsedPct}% used`,
-    });
+  // Skip individual memory check when resource data is entirely absent (already warned above).
+  if (data.rosVersion || data.uptime || data.cpuLoad > 0 || data.memoryUsedPct > 0) {
+    if (data.memoryUsedPct > 90) {
+      evidence.push({
+        dimension: "resources",
+        severity: "critical",
+        summary: `Memory critically low: ${data.memoryUsedPct}% used`,
+      });
+    } else if (data.memoryUsedPct > 75) {
+      evidence.push({
+        dimension: "resources",
+        severity: "warning",
+        summary: `Memory pressure: ${data.memoryUsedPct}% used`,
+      });
+    } else {
+      evidence.push({
+        dimension: "resources",
+        severity: "ok",
+        summary: `Memory: ${data.memoryUsedPct}% used`,
+      });
+    }
   }
 
   // ── 9. Log analysis ──────────────────────────────────────────────────
@@ -544,14 +585,27 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
   }
 
   // ── 10. VPN / tunnel analysis ─────────────────────────────────────────
+  // Server-side tunnel bindings (l2tp-in, pptp-in, ovpn-in, sstp-in, etc.)
+  // are idle when no client is connected — that's normal, not critical.
+  const isServerBinding = (t: InterfaceSnapshot): boolean =>
+    /-(in|server)$/.test(t.type) || t.name.startsWith("<");
   const downTunnels = data.tunnelInterfaces.filter((t) => !t.running && !t.disabled);
   for (const t of downTunnels) {
-    evidence.push({
-      dimension: "vpn",
-      severity: "critical",
-      summary: `Tunnel ${t.name} (${t.type}) is down`,
-      reference: t.name,
-    });
+    if (isServerBinding(t)) {
+      evidence.push({
+        dimension: "vpn",
+        severity: "info",
+        summary: `Server binding ${t.name} (${t.type}) is idle — no active client session`,
+        reference: t.name,
+      });
+    } else {
+      evidence.push({
+        dimension: "vpn",
+        severity: "critical",
+        summary: `Tunnel ${t.name} (${t.type}) is down`,
+        reference: t.name,
+      });
+    }
   }
 
   if (data.tunnelInterfaces.length > 0 && downTunnels.length === 0) {
@@ -564,6 +618,26 @@ export function analyzeRootCause(data: DiagnosticData): DiagnosisReport {
 
   // ── Correlate evidence into root causes ───────────────────────────────
   correlateRootCauses(data, evidence, rootCauses);
+
+  // ── Consistency pass ─────────────────────────────────────────────────
+  // If ping succeeded (0% loss), connectivity-dependent hypotheses like
+  // "missing default route" or "missing NAT" are contradicted by evidence.
+  // Downgrade their confidence so they don't mislead the user with a
+  // simultaneous "target reachable" and "cannot reach internet".
+  if (data.ping && data.ping.lossPct === 0) {
+    const contradicted = new Set([
+      "Missing default route",
+      "Missing source NAT / masquerade",
+      "Interface link failure",
+    ]);
+    for (const rc of rootCauses) {
+      if (contradicted.has(rc.cause) && rc.confidence !== "low") {
+        rc.confidence = "low";
+        rc.explanation +=
+          " (Note: ping to the target succeeded with 0% loss, which contradicts this hypothesis.)";
+      }
+    }
+  }
 
   // Sort: high confidence first
   rootCauses.sort((a, b) => CONFIDENCE_RANK[a.confidence] - CONFIDENCE_RANK[b.confidence]);
@@ -772,16 +846,21 @@ function correlateRootCauses(
   }
 
   // ── Pattern: Tunnel down → VPN connectivity loss
-  const downTunnels = data.tunnelInterfaces.filter((t) => !t.running && !t.disabled);
-  if (downTunnels.length > 0) {
+  // Exclude server-side bindings (*-in types) — they're idle, not broken.
+  const isServerTunnel = (t: InterfaceSnapshot): boolean =>
+    /-(in|server)$/.test(t.type) || t.name.startsWith("<");
+  const realDownTunnels = data.tunnelInterfaces.filter(
+    (t) => !t.running && !t.disabled && !isServerTunnel(t),
+  );
+  if (realDownTunnels.length > 0) {
     causes.push({
       cause: "VPN/tunnel interface down",
       explanation:
-        `Tunnel(s) ${downTunnels.map((t) => `${t.name} (${t.type})`).join(", ")} are down. ` +
+        `Tunnel(s) ${realDownTunnels.map((t) => `${t.name} (${t.type})`).join(", ")} are down. ` +
         "Traffic destined for remote networks over these tunnels will be black-holed.",
       confidence: "high",
       evidence: evidence.filter((e) => e.dimension === "vpn" && e.severity === "critical"),
-      fixes: downTunnels.map((t) => `/interface enable [find name="${t.name}"]`),
+      fixes: realDownTunnels.map((t) => `/interface enable [find name="${t.name}"]`),
       dimensions: ["vpn"],
     });
   }

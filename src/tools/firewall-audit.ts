@@ -24,6 +24,29 @@ async function fetchRules(path: string, ctx: ToolContext): Promise<Record<string
   return parseRecords(out).rows;
 }
 
+/**
+ * Fetch `/interface list member` and build a map of list name → interface names.
+ * Used by the audit engine to resolve `in-interface-list` / `out-interface-list`
+ * conditions against concrete `in-interface` / `out-interface` conditions.
+ */
+async function fetchInterfaceListMembers(ctx: ToolContext): Promise<Map<string, Set<string>>> {
+  const out = await executeMikrotikCommand("/interface list member print detail", ctx);
+  const members = new Map<string, Set<string>>();
+  if (looksLikeError(out) || isEmpty(out)) return members;
+  for (const row of parseRecords(out).rows) {
+    const list = row.list;
+    const iface = row.interface;
+    if (!list || !iface) continue;
+    let set = members.get(list);
+    if (!set) {
+      set = new Set();
+      members.set(list, set);
+    }
+    set.add(iface);
+  }
+  return members;
+}
+
 export const firewallAuditTools: ToolModule = [
   defineTool({
     name: "firewall_audit",
@@ -51,15 +74,19 @@ export const firewallAuditTools: ToolModule = [
       const device = resolveDeviceName(ctx.device);
       ctx.info(`Auditing firewall for '${device}'`);
 
-      const filter = rulesFromRows(await fetchRules("/ip firewall filter", ctx));
-      const nat = a.include_nat
-        ? rulesFromRows(await fetchRules("/ip firewall nat", ctx))
-        : undefined;
-      const mangle = a.include_mangle
-        ? rulesFromRows(await fetchRules("/ip firewall mangle", ctx))
-        : undefined;
+      // Fetch rulesets and interface list membership in parallel.
+      const [filterRows, natRows, mangleRows, interfaceLists] = await Promise.all([
+        fetchRules("/ip firewall filter", ctx),
+        a.include_nat ? fetchRules("/ip firewall nat", ctx) : Promise.resolve(undefined),
+        a.include_mangle ? fetchRules("/ip firewall mangle", ctx) : Promise.resolve(undefined),
+        fetchInterfaceListMembers(ctx),
+      ]);
 
-      const report = auditFirewall({ filter, nat, mangle });
+      const filter = rulesFromRows(filterRows);
+      const nat = natRows ? rulesFromRows(natRows) : undefined;
+      const mangle = mangleRows ? rulesFromRows(mangleRows) : undefined;
+
+      const report = auditFirewall({ filter, nat, mangle, interfaceLists });
       const structuredContent = {
         __mikrotikView: "firewall-audit" as const,
         device,
