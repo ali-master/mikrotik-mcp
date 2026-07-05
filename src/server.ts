@@ -149,7 +149,11 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
     appViews: getConfig().mcp.appViews,
     readOnly,
   });
-  const promptCount = registerPrompts(server);
+  const promptCount = registerPrompts(server, {
+    deviceNames: names,
+    deviceAliases: deviceLabels(),
+    deviceDirectory: deviceDirectory(),
+  });
   // MCP App views (`ui://…`) — interactive dashboards rendered inline by hosts
   // that support the Apps extension (Claude, ChatGPT). Plain clients ignore them.
   const uiViewCount = registerUiResources(server);

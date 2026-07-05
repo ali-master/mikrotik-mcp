@@ -23,6 +23,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import type { DeviceDirectoryEntry } from "../core/runtime";
 import { logger } from "../logger";
 import { PROMPTS_DIR } from "../paths";
 
@@ -95,14 +96,47 @@ function substitute(body: string, vars: Record<string, unknown>): string {
   });
 }
 
+/** Options for multi-device prompt injection. */
+export interface PromptRegisterOptions {
+  deviceNames?: string[];
+  deviceAliases?: string[];
+  deviceDirectory?: DeviceDirectoryEntry[];
+}
+
+/** Build the `device` argument description for prompts. */
+function deviceArgDescription(directory?: DeviceDirectoryEntry[]): string {
+  if (directory && directory.length > 0) {
+    const rows = directory
+      .map(
+        (d) =>
+          `• ${d.key}${d.label && d.label !== d.key ? ` ("${d.label}")` : ""} → ${d.target}${
+            d.isDefault ? " [default]" : ""
+          }`,
+      )
+      .join("\n");
+    return (
+      "Which configured MikroTik device to run this workflow on. " +
+      "Pass the EXACT config key or its label. Configured devices:\n" +
+      `${rows}\n` +
+      "Omit to use the default device."
+    );
+  }
+  return "Which configured MikroTik device to run this workflow on. Omit to use the default device.";
+}
+
 /** Register every prompt found in `prompts/`. Returns the number registered. */
-export function registerPrompts(server: McpServer): number {
+export function registerPrompts(server: McpServer, opts: PromptRegisterOptions = {}): number {
   let files: string[];
   try {
     files = readdirSync(PROMPTS_DIR).filter((f) => f.endsWith(".md"));
   } catch {
     return 0; // no prompts directory shipped — fine
   }
+
+  const multiDevice = opts.deviceNames && opts.deviceNames.length > 1;
+  const selectorNames = multiDevice
+    ? [...new Set([...opts.deviceNames!, ...(opts.deviceAliases ?? [])])]
+    : [];
 
   let count = 0;
   for (const file of files) {
@@ -122,6 +156,17 @@ export function registerPrompts(server: McpServer): number {
     for (const arg of parsed.arguments) {
       const s = z.string().describe(arg.description ?? "");
       argsSchema[arg.name] = arg.required ? s : s.optional();
+    }
+
+    // In multi-device setups, inject an optional `device` argument so the user
+    // can target a specific router — mirroring the tool-level device selector.
+    // Skip if the prompt already defines its own device-like arguments.
+    const hasOwnDevice = parsed.arguments.some((a) => a.name === "device" || a.name === "device_a");
+    if (multiDevice && !hasOwnDevice) {
+      argsSchema.device = z
+        .enum(selectorNames as [string, ...string[]])
+        .optional()
+        .describe(deviceArgDescription(opts.deviceDirectory));
     }
 
     server.registerPrompt(
