@@ -14,7 +14,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { api, deleteEvents } from "./api";
+import { api, deleteEvents, postJson } from "./api";
 import { HBars, Panel, StatCard } from "./atoms";
 import { BackupsView } from "./backups";
 import { AaaView } from "./aaa";
@@ -599,6 +599,13 @@ function App(): ReactNode {
     return () => clearInterval(t);
   }, []);
 
+  // Toggle a device enabled/disabled and refresh the device list.
+  const toggleDevice = useCallback((name: string, disabled: boolean): void => {
+    void postJson<DevicesPayload>("/api/devices/toggle", { device: name, disabled }).then((r) => {
+      setDevices(r);
+    });
+  }, []);
+
   // Esc closes the drawer (the What's New modal handles its own Escape key).
   useEffect(() => {
     const h = (e: KeyboardEvent): void => {
@@ -1034,7 +1041,7 @@ function App(): ReactNode {
               ) : (
                 <div className="dev-grid-wide reveal">
                   {shownDevices.map((d) => (
-                    <DeviceCard key={d.name} d={d} />
+                    <DeviceCard key={d.name} d={d} onToggle={toggleDevice} />
                   ))}
                 </div>
               )}

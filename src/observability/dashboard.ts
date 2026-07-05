@@ -31,7 +31,7 @@ import {
   ToolFilterSchema,
   getConfigSource,
 } from "../config";
-import type { DashboardConfig } from "../config";
+import type { DashboardConfig, MikrotikConfig } from "../config";
 import { moduleCatalog } from "../tools";
 import { applyModuleToggle, moduleSurface } from "./modules";
 import { atomicWrite, mergeSecrets, serializeConfig } from "../config-write";
@@ -298,6 +298,7 @@ function devicesPayload(store: EventStore): unknown {
             : "none",
       isDefault: name === cfg.defaultDevice,
       description: dc.description,
+      disabled: !!dc.disabled,
       // SSH jump host (ProxyJump): the bastion this device is reached THROUGH —
       // either another configured device (`jumpVia`) or an inline host (no secrets,
       // just host:port). Surfaced so the dashboard can draw the tunnel.
@@ -1308,6 +1309,49 @@ export async function runDashboard(
 
     if (url.pathname === "/api/devices") {
       return json(devicesPayload(db));
+    }
+
+    if (url.pathname === "/api/devices/toggle" && req.method === "POST") {
+      const b = (await readJson(req)) as { device?: string; disabled?: boolean };
+      if (typeof b?.device !== "string" || typeof b?.disabled !== "boolean") {
+        return json({ error: "device (string) and disabled (boolean) are required" }, 400);
+      }
+      const cfg = getConfig();
+      if (!(b.device in cfg.devices)) return json({ error: `unknown device: ${b.device}` }, 404);
+
+      const dc = cfg.devices[b.device];
+      const next: MikrotikConfig = {
+        ...cfg,
+        devices: {
+          ...cfg.devices,
+          [b.device]: { ...dc, disabled: b.disabled || undefined },
+        },
+      };
+      setConfig(next);
+
+      let persisted = true;
+      let warning: string | undefined;
+      try {
+        atomicWrite(getConfigSource().path, serializeConfig(next));
+      } catch (e) {
+        persisted = false;
+        warning = `applied live but not saved to disk: ${e instanceof Error ? e.message : String(e)}`;
+      }
+      if (persisted) {
+        recordVersion(
+          getConfig(),
+          "auto",
+          Date.now(),
+          `device ${b.disabled ? "disabled" : "enabled"}: ${b.device}`,
+        );
+      }
+      return json({
+        ok: true,
+        persisted,
+        requiresReconnect: true,
+        warning,
+        ...(devicesPayload(db) as Record<string, unknown>),
+      });
     }
 
     if (url.pathname === "/api/topology") {

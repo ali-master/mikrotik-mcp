@@ -120,6 +120,8 @@ export interface DeviceInfo {
   status: DeviceStatus;
   history?: MetricSample[];
   activity: { calls: number; errors: number; lastSeen: number; avgMs: number };
+  /** Whether this device is excluded from the MCP tool surface. */
+  disabled?: boolean;
   /** SSH connection pool status; null for MAC-Telnet devices or when pool is off. */
   pool: DevicePoolStatus | null;
 }

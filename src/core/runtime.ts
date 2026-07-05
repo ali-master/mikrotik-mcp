@@ -18,8 +18,21 @@ export function getConfig(): MikrotikConfig {
   return active;
 }
 
-/** Names of every configured device, plus which one is the default. */
+/** Helper: true when a device is enabled (not disabled). */
+function isEnabled(dc: DeviceConfig): boolean {
+  return !dc.disabled;
+}
+
+/** Names of every ENABLED configured device, plus which one is the default. */
 export function listDevices(): { names: string[]; default: string } {
+  const names = Object.entries(active.devices)
+    .filter(([, dc]) => isEnabled(dc))
+    .map(([k]) => k);
+  return { names, default: active.defaultDevice };
+}
+
+/** Names of ALL configured devices (including disabled), for dashboard use. */
+export function listAllDevices(): { names: string[]; default: string } {
   return { names: Object.keys(active.devices), default: active.defaultDevice };
 }
 
@@ -27,11 +40,13 @@ export function listDevices(): { names: string[]; default: string } {
  * Map a device's free-text `description` (the label shown to the AI, e.g.
  * "Ali Home") to its config key, case-insensitively. Lets a tool be targeted by
  * the friendly label as well as the key. Returns undefined when no label matches.
+ * Only matches enabled devices.
  */
 function deviceKeyForLabel(name: string): string | undefined {
   const target = name.trim().toLowerCase();
   for (const [key, dc] of Object.entries(active.devices)) {
-    if (dc.description && dc.description.trim().toLowerCase() === target) return key;
+    if (isEnabled(dc) && dc.description && dc.description.trim().toLowerCase() === target)
+      return key;
   }
   return undefined;
 }
@@ -40,12 +55,13 @@ function deviceKeyForLabel(name: string): string | undefined {
  * Distinct device labels (`description`s) that can ALSO be used to target a
  * device — a non-empty description that isn't already a device key. These are
  * added to the `device` selector enum so the AI may pass either the key or the
- * friendly label.
+ * friendly label. Only returns labels for enabled devices.
  */
 export function deviceLabels(): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const [key, dc] of Object.entries(active.devices)) {
+    if (!isEnabled(dc)) continue;
     const label = dc.description?.trim();
     if (label && label !== key && !(label in active.devices) && !seen.has(label)) {
       seen.add(label);
@@ -58,19 +74,23 @@ export function deviceLabels(): string[] {
 /**
  * Resolve a (possibly undefined) device name to a concrete, existing config key.
  * Accepts a config key OR a device's free-text label; falls back to the default.
+ * Only resolves to enabled devices.
  *
  * Matching is EXACT (key first, then label) — never fuzzy/substring — so a name
  * like "Ali Home" can never collapse onto a different device such as "home".
  */
 export function resolveDeviceName(name?: string): string {
   if (name) {
-    if (name in active.devices) return name;
+    if (name in active.devices && isEnabled(active.devices[name])) return name;
     const byLabel = deviceKeyForLabel(name);
     if (byLabel) return byLabel;
   }
-  return active.defaultDevice in active.devices
-    ? active.defaultDevice
-    : (Object.keys(active.devices)[0] ?? active.defaultDevice);
+  // Fallback: first enabled device, preferring the configured default.
+  if (active.defaultDevice in active.devices && isEnabled(active.devices[active.defaultDevice])) {
+    return active.defaultDevice;
+  }
+  const firstEnabled = Object.entries(active.devices).find(([, dc]) => isEnabled(dc));
+  return firstEnabled ? firstEnabled[0] : active.defaultDevice;
 }
 
 /** One row of the human-facing device directory shown in the `device` selector. */
@@ -89,18 +109,20 @@ function deviceTarget(dc: DeviceConfig | undefined): string {
 }
 
 /**
- * A clear key → label → target listing of every configured device, used to build
- * the `device` selector's description so the model can tell similarly-named
- * routers apart (e.g. "Ali Home" at 45.87.6.144 vs "home" at 192.168.7.1) and
- * never substitute one for another.
+ * A clear key → label → target listing of every ENABLED configured device, used
+ * to build the `device` selector's description so the model can tell
+ * similarly-named routers apart (e.g. "Ali Home" at 45.87.6.144 vs "home" at
+ * 192.168.7.1) and never substitute one for another.
  */
 export function deviceDirectory(): DeviceDirectoryEntry[] {
-  return Object.entries(active.devices).map(([key, dc]) => ({
-    key,
-    label: dc.description?.trim() || undefined,
-    target: deviceTarget(dc),
-    isDefault: key === active.defaultDevice,
-  }));
+  return Object.entries(active.devices)
+    .filter(([, dc]) => isEnabled(dc))
+    .map(([key, dc]) => ({
+      key,
+      label: dc.description?.trim() || undefined,
+      target: deviceTarget(dc),
+      isDefault: key === active.defaultDevice,
+    }));
 }
 
 /**
@@ -122,7 +144,7 @@ export function resolvedTarget(name?: string): {
 /**
  * Return the connection config for a device by key or label (or the default when
  * `name` is undefined). Throws if an explicit name matches neither a key nor a
- * label.
+ * label, or if the device is disabled.
  */
 export function getDevice(name?: string): DeviceConfig {
   if (name && !(name in active.devices) && !deviceKeyForLabel(name)) {
@@ -133,5 +155,8 @@ export function getDevice(name?: string): DeviceConfig {
   const key = resolveDeviceName(name);
   const dc = active.devices[key];
   if (!dc) throw new Error(`No device configuration available for '${key}'.`);
+  if (dc.disabled) {
+    throw new Error(`Device '${key}' is disabled. Enable it from the dashboard or config file.`);
+  }
   return dc;
 }

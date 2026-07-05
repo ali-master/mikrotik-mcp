@@ -161,6 +161,8 @@ export const DeviceConfigSchema = z.object({
   macPort: z.coerce.number().int().positive().optional(),
   /** Free-text label shown to the AI (e.g. "HQ edge router"). */
   description: z.string().optional(),
+  /** When true, this device is excluded from the MCP tool surface — the AI cannot target it. */
+  disabled: z.boolean().optional(),
 });
 export type DeviceConfig = z.infer<typeof DeviceConfigSchema>;
 

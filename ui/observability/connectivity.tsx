@@ -444,7 +444,7 @@ export function ConnectivityGraph({
           // dot still shows live online/offline status.
           const col = deviceColor(d.name);
           return (
-            <g key={`n-${d.name}`} className="conn-node">
+            <g key={`n-${d.name}`} className="conn-node" opacity={d.disabled ? 0.35 : 1}>
               {online && <circle className="conn-node-halo" cx={x} cy={y} r={r + 1} stroke={col} />}
               {/* pool halo: dashed when idle, solid+blink when busy */}
               {d.pool?.pooled && (
@@ -525,7 +525,13 @@ export function ConnectivityGraph({
   );
 }
 
-export function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
+export function DeviceCard({
+  d,
+  onToggle,
+}: {
+  d: DeviceInfo;
+  onToggle?: (name: string, disabled: boolean) => void;
+}): ReactNode {
   const info = statusInfo(d.status);
   const statusLine =
     d.status.reachable === true
@@ -535,13 +541,30 @@ export function DeviceCard({ d }: { d: DeviceInfo }): ReactNode {
         : info.label;
   const col = deviceColor(d.name);
   return (
-    <div className="card dev-card" style={{ borderLeft: `3px solid ${col}` }}>
+    <div
+      className="card dev-card"
+      style={{ borderLeft: `3px solid ${col}` }}
+      data-disabled={d.disabled ? "1" : undefined}
+    >
       <div className="dev-card__top">
         <span className="dot" style={{ background: col }} title="device colour" />
         <span className="dev-card__name">{d.name}</span>
         {d.isDefault && <Badge type="accent">default</Badge>}
+        {d.disabled && <Badge type="warning">disabled</Badge>}
         <span className="dot dot--status" style={{ background: info.color }} title={info.label} />
         <span style={{ flex: 1 }} />
+        <label
+          className="dev-toggle"
+          title={d.disabled ? "Enable device" : "Disable device"}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={!d.disabled}
+            onChange={() => onToggle?.(d.name, !d.disabled)}
+          />
+          <span className="dev-toggle__slider" />
+        </label>
         <span className="chip">{d.authMode}</span>
       </div>
       <div className="dev-card__meta">

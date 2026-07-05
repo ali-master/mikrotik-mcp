@@ -1188,6 +1188,53 @@ body::after {
   overflow-wrap: anywhere;
 }
 
+/* ── Device enable/disable toggle ──────────────────────────────────────── */
+.dev-card[data-disabled] {
+  opacity: 0.5;
+  filter: grayscale(0.4);
+}
+.dev-toggle {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  flex: none;
+  cursor: pointer;
+}
+.dev-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.dev-toggle__slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 9px;
+  background: #3f3f46;
+  transition: background 0.2s;
+}
+.dev-toggle__slider::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #a1a1aa;
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+.dev-toggle input:checked + .dev-toggle__slider {
+  background: #0d9488;
+}
+.dev-toggle input:checked + .dev-toggle__slider::before {
+  transform: translateX(14px);
+  background: #f0fdfa;
+}
+
 details.cfg > summary {
   cursor: pointer;
   color: var(--mt-text-dim);
