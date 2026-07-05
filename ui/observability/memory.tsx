@@ -104,7 +104,7 @@ function forceLayout(
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   // Simple force simulation
-  const repulsion = 2000;
+  const repulsion = 3000;
   const attraction = 0.005;
   const damping = 0.85;
   const iterations = 200;
@@ -155,9 +155,10 @@ function forceLayout(
       n.vy *= damping;
       n.x += n.vx;
       n.y += n.vy;
-      // Clamp to bounds
-      n.x = Math.max(40, Math.min(width - 40, n.x));
-      n.y = Math.max(40, Math.min(height - 40, n.y));
+      // Clamp to bounds — account for pill width based on label length.
+      const pad = Math.max(40, n.label.length * 2.7 + 16);
+      n.x = Math.max(pad, Math.min(width - pad, n.x));
+      n.y = Math.max(30, Math.min(height - 30, n.y));
     }
   }
 
@@ -221,15 +222,22 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
         if (!s || !t) return null;
         const highlighted = selected != null && (e.source === selected || e.target === selected);
         const dimmed = selected != null && !highlighted;
-        // Offset the line ends by the node radius so arrow doesn't overlap
+        // Offset line ends by the pill edge so arrows don't overlap nodes.
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const nr = 22;
-        const sx = s.x + (dx / dist) * nr;
-        const sy = s.y + (dy / dist) * nr;
-        const ex = t.x - (dx / dist) * nr;
-        const ey = t.y - (dy / dist) * nr;
+        // Approximate pill half-width for each node.
+        const pillW = (n: FNode): number => {
+          const textW = n.label.length * 5.4;
+          const halfH = 13 + Math.min(n.obsCount, 6);
+          return Math.max(halfH, textW / 2 + 12);
+        };
+        const sOff = pillW(s) + 4;
+        const tOff = pillW(t) + 4;
+        const sx = s.x + (dx / dist) * sOff;
+        const sy = s.y + (dy / dist) * sOff;
+        const ex = t.x - (dx / dist) * tOff;
+        const ey = t.y - (dy / dist) * tOff;
         const mx = (sx + ex) / 2;
         const my = (sy + ey) / 2;
         return (
@@ -256,12 +264,18 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
           </g>
         );
       })}
-      {/* Nodes */}
+      {/* Nodes — pill-shaped, width adapts to label text */}
       {layout.nodes.map((n) => {
         const isSel = n.id === selected;
         const dimmed = selected != null && !isSel;
-        const r = 18 + Math.min(n.obsCount, 8) * 1.5;
         const c = typeColor(n.type);
+        // Estimate text width: ~5.4px per char at fontSize 9, with padding.
+        const label = n.label;
+        const textW = label.length * 5.4;
+        const padX = 12;
+        const halfH = 13 + Math.min(n.obsCount, 6);
+        const halfW = Math.max(halfH, textW / 2 + padX);
+        const rx = halfH; // rounded ends
         return (
           <g
             key={n.id}
@@ -269,10 +283,13 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
             style={{ cursor: "pointer" }}
             onClick={() => setSelected(isSel ? null : n.id)}
           >
-            <circle
-              cx={n.x}
-              cy={n.y}
-              r={r}
+            <rect
+              x={n.x - halfW}
+              y={n.y - halfH}
+              width={halfW * 2}
+              height={halfH * 2}
+              rx={rx}
+              ry={rx}
               fill={c}
               fillOpacity={0.15}
               stroke={isSel ? "#fff" : c}
@@ -288,11 +305,11 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
               fontWeight={isSel ? 600 : 400}
               style={{ pointerEvents: "none" }}
             >
-              {n.label.length > 16 ? `${n.label.slice(0, 14)}…` : n.label}
+              {label}
             </text>
             <text
               x={n.x}
-              y={n.y + r + 11}
+              y={n.y + halfH + 11}
               textAnchor="middle"
               fill="#888"
               fontSize="7"
@@ -416,7 +433,13 @@ function ActivityPanel({ activity }: { activity: MemoryActivityEntry[] }): React
                 {clock(a.ts)}
               </td>
               <td>{ACTION_LABELS[a.action] ?? a.action}</td>
-              <td style={{ maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis" }}>
+              <td
+                style={{
+                  maxWidth: 260,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
                 {a.subject}
               </td>
             </tr>
@@ -466,7 +489,14 @@ function ConfigPanel({
 
   return (
     <div>
-      <label style={{ fontSize: 12, color: "#9aa3af", display: "block", marginBottom: 4 }}>
+      <label
+        style={{
+          fontSize: 12,
+          color: "#9aa3af",
+          display: "block",
+          marginBottom: 4,
+        }}
+      >
         Database path
       </label>
       <div style={{ display: "flex", gap: 6 }}>
