@@ -28,9 +28,9 @@ const pkg: PkgJson = JSON.parse(
 export const VERSION: string = pkg.version ?? "0.0.0";
 export const WEBSITE_URL: string = pkg.homepage ?? "";
 export const LOGO_URL: string = pkg.logoIcon ?? "";
-export const SERVER_TITLE: string = pkg.name ?? "mcp-mikrotik";
+export const SERVER_TITLE: string = "MikroTik MCP";
 export const SERVER_DESCRIPTION: string = pkg.description ?? "";
-export const SERVER_NAME = "mcp-mikrotik";
+export const SERVER_NAME = "mikrotik-mcp";
 
 /** Raw parsed package.json — used by cli-logo for author/license metadata. */
 export const PKG_META = pkg;

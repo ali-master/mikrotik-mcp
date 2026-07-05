@@ -103,8 +103,8 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
       icons: [
         {
           src: LOGO_URL,
-          mimeType: "image/png",
-          sizes: ["192x192"],
+          mimeType: "image/svg+xml",
+          sizes: ["any"],
           theme: "light",
         },
       ],

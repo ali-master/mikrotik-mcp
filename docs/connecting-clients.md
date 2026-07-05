@@ -1,6 +1,6 @@
 # Connecting clients
 
-The server registers as `mcp-mikrotik` and advertises **229 tools** and
+The server registers as `mikrotik-mcp` and advertises **229 tools** and
 **5 prompts**. How you connect depends on the transport.
 
 ## Claude Desktop (stdio)
