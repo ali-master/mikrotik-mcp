@@ -34,6 +34,19 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
   return (await res.json().catch(() => ({}))) as T;
 }
 
+/** DELETE with a JSON body, forwarding the token; returns the parsed JSON body. */
+export async function deleteJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(withToken(path), {
+    method: "DELETE",
+    headers: {
+      "content-type": "application/json",
+      ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  return (await res.json().catch(() => ({}))) as T;
+}
+
 /** Delete events: a list of ids, or everything (`{ all: true }`). */
 export async function deleteEvents(body: {
   ids?: string[];

@@ -119,6 +119,7 @@ import { capture, DEFAULT_TZSP_PORT } from "./capture";
 import { isPoolEnabled, poolStatus } from "../core/connection-pool";
 import { isMacTelnetDevice } from "../core/transport";
 import { VERSION } from "../version";
+import { closeMemoryStore, memoryRoutes } from "./memory-routes";
 
 const SERVER_TAG = "mikrotik-mcp";
 
@@ -1255,6 +1256,9 @@ export async function runDashboard(
     const featureResp = await featureRoutes(req, url);
     if (featureResp) return featureResp;
 
+    const memoryResp = await memoryRoutes(req, url);
+    if (memoryResp) return memoryResp;
+
     const db = getEventStore();
     if (!db) return json({ error: "recorder not active" }, 503);
 
@@ -1431,6 +1435,7 @@ export async function runDashboard(
       store.close();
       usageStore?.close();
       usageStore = null;
+      closeMemoryStore();
     },
   };
 }

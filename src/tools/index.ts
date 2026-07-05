@@ -127,6 +127,7 @@ import { vpnOnboardTools } from "./vpn-onboard";
 import { wireguardTools } from "./wireguard";
 import { wirelessTools } from "./wireless";
 import { wifiOptimizerTools } from "./wifi-optimizer";
+import { memoryTools } from "./memory";
 
 export interface ModuleInfo {
   /** Display label used in docs. */
@@ -1087,6 +1088,16 @@ export const moduleCatalog: ModuleInfo[] = [
       "them under Safe Mode with the exact `/export` diff (`plan_changes`, `apply_plan`).",
     tools: changePlanTools,
   },
+  // ── Memory ─────────────────────────────────────────────────────────────
+  {
+    label: "Knowledge Graph",
+    slug: "memory",
+    group: "Memory",
+    description:
+      "Persistent knowledge-graph memory — entities, relations and observations that survive " +
+      "across sessions. Create, search and manage structured knowledge the AI can reference.",
+    tools: memoryTools,
+  },
   // ── Interactive views (MCP Apps) ─────────────────────────────────────────
   {
     label: "Apps — Dashboards",
@@ -1108,7 +1119,7 @@ export const allToolModules: ToolModule[] = moduleCatalog.map((m) => m.tools);
  * — is always present even in a tightly scoped deployment. An explicit
  * `disabledModules`/`disabledGroups` opt-out still removes them.
  */
-export const ALWAYS_ON_MODULES = new Set(["tool-gateway"]);
+export const ALWAYS_ON_MODULES = new Set(["tool-gateway", "memory"]);
 
 /** Shape of the tool-surface filter (mirrors `ToolFilter` in config.ts). */
 export interface ToolModuleFilter {

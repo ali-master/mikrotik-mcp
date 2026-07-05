@@ -1,0 +1,292 @@
+/**
+ * Knowledge Graph Memory — persistent entity/relation/observation store.
+ *
+ * Nine MCP tools that let the AI build and query a structured knowledge graph
+ * that survives across sessions. No device connection required — all data lives
+ * in a local SQLite database (default `~/.mikrotik-mcp/memory.db`).
+ *
+ * The store is opened lazily on first tool call; `resetMemoryStore()` forces a
+ * re-open when the dashboard changes the DB path at runtime.
+ */
+import { z } from "zod";
+import { DESTRUCTIVE, READ, WRITE, defineTool } from "../core/registry";
+import type { ToolModule } from "../core/registry";
+import { getConfig } from "../core/runtime";
+import { openMemoryStore } from "../memory/store";
+import type { MemoryStore } from "../memory/store";
+
+// ── Lazy store singleton ─────────────────────────────────────────────────────
+
+let storePromise: Promise<MemoryStore> | null = null;
+
+function getStore(): Promise<MemoryStore> {
+  if (!storePromise) {
+    const cfg = getConfig();
+    if (!cfg.memory.enabled) {
+      return Promise.reject(new Error("Knowledge-graph memory is disabled in config"));
+    }
+    storePromise = openMemoryStore(cfg.memory.dbPath);
+  }
+  return storePromise;
+}
+
+/**
+ * Force the lazy store to re-open on next access. Called by the dashboard when
+ * the DB path is changed at runtime.
+ */
+export function resetMemoryStore(): void {
+  if (storePromise) {
+    storePromise.then((s) => s.close()).catch(() => {});
+    storePromise = null;
+  }
+}
+
+/** Close the store cleanly (for shutdown). */
+export function closeMemoryToolStore(): void {
+  if (storePromise) {
+    storePromise.then((s) => s.close()).catch(() => {});
+    storePromise = null;
+  }
+}
+
+// ── Zod schemas ──────────────────────────────────────────────────────────────
+
+const EntityInput = z.object({
+  name: z.string().describe("Unique name of the entity"),
+  entityType: z.string().describe("Type/category of the entity (e.g. 'router', 'subnet', 'person')"),
+  observations: z
+    .array(z.string())
+    .optional()
+    .describe("Initial observations (facts) to attach"),
+});
+
+const RelationInput = z.object({
+  from: z.string().describe("Source entity name"),
+  to: z.string().describe("Target entity name"),
+  relationType: z
+    .string()
+    .describe("Relation type in active voice (e.g. 'manages', 'connects_to', 'depends_on')"),
+});
+
+// ── Tools ────────────────────────────────────────────────────────────────────
+
+export const memoryTools: ToolModule = [
+  defineTool({
+    name: "memory_create_entities",
+    title: "Create Knowledge Graph Entities",
+    annotations: WRITE,
+    description:
+      "Create one or more new entities in the persistent knowledge graph. Each entity has a " +
+      "unique name, a type (e.g. 'router', 'subnet', 'vlan', 'person', 'config_pattern'), " +
+      "and optional initial observations. Entities that already exist are silently skipped. " +
+      "Use this to record things the AI learns about the network, devices, users, or patterns.",
+    inputSchema: {
+      entities: z
+        .array(EntityInput)
+        .min(1)
+        .describe("Entities to create"),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const created = store.createEntities(args.entities);
+      if (created.length === 0) return "No new entities created (all names already exist).";
+      return `Created ${created.length} entities:\n${created.map((e) => `  - ${e.name} (${e.entityType})`).join("\n")}`;
+    },
+  }),
+
+  defineTool({
+    name: "memory_create_relations",
+    title: "Create Knowledge Graph Relations",
+    annotations: WRITE,
+    description:
+      "Create directed relations between existing entities in the knowledge graph. Both " +
+      "endpoint entities must already exist. Use active voice for relation types (e.g. " +
+      "'manages', 'connects_to', 'provides_dhcp_for', 'part_of'). Duplicate relations " +
+      "are silently skipped.",
+    inputSchema: {
+      relations: z
+        .array(RelationInput)
+        .min(1)
+        .describe("Relations to create"),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const created = store.createRelations(args.relations);
+      if (created.length === 0)
+        return "No new relations created (all already exist or endpoints missing).";
+      return `Created ${created.length} relations:\n${created.map((r) => `  - ${r.from} --[${r.relationType}]--> ${r.to}`).join("\n")}`;
+    },
+  }),
+
+  defineTool({
+    name: "memory_add_observations",
+    title: "Add Observations to Entities",
+    annotations: WRITE,
+    description:
+      "Add new observations (discrete facts) to existing entities in the knowledge graph. " +
+      "Each observation is a string (e.g. 'runs RouterOS 7.16', 'has 4 ether ports', " +
+      "'managed by John'). Duplicate observations on the same entity are silently skipped. " +
+      "The entity must already exist.",
+    inputSchema: {
+      observations: z
+        .array(
+          z.object({
+            entityName: z.string().describe("Name of the existing entity"),
+            contents: z
+              .array(z.string())
+              .min(1)
+              .describe("Observations to add"),
+          }),
+        )
+        .min(1),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const results = store.addObservations(args.observations);
+      if (results.length === 0)
+        return "No observations added (entities not found or all duplicates).";
+      const lines = results.map(
+        (r) => `  - ${r.entityName}: +${r.added.length} observations`,
+      );
+      return `Added observations:\n${lines.join("\n")}`;
+    },
+  }),
+
+  defineTool({
+    name: "memory_delete_entities",
+    title: "Delete Knowledge Graph Entities",
+    annotations: DESTRUCTIVE,
+    description:
+      "Remove entities from the knowledge graph. This also deletes all their observations " +
+      "and any relations where they appear as an endpoint (cascade delete).",
+    inputSchema: {
+      entityNames: z
+        .array(z.string())
+        .min(1)
+        .describe("Names of entities to delete"),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const removed = store.deleteEntities(args.entityNames);
+      return removed > 0
+        ? `Deleted ${removed} entities (and their observations/relations).`
+        : "No matching entities found.";
+    },
+  }),
+
+  defineTool({
+    name: "memory_delete_observations",
+    title: "Delete Observations from Entities",
+    annotations: DESTRUCTIVE,
+    description:
+      "Remove specific observations from entities in the knowledge graph. The entity " +
+      "itself is kept; only the named observation strings are removed.",
+    inputSchema: {
+      deletions: z
+        .array(
+          z.object({
+            entityName: z.string().describe("Entity to remove observations from"),
+            observations: z
+              .array(z.string())
+              .min(1)
+              .describe("Exact observation strings to delete"),
+          }),
+        )
+        .min(1),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const removed = store.deleteObservations(args.deletions);
+      return removed > 0
+        ? `Deleted ${removed} observations.`
+        : "No matching observations found.";
+    },
+  }),
+
+  defineTool({
+    name: "memory_delete_relations",
+    title: "Delete Knowledge Graph Relations",
+    annotations: DESTRUCTIVE,
+    description:
+      "Remove specific relations from the knowledge graph. Each relation is identified " +
+      "by its (from, to, relationType) triple.",
+    inputSchema: {
+      relations: z
+        .array(RelationInput)
+        .min(1)
+        .describe("Relations to delete"),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const removed = store.deleteRelations(args.relations);
+      return removed > 0
+        ? `Deleted ${removed} relations.`
+        : "No matching relations found.";
+    },
+  }),
+
+  defineTool({
+    name: "memory_read_graph",
+    title: "Read Entire Knowledge Graph",
+    annotations: READ,
+    description:
+      "Read the entire knowledge graph — all entities with their observations, plus all " +
+      "relations. Use this to get a complete picture of accumulated knowledge. For large " +
+      "graphs, prefer memory_search_nodes or memory_open_nodes.",
+    inputSchema: {},
+    async handler() {
+      const store = await getStore();
+      const graph = store.readGraph();
+      if (graph.entities.length === 0) return "The knowledge graph is empty.";
+      return JSON.stringify(graph, null, 2);
+    },
+  }),
+
+  defineTool({
+    name: "memory_search_nodes",
+    title: "Search Knowledge Graph",
+    annotations: READ,
+    description:
+      "Search for entities in the knowledge graph by name, type, or observation content. " +
+      "Returns matching entities with their observations, plus any relations where at " +
+      "least one endpoint is in the result set.",
+    inputSchema: {
+      query: z
+        .string()
+        .describe("Search term — matched against entity names, types, and observation content"),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Max entities to return (default 50)"),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const graph = store.searchNodes(args.query, args.limit);
+      if (graph.entities.length === 0) return `No entities matching "${args.query}".`;
+      return JSON.stringify(graph, null, 2);
+    },
+  }),
+
+  defineTool({
+    name: "memory_open_nodes",
+    title: "Open Knowledge Graph Nodes",
+    annotations: READ,
+    description:
+      "Retrieve specific entities by exact name from the knowledge graph, with all their " +
+      "observations and any relations where at least one endpoint is in the requested set.",
+    inputSchema: {
+      names: z
+        .array(z.string())
+        .min(1)
+        .describe("Exact entity names to retrieve"),
+    },
+    async handler(args) {
+      const store = await getStore();
+      const graph = store.openNodes(args.names);
+      if (graph.entities.length === 0) return "None of the requested entities exist.";
+      return JSON.stringify(graph, null, 2);
+    },
+  }),
+];

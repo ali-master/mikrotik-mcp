@@ -30,6 +30,7 @@ import { Note, Spinner } from "./geist";
 import { DeviceHealthCard } from "./health";
 import { JsonView } from "./highlight";
 import { useLiveStream, useReveals } from "./hooks";
+import { MemoryView } from "./memory";
 import { ModulesView } from "./modules";
 import { PacketCapture } from "./packet-capture";
 import { S3Manage } from "./s3";
@@ -79,6 +80,7 @@ type ViewId =
   | "backups"
   | "modules"
   | "config"
+  | "memory"
   | "feed";
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
@@ -93,6 +95,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "backups", label: "Backups", sub: "Local config vault — create, restore, manage" },
   { id: "modules", label: "Modules", sub: "Enable/disable tool modules — curate the surface" },
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
+  { id: "memory", label: "Memory", sub: "Knowledge graph — entities, relations & observations" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
 /** Valid view ids — used to validate a hash/stored route before trusting it. */
@@ -150,6 +153,7 @@ const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   backups: MONO_ACCENT,
   modules: MONO_ACCENT,
   config: MONO_ACCENT,
+  memory: MONO_ACCENT,
   feed: MONO_ACCENT,
 };
 
@@ -255,6 +259,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Every successful apply is auto-saved to the version timeline — restore any point in time.",
       "Save a named checkpoint before a big change for an easy, labelled rollback.",
       "The Field Guide documents every config option, its type, and default — straight from the schema.",
+    ],
+  },
+  memory: {
+    what: "A persistent knowledge graph the AI builds across sessions — entities (routers, subnets, users), relations between them, and free-text observations.",
+    tips: [
+      "Entities are created by the AI via MCP tools — you can browse and delete them here.",
+      "The graph visualization shows entities as circles and relations as directed edges; click a node to inspect it.",
+      "Change the database path to switch between different knowledge bases.",
     ],
   },
   feed: {
@@ -369,6 +381,15 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <path d="M4 7h8M16 7h4M4 17h4M12 17h8" />
         <circle cx="14" cy="7" r="2.2" />
         <circle cx="10" cy="17" r="2.2" />
+      </>
+    ),
+    memory: (
+      <>
+        <circle cx="12" cy="6" r="2" />
+        <circle cx="6" cy="14" r="2" />
+        <circle cx="18" cy="14" r="2" />
+        <circle cx="12" cy="20" r="2" />
+        <path d="M12 8v-0.5M12 8 7.2 12.5M12 8 16.8 12.5M6 16 10.5 18.5M18 16 13.5 18.5" />
       </>
     ),
     feed: <path d="M4 6h16M4 12h16M4 18h10" />,
@@ -1183,6 +1204,9 @@ function App(): ReactNode {
               <p className="feed-empty__title">Loading configuration…</p>
             </div>
           ))}
+
+        {/* ── Memory ── */}
+        {view === "memory" && <MemoryView />}
 
         {/* ── Live Feed ── */}
         {view === "feed" && (

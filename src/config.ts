@@ -27,6 +27,13 @@ export const DEFAULT_DASHBOARD_DB = join(homedir(), ".mikrotik-mcp", "events.db"
 export const DEFAULT_SNAPSHOT_DB = join(homedir(), ".mikrotik-mcp", "snapshots.db");
 
 /**
+ * Default knowledge-graph memory DB: `~/.mikrotik-mcp/memory.db`. Persists
+ * entities, relations and observations across sessions so the AI builds
+ * long-term structured knowledge about the managed network.
+ */
+export const DEFAULT_MEMORY_DB = join(homedir(), ".mikrotik-mcp", "memory.db");
+
+/**
  * Default local backup vault: `~/.mikrotik-mcp/backups/`. Holds `/export` `.rsc`
  * config backups on the MCP server's own filesystem (NOT on the device, NOT S3),
  * one file per backup. Override with `MIKROTIK_BACKUP_DIR`.
@@ -215,6 +222,19 @@ export const DashboardConfigSchema = z.object({
 export type DashboardConfig = z.infer<typeof DashboardConfigSchema>;
 
 /**
+ * Persistent knowledge-graph memory. Entities, relations and observations are
+ * stored in a SQLite database so the AI can accumulate structured knowledge
+ * across sessions. Enabled by default; the DB is opened lazily on first use.
+ */
+export const MemoryConfigSchema = z.object({
+  /** Master switch — when false the memory tools are inert (no DB opened). */
+  enabled: z.boolean().default(true),
+  /** SQLite database path for the knowledge graph (`:memory:` for ephemeral). */
+  dbPath: z.string().default(DEFAULT_MEMORY_DB),
+});
+export type MemoryConfig = z.infer<typeof MemoryConfigSchema>;
+
+/**
  * Tool-surface curation. This server exposes several hundred tools across ~110
  * modules; MCP clients discover tools by relevance search and only feed a capped
  * candidate set to the model, so a query can crowd out simple read tools (e.g.
@@ -286,6 +306,8 @@ export const MikrotikConfigSchema = z.object({
    * {@link ToolFilterSchema}). Off by default (the full surface registers).
    */
   tools: ToolFilterSchema.default(() => ToolFilterSchema.parse({})),
+  /** Persistent knowledge-graph memory (entities, relations, observations). */
+  memory: MemoryConfigSchema.default(() => MemoryConfigSchema.parse({})),
   /**
    * Directory for the local backup vault (`/export` `.rsc` files on the MCP host).
    * Editable from the dashboard's Backups page and persisted here. Falls back to
@@ -342,6 +364,7 @@ function parseDevicesSource(
   tools?: Record<string, unknown>;
   mcp?: Record<string, unknown>;
   ssh?: Record<string, unknown>;
+  memory?: Record<string, unknown>;
 } {
   let json: unknown;
   try {
@@ -380,7 +403,11 @@ function parseDevicesSource(
     structured && obj.ssh && typeof obj.ssh === "object"
       ? (obj.ssh as Record<string, unknown>)
       : undefined;
-  return { devices, defaultDevice, s3, dashboard, tools, mcp, ssh };
+  const memory =
+    structured && obj.memory && typeof obj.memory === "object"
+      ? (obj.memory as Record<string, unknown>)
+      : undefined;
+  return { devices, defaultDevice, s3, dashboard, tools, mcp, ssh, memory };
 }
 
 /**
@@ -461,6 +488,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   let fileTools: Record<string, unknown> | undefined;
   let fileMcp: Record<string, unknown> | undefined;
   let fileSsh: Record<string, unknown> | undefined;
+  let fileMemory: Record<string, unknown> | undefined;
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -473,6 +501,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     fileTools = src.tools;
     fileMcp = src.mcp;
     fileSsh = src.ssh;
+    fileMemory = src.memory;
   }
 
   // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
@@ -561,6 +590,13 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     ...fileSsh,
   };
 
+  // 6) Persistent knowledge-graph memory. Env/flags → config-file override.
+  const memory = {
+    enabled: boolOpt(pick("memory-enabled", "MIKROTIK_MEMORY__ENABLED")),
+    dbPath: pick("memory-db", "MIKROTIK_MEMORY__DB_PATH"),
+    ...fileMemory,
+  };
+
   // S3 is opt-in: only attach the block when something meaningful is set, so an
   // unconfigured deployment leaves `config.s3` undefined and the tools inert.
   const hasS3 = !!(s3.accessKeyId || s3.bucket || s3.endpoint);
@@ -573,6 +609,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     readOnly,
     tools,
     ssh,
+    memory,
     ...(hasS3 ? { s3 } : {}),
   };
 

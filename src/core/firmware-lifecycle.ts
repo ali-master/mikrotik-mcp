@@ -243,7 +243,7 @@ export function assessUpgradeReadiness(state: FirmwareState): ReadinessCheck[] {
   }
 
   // 2. CPU load — warn if high
-  const cpuNum = parseInt(state.cpuLoad, 10);
+  const cpuNum = Number.parseInt(state.cpuLoad, 10);
   if (!isNaN(cpuNum) && cpuNum > 80) {
     checks.push({
       label: "CPU load",
@@ -307,7 +307,7 @@ export function assessUpgradeReadiness(state: FirmwareState): ReadinessCheck[] {
 function parseMem(s: string): number {
   const m = s.match(/([\d.]+)\s*(MiB|GiB|KiB)?/i);
   if (!m) return 0;
-  const val = parseFloat(m[1]);
+  const val = Number.parseFloat(m[1]);
   const unit = (m[2] ?? "").toLowerCase();
   if (unit === "gib") return val * 1024 * 1024 * 1024;
   if (unit === "mib") return val * 1024 * 1024;

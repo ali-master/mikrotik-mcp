@@ -145,12 +145,12 @@ async function captureHealthSnapshot(ctx: ToolContext): Promise<HealthSnapshot> 
     cpuLoad: res["cpu-load"] ?? "",
     freeMemory: res["free-memory"] ?? "",
     totalMemory: res["total-memory"] ?? "",
-    routeCount: parseInt(routesRaw.trim(), 10) || 0,
+    routeCount: Number.parseInt(routesRaw.trim(), 10) || 0,
     activeInterfaces: running,
     totalInterfaces: ifRows.length,
     healthSensors: healthRaw || "No sensors available",
-    pppSessions: parseInt(pppRaw.trim(), 10) || 0,
-    dhcpLeases: parseInt(dhcpRaw.trim(), 10) || 0,
+    pppSessions: Number.parseInt(pppRaw.trim(), 10) || 0,
+    dhcpLeases: Number.parseInt(dhcpRaw.trim(), 10) || 0,
   };
 }
 
@@ -434,7 +434,7 @@ export const firmwareLifecycleTools: ToolModule = [
         let script = "/system package update install";
         if (a.upgrade_routerboard) {
           script =
-            ":delay 3s; /system routerboard upgrade; :delay 2s; " + script;
+            `:delay 3s; /system routerboard upgrade; :delay 2s; ${  script}`;
         }
 
         // Remove any existing upgrade scheduler

@@ -190,3 +190,42 @@ export type Filter = {
   q: string;
 };
 export type LiveMode = "ws" | "sse" | "off";
+
+// ── Knowledge Graph Memory ──────────────────────────────────────────────────
+export interface MemoryEntity {
+  name: string;
+  entityType: string;
+  observations: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+export interface MemoryRelation {
+  from: string;
+  to: string;
+  relationType: string;
+  createdAt: number;
+}
+export interface MemoryGraph {
+  entities: MemoryEntity[];
+  relations: MemoryRelation[];
+}
+export interface MemoryStats {
+  entities: number;
+  relations: number;
+  observations: number;
+  entityTypes: { type: string; count: number }[];
+  relationTypes: { type: string; count: number }[];
+  recentActivity: MemoryActivityEntry[];
+}
+export interface MemoryActivityEntry {
+  id: number;
+  ts: number;
+  action: string;
+  subject: string;
+  detail?: string;
+}
+export interface MemoryConfig {
+  enabled: boolean;
+  dbPath: string;
+  stats: MemoryStats | null;
+}
