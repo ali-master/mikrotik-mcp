@@ -1,13 +1,16 @@
 /**
  * Build the MCP App views into single self-contained HTML files.
  *
- * 1. `vp build -c ui/vite.config.ts` (vite-plus) bundles each `ui/<id>/index.html`
- *    entry into `dist/ui-build/<id>/index.html` + hashed JS/CSS assets.
- * 2. We inline those assets into the HTML and write `dist/ui/<id>.html`.
+ * Each MCP App view is built as a **separate single-entry** Vite build (via the
+ * `MCP_VIEW` env var) with `inlineDynamicImports: true`, so the entire view
+ * — including the `@modelcontextprotocol/ext-apps` SDK — lands in one JS chunk
+ * with no shared runtime chunk. A multi-entry build would extract common code
+ * (the ext-apps SDK) into a sibling chunk file that the sandboxed iframe can't
+ * fetch, breaking every view.
  *
- * A single self-contained file is required because the host renders the view in
- * a sandboxed iframe that can't fetch sibling assets. The intermediate
- * `dist/ui-build` is removed afterwards so only the final views ship.
+ * After each build, we inline the JS/CSS assets into the HTML and write
+ * `dist/ui/<id>.html`. The intermediate `dist/ui-build` is removed afterwards
+ * so only the final views ship.
  *
  * Run via `bun run build:ui`.
  */
@@ -20,6 +23,17 @@ const log = (msg: string): void => void process.stdout.write(`${msg}\n`);
 
 const BUILD_DIR = join(PROJECT_ROOT, "dist", "ui-build");
 const OUT_DIR = join(PROJECT_ROOT, "dist", "ui");
+
+/** All MCP App view ids (must match `ALL_VIEWS` in `ui/vite.config.ts`). */
+const MCP_VIEWS = [
+  "dashboard",
+  "records",
+  "interfaces",
+  "firewall",
+  "firewall-audit",
+  "connected-devices",
+  "aaa",
+];
 
 /** Inline `<script src>` / `<link rel=stylesheet>` referenced by an HTML file. */
 function inline(htmlPath: string): string {
@@ -43,15 +57,21 @@ function inline(htmlPath: string): string {
     },
   );
 
+  // Remove modulepreload links — these reference sibling chunks that don't
+  // exist in the sandboxed iframe. With single-entry + inlineDynamicImports
+  // there should be none, but strip any that slip through.
+  html = html.replace(/<link\b[^>]*\brel="modulepreload"[^>]*>/g, "");
+
   return html;
 }
 
 /** Run a single `vp build` for one config; abort on failure. */
-function build(configPath: string, label: string): void {
+function build(configPath: string, label: string, env?: Record<string, string>): void {
   log(`• Building ${label} (vp build)…`);
   const res = spawnSync("bunx", ["vp", "build", "-c", configPath, "--logLevel", "warn"], {
     cwd: PROJECT_ROOT,
     stdio: "inherit",
+    env: env ? { ...process.env, ...env } : undefined,
   });
   if (res.status !== 0) {
     console.error(`✗ vp build failed (${label})`);
@@ -60,8 +80,18 @@ function build(configPath: string, label: string): void {
 }
 
 function main(): void {
-  // First build empties dist/ui-build; the second (React dashboard) appends.
-  build("ui/vite.config.ts", "MCP App views");
+  // Clean the intermediate build directory so individual per-view builds don't
+  // accumulate stale output from previous runs.
+  rmSync(BUILD_DIR, { recursive: true, force: true });
+  mkdirSync(BUILD_DIR, { recursive: true });
+
+  // Build each MCP App view as a separate single-entry build so
+  // inlineDynamicImports can be used — no shared runtime chunk.
+  for (const view of MCP_VIEWS) {
+    build("ui/vite.config.ts", `MCP App view: ${view}`, { MCP_VIEW: view });
+  }
+
+  // The React observability dashboard is already a single-entry build.
   build("ui/vite.observability.config.ts", "React observability dashboard");
 
   if (!existsSync(BUILD_DIR)) {

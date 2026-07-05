@@ -30,7 +30,7 @@ export default defineConfig({
     modulePreload: { polyfill: false },
     rollupOptions: {
       input: { observability: resolve(here, "observability/index.html") },
-      output: { inlineDynamicImports: true },
+      output: { codeSplitting: false },
     },
   },
 });
