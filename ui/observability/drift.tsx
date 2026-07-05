@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { api, deleteJson, postJson } from "./api";
+import { Panel, StatCard } from "./atoms";
 import type {
   DriftAttribution,
   DriftBaseline,
@@ -140,12 +141,12 @@ function DiffViewer({ unified }: { unified: string }): ReactNode {
         maxHeight: 500,
         margin: 0,
         padding: 12,
-        background: "var(--bg-2, #111)",
+        background: "var(--mt-surface-2, #111)",
         borderRadius: 6,
       }}
     >
       {lines.map((line, i) => {
-        let color = "var(--fg-2, #aaa)";
+        let color = "var(--mt-text-dim, #aaa)";
         let bg = "transparent";
         if (line.startsWith("+")) {
           color = "#22c55e";
@@ -185,7 +186,7 @@ function SectionBars({ sections }: { sections: DriftSection[] }): ReactNode {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                color: "var(--fg-1, #eee)",
+                color: "var(--mt-text, #eee)",
               }}
               title={s.path}
             >
@@ -195,7 +196,7 @@ function SectionBars({ sections }: { sections: DriftSection[] }): ReactNode {
               style={{
                 flex: 1,
                 height: 14,
-                background: "var(--bg-2, #222)",
+                background: "var(--mt-surface-2, #222)",
                 borderRadius: 3,
                 overflow: "hidden",
                 display: "flex",
@@ -216,7 +217,7 @@ function SectionBars({ sections }: { sections: DriftSection[] }): ReactNode {
                 }}
               />
             </div>
-            <span style={{ fontSize: 11, color: "var(--fg-2, #aaa)", minWidth: 60 }}>
+            <span style={{ fontSize: 11, color: "var(--mt-text-dim, #aaa)", minWidth: 60 }}>
               +{s.added} -{s.removed}
             </span>
           </div>
@@ -254,7 +255,7 @@ function AttributionTable({ attributions }: { attributions: DriftAttribution[] }
                   style={{
                     padding: "1px 6px",
                     borderRadius: 4,
-                    background: "var(--bg-2, #222)",
+                    background: "var(--mt-surface-2, #222)",
                     fontSize: 10,
                   }}
                 >
@@ -278,7 +279,7 @@ function AttributionTable({ attributions }: { attributions: DriftAttribution[] }
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  color: "var(--fg-2, #aaa)",
+                  color: "var(--mt-text-dim, #aaa)",
                 }}
                 title={a.logLine}
               >
@@ -340,17 +341,10 @@ function DeviceDetail({
   };
 
   return (
-    <div
-      className="panel reveal"
-      style={{ marginTop: 16, border: "1px solid var(--border, #333)", borderRadius: 8 }}
-    >
-      <div className="sheet__hd" style={{ padding: "12px 16px" }}>
-        <div>
-          <strong>{device}</strong>
-          <span className="muted" style={{ marginLeft: 8 }}>
-            Drift Detail
-          </span>
-        </div>
+    <Panel
+      title={`${device} — Drift Detail`}
+      className="reveal"
+      extra={
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn btn--sm" onClick={() => void check()} disabled={loading}>
             {loading ? "Checking..." : "Check Now"}
@@ -362,12 +356,12 @@ function DeviceDetail({
             Close
           </button>
         </div>
-      </div>
-
-      {error && <div style={{ padding: "8px 16px", color: "#ef4444" }}>{error}</div>}
+      }
+    >
+      {error && <div style={{ color: "#ef4444" }}>{error}</div>}
 
       {report && (
-        <div style={{ padding: "0 16px 16px" }}>
+        <div>
           {/* Summary bar */}
           <div
             style={{
@@ -375,7 +369,7 @@ function DeviceDetail({
               gap: 24,
               alignItems: "center",
               padding: "12px 0",
-              borderBottom: "1px solid var(--border, #333)",
+              borderBottom: "1px solid var(--mt-border, #333)",
               marginBottom: 12,
             }}
           >
@@ -437,11 +431,11 @@ function DeviceDetail({
       )}
 
       {!report && !loading && !error && (
-        <div style={{ padding: "16px", textAlign: "center" }} className="muted">
+        <p className="muted" style={{ textAlign: "center" }}>
           Click "Check Now" to run a live drift check against the golden baseline.
-        </div>
+        </p>
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -476,9 +470,9 @@ export function DriftView(): ReactNode {
 
   if (error && devices.length === 0) {
     return (
-      <div className="panel reveal" style={{ padding: 24 }}>
+      <Panel className="reveal">
         <p style={{ color: "#ef4444" }}>{error}</p>
-      </div>
+      </Panel>
     );
   }
 
@@ -487,40 +481,20 @@ export function DriftView(): ReactNode {
   return (
     <>
       {/* Stats row */}
-      <div className="stats-row reveal">
-        <div className="stat">
-          <div className="stat__n">{devices.length}</div>
-          <div className="stat__l">Devices</div>
-        </div>
-        <div className="stat">
-          <div className="stat__n">{withBaseline.length}</div>
-          <div className="stat__l">With Baseline</div>
-        </div>
-        <div className="stat">
-          <div className="stat__n" style={{ color: "#22c55e" }}>
-            {devices.filter((d) => d.status === "in-sync").length}
-          </div>
-          <div className="stat__l">In Sync</div>
-        </div>
-        <div className="stat">
-          <div className="stat__n" style={{ color: "#f59e0b" }}>
-            {devices.filter((d) => d.status === "drifted").length}
-          </div>
-          <div className="stat__l">Drifted</div>
-        </div>
+      <div className="cards reveal">
+        <StatCard k="Devices" v={String(devices.length)} />
+        <StatCard k="With Baseline" v={String(withBaseline.length)} />
+        <StatCard k="In Sync" v={String(devices.filter((d) => d.status === "in-sync").length)} />
+        <StatCard k="Drifted" v={String(devices.filter((d) => d.status === "drifted").length)} />
       </div>
 
       {/* Fleet overview cards */}
-      <div className="panel reveal">
-        <div className="sheet__hd">
-          <h3 style={{ margin: 0 }}>Fleet Drift Overview</h3>
-        </div>
+      <Panel title="Fleet Drift Overview" className="reveal">
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
             gap: 12,
-            padding: 16,
           }}
         >
           {devices.map((d) => (
@@ -531,9 +505,9 @@ export function DriftView(): ReactNode {
               }}
               style={{
                 padding: 16,
-                borderRadius: 8,
-                border: `1px solid ${selectedDevice === d.device ? "#3b82f6" : "var(--border, #333)"}`,
-                background: "var(--bg-2, #111)",
+                borderRadius: "var(--mt-radius, 8px)",
+                border: `1px solid ${selectedDevice === d.device ? "var(--mt-accent, #3b82f6)" : "var(--mt-border, #333)"}`,
+                background: "var(--mt-surface-2, #111)",
                 cursor: d.status !== "no-baseline" ? "pointer" : "default",
                 transition: "border-color 0.2s",
               }}
@@ -554,7 +528,7 @@ export function DriftView(): ReactNode {
                 </span>
               </div>
               {d.baseline && (
-                <div style={{ fontSize: 11, color: "var(--fg-2, #aaa)" }}>
+                <div style={{ fontSize: 11, color: "var(--mt-text-dim, #aaa)" }}>
                   <div>Baseline: {ago(d.baseline.setAt)}</div>
                   {d.baseline.label && <div>Label: {d.baseline.label}</div>}
                 </div>
@@ -574,19 +548,19 @@ export function DriftView(): ReactNode {
             </div>
           ))}
         </div>
-      </div>
+      </Panel>
 
       {/* Set baseline form */}
       {showSetBaseline && (
-        <div className="panel reveal" style={{ marginTop: 16 }}>
-          <div className="sheet__hd" style={{ padding: "8px 16px" }}>
-            <span>
-              Set baseline for <strong>{showSetBaseline}</strong>
-            </span>
+        <Panel
+          title={`Set baseline for ${showSetBaseline}`}
+          className="reveal"
+          extra={
             <button className="btn btn--xs" onClick={() => setShowSetBaseline(null)}>
               Cancel
             </button>
-          </div>
+          }
+        >
           <SetBaselineForm
             device={showSetBaseline}
             onDone={() => {
@@ -594,7 +568,7 @@ export function DriftView(): ReactNode {
               void load();
             }}
           />
-        </div>
+        </Panel>
       )}
 
       {/* Device detail panel */}
@@ -611,10 +585,7 @@ export function DriftView(): ReactNode {
 
       {/* Baseline manager table */}
       {baselines.length > 0 && (
-        <div className="panel reveal" style={{ marginTop: 16 }}>
-          <div className="sheet__hd">
-            <h3 style={{ margin: 0 }}>Baseline Manager</h3>
-          </div>
+        <Panel title="Baseline Manager" className="reveal">
           <div style={{ overflowX: "auto" }}>
             <table className="tbl" style={{ fontSize: 12 }}>
               <thead>
@@ -665,14 +636,16 @@ export function DriftView(): ReactNode {
               </tbody>
             </table>
           </div>
-        </div>
+        </Panel>
       )}
 
       {/* Empty state */}
       {devices.length === 0 && !error && (
-        <div className="panel reveal" style={{ padding: 24, textAlign: "center" }}>
-          <p className="muted">No devices configured. Add devices to start using Drift Guard.</p>
-        </div>
+        <Panel className="reveal">
+          <p className="muted" style={{ textAlign: "center" }}>
+            No devices configured. Add devices to start using Drift Guard.
+          </p>
+        </Panel>
       )}
     </>
   );

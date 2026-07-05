@@ -177,10 +177,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
     [graph.entities, graph.relations],
   );
 
-  const nodeMap = useMemo(
-    () => new Map(layout.nodes.map((n) => [n.id, n])),
-    [layout.nodes],
-  );
+  const nodeMap = useMemo(() => new Map(layout.nodes.map((n) => [n.id, n])), [layout.nodes]);
 
   if (graph.entities.length === 0) {
     return (
@@ -222,8 +219,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
         const s = nodeMap.get(e.source);
         const t = nodeMap.get(e.target);
         if (!s || !t) return null;
-        const highlighted =
-          selected != null && (e.source === selected || e.target === selected);
+        const highlighted = selected != null && (e.source === selected || e.target === selected);
         const dimmed = selected != null && !highlighted;
         // Offset the line ends by the node radius so arrow doesn't overlap
         const dx = t.x - s.x;
@@ -344,11 +340,7 @@ function EntityDetail({
           {entity.name}
         </h3>
         <span style={{ flex: 1 }} />
-        <button
-          className="btn btn--danger btn--xs"
-          onClick={onDelete}
-          title="Delete entity"
-        >
+        <button className="btn btn--danger btn--xs" onClick={onDelete} title="Delete entity">
           Delete
         </button>
         <button className="btn btn--xs" onClick={onClose} style={{ marginLeft: 6 }}>
@@ -378,9 +370,7 @@ function EntityDetail({
 
       {(outgoing.length > 0 || incoming.length > 0) && (
         <>
-          <h4 style={{ margin: "12px 0 6px", fontSize: 12, color: "#9aa3af" }}>
-            Relations
-          </h4>
+          <h4 style={{ margin: "12px 0 6px", fontSize: 12, color: "#9aa3af" }}>Relations</h4>
           <div style={{ fontSize: 13 }}>
             {outgoing.map((r, i) => (
               <div key={`o${i}`}>
@@ -401,11 +391,7 @@ function EntityDetail({
 
 // ── Activity log ─────────────────────────────────────────────────────────────
 
-function ActivityPanel({
-  activity,
-}: {
-  activity: MemoryActivityEntry[];
-}): ReactNode {
+function ActivityPanel({ activity }: { activity: MemoryActivityEntry[] }): ReactNode {
   if (activity.length === 0) {
     return (
       <p className="muted" style={{ fontSize: 13 }}>
@@ -462,10 +448,9 @@ function ConfigPanel({
     setSaving(true);
     setMsg("");
     try {
-      const res = await postJson<{ ok?: boolean; error?: string }>(
-        "/api/memory/config",
-        { dbPath },
-      );
+      const res = await postJson<{ ok?: boolean; error?: string }>("/api/memory/config", {
+        dbPath,
+      });
       if (res.ok) {
         setMsg("Saved");
         onSaved();
@@ -512,7 +497,7 @@ function ConfigPanel({
         </p>
       )}
       {config.stats && (
-        <div className="stats-row" style={{ marginTop: 12 }}>
+        <div className="cards" style={{ marginTop: 12 }}>
           <StatCard k="Entities" v={String(config.stats.entities)} />
           <StatCard k="Relations" v={String(config.stats.relations)} />
           <StatCard k="Observations" v={String(config.stats.observations)} />
@@ -563,9 +548,7 @@ export function MemoryView(): ReactNode {
       return;
     }
     try {
-      const g = await api<MemoryGraph>(
-        `/api/memory/search?q=${encodeURIComponent(search)}`,
-      );
+      const g = await api<MemoryGraph>(`/api/memory/search?q=${encodeURIComponent(search)}`);
       setGraph(g);
     } catch (e) {
       setError(String(e));
@@ -593,7 +576,7 @@ export function MemoryView(): ReactNode {
     <>
       {/* Stats row */}
       {stats && (
-        <div className="stats-row reveal">
+        <div className="cards reveal">
           <StatCard k="Entities" v={String(stats.entities)} />
           <StatCard k="Relations" v={String(stats.relations)} />
           <StatCard k="Observations" v={String(stats.observations)} />
@@ -637,10 +620,7 @@ export function MemoryView(): ReactNode {
         {graph && <GraphPanel graph={graph} />}
       </Panel>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-        className="reveal"
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="reveal">
         {/* Entity browser */}
         <Panel title="Entities">
           {graph && graph.entities.length > 0 ? (
@@ -661,9 +641,7 @@ export function MemoryView(): ReactNode {
                       style={{
                         cursor: "pointer",
                         background:
-                          selectedEntity?.name === e.name
-                            ? "rgba(255,255,255,0.05)"
-                            : undefined,
+                          selectedEntity?.name === e.name ? "rgba(255,255,255,0.05)" : undefined,
                       }}
                       onClick={() => setSelectedEntity(e)}
                     >
