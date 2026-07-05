@@ -99,7 +99,7 @@
     "prettier": "^3.9.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "recharts": "^3.9.1",
+    "recharts": "^3.9.2",
     "release-it": "^20.2.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
