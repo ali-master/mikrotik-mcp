@@ -2122,49 +2122,54 @@ pre.body.ros .ros-comment {
 .cfgver {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 4px;
+  padding: 0 0 0 6px;
   display: grid;
-  gap: 2px;
+  gap: 0;
 }
 .cfgver__row {
   position: relative;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 10px;
-  padding: 11px 6px;
+  gap: 12px;
+  padding: 14px 10px;
   border-radius: var(--mt-radius-sm);
   transition: background 0.18s var(--ease);
 }
 .cfgver__row:hover {
-  background: color-mix(in srgb, var(--mt-text) 4%, transparent);
+  background: color-mix(in srgb, var(--mt-text) 5%, transparent);
 }
 /* vertical rail connecting the dots */
 .cfgver__row::before {
   content: "";
   position: absolute;
-  left: 12px;
-  top: 22px;
-  bottom: -2px;
-  width: 1.5px;
-  background: var(--mt-border);
+  left: 21px;
+  top: 26px;
+  bottom: -18px;
+  width: 2px;
+  background: color-mix(in srgb, var(--mt-border) 70%, var(--mt-text));
+  border-radius: 1px;
 }
 .cfgver__row:last-child::before {
   display: none;
 }
 .cfgver__dot {
-  margin-top: 5px;
-  width: 11px;
-  height: 11px;
+  margin-top: 4px;
+  width: 13px;
+  height: 13px;
   border-radius: 999px;
-  border: 2px solid var(--mt-border-strong);
+  border: 2.5px solid var(--mt-border-strong);
   background: var(--mt-surface);
   z-index: 1;
+  position: relative;
+  justify-self: center;
 }
 .cfgver__row.is-head .cfgver__dot {
+  width: 14px;
+  height: 14px;
   border-color: var(--page-accent);
   background: var(--page-accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--page-accent) 22%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--page-accent) 25%, transparent);
 }
 .cfgver__main {
   min-width: 0;
@@ -2181,7 +2186,7 @@ pre.body.ros .ros-comment {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid var(--mt-border);
   color: var(--mt-text-dim);
@@ -2206,6 +2211,7 @@ pre.body.ros .ros-comment {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--page-accent);
+  font-weight: 600;
 }
 .cfgver__same {
   font-size: 11.5px;
@@ -2237,6 +2243,7 @@ pre.body.ros .ros-comment {
   align-items: center;
   gap: 6px;
   flex: none;
+  margin-top: 1px;
 }
 .cfgver__del {
   color: var(--mt-text-faint);
