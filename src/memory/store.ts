@@ -9,13 +9,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Database } from "bun:sqlite";
-import type {
-  Entity,
-  KnowledgeGraph,
-  MemoryActivity,
-  MemoryStats,
-  Relation,
-} from "./types";
+import type { Entity, KnowledgeGraph, MemoryActivity, MemoryStats, Relation } from "./types";
 
 // ── Store interface ──────────────────────────────────────────────────────────
 
@@ -23,24 +17,20 @@ export interface MemoryStore {
   createEntities(
     entities: { name: string; entityType: string; observations?: string[] }[],
   ): Entity[];
-  createRelations(
-    relations: { from: string; to: string; relationType: string }[],
-  ): Relation[];
+  createRelations(relations: { from: string; to: string; relationType: string }[]): Relation[];
   addObservations(
     entries: { entityName: string; contents: string[] }[],
   ): { entityName: string; added: string[] }[];
   deleteEntities(names: string[]): number;
-  deleteObservations(
-    entries: { entityName: string; observations: string[] }[],
-  ): number;
-  deleteRelations(
-    relations: { from: string; to: string; relationType: string }[],
-  ): number;
+  deleteObservations(entries: { entityName: string; observations: string[] }[]): number;
+  deleteRelations(relations: { from: string; to: string; relationType: string }[]): number;
   readGraph(): KnowledgeGraph;
   searchNodes(query: string, limit?: number): KnowledgeGraph;
   openNodes(names: string[]): KnowledgeGraph;
   stats(): MemoryStats;
   activity(limit?: number, since?: number): MemoryActivity[];
+  /** Write an entry to the memory_activity audit log. */
+  logActivity(action: string, subject: string, detail?: unknown): void;
   close(): void;
 }
 
@@ -153,7 +143,7 @@ class SqliteMemoryStore implements MemoryStore {
     for (const stmt of SCHEMA_STATEMENTS) db.run(stmt);
   }
 
-  private log(action: string, subject: string, detail?: unknown): void {
+  logActivity(action: string, subject: string, detail?: unknown): void {
     this.db
       .query(
         "INSERT INTO memory_activity (ts, action, subject, detail) VALUES ($ts, $action, $subject, $detail)",
@@ -184,9 +174,7 @@ class SqliteMemoryStore implements MemoryStore {
   private relationsForEntities(names: Set<string>): Relation[] {
     if (names.size === 0) return [];
     const all = this.db.query("SELECT * FROM relations").all() as RelationRow[];
-    return all
-      .filter((r) => names.has(r.from_entity) || names.has(r.to_entity))
-      .map(rowToRelation);
+    return all.filter((r) => names.has(r.from_entity) || names.has(r.to_entity)).map(rowToRelation);
   }
 
   // ── Entity CRUD ──────────────────────────────────────────────────────────
@@ -218,11 +206,10 @@ class SqliteMemoryStore implements MemoryStore {
       }
     }
     if (created.length > 0) {
-      this.log(
-        "create_entity",
-        created.map((e) => e.name).join(", "),
-        { count: created.length, types: created.map((e) => e.entityType) },
-      );
+      this.logActivity("create_entity", created.map((e) => e.name).join(", "), {
+        count: created.length,
+        types: created.map((e) => e.entityType),
+      });
     }
     return created;
   }
@@ -236,7 +223,7 @@ class SqliteMemoryStore implements MemoryStore {
       removed += Number(res.changes ?? 0);
     }
     if (removed > 0) {
-      this.log("delete_entity", names.join(", "), { count: removed });
+      this.logActivity("delete_entity", names.join(", "), { count: removed });
     }
     return removed;
   }
@@ -251,9 +238,7 @@ class SqliteMemoryStore implements MemoryStore {
     const insertObs = this.db.query(
       "INSERT OR IGNORE INTO observations (entity_name, content, created_at) VALUES ($name, $content, $ts)",
     );
-    const touchEntity = this.db.query(
-      "UPDATE entities SET updated_at = $ts WHERE name = $name",
-    );
+    const touchEntity = this.db.query("UPDATE entities SET updated_at = $ts WHERE name = $name");
 
     for (const entry of entries) {
       // Verify entity exists
@@ -277,24 +262,18 @@ class SqliteMemoryStore implements MemoryStore {
       }
     }
     if (results.length > 0) {
-      this.log(
-        "add_observation",
-        results.map((r) => r.entityName).join(", "),
-        { entries: results.map((r) => ({ entity: r.entityName, count: r.added.length })) },
-      );
+      this.logActivity("add_observation", results.map((r) => r.entityName).join(", "), {
+        entries: results.map((r) => ({ entity: r.entityName, count: r.added.length })),
+      });
     }
     return results;
   }
 
-  deleteObservations(
-    entries: { entityName: string; observations: string[] }[],
-  ): number {
+  deleteObservations(entries: { entityName: string; observations: string[] }[]): number {
     const del = this.db.query(
       "DELETE FROM observations WHERE entity_name = $name AND content = $content",
     );
-    const touchEntity = this.db.query(
-      "UPDATE entities SET updated_at = $ts WHERE name = $name",
-    );
+    const touchEntity = this.db.query("UPDATE entities SET updated_at = $ts WHERE name = $name");
     let removed = 0;
     const now = Date.now();
     for (const entry of entries) {
@@ -309,20 +288,16 @@ class SqliteMemoryStore implements MemoryStore {
       }
     }
     if (removed > 0) {
-      this.log(
-        "delete_observation",
-        entries.map((e) => e.entityName).join(", "),
-        { count: removed },
-      );
+      this.logActivity("delete_observation", entries.map((e) => e.entityName).join(", "), {
+        count: removed,
+      });
     }
     return removed;
   }
 
   // ── Relation CRUD ────────────────────────────────────────────────────────
 
-  createRelations(
-    relations: { from: string; to: string; relationType: string }[],
-  ): Relation[] {
+  createRelations(relations: { from: string; to: string; relationType: string }[]): Relation[] {
     const now = Date.now();
     const created: Relation[] = [];
     const insert = this.db.query(
@@ -355,7 +330,7 @@ class SqliteMemoryStore implements MemoryStore {
       }
     }
     if (created.length > 0) {
-      this.log(
+      this.logActivity(
         "create_relation",
         created.map((r) => `${r.from} -[${r.relationType}]-> ${r.to}`).join(", "),
         { count: created.length },
@@ -364,9 +339,7 @@ class SqliteMemoryStore implements MemoryStore {
     return created;
   }
 
-  deleteRelations(
-    relations: { from: string; to: string; relationType: string }[],
-  ): number {
+  deleteRelations(relations: { from: string; to: string; relationType: string }[]): number {
     const del = this.db.query(
       "DELETE FROM relations WHERE from_entity = $from AND to_entity = $to AND relation_type = $type",
     );
@@ -376,11 +349,9 @@ class SqliteMemoryStore implements MemoryStore {
       removed += Number(res.changes ?? 0);
     }
     if (removed > 0) {
-      this.log(
+      this.logActivity(
         "delete_relation",
-        relations
-          .map((r) => `${r.from} -[${r.relationType}]-> ${r.to}`)
-          .join(", "),
+        relations.map((r) => `${r.from} -[${r.relationType}]-> ${r.to}`).join(", "),
         { count: removed },
       );
     }
@@ -390,12 +361,8 @@ class SqliteMemoryStore implements MemoryStore {
   // ── Read / search ────────────────────────────────────────────────────────
 
   readGraph(): KnowledgeGraph {
-    const entityRows = this.db
-      .query("SELECT * FROM entities ORDER BY name")
-      .all() as EntityRow[];
-    const entities = entityRows.map((r) =>
-      rowToEntity(r, this.observationsFor(r.name)),
-    );
+    const entityRows = this.db.query("SELECT * FROM entities ORDER BY name").all() as EntityRow[];
+    const entities = entityRows.map((r) => rowToEntity(r, this.observationsFor(r.name)));
     const relationRows = this.db
       .query("SELECT * FROM relations ORDER BY id")
       .all() as RelationRow[];
@@ -414,9 +381,7 @@ class SqliteMemoryStore implements MemoryStore {
       )
       .all({ $q: pattern, $limit: limit }) as EntityRow[];
 
-    const entities = entityRows.map((r) =>
-      rowToEntity(r, this.observationsFor(r.name)),
-    );
+    const entities = entityRows.map((r) => rowToEntity(r, this.observationsFor(r.name)));
     const names = new Set(entities.map((e) => e.name));
     return { entities, relations: this.relationsForEntities(names) };
   }
@@ -435,36 +400,23 @@ class SqliteMemoryStore implements MemoryStore {
   // ── Dashboard helpers ────────────────────────────────────────────────────
 
   stats(): MemoryStats {
-    const entities =
-      (this.db.query("SELECT COUNT(*) AS n FROM entities").get() as { n: number })
-        .n;
-    const relations =
-      (
-        this.db
-          .query("SELECT COUNT(*) AS n FROM relations")
-          .get() as { n: number }
-      ).n;
-    const observations =
-      (
-        this.db
-          .query("SELECT COUNT(*) AS n FROM observations")
-          .get() as { n: number }
-      ).n;
+    const entities = (this.db.query("SELECT COUNT(*) AS n FROM entities").get() as { n: number }).n;
+    const relations = (this.db.query("SELECT COUNT(*) AS n FROM relations").get() as { n: number })
+      .n;
+    const observations = (
+      this.db.query("SELECT COUNT(*) AS n FROM observations").get() as { n: number }
+    ).n;
 
-    const entityTypes = (
-      this.db
-        .query(
-          "SELECT entity_type AS type, COUNT(*) AS count FROM entities GROUP BY entity_type ORDER BY count DESC",
-        )
-        .all() as { type: string; count: number }[]
-    );
-    const relationTypes = (
-      this.db
-        .query(
-          "SELECT relation_type AS type, COUNT(*) AS count FROM relations GROUP BY relation_type ORDER BY count DESC",
-        )
-        .all() as { type: string; count: number }[]
-    );
+    const entityTypes = this.db
+      .query(
+        "SELECT entity_type AS type, COUNT(*) AS count FROM entities GROUP BY entity_type ORDER BY count DESC",
+      )
+      .all() as { type: string; count: number }[];
+    const relationTypes = this.db
+      .query(
+        "SELECT relation_type AS type, COUNT(*) AS count FROM relations GROUP BY relation_type ORDER BY count DESC",
+      )
+      .all() as { type: string; count: number }[];
 
     const recentActivity = this.activity(20);
 
@@ -474,9 +426,7 @@ class SqliteMemoryStore implements MemoryStore {
   activity(limit = 50, since?: number): MemoryActivity[] {
     if (since != null) {
       const rows = this.db
-        .query(
-          "SELECT * FROM memory_activity WHERE ts >= $since ORDER BY ts DESC LIMIT $limit",
-        )
+        .query("SELECT * FROM memory_activity WHERE ts >= $since ORDER BY ts DESC LIMIT $limit")
         .all({ $since: since, $limit: limit }) as ActivityRow[];
       return rows.map(rowToActivity);
     }

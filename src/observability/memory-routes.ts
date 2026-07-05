@@ -9,29 +9,9 @@
 import { getConfig, setConfig } from "../core/runtime";
 import { getConfigSource } from "../config";
 import { atomicWrite, serializeConfig } from "../config-write";
-import { openMemoryStore } from "../memory/store";
-import type { MemoryStore } from "../memory/store";
-import { resetMemoryStore } from "../tools/memory";
+import { closeMemoryStore, getMemoryStore, reopenMemoryStore } from "../memory/accessor";
 
-// ── Lazy store ───────────────────────────────────────────────────────────────
-
-let storePromise: Promise<MemoryStore> | null = null;
-
-function getStore(): Promise<MemoryStore> {
-  if (!storePromise) {
-    const cfg = getConfig();
-    storePromise = openMemoryStore(cfg.memory.dbPath);
-  }
-  return storePromise;
-}
-
-/** Close the memory store (called on dashboard shutdown). */
-export function closeMemoryStore(): void {
-  if (storePromise) {
-    storePromise.then((s) => s.close()).catch(() => {});
-    storePromise = null;
-  }
-}
+export { closeMemoryStore };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -47,10 +27,7 @@ async function bodyJson<T>(req: Request): Promise<T> {
 
 // ── Route handler ────────────────────────────────────────────────────────────
 
-export async function memoryRoutes(
-  req: Request,
-  url: URL,
-): Promise<Response | null> {
+export async function memoryRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith("/api/memory")) return null;
 
@@ -64,7 +41,7 @@ export async function memoryRoutes(
   if (p === "/api/memory/config" && req.method === "GET") {
     let stats = null;
     try {
-      const store = await getStore();
+      const store = await getMemoryStore();
       stats = store.stats();
     } catch {
       // store may not be openable yet
@@ -80,21 +57,21 @@ export async function memoryRoutes(
     const body = await bodyJson<{ dbPath?: string; enabled?: boolean }>(req);
     const updates: Record<string, unknown> = {};
 
-    if (body.dbPath !== undefined && typeof body.dbPath === "string" && body.dbPath !== cfg.memory.dbPath) {
-      // Close current stores
-      closeMemoryStore();
-      resetMemoryStore();
-
+    if (
+      body.dbPath !== undefined &&
+      typeof body.dbPath === "string" &&
+      body.dbPath !== cfg.memory.dbPath
+    ) {
       updates.dbPath = body.dbPath;
 
-      // Open at new path to verify it works
-      storePromise = openMemoryStore(body.dbPath);
+      // Reopen the shared store at the new path; verifies the DB is usable.
       try {
-        await storePromise;
+        await reopenMemoryStore(body.dbPath);
       } catch (e) {
-        storePromise = null;
         return json(
-          { error: `Failed to open memory DB at ${body.dbPath}: ${e instanceof Error ? e.message : String(e)}` },
+          {
+            error: `Failed to open memory DB at ${body.dbPath}: ${e instanceof Error ? e.message : String(e)}`,
+          },
           400,
         );
       }
@@ -120,7 +97,7 @@ export async function memoryRoutes(
 
     let stats = null;
     try {
-      const store = await getStore();
+      const store = await getMemoryStore();
       stats = store.stats();
     } catch {
       // may fail if disabled
@@ -136,7 +113,7 @@ export async function memoryRoutes(
 
   // ── All remaining endpoints require the store ────────────────────────────
 
-  const store = await getStore();
+  const store = await getMemoryStore();
 
   // ── Read endpoints ───────────────────────────────────────────────────────
 

@@ -16,6 +16,7 @@
 import { existsSync } from "node:fs";
 import { loadConfig } from "./config";
 import { closeAll as closeConnectionPool } from "./core/connection-pool";
+import { closeMemoryStore } from "./memory/accessor";
 import { setConfig } from "./core/runtime";
 import { createDeviceClient, describeTransport } from "./core/transport";
 import { logger } from "./logger";
@@ -201,6 +202,7 @@ async function main(): Promise<void> {
     shuttingDown = true;
     logger.info(`Received ${signal}, shutting down…`);
     closeConnectionPool();
+    closeMemoryStore();
     process.exit(0);
   };
   process.on("SIGINT", () => shutdown("SIGINT"));

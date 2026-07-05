@@ -14,6 +14,7 @@ import type { UiLink } from "./ui-meta";
 import { resolvedTarget } from "./runtime";
 import type { DeviceDirectoryEntry } from "./runtime";
 import { riskOf } from "../observability/event";
+import { recordToolToMemory } from "../memory/auto-record";
 import { isRecording, recordToolCall } from "../observability/recorder";
 
 /**
@@ -354,6 +355,12 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
               reason: typeof reason === "string" ? reason : undefined,
             });
           }
+          recordToolToMemory({
+            tool: def.name,
+            device: deviceName,
+            isError: isErr,
+            durationMs: Date.now() - startedAt,
+          });
         }
       };
 
