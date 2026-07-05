@@ -110,6 +110,7 @@ import { routingTableTools } from "./routing-table";
 import { drDrillTools } from "./dr-drill";
 import { safeModeTools } from "./safe-mode";
 import { schedulerTools } from "./scheduler";
+import { serverPulseTools } from "./server-pulse";
 import { threatFeedTools } from "./threat-feed";
 import { sstpTools } from "./sstp";
 import { switchSettingsTools } from "./switch-settings";
@@ -153,6 +154,15 @@ export const moduleCatalog: ModuleInfo[] = [
       "surface a specific tool: search by intent (`find_tools`), inspect a schema (`describe_tool`), " +
       "and run any tool by name with full validation (`invoke_tool`).",
     tools: toolGatewayTools,
+  },
+  {
+    label: "Server Pulse",
+    slug: "server-pulse",
+    group: "Discovery & Meta",
+    description:
+      "Server self-awareness: running version, update availability, release notes, " +
+      "upgrade path, and server vitals. No RouterOS device is contacted.",
+    tools: serverPulseTools,
   },
   // ── Universal primitive (the reliable dispatcher for any RouterOS command) ─
   {
@@ -1129,7 +1139,7 @@ export const allToolModules: ToolModule[] = moduleCatalog.map((m) => m.tools);
  * — is always present even in a tightly scoped deployment. An explicit
  * `disabledModules`/`disabledGroups` opt-out still removes them.
  */
-export const ALWAYS_ON_MODULES = new Set(["tool-gateway", "memory"]);
+export const ALWAYS_ON_MODULES = new Set(["tool-gateway", "memory", "server-pulse"]);
 
 /** Shape of the tool-surface filter (mirrors `ToolFilter` in config.ts). */
 export interface ToolModuleFilter {

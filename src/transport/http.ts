@@ -14,9 +14,12 @@ import { randomUUID } from "node:crypto";
 import { serve } from "bun";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import type { McpServerSettings } from "../config";
+import { getConfig } from "../core/runtime";
+import { checkForUpdate } from "../core/update-check";
 import { corsHeaders } from "./cors";
 import { logger } from "../logger";
 import { createServer } from "../server";
+import { VERSION } from "../version";
 
 const LOCALHOST = new Set(["127.0.0.1", "localhost", "::1", "0.0.0.0"]);
 
@@ -139,4 +142,19 @@ export async function runHttp(mcp: McpServerSettings): Promise<void> {
     `MCP server ready on http://${mcp.host}:${mcp.port}${mcpPath} — ${toolCount} tools, ${promptCount} prompts, ${uiViewCount} app views ` +
       `(${mcp.transport})${readOnly ? " [READ-ONLY]" : ""}`,
   );
+
+  // Background update whisper — seed the file cache so the next session's
+  // instructions injection has data, and log the result to stderr.
+  if (!getConfig().disableUpdateCheck) {
+    void checkForUpdate()
+      .then((r) => {
+        if (r.release?.isNewer) {
+          logger.info(
+            `[update] MikroTik MCP v${r.release.version} available (running v${VERSION}). ` +
+              `Upgrade: bun i -g @usex/mikrotik-mcp@latest`,
+          );
+        }
+      })
+      .catch(() => {});
+  }
 }

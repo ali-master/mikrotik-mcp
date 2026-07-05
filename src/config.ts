@@ -316,6 +316,12 @@ export const MikrotikConfigSchema = z.object({
    * `~/.mikrotik-mcp/backups/` (the `MIKROTIK_BACKUP_DIR` env var overrides both).
    */
   backupDir: z.string().optional(),
+  /**
+   * Suppress background update checks (startup whisper + cache seeding). The
+   * `check_server_pulse` tool still works on-demand. Useful for air-gapped or
+   * privacy-conscious deployments. Env: `MIKROTIK_DISABLE_UPDATE_CHECK`.
+   */
+  disableUpdateCheck: z.boolean().default(false),
 });
 export type MikrotikConfig = z.infer<typeof MikrotikConfigSchema>;
 
@@ -545,6 +551,9 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   // Read-only mode (boolean flag/env). A bare `--read-only` parses to "true".
   const isTruthy = (v?: string): boolean => /^(1|true|yes|on)$/i.test(v ?? "");
   const readOnly = isTruthy(pick("read-only", "MIKROTIK_READ_ONLY"));
+  const disableUpdateCheck = isTruthy(
+    pick("disable-update-check", "MIKROTIK_DISABLE_UPDATE_CHECK"),
+  );
 
   // Tool-surface curation. Env/flags carry comma-separated lists; the config-file
   // `tools` block (arrays) overrides them. A list left undefined stays undefined
@@ -609,6 +618,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     mcp,
     dashboard,
     readOnly,
+    disableUpdateCheck,
     tools,
     ssh,
     memory,

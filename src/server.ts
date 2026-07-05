@@ -8,6 +8,7 @@ import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import type { SendLog } from "./core/context";
 import { registerTools } from "./core/registry";
 import { registerUiResources } from "./core/ui-resources";
+import { loadFileCacheSync, updateSummaryLine } from "./core/update-check";
 import { listDevices, deviceDirectory, deviceLabels, getConfig } from "./core/runtime";
 import { registerPrompts } from "./prompts";
 import { selectToolModules } from "./tools";
@@ -84,7 +85,7 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
 
   const { names, default: defaultDevice } = listDevices();
   const readOnly = getConfig().readOnly;
-  const instructions =
+  let instructions =
     names.length > 1
       ? INSTRUCTIONS +
         MULTI_DEVICE_INSTRUCTIONS.replace("{{names}}", names.join(", ")).replace(
@@ -92,6 +93,17 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
           defaultDevice,
         )
       : INSTRUCTIONS;
+
+  // If a previous run cached an update check showing a newer version, seed
+  // the LLM's instructions so it naturally knows about the update. This is
+  // a synchronous file read — fast and non-blocking.
+  if (!getConfig().disableUpdateCheck) {
+    const cached = loadFileCacheSync();
+    if (cached) {
+      const note = updateSummaryLine(cached);
+      if (note) instructions += `\n\n${note}`;
+    }
+  }
 
   const server = new McpServer(
     {
