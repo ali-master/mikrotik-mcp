@@ -43,5 +43,11 @@ Follow these steps in order — never skip the snapshot.
    `get_config_snapshot` (it returns the full `/export` `.rsc` text) and use it to
    reverse the change.
 
+6. **Set a golden baseline (optional).** If the change is intentional and
+   permanent, call `config_set_baseline` to designate the new state as the
+   golden-config baseline. Future drift can then be detected automatically with
+   `config_check_drift` — it reports exactly what changed, who changed it (from
+   system logs), and scores the severity.
+
 Report: the snapshot id you captured, the plan summary, the committed diff, and
 the post-change verification result.

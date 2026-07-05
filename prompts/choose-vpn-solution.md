@@ -23,6 +23,9 @@ Decision guidance — weigh these MikroTik options:
 - **WireGuard** — fastest, simplest, modern. Best for MikroTik↔MikroTik and
   laptops/phones with the WireGuard app. No built-in OS client on older systems.
   Tools: `create_wireguard_interface`, `add_wireguard_peer`, `generate_wireguard_client_config`.
+  For **3+ sites** (full-mesh or hub-spoke): `build_wireguard_mesh`.
+  For **user onboarding** (generate config, add peer, revoke later):
+  `onboard_wireguard_user`, `revoke_wireguard_user`.
 - **IPsec (IKEv2)** — the interoperability choice for site-to-site with
   _other vendors_ (Cisco/Fortinet/pfSense) and for native iOS/Windows IKEv2
   road-warrior. Most config surface. Tools: `create_ipsec_*` (profile/peer/

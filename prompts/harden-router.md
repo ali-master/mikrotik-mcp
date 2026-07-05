@@ -33,6 +33,16 @@ Carry out a hardening pass in this order, explaining each finding:
    bandwidth-test left open on the WAN.
 6. **DNS** — `get_dns_settings`; if `allow-remote-requests` is yes, ensure UDP/TCP
    53 from WAN is dropped.
+7. **SSH hardening** — `get_ssh_server_settings`; recommend strong-crypto only,
+   disable password auth if SSH keys are already deployed for admin users, and
+   consider changing the default port.
+8. **Automated DDoS / brute-force protection** — consider `harden_firewall` (the
+   Security Shield) to deploy rate-limiting rules for SSH/Winbox brute-force,
+   SYN floods, port scans, and IP spoofing in one step.
+9. **Full compliance audit** — for a comprehensive automated check across all 36
+   security dimensions, run `run_compliance_audit`. It scores the device A+
+   through F and provides per-check fix commands. Use this to catch anything the
+   manual steps above may have missed.
 
 Finish with a short prioritized checklist (Critical / Recommended / Optional) and
 the exact tool calls you would run for each. Do not make changes the user hasn't
