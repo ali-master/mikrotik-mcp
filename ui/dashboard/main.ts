@@ -229,7 +229,10 @@ async function refresh(): Promise<void> {
   }
 }
 
-app.ontoolresult = (result) => adopt((result as { structuredContent?: unknown }).structuredContent);
+app.ontoolresult = (result) => {
+  console.debug("[dashboard] ontoolresult fired", result);
+  adopt((result as { structuredContent?: unknown }).structuredContent);
+};
 app.ontoolinput = () => {
   if (!current) render();
 };
@@ -246,4 +249,12 @@ app.onteardown = async () => ({});
 
 applyDocumentTheme(getDocumentTheme());
 render();
-app.connect().catch((e) => console.error("[dashboard] connect failed", e));
+app
+  .connect()
+  .then(() => {
+    console.debug("[dashboard] connect OK", {
+      hostCaps: app.getHostCapabilities(),
+      hostCtx: app.getHostContext(),
+    });
+  })
+  .catch((e) => console.error("[dashboard] connect failed", e));

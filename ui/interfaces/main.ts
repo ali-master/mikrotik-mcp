@@ -153,7 +153,10 @@ async function refresh(): Promise<void> {
   }
 }
 
-app.ontoolresult = (result) => adopt((result as { structuredContent?: unknown }).structuredContent);
+app.ontoolresult = (result) => {
+  console.debug("[interfaces] ontoolresult fired", result);
+  adopt((result as { structuredContent?: unknown }).structuredContent);
+};
 app.ontoolinput = () => {
   if (!view) render();
 };
@@ -161,4 +164,7 @@ wireHostContext(app);
 app.onteardown = async () => ({});
 
 render();
-app.connect().catch((e) => console.error("[interfaces] connect failed", e));
+app
+  .connect()
+  .then(() => console.debug("[interfaces] connect OK", { hostCaps: app.getHostCapabilities() }))
+  .catch((e) => console.error("[interfaces] connect failed", e));

@@ -287,7 +287,10 @@ function render(): void {
 }
 
 // ── bridge ───────────────────────────────────────────────────────────────────
-app.ontoolresult = (result) => adopt((result as { structuredContent?: unknown }).structuredContent);
+app.ontoolresult = (result) => {
+  console.debug("[connected-devices] ontoolresult fired", result);
+  adopt((result as { structuredContent?: unknown }).structuredContent);
+};
 app.ontoolinput = () => {
   if (!view) render();
 };
@@ -299,6 +302,9 @@ app.onteardown = async () => {
 };
 
 render();
-app.connect().catch((e) => console.error("[connected-devices] connect failed", e));
+app
+  .connect()
+  .then(() => console.debug("[connected-devices] connect OK", { hostCaps: app.getHostCapabilities() }))
+  .catch((e) => console.error("[connected-devices] connect failed", e));
 // Light auto-refresh of the device list (status/blocked can change).
 autoTimer = setInterval(() => void refresh(), 15000);

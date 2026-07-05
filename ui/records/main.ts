@@ -340,7 +340,10 @@ function setAuto(ms: number): void {
   render();
 }
 
-app.ontoolresult = (result) => adopt((result as { structuredContent?: unknown }).structuredContent);
+app.ontoolresult = (result) => {
+  console.debug("[records] ontoolresult fired", result);
+  adopt((result as { structuredContent?: unknown }).structuredContent);
+};
 app.ontoolinput = (input) => {
   // Remember the arguments so Refresh re-runs the same query.
   if (input && typeof input === "object" && "arguments" in input) {
@@ -358,4 +361,7 @@ app.onteardown = async () => {
 };
 
 render();
-app.connect().catch((e) => console.error("[records] connect failed", e));
+app
+  .connect()
+  .then(() => console.debug("[records] connect OK", { hostCaps: app.getHostCapabilities() }))
+  .catch((e) => console.error("[records] connect failed", e));
