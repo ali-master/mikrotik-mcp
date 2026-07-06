@@ -15,6 +15,7 @@ import {
   applyHostStyleVariables,
   getDocumentTheme,
 } from "@modelcontextprotocol/ext-apps";
+import { connectApp } from "../shared/kit";
 import "./styles.css";
 
 interface Derived {
@@ -230,7 +231,7 @@ async function refresh(): Promise<void> {
 }
 
 app.ontoolresult = (result) => {
-  console.debug("[dashboard] ontoolresult fired", result);
+  console.warn("[dashboard] ontoolresult", result);
   adopt((result as { structuredContent?: unknown }).structuredContent);
 };
 app.ontoolinput = () => {
@@ -249,12 +250,4 @@ app.onteardown = async () => ({});
 
 applyDocumentTheme(getDocumentTheme());
 render();
-app
-  .connect()
-  .then(() => {
-    console.debug("[dashboard] connect OK", {
-      hostCaps: app.getHostCapabilities(),
-      hostCtx: app.getHostContext(),
-    });
-  })
-  .catch((e) => console.error("[dashboard] connect failed", e));
+void connectApp(app, "dashboard", root);

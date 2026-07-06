@@ -13,7 +13,7 @@
  * All DOM is built with textContent/element nodes (never innerHTML).
  */
 import { App } from "@modelcontextprotocol/ext-apps";
-import { h, button, wireHostContext } from "../shared/kit";
+import { h, button, connectApp, wireHostContext } from "../shared/kit";
 import "./styles.css";
 
 type Row = Record<string, string>;
@@ -596,4 +596,4 @@ app.ontoolinput = () => render();
 wireHostContext(app);
 
 render();
-app.connect().catch((e) => console.error("[aaa] connect failed", e));
+void connectApp(app, "aaa", root);

@@ -7,7 +7,7 @@
  * live refresh and CSV export via the App bridge. Text-node only — no innerHTML.
  */
 import { App } from "@modelcontextprotocol/ext-apps";
-import { button, download, h, toCsv, wireHostContext } from "../shared/kit";
+import { button, connectApp, download, h, toCsv, wireHostContext } from "../shared/kit";
 import "./styles.css";
 
 interface FirewallView {
@@ -220,4 +220,4 @@ wireHostContext(app);
 app.onteardown = async () => ({});
 
 render();
-app.connect().catch((e) => console.error("[firewall] connect failed", e));
+void connectApp(app, "firewall", root);

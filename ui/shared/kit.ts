@@ -119,3 +119,39 @@ export function wireHostContext(app: App): void {
   };
   applyDocumentTheme(getDocumentTheme());
 }
+
+/** Default connect timeout — 10 s is long enough for a healthy host. */
+const CONNECT_TIMEOUT_MS = 10_000;
+
+/**
+ * Connect the App to the host with a short timeout and visible error feedback.
+ *
+ * The ext-apps SDK defaults to a 60 s timeout for the `ui/initialize` handshake.
+ * That leaves users staring at "Waiting for data…" for a full minute before
+ * discovering the host never responded. This wrapper:
+ *
+ *  1. Cuts the timeout to 10 s.
+ *  2. Returns a boolean so the caller knows whether the bridge is live.
+ *  3. Renders a user-visible diagnostic into `root` on failure so the view
+ *     doesn't stay stuck on the skeleton state.
+ *  4. Uses `console.log` (not `.debug`) so lifecycle events are visible by
+ *     default in every browser.
+ */
+export async function connectApp(app: App, tag: string, root: HTMLElement): Promise<boolean> {
+  try {
+    await app.connect(undefined, { timeout: CONNECT_TIMEOUT_MS });
+    console.warn(`[${tag}] connected`, {
+      host: app.getHostVersion(),
+      caps: app.getHostCapabilities(),
+    });
+    return true;
+  } catch (err) {
+    console.error(`[${tag}] connect failed`, err);
+    const msg =
+      err instanceof Error && /timed?\s*out/i.test(err.message)
+        ? "The MCP App host did not respond — make sure your client supports MCP Apps (ext-apps)."
+        : `Connection failed: ${err instanceof Error ? err.message : String(err)}`;
+    root.replaceChildren(h("div", { class: "skeleton" }, msg));
+    return false;
+  }
+}

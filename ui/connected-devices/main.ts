@@ -10,7 +10,7 @@
  * All DOM is built with textContent/element nodes (never innerHTML).
  */
 import { App } from "@modelcontextprotocol/ext-apps";
-import { h, button, bytes, wireHostContext } from "../shared/kit";
+import { h, button, bytes, connectApp, wireHostContext } from "../shared/kit";
 import "./styles.css";
 
 interface Device {
@@ -288,7 +288,7 @@ function render(): void {
 
 // ── bridge ───────────────────────────────────────────────────────────────────
 app.ontoolresult = (result) => {
-  console.debug("[connected-devices] ontoolresult fired", result);
+  console.warn("[connected-devices] ontoolresult", result);
   adopt((result as { structuredContent?: unknown }).structuredContent);
 };
 app.ontoolinput = () => {
@@ -302,9 +302,7 @@ app.onteardown = async () => {
 };
 
 render();
-app
-  .connect()
-  .then(() => console.debug("[connected-devices] connect OK", { hostCaps: app.getHostCapabilities() }))
-  .catch((e) => console.error("[connected-devices] connect failed", e));
-// Light auto-refresh of the device list (status/blocked can change).
-autoTimer = setInterval(() => void refresh(), 15000);
+void connectApp(app, "connected-devices", root).then((ok) => {
+  // Only start auto-refresh once the bridge is live.
+  if (ok) autoTimer = setInterval(() => void refresh(), 15000);
+});

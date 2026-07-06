@@ -8,7 +8,7 @@
  * and severity counts sit up top. Text-node only — no innerHTML.
  */
 import { App } from "@modelcontextprotocol/ext-apps";
-import { button, h, wireHostContext } from "../shared/kit";
+import { button, connectApp, h, wireHostContext } from "../shared/kit";
 import "./styles.css";
 
 type Severity = "high" | "medium" | "low";
@@ -227,4 +227,4 @@ wireHostContext(app);
 app.onteardown = async () => ({});
 
 render();
-app.connect().catch((e) => console.error("[firewall-audit] connect failed", e));
+void connectApp(app, "firewall-audit", root);

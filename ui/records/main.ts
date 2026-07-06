@@ -15,7 +15,7 @@
  * innerHTML), so device-supplied strings can't inject markup.
  */
 import { App } from "@modelcontextprotocol/ext-apps";
-import { button, copyText, download, h, toCsv, wireHostContext } from "../shared/kit";
+import { button, connectApp, copyText, download, h, toCsv, wireHostContext } from "../shared/kit";
 import "./styles.css";
 
 interface RecordsView {
@@ -341,7 +341,7 @@ function setAuto(ms: number): void {
 }
 
 app.ontoolresult = (result) => {
-  console.debug("[records] ontoolresult fired", result);
+  console.warn("[records] ontoolresult", result);
   adopt((result as { structuredContent?: unknown }).structuredContent);
 };
 app.ontoolinput = (input) => {
@@ -361,7 +361,4 @@ app.onteardown = async () => {
 };
 
 render();
-app
-  .connect()
-  .then(() => console.debug("[records] connect OK", { hostCaps: app.getHostCapabilities() }))
-  .catch((e) => console.error("[records] connect failed", e));
+void connectApp(app, "records", root);

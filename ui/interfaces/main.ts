@@ -6,7 +6,7 @@
  * DOM is text-node only — no innerHTML.
  */
 import { App } from "@modelcontextprotocol/ext-apps";
-import { button, h, wireHostContext } from "../shared/kit";
+import { button, connectApp, h, wireHostContext } from "../shared/kit";
 import "./styles.css";
 
 interface IfacesView {
@@ -154,7 +154,7 @@ async function refresh(): Promise<void> {
 }
 
 app.ontoolresult = (result) => {
-  console.debug("[interfaces] ontoolresult fired", result);
+  console.warn("[interfaces] ontoolresult", result);
   adopt((result as { structuredContent?: unknown }).structuredContent);
 };
 app.ontoolinput = () => {
@@ -164,7 +164,4 @@ wireHostContext(app);
 app.onteardown = async () => ({});
 
 render();
-app
-  .connect()
-  .then(() => console.debug("[interfaces] connect OK", { hostCaps: app.getHostCapabilities() }))
-  .catch((e) => console.error("[interfaces] connect failed", e));
+void connectApp(app, "interfaces", root);
