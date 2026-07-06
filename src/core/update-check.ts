@@ -23,7 +23,10 @@ export interface ReleasePayload {
   body: string;
   publishedAt: string;
   url: string;
+  /** The latest published release is newer than the running version. */
   isNewer: boolean;
+  /** The running version is ahead of the latest published release (dev/pre-release). */
+  isAhead: boolean;
   currentVersion: string;
 }
 
@@ -134,13 +137,15 @@ export async function fetchLatestRelease(): Promise<ReleasePayload> {
     html_url: string;
   };
   const latestVersion = gh.tag_name.replace(/^v/, "");
+  const cmp = compareVersions(latestVersion, VERSION);
   const data: ReleasePayload = {
     version: latestVersion,
     name: gh.name || `v${latestVersion}`,
     body: gh.body || "",
     publishedAt: gh.published_at,
     url: gh.html_url,
-    isNewer: compareVersions(latestVersion, VERSION) > 0,
+    isNewer: cmp > 0,
+    isAhead: cmp < 0,
     currentVersion: VERSION,
   };
 

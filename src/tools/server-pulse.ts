@@ -94,24 +94,40 @@ export const serverPulseTools: ToolModule = [
 
       // ── Section 2: Update status ─────────────────────────────────────────
       if (result.release) {
-        const freshness = assessFreshness(VERSION, result.release.version);
-        const label = freshnessLabel(freshness);
         const age = timeAgo(result.release.publishedAt);
 
-        sections.push(
-          "",
-          `UPDATE STATUS: ${label}`,
-          sep,
-          `Current:    v${VERSION}`,
-          `Latest:     v${result.release.version} (${result.release.name})`,
-          `Published:  ${age}`,
-          `Freshness:  ${freshness.toUpperCase()}`,
-        );
-
-        if (result.release.isNewer) {
-          sections.push("", ">>> A newer version is available! <<<");
+        if (result.release.isAhead) {
+          // Running version is ahead of the latest published release (dev/pre-release build).
+          sections.push(
+            "",
+            "UPDATE STATUS: AHEAD OF LATEST RELEASE",
+            sep,
+            `Current:    v${VERSION}`,
+            `Published:  v${result.release.version} (${result.release.name})`,
+            `Released:   ${age}`,
+            `Freshness:  DEV BUILD`,
+            "",
+            "You are running ahead of the latest published release.",
+          );
         } else {
-          sections.push("", "You are running the latest version.");
+          const freshness = assessFreshness(VERSION, result.release.version);
+          const label = freshnessLabel(freshness);
+
+          sections.push(
+            "",
+            `UPDATE STATUS: ${label}`,
+            sep,
+            `Current:    v${VERSION}`,
+            `Latest:     v${result.release.version} (${result.release.name})`,
+            `Published:  ${age}`,
+            `Freshness:  ${freshness.toUpperCase()}`,
+          );
+
+          if (result.release.isNewer) {
+            sections.push("", ">>> A newer version is available! <<<");
+          } else {
+            sections.push("", "You are running the latest version.");
+          }
         }
 
         // ── Section 3: Upgrade commands (only if newer) ────────────────────
