@@ -79,14 +79,15 @@ export const McpServerSettingsSchema = z.object({
    */
   toolPageSize: z.coerce.number().int().min(0).default(0),
   /**
-   * Emit MCP App view metadata (`_meta.ui`) on tools. Default true. Set false
-   * when the MCP host's tool discovery hides or deprioritises tools that carry
-   * App / `openai/outputTemplate` metadata — every `list_*`/`get_*` read tool
-   * carries the auto-records view, so on such a host only the metadata-free
-   * write tools surface. Disabling makes every read tool plain and discoverable
-   * (you lose the interactive table/detail widgets, not any tool).
+   * Emit MCP App view metadata (`_meta.ui`) on tools. Default false. Set true
+   * to enable interactive table/detail widgets on read tools. When enabled,
+   * every `list_*`/`get_*` read tool carries the auto-records view which adds
+   * `(renders an MCP App view)` to tool descriptions — this can bloat the LLM
+   * context and some MCP hosts hide or deprioritise tools that carry App /
+   * `openai/outputTemplate` metadata. Disabled by default to keep the tool
+   * surface lean and broadly compatible.
    */
-  appViews: z.boolean().default(true),
+  appViews: z.boolean().default(false),
 });
 export type McpServerSettings = z.infer<typeof McpServerSettingsSchema>;
 

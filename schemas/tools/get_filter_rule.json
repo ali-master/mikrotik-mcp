@@ -5,7 +5,7 @@
   "properties": {
     "rule_id": {
       "type": "string",
-      "description": "Rule ID from list output e.g. \"*1\" or \"0\""
+      "description": "Rule .id e.g. \"*1F\", or bare position number e.g. \"3\""
     }
   },
   "required": [

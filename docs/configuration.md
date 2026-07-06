@@ -77,6 +77,7 @@ for the full behavior.
 | Allowed `Origin` headers   | `--mcp-allowed-origins` | `MIKROTIK_MCP__ALLOWED_ORIGINS`                   | _(empty)_             |
 | CORS allow-list for `/mcp` | `--mcp-cors-origins`    | `MIKROTIK_MCP__CORS_ORIGINS`                      | _(MCP-host defaults)_ |
 | Read-only mode             | `--read-only`           | `MIKROTIK_READ_ONLY`                              | `false`               |
+| App Views                  | `--app-views`           | `MIKROTIK_MCP__APP_VIEWS`                         | `false`               |
 
 Transport values are `stdio`, `streamable-http`, or `sse`. The HTTP bind host,
 port, and allow-lists only apply to the HTTP transports; they're ignored for
@@ -90,6 +91,13 @@ port, and allow-lists only apply to the HTTP transports; they're ignored for
 write/destructive tool is withheld. Turn it on whenever the server is exposed
 publicly (e.g. a ChatGPT Apps connector) before authentication is in place. See
 [Deploying to ChatGPT Apps](./docker.md#deploying-to-chatgpt-apps).
+
+**App Views** controls whether read tools (`list_*`/`get_*`/`show_*`/`print_*`)
+emit MCP App view metadata (`_meta.ui`). When enabled, these tools render
+interactive table/detail widgets in supporting MCP hosts — but they also add
+`(renders an MCP App view)` to every tool description, which can bloat the LLM
+context. Disabled by default for a lean tool surface. Enable via the config file
+(`mcp.appViews: true`), environment, CLI flag, or the dashboard's Modules view.
 
 The `__` (double underscore) in the env var names is the nested-key delimiter.
 

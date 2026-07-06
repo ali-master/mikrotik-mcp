@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "check_server_pulse",
+  "type": "object",
+  "properties": {
+    "include_release_notes": {
+      "description": "Include the full GitHub release notes markdown (default true). Set false for a compact version-only check.",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

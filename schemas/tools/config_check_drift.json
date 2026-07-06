@@ -21,6 +21,10 @@
       "maximum": 5000
     }
   },
-  "required": ["include_logs", "log_duration", "max_output_lines"],
+  "required": [
+    "include_logs",
+    "log_duration",
+    "max_output_lines"
+  ],
   "additionalProperties": false
 }

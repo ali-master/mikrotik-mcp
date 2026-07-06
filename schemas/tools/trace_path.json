@@ -20,6 +20,10 @@
       "type": "boolean"
     }
   },
-  "required": ["target", "count", "use_dns"],
+  "required": [
+    "target",
+    "count",
+    "use_dns"
+  ],
   "additionalProperties": false
 }

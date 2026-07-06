@@ -549,12 +549,13 @@ async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise
  */
 async function modulesRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
-  if (p !== "/api/modules" && p !== "/api/modules/toggle") return null;
+  if (p !== "/api/modules" && p !== "/api/modules/toggle" && p !== "/api/modules/app-views")
+    return null;
 
   if (p === "/api/modules" && req.method === "GET") {
     const cfg = getConfig();
     const src = getConfigSource();
-    return json({ ...moduleSurface(cfg.tools), filter: cfg.tools, source: src });
+    return json({ ...moduleSurface(cfg.tools), filter: cfg.tools, source: src, appViews: cfg.mcp.appViews });
   }
 
   if (p === "/api/modules/toggle" && req.method === "POST") {
@@ -597,6 +598,43 @@ async function modulesRoutes(req: Request, url: URL): Promise<Response | null> {
       enabled: b.enabled,
       ...moduleSurface(getConfig().tools),
       filter: getConfig().tools,
+      source: getConfigSource(),
+    });
+  }
+
+  // POST /api/modules/app-views — toggle MCP App view metadata on/off.
+  if (p === "/api/modules/app-views" && req.method === "POST") {
+    const b = (await readJson(req)) as { enabled?: boolean };
+    if (typeof b?.enabled !== "boolean") {
+      return json({ error: "enabled (boolean) is required" }, 400);
+    }
+
+    const cfg = getConfig();
+    const next = { ...cfg, mcp: { ...cfg.mcp, appViews: b.enabled } };
+    setConfig(next);
+
+    let persisted = true;
+    let warning: string | undefined;
+    try {
+      atomicWrite(getConfigSource().path, serializeConfig(next));
+    } catch (e) {
+      persisted = false;
+      warning = `applied live but not saved to disk: ${e instanceof Error ? e.message : String(e)}`;
+    }
+    if (persisted) {
+      recordVersion(
+        getConfig(),
+        "auto",
+        Date.now(),
+        `app views ${b.enabled ? "enabled" : "disabled"}`,
+      );
+    }
+    return json({
+      ok: true,
+      persisted,
+      requiresReconnect: true,
+      warning,
+      appViews: b.enabled,
       source: getConfigSource(),
     });
   }

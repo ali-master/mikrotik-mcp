@@ -28,6 +28,7 @@ interface ModuleSurface {
   totalTools: number;
   hasAllowList: boolean;
   source?: ConfigSource;
+  appViews?: boolean;
 }
 interface ToggleResult extends ModuleSurface {
   ok?: boolean;
@@ -74,10 +75,15 @@ export function ModulesView(): ReactNode {
   const [busy, setBusy] = useState<Set<string>>(new Set());
   const [msg, setMsg] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [appViews, setAppViews] = useState<boolean>(false);
+  const [appViewsBusy, setAppViewsBusy] = useState(false);
 
   const load = useCallback(() => {
     void api<ModuleSurface>("/api/modules")
-      .then(setData)
+      .then((d) => {
+        setData(d);
+        if (d.appViews !== undefined) setAppViews(d.appViews);
+      })
       .catch(() => setMsg("could not load modules"));
   }, []);
   useEffect(() => load(), [load]);
@@ -129,6 +135,34 @@ export function ModulesView(): ReactNode {
     [toggle],
   );
 
+  const toggleAppViews = useCallback(
+    async (enabled: boolean): Promise<void> => {
+      setAppViewsBusy(true);
+      setAppViews(enabled);
+      const r = await postJson<{
+        ok?: boolean;
+        persisted?: boolean;
+        warning?: string;
+        error?: string;
+        appViews?: boolean;
+      }>("/api/modules/app-views", { enabled }).catch(() => ({ error: "request failed" }));
+      setAppViewsBusy(false);
+      if ("error" in r && r.error) {
+        setMsg(r.error);
+        setAppViews(!enabled);
+        return;
+      }
+      if ("appViews" in r && r.appViews !== undefined) setAppViews(r.appViews);
+      const where = "persisted" in r && r.persisted ? "saved to config" : "applied live (not saved)";
+      const warn = "warning" in r && r.warning ? ` — ${r.warning}` : "";
+      setMsg(
+        `App views ${enabled ? "enabled" : "disabled"} — ${where}. ` +
+          `Restart the server for the change to take effect.${warn}`,
+      );
+    },
+    [],
+  );
+
   const groups = useMemo(() => {
     if (!data) return [];
     const q = query.trim().toLowerCase();
@@ -169,6 +203,27 @@ export function ModulesView(): ReactNode {
           </>
         }
       >
+        <label
+          className="mod-row"
+          data-on={appViews ? "1" : undefined}
+          title="Emit MCP App view metadata (_meta.ui) on read tools"
+          style={{ marginBottom: 10, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px" }}
+        >
+          <input
+            type="checkbox"
+            checked={appViews}
+            disabled={appViewsBusy}
+            onChange={() => void toggleAppViews(!appViews)}
+          />
+          <span className="mod-row__main">
+            <span className="mod-row__name">MCP App Views</span>
+            <span className="mod-row__desc muted">
+              When on, read tools emit interactive table/detail widgets via <code>_meta.ui</code>.
+              Disable to keep the LLM context lean. Requires server restart.
+            </span>
+          </span>
+        </label>
+
         <div className="legend" style={{ margin: "0 0 10px" }}>
           <span>
             writes to: <code>{data.source?.path ?? "config file"}</code>

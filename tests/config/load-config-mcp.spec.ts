@@ -36,8 +36,13 @@ describe("loadConfig — config-file mcp block", () => {
     expect(cfg.mcp.appViews).toBe(false);
   });
 
-  test("defaults mcp.appViews to true when the file omits an mcp block", () => {
+  test("defaults mcp.appViews to false when the file omits an mcp block", () => {
     const cfg = loadConfig([`--config=${cfgFile(DEVICES)}`]);
+    expect(cfg.mcp.appViews).toBe(false);
+  });
+
+  test("honours mcp.appViews=true from the config file", () => {
+    const cfg = loadConfig([`--config=${cfgFile({ ...DEVICES, mcp: { appViews: true } })}`]);
     expect(cfg.mcp.appViews).toBe(true);
   });
 
