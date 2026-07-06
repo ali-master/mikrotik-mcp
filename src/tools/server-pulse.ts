@@ -57,6 +57,7 @@ export const serverPulseTools: ToolModule = [
   defineTool({
     name: "check_server_pulse",
     title: "Server Pulse & Update Check",
+    noDevice: true,
     annotations: READ,
     description:
       "Check the MCP server's own heartbeat: running version, whether a newer release " +
@@ -123,8 +124,11 @@ export const serverPulseTools: ToolModule = [
         }
 
         // ── Section 4: Release notes ───────────────────────────────────────
-        if (includeNotes && result.release.body && result.release.isNewer) {
-          sections.push("", `WHAT'S NEW IN v${result.release.version}`, sep, result.release.body);
+        if (includeNotes && result.release.body) {
+          const notesHeader = result.release.isNewer
+            ? `WHAT'S NEW IN v${result.release.version}`
+            : `RELEASE NOTES — v${result.release.version}`;
+          sections.push("", notesHeader, sep, result.release.body);
         }
       } else {
         sections.push(

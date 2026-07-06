@@ -180,6 +180,11 @@ export interface ToolDef<Shape extends ZodRawShape> {
    * view (it still returns `text` for non-UI hosts).
    */
   ui?: UiLink;
+  /**
+   * When true, skip the multi-device `device` selector injection for this tool.
+   * Use for server-introspection tools that never contact a RouterOS device.
+   */
+  noDevice?: boolean;
   /** Handler returning the result shown to the model (text, or text + structured data). */
   handler: (args: any, ctx: ToolContext) => Promise<HandlerOutput> | HandlerOutput;
 }
@@ -215,8 +220,8 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
       const { sendLog, deviceNames, deviceAliases, deviceDirectory, appViews } = opts;
       // The single-vs-multi decision is keyed on the device COUNT, never the
       // enum size — a lone device that happens to have a label must not gain a
-      // selector.
-      const multiDevice = !!deviceNames && deviceNames.length > 1;
+      // selector. Tools that opt out via `noDevice` never get the selector.
+      const multiDevice = !def.noDevice && !!deviceNames && deviceNames.length > 1;
       // Resolve the view once: explicit `ui` or the auto `records` view for reads.
       // When App views are disabled, no tool carries `_meta.ui` — read tools
       // become plain tools so hosts that hide App-metadata tools still surface them.
