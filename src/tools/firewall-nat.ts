@@ -14,8 +14,11 @@ import {
   Cmd,
 } from "../core/routeros";
 import type { ToolContext } from "../core/context";
+import { ruleResolver } from "./_resolve-rule-id";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
+
+const resolveNatRuleId = ruleResolver("/ip firewall nat");
 
 /** Shared update routine — used by update/enable/disable. */
 async function updateNatRule(
@@ -152,12 +155,14 @@ async function updateNatRule(
 
   if (updates.length === 0) return "No updates specified.";
 
-  const cmd = `/ip firewall nat set ${a.rule_id} ${updates.join(" ")}`;
+  const id = await resolveNatRuleId(a.rule_id, ctx);
+  if (!id) return `NAT rule '${a.rule_id}' not found.`;
+  const cmd = `/ip firewall nat set ${id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
   if (looksLikeError(result)) return `Failed to update NAT rule: ${result}`;
 
   const details = await executeMikrotikCommand(
-    `/ip firewall nat print detail where .id=${a.rule_id}`,
+    `/ip firewall nat print detail where .id=${id}`,
     ctx,
   );
   return `NAT rule updated successfully:\n\n${details}`;
@@ -456,12 +461,16 @@ export const firewallNatTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Getting NAT rule details: rule_id=${a.rule_id}`);
+
+      const id = await resolveNatRuleId(a.rule_id, ctx);
+      if (!id) return `NAT rule '${a.rule_id}' not found.`;
+
       const result = await executeMikrotikCommand(
-        `/ip firewall nat print detail where .id=${a.rule_id}`,
+        `/ip firewall nat print detail where .id=${id}`,
         ctx,
       );
       return isEmpty(result)
-        ? `NAT rule with ID '${a.rule_id}' not found.`
+        ? `NAT rule '${a.rule_id}' not found.`
         : `NAT RULE DETAILS:\n\n${result}`;
     },
   }),
@@ -555,15 +564,12 @@ export const firewallNatTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Removing NAT rule: rule_id=${a.rule_id}`);
 
-      const count = await executeMikrotikCommand(
-        `/ip firewall nat print count-only where .id=${a.rule_id}`,
-        ctx,
-      );
-      if (count.trim() === "0") return `NAT rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveNatRuleId(a.rule_id, ctx);
+      if (!id) return `NAT rule '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(`/ip firewall nat remove ${a.rule_id}`, ctx);
+      const result = await executeMikrotikCommand(`/ip firewall nat remove ${id}`, ctx);
       if (looksLikeError(result)) return `Failed to remove NAT rule: ${result}`;
-      return `NAT rule with ID '${a.rule_id}' removed successfully.`;
+      return `NAT rule '${a.rule_id}' (${id}) removed successfully.`;
     },
   }),
 
@@ -583,18 +589,15 @@ export const firewallNatTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Moving NAT rule: rule_id=${a.rule_id} to position ${a.destination}`);
 
-      const count = await executeMikrotikCommand(
-        `/ip firewall nat print count-only where .id=${a.rule_id}`,
-        ctx,
-      );
-      if (count.trim() === "0") return `NAT rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveNatRuleId(a.rule_id, ctx);
+      if (!id) return `NAT rule '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
-        `/ip firewall nat move ${a.rule_id} destination=${a.destination}`,
+        `/ip firewall nat move ${id} destination=${a.destination}`,
         ctx,
       );
       if (looksLikeError(result)) return `Failed to move NAT rule: ${result}`;
-      return `NAT rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
+      return `NAT rule '${a.rule_id}' (${id}) moved to position ${a.destination}.`;
     },
   }),
 

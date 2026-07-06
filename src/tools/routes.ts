@@ -417,8 +417,11 @@ export const routeTools: ToolModule = [
       }
 
       // v7+: `/ip route check` was removed — query active routes instead.
+      // Routes in the default "main" table carry no explicit `routing-table`
+      // property, so filtering by `routing-table=main` returns nothing —
+      // omit the filter for "main" (same logic as get_routing_table).
       const where = [`dst-address in ${a.destination}`, "active=yes"];
-      if (table) where.push(`routing-table=${quoteValue(table)}`);
+      if (table && table !== "main") where.push(`routing-table=${quoteValue(table)}`);
       const v7Cmd = `/ip route print detail where ${where.join(" ")}`;
       const v7Result = await executeMikrotikCommand(v7Cmd, ctx);
       if (looksLikeError(v7Result)) return `Failed to check route to ${a.destination}: ${v7Result}`;

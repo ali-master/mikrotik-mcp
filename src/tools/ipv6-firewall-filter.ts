@@ -13,8 +13,11 @@ import {
   Cmd,
 } from "../core/routeros";
 import type { ToolContext } from "../core/context";
+import { ruleResolver } from "./_resolve-rule-id";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
+
+const resolveRuleId = ruleResolver("/ipv6 firewall filter");
 
 /** Shared update routine — used by update/enable/disable. */
 async function updateFilterRule(
@@ -139,12 +142,14 @@ async function updateFilterRule(
 
   if (updates.length === 0) return "No updates specified.";
 
-  const cmd = `/ipv6 firewall filter set ${a.rule_id} ${updates.join(" ")}`;
+  const id = await resolveRuleId(a.rule_id, ctx);
+  if (!id) return `IPv6 firewall filter rule '${a.rule_id}' not found.`;
+  const cmd = `/ipv6 firewall filter set ${id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
   if (looksLikeError(result)) return `Failed to update IPv6 firewall filter rule: ${result}`;
 
   const details = await executeMikrotikCommand(
-    `/ipv6 firewall filter print detail where .id=${a.rule_id}`,
+    `/ipv6 firewall filter print detail where .id=${id}`,
     ctx,
   );
   return `IPv6 firewall filter rule updated successfully:\n\n${details}`;
@@ -428,12 +433,16 @@ export const ipv6FirewallFilterTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Getting IPv6 firewall filter rule details: rule_id=${a.rule_id}`);
+
+      const id = await resolveRuleId(a.rule_id, ctx);
+      if (!id) return `IPv6 firewall filter rule '${a.rule_id}' not found.`;
+
       const result = await executeMikrotikCommand(
-        `/ipv6 firewall filter print detail where .id=${a.rule_id}`,
+        `/ipv6 firewall filter print detail where .id=${id}`,
         ctx,
       );
       return isEmpty(result)
-        ? `IPv6 firewall filter rule with ID '${a.rule_id}' not found.`
+        ? `IPv6 firewall filter rule '${a.rule_id}' not found.`
         : `IPV6 FIREWALL FILTER RULE DETAILS:\n\n${result}`;
     },
   }),
@@ -521,16 +530,12 @@ export const ipv6FirewallFilterTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Removing IPv6 firewall filter rule: rule_id=${a.rule_id}`);
 
-      const count = await executeMikrotikCommand(
-        `/ipv6 firewall filter print count-only where .id=${a.rule_id}`,
-        ctx,
-      );
-      if (count.trim() === "0")
-        return `IPv6 firewall filter rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveRuleId(a.rule_id, ctx);
+      if (!id) return `IPv6 firewall filter rule '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(`/ipv6 firewall filter remove ${a.rule_id}`, ctx);
+      const result = await executeMikrotikCommand(`/ipv6 firewall filter remove ${id}`, ctx);
       if (looksLikeError(result)) return `Failed to remove IPv6 firewall filter rule: ${result}`;
-      return `IPv6 firewall filter rule with ID '${a.rule_id}' removed successfully.`;
+      return `IPv6 firewall filter rule '${a.rule_id}' (${id}) removed successfully.`;
     },
   }),
 
@@ -552,19 +557,15 @@ export const ipv6FirewallFilterTools: ToolModule = [
         `Moving IPv6 firewall filter rule: rule_id=${a.rule_id} to position ${a.destination}`,
       );
 
-      const count = await executeMikrotikCommand(
-        `/ipv6 firewall filter print count-only where .id=${a.rule_id}`,
-        ctx,
-      );
-      if (count.trim() === "0")
-        return `IPv6 firewall filter rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveRuleId(a.rule_id, ctx);
+      if (!id) return `IPv6 firewall filter rule '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
-        `/ipv6 firewall filter move ${a.rule_id} destination=${a.destination}`,
+        `/ipv6 firewall filter move ${id} destination=${a.destination}`,
         ctx,
       );
       if (looksLikeError(result)) return `Failed to move IPv6 firewall filter rule: ${result}`;
-      return `IPv6 firewall filter rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
+      return `IPv6 firewall filter rule '${a.rule_id}' (${id}) moved to position ${a.destination}.`;
     },
   }),
 

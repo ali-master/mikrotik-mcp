@@ -14,8 +14,11 @@ import {
   Cmd,
 } from "../core/routeros";
 import type { ToolContext } from "../core/context";
+import { ruleResolver } from "./_resolve-rule-id";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
+
+const resolveMangleRuleId = ruleResolver("/ip firewall mangle");
 
 /** Shared update routine — used by update/enable/disable. */
 async function updateMangleRule(
@@ -170,12 +173,14 @@ async function updateMangleRule(
 
   if (updates.length === 0) return "No updates specified.";
 
-  const cmd = `/ip firewall mangle set ${a.rule_id} ${updates.join(" ")}`;
+  const id = await resolveMangleRuleId(a.rule_id, ctx);
+  if (!id) return `Mangle rule '${a.rule_id}' not found.`;
+  const cmd = `/ip firewall mangle set ${id} ${updates.join(" ")}`;
   const result = await executeMikrotikCommand(cmd, ctx);
   if (looksLikeError(result)) return `Failed to update mangle rule: ${result}`;
 
   const details = await executeMikrotikCommand(
-    `/ip firewall mangle print detail where .id=${a.rule_id}`,
+    `/ip firewall mangle print detail where .id=${id}`,
     ctx,
   );
   return `Mangle rule updated successfully:\n\n${details}`;
@@ -488,12 +493,16 @@ export const firewallMangleTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Getting mangle rule details: rule_id=${a.rule_id}`);
+
+      const id = await resolveMangleRuleId(a.rule_id, ctx);
+      if (!id) return `Mangle rule '${a.rule_id}' not found.`;
+
       const result = await executeMikrotikCommand(
-        `/ip firewall mangle print detail where .id=${a.rule_id}`,
+        `/ip firewall mangle print detail where .id=${id}`,
         ctx,
       );
       return isEmpty(result)
-        ? `Mangle rule with ID '${a.rule_id}' not found.`
+        ? `Mangle rule '${a.rule_id}' not found.`
         : `MANGLE RULE DETAILS:\n\n${result}`;
     },
   }),
@@ -595,15 +604,12 @@ export const firewallMangleTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Removing mangle rule: rule_id=${a.rule_id}`);
 
-      const count = await executeMikrotikCommand(
-        `/ip firewall mangle print count-only where .id=${a.rule_id}`,
-        ctx,
-      );
-      if (count.trim() === "0") return `Mangle rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveMangleRuleId(a.rule_id, ctx);
+      if (!id) return `Mangle rule '${a.rule_id}' not found.`;
 
-      const result = await executeMikrotikCommand(`/ip firewall mangle remove ${a.rule_id}`, ctx);
+      const result = await executeMikrotikCommand(`/ip firewall mangle remove ${id}`, ctx);
       if (looksLikeError(result)) return `Failed to remove mangle rule: ${result}`;
-      return `Mangle rule with ID '${a.rule_id}' removed successfully.`;
+      return `Mangle rule '${a.rule_id}' (${id}) removed successfully.`;
     },
   }),
 
@@ -623,18 +629,15 @@ export const firewallMangleTools: ToolModule = [
     async handler(a, ctx) {
       ctx.info(`Moving mangle rule: rule_id=${a.rule_id} to position ${a.destination}`);
 
-      const count = await executeMikrotikCommand(
-        `/ip firewall mangle print count-only where .id=${a.rule_id}`,
-        ctx,
-      );
-      if (count.trim() === "0") return `Mangle rule with ID '${a.rule_id}' not found.`;
+      const id = await resolveMangleRuleId(a.rule_id, ctx);
+      if (!id) return `Mangle rule '${a.rule_id}' not found.`;
 
       const result = await executeMikrotikCommand(
-        `/ip firewall mangle move ${a.rule_id} destination=${a.destination}`,
+        `/ip firewall mangle move ${id} destination=${a.destination}`,
         ctx,
       );
       if (looksLikeError(result)) return `Failed to move mangle rule: ${result}`;
-      return `Mangle rule with ID '${a.rule_id}' moved to position ${a.destination}.`;
+      return `Mangle rule '${a.rule_id}' (${id}) moved to position ${a.destination}.`;
     },
   }),
 

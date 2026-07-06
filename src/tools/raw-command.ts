@@ -36,7 +36,10 @@ export const rawCommandTools: ToolModule = [
       const cmd = a.command.trim();
       if (!cmd) return "Provide a RouterOS command to run.";
       ctx.info(`Running raw RouterOS command: ${cmd}`);
-      const result = await executeMikrotikCommand(cmd, ctx);
+      // Hard cap at 30 s — raw commands can hang the SSH channel (e.g. script
+      // sub-expressions like `:put [find ...]`) and pin the connection, blocking
+      // all subsequent tool calls until the server restarts.
+      const result = await executeMikrotikCommand(cmd, ctx, { maxMs: 30_000 });
       if (looksLikeError(result)) return `RouterOS command error: ${result}`;
       return result.trim() ? result : "(command completed with no output)";
     },
