@@ -33,7 +33,9 @@ const HEALTH_TINT: Record<Health, Color> = {
 
 function open_(cmd: string) {
   return () => {
-    launchCommand({ name: cmd, type: LaunchType.UserInitiated }).catch(() => {});
+    launchCommand({ name: cmd, type: LaunchType.UserInitiated }).catch(
+      () => {},
+    );
   };
 }
 
@@ -78,7 +80,9 @@ export default function Command() {
   // Keep the root-search subtitle in sync for background glances.
   useEffect(() => {
     if (unreachable) {
-      updateCommandMetadata({ subtitle: "Dashboard unreachable" }).catch(() => {});
+      updateCommandMetadata({ subtitle: "Dashboard unreachable" }).catch(
+        () => {},
+      );
     } else if (total > 0) {
       const rate = stats ? ` · ${stats.callsPerMin.toFixed(0)}/min` : "";
       updateCommandMetadata({
@@ -89,7 +93,8 @@ export default function Command() {
 
   function deviceDot(d: DeviceInfo): { source: Icon; tintColor: Color } {
     const r = d.status.reachable;
-    const hotDev = (d.status.cpuLoad ?? 0) >= 85 || (d.status.memUsedPct ?? 0) >= 85;
+    const hotDev =
+      (d.status.cpuLoad ?? 0) >= 85 || (d.status.memUsedPct ?? 0) >= 85;
     return {
       source: Icon.Dot,
       tintColor:
@@ -144,12 +149,16 @@ export default function Command() {
                 <MenuBarExtra.Item
                   icon={Icon.Clipboard}
                   title={`Copy ${d.address ?? `${d.host}:${d.port}`}`}
-                  onAction={() => Clipboard.copy(d.address ?? `${d.host}:${d.port}`)}
+                  onAction={() =>
+                    Clipboard.copy(d.address ?? `${d.host}:${d.port}`)
+                  }
                 />
               }
             />
           ))}
-          {enabled.length === 0 ? <MenuBarExtra.Item title="No devices configured" /> : null}
+          {enabled.length === 0 ? (
+            <MenuBarExtra.Item title="No devices configured" />
+          ) : null}
         </MenuBarExtra.Section>
       ) : null}
 
@@ -222,9 +231,21 @@ export default function Command() {
       ) : null}
 
       <MenuBarExtra.Section title="Open">
-        <MenuBarExtra.Item icon={Icon.BarChart} title="Overview" onAction={open_("overview")} />
-        <MenuBarExtra.Item icon={Icon.Livestream} title="Live Feed" onAction={open_("feed")} />
-        <MenuBarExtra.Item icon={Icon.HardDrive} title="Devices" onAction={open_("devices")} />
+        <MenuBarExtra.Item
+          icon={Icon.BarChart}
+          title="Overview"
+          onAction={open_("overview")}
+        />
+        <MenuBarExtra.Item
+          icon={Icon.Livestream}
+          title="Live Feed"
+          onAction={open_("feed")}
+        />
+        <MenuBarExtra.Item
+          icon={Icon.HardDrive}
+          title="Devices"
+          onAction={open_("devices")}
+        />
         <MenuBarExtra.Item
           icon={Icon.Globe}
           title="Dashboard in Browser"

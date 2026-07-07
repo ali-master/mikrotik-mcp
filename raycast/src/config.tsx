@@ -25,7 +25,12 @@ import { DiffDetail, diffMarkdown } from "./lib/diff";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { bytes } from "./lib/format";
 import { useApi } from "./lib/hooks";
-import type { CfgVersion, ConfigIssue, DiffSummary } from "./lib/types";
+import type {
+  CfgVersion,
+  ConfigIssue,
+  DeviceStatus,
+  DiffSummary,
+} from "./lib/types";
 
 interface SaveResp {
   ok?: boolean;
@@ -115,7 +120,7 @@ function PendingView({ resp, onDone }: { resp: SaveResp; onDone: () => void }) {
       onDone();
       pop();
     } catch (e) {
-      toast.hide();
+      void toast.hide();
       await showFailureToast(e, { title: "Could not keep config" });
     }
   }
@@ -132,7 +137,7 @@ function PendingView({ resp, onDone }: { resp: SaveResp; onDone: () => void }) {
       onDone();
       pop();
     } catch (e) {
-      toast.hide();
+      void toast.hide();
       await showFailureToast(e, { title: "Could not revert" });
     }
   }
@@ -207,7 +212,7 @@ function CheckpointForm({ onDone }: { onDone: () => void }) {
                 onDone();
                 pop();
               } catch (e) {
-                toast.hide();
+                void toast.hide();
                 await showFailureToast(e, {
                   title: "Could not save checkpoint",
                 });
@@ -274,7 +279,7 @@ function HistoryView({ onReload }: { onReload: () => void }) {
       revalidate();
       onReload();
     } catch (e) {
-      toast.hide();
+      void toast.hide();
       await showFailureToast(e, { title: "Could not restore" });
     }
   }
@@ -459,14 +464,144 @@ function FieldGuideView() {
   );
 }
 
+interface TestResult {
+  reachable?: boolean;
+  latencyMs?: number;
+  identity?: string;
+  error?: string;
+}
+
+/** Per-device connection test — mirrors the dashboard's `● name: 12ms · identity` chips. */
+function TestDevicesView({ devices }: { devices: Record<string, unknown> }) {
+  const names = Object.keys(devices);
+  const [results, setResults] = useState<Record<string, TestResult>>({});
+  const done = Object.keys(results).length;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      type TestResp = {
+        ok?: boolean;
+        status?: DeviceStatus;
+        errors?: ConfigIssue[];
+      };
+      for (const name of names) {
+        const r = await postJson<TestResp>("/api/config/test-device", {
+          name,
+          config: devices[name],
+        }).catch((): TestResp => ({ ok: false }));
+        if (cancelled) return;
+        const res: TestResult =
+          r.ok && r.status?.reachable === true
+            ? {
+                reachable: true,
+                latencyMs: r.status.latencyMs ?? 0,
+                identity: r.status.identity,
+              }
+            : {
+                reachable: false,
+                error:
+                  r.status?.error ?? r.errors?.[0]?.message ?? "unreachable",
+              };
+        setResults((prev) => ({ ...prev, [name]: res }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <List
+      isLoading={done < names.length}
+      navigationTitle={`Test Devices · ${done}/${names.length}`}
+    >
+      {names.map((name) => {
+        const r = results[name];
+        return (
+          <List.Item
+            key={name}
+            icon={
+              r
+                ? {
+                    source: r.reachable ? Icon.CheckCircle : Icon.XMarkCircle,
+                    tintColor: r.reachable ? Color.Green : Color.Red,
+                  }
+                : { source: Icon.Dot, tintColor: Color.SecondaryText }
+            }
+            title={name}
+            subtitle={
+              r
+                ? r.reachable
+                  ? `${Math.round(r.latencyMs ?? 0)}ms · ${r.identity ?? "ok"}`
+                  : (r.error ?? "unreachable")
+                : "testing…"
+            }
+            accessories={
+              r
+                ? [
+                    {
+                      tag: {
+                        value: r.reachable ? "reachable" : "unreachable",
+                        color: r.reachable ? Color.Green : Color.Red,
+                      },
+                    },
+                  ]
+                : undefined
+            }
+          />
+        );
+      })}
+      <List.EmptyView icon={Icon.Plug} title="No devices in config" />
+    </List>
+  );
+}
+
+type ValidationState =
+  | { state: "idle" }
+  | { state: "checking" }
+  | { state: "jsonerror"; jsonErr: string }
+  | { state: "issues"; issues: ConfigIssue[] }
+  | { state: "valid" };
+
 export default function Command() {
   const { push } = useNavigation();
   const cfg = useApi<Record<string, unknown>>("/api/config");
   const [text, setText] = useState<string | null>(null);
   const [rollbackMs, setRollbackMs] = useState(60_000);
+  const [validation, setValidation] = useState<ValidationState>({
+    state: "idle",
+  });
   useEffect(() => {
     if (text === null && cfg.data) setText(JSON.stringify(cfg.data, null, 2));
   }, [cfg.data, text]);
+
+  // Live validation: parse locally on each edit, then ask the server (Zod truth),
+  // debounced — mirrors the dashboard's status pill + inline error list.
+  useEffect(() => {
+    if (text === null) return;
+    const p = parseJson(text);
+    if (p.error) {
+      setValidation({ state: "jsonerror", jsonErr: p.error });
+      return;
+    }
+    setValidation({ state: "checking" });
+    const id = setTimeout(async () => {
+      try {
+        const res = await postJson<{ ok?: boolean; errors?: ConfigIssue[] }>(
+          "/api/config/validate",
+          p.obj,
+        );
+        const issues = res.errors ?? [];
+        setValidation(
+          issues.length ? { state: "issues", issues } : { state: "valid" },
+        );
+      } catch {
+        setValidation({ state: "idle" });
+      }
+    }, 500);
+    return () => clearTimeout(id);
+  }, [text]);
 
   async function validate(raw: string) {
     const p = parseJson(raw);
@@ -484,14 +619,14 @@ export default function Command() {
         p.obj,
       );
       if (res.errors && res.errors.length) {
-        toast.hide();
+        void toast.hide();
         push(<IssuesView issues={res.errors} />);
       } else {
         toast.style = Toast.Style.Success;
         toast.title = "Valid ✓";
       }
     } catch (e) {
-      toast.hide();
+      void toast.hide();
       await showFailureToast(e, { title: "Validation failed" });
     }
   }
@@ -542,67 +677,114 @@ export default function Command() {
         rollbackMs,
       });
       if (res.ok === false) {
-        toast.hide();
+        void toast.hide();
         push(<IssuesView issues={res.errors ?? []} />);
         return;
       }
-      toast.hide();
+      void toast.hide();
       push(<PendingView resp={res} onDone={cfg.revalidate} />);
     } catch (e) {
-      toast.hide();
+      void toast.hide();
       await showFailureToast(e, { title: "Apply failed" });
     }
   }
 
+  function testDevices() {
+    const p = parseJson(text ?? "");
+    if (p.error) {
+      void showFailureToast(new Error(p.error), { title: "Invalid JSON" });
+      return;
+    }
+    const devices = (p.obj as { devices?: Record<string, unknown> })?.devices;
+    if (!devices || Object.keys(devices).length === 0) {
+      void showToast({ style: Toast.Style.Failure, title: "No devices in config" });
+      return;
+    }
+    push(<TestDevicesView devices={devices} />);
+  }
+
+  // Status pill + inline field error, driven by live validation.
+  const vs = validation.state;
+  const statusText =
+    vs === "jsonerror"
+      ? "✗ Invalid JSON"
+      : vs === "checking"
+        ? "… Validating"
+        : vs === "issues"
+          ? `⚠ ${validation.issues.length} schema issue(s)`
+          : vs === "valid"
+            ? "✓ Valid"
+            : "";
+  const fieldError =
+    vs === "jsonerror"
+      ? validation.jsonErr
+      : vs === "issues"
+        ? `${validation.issues[0].path || "(root)"} — ${validation.issues[0].message}`
+        : undefined;
+
   return (
     <Form
       isLoading={cfg.isLoading}
-      navigationTitle="Config"
+      navigationTitle={statusText ? `Config · ${statusText}` : "Config"}
       actions={
         <ActionPanel>
-          <Action.SubmitForm
-            title="Apply Changes"
-            icon={Icon.Bolt}
-            onSubmit={(v: { config: string }) => apply(v.config)}
-          />
-          <Action
-            title="Validate"
-            icon={Icon.Checkmark}
-            onAction={() => validate(text ?? "")}
-          />
-          <Action
-            title="Preview Diff"
-            icon={Icon.Text}
-            onAction={() => preview(text ?? "")}
-          />
-          <Action.Push
-            title="Version History"
-            icon={Icon.Clock}
-            target={<HistoryView onReload={cfg.revalidate} />}
-          />
-          <Action.Push
-            title="Field Guide"
-            icon={Icon.Book}
-            target={<FieldGuideView />}
-          />
-          <Action
-            title="Reload from Server"
-            icon={Icon.ArrowClockwise}
-            shortcut={Keyboard.Shortcut.Common.Refresh}
-            onAction={() => {
-              setText(null);
-              cfg.revalidate();
-            }}
-          />
+          <ActionPanel.Section>
+            <Action.SubmitForm
+              title="Apply Changes"
+              icon={Icon.Bolt}
+              onSubmit={(v: { config: string }) => apply(v.config)}
+            />
+            <Action
+              title="Preview Diff"
+              icon={Icon.Text}
+              onAction={() => preview(text ?? "")}
+            />
+            <Action
+              title="Test Devices"
+              icon={Icon.Plug}
+              onAction={testDevices}
+            />
+          </ActionPanel.Section>
+          <ActionPanel.Section>
+            <Action
+              title={vs === "issues" ? "View All Issues" : "Validate Now"}
+              icon={Icon.Checkmark}
+              onAction={() => validate(text ?? "")}
+            />
+            <Action.Push
+              title="Version History"
+              icon={Icon.Clock}
+              target={<HistoryView onReload={cfg.revalidate} />}
+            />
+            <Action.Push
+              title="Field Guide"
+              icon={Icon.Book}
+              target={<FieldGuideView />}
+            />
+          </ActionPanel.Section>
+          <ActionPanel.Section>
+            <Action
+              title="Reload from Server"
+              icon={Icon.ArrowClockwise}
+              shortcut={Keyboard.Shortcut.Common.Refresh}
+              onAction={() => {
+                setText(null);
+                cfg.revalidate();
+              }}
+            />
+          </ActionPanel.Section>
         </ActionPanel>
       }
     >
-      <Form.Description text="Edit the effective configuration as JSON. Validate → Preview → Apply (timed safe-apply; Keep or it auto-reverts)." />
+      <Form.Description
+        text={`${statusText ? `${statusText}  ·  ` : ""}Edit the effective config as JSON. Preview → Apply (safe-apply auto-reverts). Test Devices probes each configured device.`}
+      />
       <Form.TextArea
         id="config"
         title="Config JSON"
         value={text ?? ""}
         onChange={setText}
+        error={fieldError}
       />
       <Form.Dropdown
         id="rollback"

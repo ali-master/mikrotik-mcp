@@ -154,7 +154,7 @@ export function areaChart(
   const cw = W - PL - PR;
   const ch = H - PT - PB;
 
-  const present = values.filter((v): v is number => v != null && isFinite(v));
+  const present = values.filter((v): v is number => v != null && Number.isFinite(v));
   if (present.length === 0) return "";
   const min = Math.min(...present);
   const max = Math.max(...present);
@@ -167,7 +167,7 @@ export function areaChart(
   const runs: Array<Array<[number, number]>> = [];
   let run: Array<[number, number]> = [];
   values.forEach((v, i) => {
-    if (v == null || !isFinite(v)) {
+    if (v == null || !Number.isFinite(v)) {
       if (run.length) runs.push(run);
       run = [];
     } else {
@@ -190,7 +190,7 @@ export function areaChart(
   let lastIdx = -1;
   for (let i = n - 1; i >= 0; i--) {
     const v = values[i];
-    if (v != null && isFinite(v)) {
+    if (v != null && Number.isFinite(v)) {
       lastIdx = i;
       break;
     }
@@ -205,7 +205,7 @@ export function areaChart(
       ? present.length &&
         values
           .map((v, i) =>
-            v != null && isFinite(v)
+            v != null && Number.isFinite(v)
               ? `<circle cx="${n2(xAt(i))}" cy="${n2(yAt(v))}" r="2" fill="${c}" opacity="0.55"/>`
               : "",
           )
@@ -260,7 +260,7 @@ export function multiAreaChart(
   const cw = W - PL - PR;
   const ch = H - PT - PB;
   const all = bands.flatMap((b) =>
-    b.values.filter((v): v is number => v != null && isFinite(v)),
+    b.values.filter((v): v is number => v != null && Number.isFinite(v)),
   );
   if (all.length === 0) return "";
   const min = Math.min(0, ...all);
@@ -277,7 +277,7 @@ export function multiAreaChart(
       const yAt = (v: number) => PT + ch - ((v - min) / range) * ch;
       const pts: Array<[number, number]> = [];
       b.values.forEach((v, i) => {
-        if (v != null && isFinite(v)) pts.push([xAt(i), yAt(v)]);
+        if (v != null && Number.isFinite(v)) pts.push([xAt(i), yAt(v)]);
       });
       if (pts.length === 0) return "";
       const d = smooth(pts);
@@ -531,14 +531,14 @@ export function heatmapChart(
   // legend
   const legY = topPad + 7 * step + 10;
   const legend =
-    `<text x="${leftPad}" y="${legY}" font-size="8.5" fill="${t.faint}">Less</text>` +
+    `<text x="${leftPad}" y="${legY}" font-size="8.5" fill="${t.faint}">Less</text>${
     alpha
       .map(
         (al, i) =>
           `<rect x="${leftPad + 30 + i * (cell + 2)}" y="${legY - 9}" width="${cell}" height="${cell}" rx="2.5" fill="${i === 0 ? t.track : base}" fill-opacity="${al}"/>`,
       )
-      .join("") +
-    `<text x="${leftPad + 30 + alpha.length * (cell + 2) + 4}" y="${legY}" font-size="8.5" fill="${t.faint}">More</text>`;
+      .join("")
+    }<text x="${leftPad + 30 + alpha.length * (cell + 2) + 4}" y="${legY}" font-size="8.5" fill="${t.faint}">More</text>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}">
   ${wl}
@@ -556,7 +556,7 @@ export function sparklineIcon(
   const W = 44;
   const H = 18;
   const c = colorToHex(color);
-  const present = values.filter((v): v is number => v != null && isFinite(v));
+  const present = values.filter((v): v is number => v != null && Number.isFinite(v));
   if (present.length < 2) return "";
   const min = Math.min(...present);
   const max = Math.max(...present);
@@ -564,7 +564,7 @@ export function sparklineIcon(
   const n = values.length;
   const pts: Array<[number, number]> = [];
   values.forEach((v, i) => {
-    if (v != null && isFinite(v))
+    if (v != null && Number.isFinite(v))
       pts.push([
         2 + (i / (n - 1)) * (W - 4),
         2 + (H - 4) - ((v - min) / range) * (H - 4),
