@@ -116,10 +116,13 @@ export const changePlanTools: ToolModule = [
       if (enabled.startsWith("Error")) throw new Error(enabled);
 
       // Overall time budget so apply_plan can never approach the MCP client's
-      // patience (it gave up around 4 min). A wedged Safe-Mode shell now aborts
-      // on the first command via safe.execute; this is the belt-and-suspenders
-      // backstop for an unusually long but otherwise-healthy run.
-      const APPLY_BUDGET_MS = 90_000;
+      // patience (it gave up around 4 min). A wedged Safe-Mode shell aborts on the
+      // first silent command via safe.execute (idle timeout); this is the
+      // belt-and-suspenders backstop for an unusually long but otherwise-healthy
+      // run. It must comfortably clear two `/export terse` captures — which on a
+      // large config legitimately stream for tens of seconds each — so it is set
+      // well above a single export's cost yet still short of the client's patience.
+      const APPLY_BUDGET_MS = 180_000;
       const startedAt = Date.now();
       const overBudget = (): boolean => Date.now() - startedAt > APPLY_BUDGET_MS;
 

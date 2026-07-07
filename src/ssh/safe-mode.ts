@@ -35,6 +35,22 @@ function stripAnsi(text: string): string {
 const CTRL_X = "\x18";
 
 /**
+ * How long the interactive shell may stay SILENT before we treat it as wedged.
+ * This is an idle window, not a total budget — it is reset on every byte, so a
+ * slow-but-streaming command (a large `/export terse`) is fine; only a shell
+ * that stops answering entirely trips it.
+ */
+const IDLE_TIMEOUT_MS = 15_000;
+
+/**
+ * Absolute ceiling on a single read regardless of streaming — bounds the
+ * pathological "emits a byte every 14s forever" case so a read can never hang
+ * indefinitely. Well under the MCP client's patience; `apply_plan` layers its own
+ * overall budget on top for the multi-command run.
+ */
+const HARD_CAP_MS = 120_000;
+
+/**
  * True when a RouterOS Ctrl+X response confirms Safe Mode is active. RouterOS
  * signals this in one of two ways depending on version and terminal type:
  *   • the prompt redraws with the `<SAFE>` marker (the common case), or
@@ -190,9 +206,9 @@ export class SafeModeManager {
       const { text, timedOut } = await this.readUntilPrompt();
       if (timedOut) {
         throw new Error(
-          `Safe Mode shell did not return a prompt within 15s (command: ${command}). The interactive ` +
-            "session appears wedged — some RouterOS builds/terminals don't support Safe Mode over SSH. " +
-            "Apply the change with the direct write tools instead (verify each with a read).",
+          `Safe Mode shell went silent for ${IDLE_TIMEOUT_MS / 1000}s (command: ${command}). The ` +
+            "interactive session appears wedged — some RouterOS builds/terminals don't support Safe " +
+            "Mode over SSH. Apply the change with the direct write tools instead (verify each with a read).",
         );
       }
       return this.extractOutput(text, command);
@@ -284,39 +300,53 @@ export class SafeModeManager {
   // ── internals ────────────────────────────────────────────────────────────
 
   /**
-   * Read from the channel until `isDone(cleaned)` is satisfied or the timeout
-   * elapses. Defaults to "any RouterOS prompt appeared". Mode transitions pass a
+   * Read from the channel until `isDone(cleaned)` is satisfied or the shell goes
+   * SILENT. Defaults to "any RouterOS prompt appeared". Mode transitions pass a
    * stricter predicate so they wait for the prompt that reflects the NEW state
    * (safe-mode marker present/absent), not merely the first prompt-shaped line.
+   *
+   * The timeout is an IDLE timeout, not a total budget: every data chunk resets
+   * it, so a legitimately slow-but-streaming command (`/export terse` on a large
+   * config can emit for tens of seconds) never trips it — only a genuine wedge,
+   * where no byte has arrived for `idleMs`, does. A separate hard cap (`hardCapMs`)
+   * bounds the pathological "dribbles a byte forever" case so the read can't hang
+   * indefinitely. Either expiry resolves with `timedOut: true` so callers can tell
+   * "the prompt appeared" from "the shell stopped answering" — the latter means the
+   * interactive Safe-Mode session is wedged and must abort rather than letting every
+   * subsequent command burn its own timeout.
    */
   private readUntilPrompt(
-    timeoutMs = 15_000,
+    idleMs = IDLE_TIMEOUT_MS,
     isDone: (cleaned: string) => boolean = (c) => PROMPT_RE.test(c),
+    hardCapMs = HARD_CAP_MS,
   ): Promise<{ text: string; timedOut: boolean }> {
     const channel = this.channel;
     if (!channel) return Promise.resolve({ text: "", timedOut: false });
     return new Promise((resolve) => {
       let buf = "";
       // Function declarations are hoisted, so onData/finish can reference each
-      // other; `timer` is assigned before any listener can fire.
-      let timer: ReturnType<typeof setTimeout>;
+      // other; the timers are assigned before any listener can fire.
+      let idleTimer: ReturnType<typeof setTimeout>;
+      const hardTimer = setTimeout(() => finish(stripAnsi(buf), true), hardCapMs);
+      function armIdle(): void {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => finish(stripAnsi(buf), true), idleMs);
+      }
       function onData(chunk: Buffer): void {
         buf += decodeOutput(chunk);
+        armIdle(); // progress: the shell is alive, so restart the silence clock
         const cleaned = stripAnsi(buf);
         if (isDone(cleaned)) finish(cleaned, false);
       }
       function finish(result: string, timedOut: boolean): void {
-        clearTimeout(timer);
+        clearTimeout(idleTimer);
+        clearTimeout(hardTimer);
         // `channel` is non-null past the early return above; the hoisted
         // function declaration just doesn't carry that narrowing.
         channel!.removeListener("data", onData);
         resolve({ text: result, timedOut });
       }
-      // A timeout resolves with `timedOut: true` so callers can tell "the prompt
-      // appeared" from "the shell never answered" — the latter means the
-      // interactive Safe-Mode session is wedged and must abort fast rather than
-      // letting every subsequent command burn the full timeout.
-      timer = setTimeout(() => finish(stripAnsi(buf), true), timeoutMs);
+      armIdle();
       channel.on("data", onData);
     });
   }
