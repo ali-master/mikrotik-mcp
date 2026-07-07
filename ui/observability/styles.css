@@ -4279,7 +4279,9 @@ pre.body.ros .ros-comment {
   background: var(--mt-surface);
   border-radius: var(--mt-radius);
   padding: 14px 16px;
-  transition: opacity 0.2s var(--ease), border-color 0.2s var(--ease);
+  transition:
+    opacity 0.2s var(--ease),
+    border-color 0.2s var(--ease);
 }
 .cfg-card.is-off {
   opacity: 0.5;
@@ -4426,10 +4428,14 @@ pre.body.ros .ros-comment {
 
 .cfg-modgroups {
   display: grid;
-  gap: 6px;
+  gap: 18px;
   margin-top: 12px;
   max-height: 440px;
   overflow: auto;
+}
+.cfg-modgroup {
+  display: grid;
+  gap: 8px;
 }
 .cfg-modgroup__hd {
   font: 700 11px var(--mt-sans);

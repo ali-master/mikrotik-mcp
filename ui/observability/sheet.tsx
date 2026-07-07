@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { Button } from "./geist";
 
@@ -28,7 +29,10 @@ export function Sheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // Render into <body> via a portal so the overlay covers the whole page and is
+  // never clipped/positioned by an ancestor (the Configuration panel sets up its
+  // own containing block via overflow/transform).
+  return createPortal(
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="sheet cfg-sheet" role="dialog" aria-modal="true">
         <div className="sheet__hd">
@@ -42,6 +46,7 @@ export function Sheet({
         <div className="cfg-sheet__body">{children}</div>
         {footer != null && <div className="cfg-sheet__ft">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
