@@ -27,9 +27,7 @@
   "bin": {
     "mikrotik-mcp": "dist/cli.js"
   },
-  "workspaces": [
-    "raycast"
-  ],
+  "workspaces": [],
   "files": [
     "dist",
     "prompts",
