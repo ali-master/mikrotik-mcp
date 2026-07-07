@@ -393,7 +393,7 @@ export const routeTools: ToolModule = [
       "Resolves which nexthop RouterOS would use for a given IPv4 destination " +
       '— answers "which gateway will this packet take?" without sending any traffic. ' +
       "Version-aware: uses `/ip route check` on v6, falls back to " +
-      "`/ip route print where dst-address in <dest> active=yes` on v7+ where the check " +
+      "`/ip route print where <dest> in dst-address active=yes` on v7+ where the check " +
       "command was removed. Optionally scoped by `routing_table` (v7) / `routing_mark` (v6) " +
       "for policy-routing table lookups. " +
       "For listing all known routes use list_routes; for a named-table view use get_routing_table. " +
@@ -417,10 +417,14 @@ export const routeTools: ToolModule = [
       }
 
       // v7+: `/ip route check` was removed — query active routes instead.
+      // `<dest> in dst-address` finds routes whose prefix COVERS the target
+      // (e.g. 0.0.0.0/0 covers 8.8.8.8).  The old `dst-address in <dest>`
+      // was backwards — it checked if the route prefix was a SUBSET of the
+      // target, so only an exact /32 match ever returned.
       // Routes in the default "main" table carry no explicit `routing-table`
       // property, so filtering by `routing-table=main` returns nothing —
       // omit the filter for "main" (same logic as get_routing_table).
-      const where = [`dst-address in ${a.destination}`, "active=yes"];
+      const where = [`${a.destination} in dst-address`, "active=yes"];
       if (table && table !== "main") where.push(`routing-table=${quoteValue(table)}`);
       const v7Cmd = `/ip route print detail where ${where.join(" ")}`;
       const v7Result = await executeMikrotikCommand(v7Cmd, ctx);
