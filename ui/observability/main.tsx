@@ -22,7 +22,7 @@ import { ChangePlanView } from "./change-plan";
 import { ActivityChart, RiskDonut } from "./charts";
 import { ClientsView } from "./clients";
 import { ConfigHistoryPanel, FieldGuidePanel } from "./config-panels";
-import { ConfigStudio } from "./config-studio";
+import { ConfigEditor } from "./config-editor";
 import { ConnectivityGraph, DeviceCard } from "./connectivity";
 import { DetailDrawer } from "./detail-drawer";
 import { bytes, clock, FEED_CAP, ms, num, RISK_COLOR, sval, WINDOWS } from "./format";
@@ -1159,7 +1159,7 @@ function App(): ReactNode {
                 }
               >
                 {editingConfig ? (
-                  <ConfigStudio
+                  <ConfigEditor
                     key={seed ? `seed-${seed.name}` : "config"}
                     initial={
                       seed

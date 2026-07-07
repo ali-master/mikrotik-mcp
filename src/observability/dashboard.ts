@@ -293,16 +293,26 @@ function topologyPayload(): unknown {
   };
 }
 
-/** Effective runtime configuration, with every secret redacted. */
+/**
+ * Effective runtime configuration, with every secret redacted. Returns the FULL
+ * config (all top-level sections) so an editor can round-trip it without
+ * clobbering the omitted blocks: `POST /api/config` validates the whole schema,
+ * so any section missing here would be reset to its Zod default on save.
+ */
 function configPayload(): unknown {
   const cfg = getConfig();
   return redact({
     devices: cfg.devices,
     defaultDevice: cfg.defaultDevice,
     mcp: cfg.mcp,
-    dashboard: cfg.dashboard,
-    readOnly: cfg.readOnly,
     s3: cfg.s3,
+    dashboard: cfg.dashboard,
+    ssh: cfg.ssh,
+    readOnly: cfg.readOnly,
+    tools: cfg.tools,
+    memory: cfg.memory,
+    backupDir: cfg.backupDir,
+    disableUpdateCheck: cfg.disableUpdateCheck,
   });
 }
 
