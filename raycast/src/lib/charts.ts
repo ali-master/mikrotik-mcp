@@ -154,7 +154,9 @@ export function areaChart(
   const cw = W - PL - PR;
   const ch = H - PT - PB;
 
-  const present = values.filter((v): v is number => v != null && Number.isFinite(v));
+  const present = values.filter(
+    (v): v is number => v != null && Number.isFinite(v),
+  );
   if (present.length === 0) return "";
   const min = Math.min(...present);
   const max = Math.max(...present);
@@ -530,15 +532,14 @@ export function heatmapChart(
 
   // legend
   const legY = topPad + 7 * step + 10;
-  const legend =
-    `<text x="${leftPad}" y="${legY}" font-size="8.5" fill="${t.faint}">Less</text>${
-    alpha
-      .map(
-        (al, i) =>
-          `<rect x="${leftPad + 30 + i * (cell + 2)}" y="${legY - 9}" width="${cell}" height="${cell}" rx="2.5" fill="${i === 0 ? t.track : base}" fill-opacity="${al}"/>`,
-      )
-      .join("")
-    }<text x="${leftPad + 30 + alpha.length * (cell + 2) + 4}" y="${legY}" font-size="8.5" fill="${t.faint}">More</text>`;
+  const legend = `<text x="${leftPad}" y="${legY}" font-size="8.5" fill="${t.faint}">Less</text>${alpha
+    .map(
+      (al, i) =>
+        `<rect x="${leftPad + 30 + i * (cell + 2)}" y="${legY - 9}" width="${cell}" height="${cell}" rx="2.5" fill="${i === 0 ? t.track : base}" fill-opacity="${al}"/>`,
+    )
+    .join(
+      "",
+    )}<text x="${leftPad + 30 + alpha.length * (cell + 2) + 4}" y="${legY}" font-size="8.5" fill="${t.faint}">More</text>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${FONT}">
   ${wl}
@@ -556,7 +557,9 @@ export function sparklineIcon(
   const W = 44;
   const H = 18;
   const c = colorToHex(color);
-  const present = values.filter((v): v is number => v != null && Number.isFinite(v));
+  const present = values.filter(
+    (v): v is number => v != null && Number.isFinite(v),
+  );
   if (present.length < 2) return "";
   const min = Math.min(...present);
   const max = Math.max(...present);

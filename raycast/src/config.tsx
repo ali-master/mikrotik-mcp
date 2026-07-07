@@ -6,7 +6,7 @@
  * Plus version History (diff / restore / checkpoint / delete) and a Field Guide
  * generated from the JSON schema. Apply / Keep / Restore / Delete are destructive.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Action,
   ActionPanel,
@@ -17,6 +17,7 @@ import {
   Keyboard,
   List,
   Toast,
+  openExtensionPreferences,
   showToast,
   useNavigation,
 } from "@raycast/api";
@@ -564,22 +565,27 @@ type ValidationState =
   | { state: "issues"; issues: ConfigIssue[] }
   | { state: "valid" };
 
-export default function Command() {
+function Editor({
+  initial,
+  reload,
+}: {
+  initial: Record<string, unknown>;
+  reload: () => void;
+}) {
   const { push } = useNavigation();
-  const cfg = useApi<Record<string, unknown>>("/api/config");
-  const [text, setText] = useState<string | null>(null);
+  // Mounted only once the config has loaded, so `text` is initialized SYNCHRONOUSLY
+  // from the real data — the field shows it on first render. (A Raycast Form field
+  // identifies by `id`, so setting its value after mount does not repaint it; that
+  // is why the editor showed empty when it was fetched asynchronously in-place.)
+  const [text, setText] = useState(() => JSON.stringify(initial, null, 2));
   const [rollbackMs, setRollbackMs] = useState(60_000);
   const [validation, setValidation] = useState<ValidationState>({
     state: "idle",
   });
-  useEffect(() => {
-    if (text === null && cfg.data) setText(JSON.stringify(cfg.data, null, 2));
-  }, [cfg.data, text]);
 
   // Live validation: parse locally on each edit, then ask the server (Zod truth),
   // debounced — mirrors the dashboard's status pill + inline error list.
   useEffect(() => {
-    if (text === null) return;
     const p = parseJson(text);
     if (p.error) {
       setValidation({ state: "jsonerror", jsonErr: p.error });
@@ -682,7 +688,7 @@ export default function Command() {
         return;
       }
       void toast.hide();
-      push(<PendingView resp={res} onDone={cfg.revalidate} />);
+      push(<PendingView resp={res} onDone={reload} />);
     } catch (e) {
       void toast.hide();
       await showFailureToast(e, { title: "Apply failed" });
@@ -697,7 +703,10 @@ export default function Command() {
     }
     const devices = (p.obj as { devices?: Record<string, unknown> })?.devices;
     if (!devices || Object.keys(devices).length === 0) {
-      void showToast({ style: Toast.Style.Failure, title: "No devices in config" });
+      void showToast({
+        style: Toast.Style.Failure,
+        title: "No devices in config",
+      });
       return;
     }
     push(<TestDevicesView devices={devices} />);
@@ -724,7 +733,6 @@ export default function Command() {
 
   return (
     <Form
-      isLoading={cfg.isLoading}
       navigationTitle={statusText ? `Config · ${statusText}` : "Config"}
       actions={
         <ActionPanel>
@@ -754,7 +762,7 @@ export default function Command() {
             <Action.Push
               title="Version History"
               icon={Icon.Clock}
-              target={<HistoryView onReload={cfg.revalidate} />}
+              target={<HistoryView onReload={reload} />}
             />
             <Action.Push
               title="Field Guide"
@@ -767,10 +775,7 @@ export default function Command() {
               title="Reload from Server"
               icon={Icon.ArrowClockwise}
               shortcut={Keyboard.Shortcut.Common.Refresh}
-              onAction={() => {
-                setText(null);
-                cfg.revalidate();
-              }}
+              onAction={reload}
             />
           </ActionPanel.Section>
         </ActionPanel>
@@ -782,7 +787,7 @@ export default function Command() {
       <Form.TextArea
         id="config"
         title="Config JSON"
-        value={text ?? ""}
+        defaultValue={JSON.stringify(initial, null, 2)}
         onChange={setText}
         error={fieldError}
       />
@@ -797,5 +802,61 @@ export default function Command() {
         ))}
       </Form.Dropdown>
     </Form>
+  );
+}
+
+export default function Command() {
+  const cfg = useApi<Record<string, unknown>>("/api/config");
+  // Remount the editor with a fresh key each time new server config arrives, so
+  // "Reload from Server" / post-apply revalidation re-seed the field.
+  const [gen, setGen] = useState(0);
+  const lastData = useRef<unknown>(undefined);
+  useEffect(() => {
+    if (cfg.data && cfg.data !== lastData.current) {
+      lastData.current = cfg.data;
+      setGen((g) => g + 1);
+    }
+  }, [cfg.data]);
+
+  if (!cfg.data) {
+    return (
+      <Form
+        isLoading={cfg.isLoading}
+        navigationTitle="Config"
+        actions={
+          <ActionPanel>
+            <Action
+              title="Reload"
+              icon={Icon.ArrowClockwise}
+              onAction={cfg.revalidate}
+            />
+            <Action
+              title="Open Preferences"
+              icon={Icon.Gear}
+              onAction={openExtensionPreferences}
+            />
+          </ActionPanel>
+        }
+      >
+        <Form.Description
+          text={
+            cfg.isLoading
+              ? "Loading configuration…"
+              : "Could not load config. Check the Dashboard URL / token in extension preferences."
+          }
+        />
+      </Form>
+    );
+  }
+
+  return (
+    <Editor
+      key={gen}
+      initial={cfg.data}
+      reload={() => {
+        lastData.current = undefined;
+        cfg.revalidate();
+      }}
+    />
   );
 }
