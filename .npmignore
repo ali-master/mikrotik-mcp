@@ -28,3 +28,4 @@ jest.config.js
 coverage
 # docs
 docs
+raycast
