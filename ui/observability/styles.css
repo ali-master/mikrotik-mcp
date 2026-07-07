@@ -4376,6 +4376,30 @@ pre.body.ros .ros-comment {
 .cfg-sheet {
   width: min(560px, 100%);
 }
+/* Open/close animation: overlay fades, panel slides in from the right. The
+   `data-open` attribute (set by sheet.tsx one frame after mount, cleared on
+   dismissal) drives both transitions; the panel starts off-screen and closed. */
+.cfg-overlay {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.cfg-overlay[data-open="1"] {
+  opacity: 1;
+}
+.cfg-overlay .cfg-sheet {
+  transform: translateX(100%);
+  transition: transform 0.26s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+.cfg-overlay[data-open="1"] .cfg-sheet {
+  transform: translateX(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cfg-overlay,
+  .cfg-overlay .cfg-sheet {
+    transition: none;
+  }
+}
 .cfg-sheet__sub {
   font-size: 12px;
 }
