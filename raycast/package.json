@@ -30,6 +30,7 @@
     "typescript": "^5.9.3"
   },
   "icon": "extension-icon.png",
+  "access": "public",
   "commands": [
     {
       "name": "menubar",
