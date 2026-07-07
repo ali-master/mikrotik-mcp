@@ -29,6 +29,14 @@
   "icon": "extension-icon.png",
   "commands": [
     {
+      "name": "menubar",
+      "title": "Fleet Menu Bar",
+      "description": "Live MikroTik fleet cockpit in the menu bar — health, activity, alerts",
+      "icon": "extension-icon.png",
+      "mode": "menu-bar",
+      "interval": "1m"
+    },
+    {
       "name": "overview",
       "title": "Overview",
       "description": "Tool-call volume, latency, error rate and risk at a glance",
@@ -134,7 +142,7 @@
       "mode": "view"
     }
   ],
-  "owner": "usex",
+  "owner": "usestrict",
   "platforms": [
     "macOS",
     "Windows"
