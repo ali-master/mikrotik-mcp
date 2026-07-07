@@ -103,7 +103,6 @@
     "release-it": "^20.2.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
-    "typescript": "^5.9.3",
     "vite": "catalog:",
     "vite-plus": "catalog:"
   },
