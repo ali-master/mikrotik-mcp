@@ -374,6 +374,9 @@ function parseDevicesSource(
   mcp?: Record<string, unknown>;
   ssh?: Record<string, unknown>;
   memory?: Record<string, unknown>;
+  readOnly?: boolean;
+  disableUpdateCheck?: boolean;
+  backupDir?: string;
 } {
   let json: unknown;
   try {
@@ -416,7 +419,24 @@ function parseDevicesSource(
     structured && obj.memory && typeof obj.memory === "object"
       ? (obj.memory as Record<string, unknown>)
       : undefined;
-  return { devices, defaultDevice, s3, dashboard, tools, mcp, ssh, memory };
+  // Top-level scalar toggles (also structured-form only, for the same reason).
+  const readOnly = structured && typeof obj.readOnly === "boolean" ? obj.readOnly : undefined;
+  const disableUpdateCheck =
+    structured && typeof obj.disableUpdateCheck === "boolean" ? obj.disableUpdateCheck : undefined;
+  const backupDir = structured && typeof obj.backupDir === "string" ? obj.backupDir : undefined;
+  return {
+    devices,
+    defaultDevice,
+    s3,
+    dashboard,
+    tools,
+    mcp,
+    ssh,
+    memory,
+    readOnly,
+    disableUpdateCheck,
+    backupDir,
+  };
 }
 
 /**
@@ -441,6 +461,20 @@ export function getConfigSource(): ConfigSource {
 export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConfig {
   const flags = parseFlags(argv);
   const pick = (flag: string, ...envNames: string[]) => flags[flag] ?? env(...envNames);
+
+  // Precedence for a settings block: schema default → config-file block →
+  // explicit env/flag. An explicit CLI flag or env var overrides the matching
+  // config-file value; a value left undefined (flag/env not set) NEVER clobbers a
+  // file value. This is the conventional "flags win over config file" behaviour —
+  // e.g. `--dashboard-port 9091` overrides a `dashboard.port` saved in the file.
+  const overlay = (
+    file: Record<string, unknown> | undefined,
+    over: Record<string, unknown>,
+  ): Record<string, unknown> => {
+    const out: Record<string, unknown> = { ...file };
+    for (const [k, v] of Object.entries(over)) if (v !== undefined) out[k] = v;
+    return out;
+  };
 
   // Optional inline SSH jump host for the single-device path. Built only when a
   // jump host is named; the schema fills the rest (port 22, user admin).
@@ -498,6 +532,9 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   let fileMcp: Record<string, unknown> | undefined;
   let fileSsh: Record<string, unknown> | undefined;
   let fileMemory: Record<string, unknown> | undefined;
+  let fileReadOnly: boolean | undefined;
+  let fileDisableUpdateCheck: boolean | undefined;
+  let fileBackupDir: string | undefined;
   if (configFile || devicesInline) {
     const src = configFile
       ? parseDevicesSource(configFile, true)
@@ -511,11 +548,15 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     fileMcp = src.mcp;
     fileSsh = src.ssh;
     fileMemory = src.memory;
+    fileReadOnly = src.readOnly;
+    fileDisableUpdateCheck = src.disableUpdateCheck;
+    fileBackupDir = src.backupDir;
   }
 
   // 3) Optional S3 storage. Credentials follow Bun's native S3 lookup order
-  // (S3_* then AWS_*); flags and the config-file `s3` block override env.
-  const s3 = {
+  // (S3_* then AWS_*); the config-file `s3` block is the baseline, and an explicit
+  // env/flag overrides it.
+  const s3 = overlay(fileS3, {
     accessKeyId: pick("s3-access-key-id", "S3_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
     secretAccessKey: pick("s3-secret-access-key", "S3_SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY"),
     sessionToken: pick("s3-session-token", "S3_SESSION_TOKEN", "AWS_SESSION_TOKEN"),
@@ -524,9 +565,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     bucket: pick("s3-bucket", "S3_BUCKET", "AWS_BUCKET"),
     prefix: pick("s3-prefix", "MIKROTIK_S3_PREFIX"),
     presignExpiresIn: pick("s3-presign-expires-in", "MIKROTIK_S3_PRESIGN_EXPIRES_IN"),
-    // The config-file block overrides anything from env/flags.
-    ...fileS3,
-  };
+  });
 
   // App-view metadata toggle: env/flag is a tri-state — absent leaves the schema
   // default (true), an explicit falsy value disables it. The config-file
@@ -535,7 +574,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
   const appViewsEnv =
     appViewsRaw === undefined ? undefined : !/^(0|false|no|off)$/i.test(appViewsRaw);
 
-  const mcp = {
+  const mcp = overlay(fileMcp, {
     transport: pick("transport", "MIKROTIK_MCP__TRANSPORT", "MCP_TRANSPORT"),
     host: pick("mcp-host", "MIKROTIK_MCP__HOST"),
     port: pick("mcp-port", "MIKROTIK_MCP__PORT"),
@@ -545,16 +584,25 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     toolPageSize: pick("tool-page-size", "MIKROTIK_MCP__TOOL_PAGE_SIZE"),
     // `--app-views=false` / MIKROTIK_MCP__APP_VIEWS=false disables App-view metadata.
     appViews: appViewsEnv,
-    // The config-file `mcp` block overrides anything from env/flags.
-    ...fileMcp,
-  };
+  });
 
   // Read-only mode (boolean flag/env). A bare `--read-only` parses to "true".
   const isTruthy = (v?: string): boolean => /^(1|true|yes|on)$/i.test(v ?? "");
-  const readOnly = isTruthy(pick("read-only", "MIKROTIK_READ_ONLY"));
-  const disableUpdateCheck = isTruthy(
+  // Tri-state: an explicit flag/env wins; otherwise fall back to the config-file
+  // value; otherwise leave undefined so zod applies the schema default. This lets a
+  // `readOnly`/`disableUpdateCheck` saved by the dashboard config editor round-trip.
+  const boolFileFlag = (
+    flagVal: string | undefined,
+    fileVal: boolean | undefined,
+  ): boolean | undefined => (flagVal !== undefined ? isTruthy(flagVal) : fileVal);
+  const readOnly = boolFileFlag(pick("read-only", "MIKROTIK_READ_ONLY"), fileReadOnly);
+  const disableUpdateCheck = boolFileFlag(
     pick("disable-update-check", "MIKROTIK_DISABLE_UPDATE_CHECK"),
+    fileDisableUpdateCheck,
   );
+  // Backup vault directory: `--backup-dir`/`MIKROTIK_BACKUP_DIR` wins over the
+  // config-file value; both fall back to `DEFAULT_BACKUP_DIR` at read time (vault.ts).
+  const backupDir = pick("backup-dir", "MIKROTIK_BACKUP_DIR") ?? fileBackupDir;
 
   // Tool-surface curation. Env/flags carry comma-separated lists; the config-file
   // `tools` block (arrays) overrides them. A list left undefined stays undefined
@@ -566,22 +614,21 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean);
-  const tools = {
+  const tools = overlay(fileTools, {
     enabledModules: csv(pick("tools-enabled-modules", "MIKROTIK_TOOLS__ENABLED_MODULES")),
     disabledModules: csv(pick("tools-disabled-modules", "MIKROTIK_TOOLS__DISABLED_MODULES")),
     enabledGroups: csv(pick("tools-enabled-groups", "MIKROTIK_TOOLS__ENABLED_GROUPS")),
     disabledGroups: csv(pick("tools-disabled-groups", "MIKROTIK_TOOLS__DISABLED_GROUPS")),
-    // The config-file block overrides anything from env/flags.
-    ...fileTools,
-  };
+  });
 
   // Coerce a string flag/env to a boolean only when present; undefined lets zod
   // apply its schema default (so e.g. captureBody stays true unless overridden).
   const boolOpt = (v?: string): boolean | undefined => (v === undefined ? undefined : isTruthy(v));
 
-  // 4) Optional observability dashboard. A bare `--dashboard` enables it; the
-  // config-file `dashboard` block overrides anything from env/flags.
-  const dashboard = {
+  // 4) Optional observability dashboard. A bare `--dashboard` enables it. The
+  // config-file `dashboard` block is the baseline; explicit env/flags (e.g.
+  // `--dashboard-port`) override it.
+  const dashboard = overlay(fileDashboard, {
     enabled: boolOpt(pick("dashboard", "MIKROTIK_DASHBOARD__ENABLED", "MIKROTIK_DASHBOARD")),
     host: pick("dashboard-host", "MIKROTIK_DASHBOARD__HOST"),
     port: pick("dashboard-port", "MIKROTIK_DASHBOARD__PORT"),
@@ -591,23 +638,20 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     redactInput: boolOpt(pick("dashboard-redact-input", "MIKROTIK_DASHBOARD__REDACT_INPUT")),
     maxBodyBytes: pick("dashboard-max-body-bytes", "MIKROTIK_DASHBOARD__MAX_BODY_BYTES"),
     token: pick("dashboard-token", "MIKROTIK_DASHBOARD__TOKEN"),
-    ...fileDashboard,
-  };
+  });
 
-  // 5) SSH connection pooling. Env/flags → config-file block override.
-  const ssh = {
+  // 5) SSH connection pooling. Config-file block is the baseline; env/flags override.
+  const ssh = overlay(fileSsh, {
     keepAlive: boolOpt(pick("ssh-keep-alive", "MIKROTIK_SSH__KEEP_ALIVE")),
     keepAliveInterval: pick("ssh-keepalive-interval", "MIKROTIK_SSH__KEEPALIVE_INTERVAL"),
     idleTimeout: pick("ssh-idle-timeout", "MIKROTIK_SSH__IDLE_TIMEOUT"),
-    ...fileSsh,
-  };
+  });
 
-  // 6) Persistent knowledge-graph memory. Env/flags → config-file override.
-  const memory = {
+  // 6) Persistent knowledge-graph memory. Config-file block is the baseline; env/flags override.
+  const memory = overlay(fileMemory, {
     enabled: boolOpt(pick("memory-enabled", "MIKROTIK_MEMORY__ENABLED")),
     dbPath: pick("memory-db", "MIKROTIK_MEMORY__DB_PATH"),
-    ...fileMemory,
-  };
+  });
 
   // S3 is opt-in: only attach the block when something meaningful is set, so an
   // unconfigured deployment leaves `config.s3` undefined and the tools inert.
@@ -620,6 +664,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     dashboard,
     readOnly,
     disableUpdateCheck,
+    backupDir,
     tools,
     ssh,
     memory,

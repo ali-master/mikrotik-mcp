@@ -63,14 +63,14 @@ describe("dashboard config", () => {
     expect(cfg.dashboard.token).toBe("tok");
   });
 
-  it("a config-file dashboard block overrides env/flags", () => {
+  it("an explicit flag overrides the config-file dashboard block; file-only fields persist", () => {
     const inline = JSON.stringify({
       devices: { default: { host: "10.0.0.1" } },
       dashboard: { enabled: true, port: 9999, maxBodyBytes: 4096 },
     });
     const cfg = loadConfig(["--devices", inline, "--dashboard-port", "1111"]);
-    expect(cfg.dashboard.enabled).toBe(true);
-    expect(cfg.dashboard.port).toBe(9999); // file wins over the --dashboard-port flag
-    expect(cfg.dashboard.maxBodyBytes).toBe(4096);
+    expect(cfg.dashboard.enabled).toBe(true); // file value, no flag to override it
+    expect(cfg.dashboard.port).toBe(1111); // --dashboard-port wins over the file's 9999
+    expect(cfg.dashboard.maxBodyBytes).toBe(4096); // file-only field, kept (flag never clobbers)
   });
 });
