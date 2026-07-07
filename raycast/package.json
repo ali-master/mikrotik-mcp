@@ -23,16 +23,118 @@
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
     "@types/node": "26.1.0",
-    "@types/react": "19.2.17",
+    "@types/react": "19.0.10",
     "eslint": "^9.22.0"
   },
   "icon": "extension-icon.png",
   "commands": [
     {
+      "name": "overview",
+      "title": "Overview",
+      "description": "Tool-call volume, latency, error rate and risk at a glance",
+      "mode": "view"
+    },
+    {
       "name": "devices",
       "title": "Devices",
-      "description": "",
-      "mode": "no-view"
+      "description": "Router connectivity, system health (CPU/MEM/DISK) and SSH pool",
+      "mode": "view"
+    },
+    {
+      "name": "clients",
+      "title": "Clients",
+      "description": "LAN devices on a router — live traffic, block/allow, pin IP, rate limits",
+      "mode": "view"
+    },
+    {
+      "name": "packets",
+      "title": "Packet Capture",
+      "description": "Live decoded TZSP packet capture — protocols, talkers, pcap export",
+      "mode": "view"
+    },
+    {
+      "name": "radius-um",
+      "title": "RADIUS & UM",
+      "description": "RADIUS client and User Manager — users, profiles, limitations, NAS, sessions",
+      "mode": "view"
+    },
+    {
+      "name": "topology",
+      "title": "Topology",
+      "description": "Configured devices and discovered Layer-2 neighbours (MNDP/CDP/LLDP)",
+      "mode": "view"
+    },
+    {
+      "name": "snapshots",
+      "title": "Snapshots",
+      "description": "Browse stored config snapshots and time-travel diff any two",
+      "mode": "view"
+    },
+    {
+      "name": "drift",
+      "title": "Drift Guard",
+      "description": "Golden config baselines and live drift detection per device",
+      "mode": "view"
+    },
+    {
+      "name": "change-plan",
+      "title": "Change Plan",
+      "description": "Dry-run intended RouterOS commands — risk-scored, safely ordered",
+      "mode": "view"
+    },
+    {
+      "name": "s3-backups",
+      "title": "S3 Backups",
+      "description": "List, download and delete S3 backup objects",
+      "mode": "view"
+    },
+    {
+      "name": "backups",
+      "title": "Backups",
+      "description": "Local config vault — create, download, rename, restore, delete",
+      "mode": "view"
+    },
+    {
+      "name": "modules",
+      "title": "Modules",
+      "description": "Enable/disable tool modules — curate the exposed MCP surface",
+      "mode": "view"
+    },
+    {
+      "name": "config",
+      "title": "Config",
+      "description": "Effective configuration, safe editor, version history and field guide",
+      "mode": "view"
+    },
+    {
+      "name": "memory",
+      "title": "Memory",
+      "description": "Knowledge graph — entities, relations, observations and activity",
+      "mode": "view"
+    },
+    {
+      "name": "feed",
+      "title": "Live Feed",
+      "description": "Every MCP tool call in real time (WebSocket, SSE fallback)",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "dashboardUrl",
+      "title": "Dashboard URL",
+      "description": "Base URL of the MikroTik MCP observability dashboard (e.g. http://127.0.0.1:9090)",
+      "type": "textfield",
+      "required": true,
+      "default": "http://127.0.0.1:9090",
+      "placeholder": "http://127.0.0.1:9090"
+    },
+    {
+      "name": "token",
+      "title": "Access Token",
+      "description": "Bearer token if the dashboard is token-gated (leave empty otherwise)",
+      "type": "password",
+      "required": false
     }
   ],
   "owner": "usex",
