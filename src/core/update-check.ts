@@ -41,7 +41,7 @@ export type Freshness = "fresh" | "aging" | "stale" | "ancient";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const GITHUB_API = "https://api.github.com/repos/ali-master/mikrotik-mcp/releases/latest";
+const GITHUB_API = "https://api.github.com/repos/mikrotik-mcp/mikrotik-mcp/releases/latest";
 const MEMORY_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const FILE_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 const CACHE_PATH = join(homedir(), ".mikrotik-mcp", "update-check.json");

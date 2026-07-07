@@ -113,7 +113,7 @@ precedence over a password. Full configuration reference:
 ### From source
 
 ```bash
-git clone https://github.com/ali-master/mikrotik-mcp && cd mikrotik-mcp
+git clone https://github.com/mikrotik-mcp/mikrotik-mcp && cd mikrotik-mcp
 bun install
 bun run start            # serve from source
 bun run build            # bundle to dist/

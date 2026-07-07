@@ -12,7 +12,7 @@
   ],
   "homepage": "https://mikrotik-mcp.usestrict.dev",
   "bugs": {
-    "url": "https://github.com/ali-master/mikrotik-mcp/issues"
+    "url": "https://github.com/mikrotik-mcp/mikrotik-mcp/issues"
   },
   "license": "MIT",
   "author": {
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ali-master/mikrotik-mcp.git"
+    "url": "https://github.com/mikrotik-mcp/mikrotik-mcp.git"
   },
   "bin": {
     "mikrotik-mcp": "dist/cli.js"
@@ -132,6 +132,6 @@
       "breaking change": "Breaking changes"
     }
   },
-  "logo": "https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/logo.svg",
-  "logoIcon": "https://raw.githubusercontent.com/ali-master/mikrotik-mcp/master/assets/logo-icon.svg"
+  "logo": "https://raw.githubusercontent.com/mikrotik-mcp/mikrotik-mcp/master/assets/logo.svg",
+  "logoIcon": "https://raw.githubusercontent.com/mikrotik-mcp/mikrotik-mcp/master/assets/logo-icon.svg"
 }

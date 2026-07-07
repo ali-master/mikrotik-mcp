@@ -1,11 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: 💬 Questions & ideas
-    url: https://github.com/ali-master/mikrotik-mcp/discussions
+    url: https://github.com/mikrotik-mcp/mikrotik-mcp/discussions
     about: Ask questions, share setups, or discuss RouterOS tooling here.
   - name: 📖 Documentation
-    url: https://github.com/ali-master/mikrotik-mcp/tree/master/docs
+    url: https://github.com/mikrotik-mcp/mikrotik-mcp/tree/master/docs
     about: Getting started, configuration, transports, the VPN guide, and the full tool reference.
   - name: 🔒 Report a security issue
-    url: https://github.com/ali-master/mikrotik-mcp/security/advisories/new
+    url: https://github.com/mikrotik-mcp/mikrotik-mcp/security/advisories/new
     about: Please report vulnerabilities in mikrotik-mcp itself privately, not as a public issue.

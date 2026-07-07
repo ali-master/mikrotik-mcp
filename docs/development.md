@@ -9,7 +9,7 @@ source. Bun runs the `.ts` entry points directly.
   `packageManager`).
 
 ```bash
-git clone https://github.com/ali-master/mikrotik-mcp.git
+git clone https://github.com/mikrotik-mcp/mikrotik-mcp.git
 cd mikrotik-mcp
 bun install
 ```
