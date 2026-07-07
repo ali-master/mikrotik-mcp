@@ -23,7 +23,7 @@ import { postJson } from "./lib/api";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { bytes } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
-import { sparkline } from "./lib/viz";
+import { chartImage, multiAreaChart } from "./lib/charts";
 import { DeviceDropdown, useDevices } from "./lib/devices";
 import type { UsagePayload } from "./lib/types";
 
@@ -184,14 +184,29 @@ function UsageView({ device, client }: { device: string; client: Client }) {
   );
   const series = data?.series ?? [];
   const peak = series.reduce((m, d) => Math.max(m, d.rx + d.tx), 0);
+  const chart = series.length
+    ? chartImage(
+        multiAreaChart([
+          {
+            values: series.map((d) => d.rx),
+            color: Color.Blue,
+            label: "download",
+          },
+          {
+            values: series.map((d) => d.tx),
+            color: Color.Green,
+            label: "upload",
+          },
+        ]),
+        "usage",
+      )
+    : "_No usage history._";
   const md = [
     `# Usage · ${clientTitle(client)}`,
     ``,
-    `Daily total  \`${sparkline(series.map((d) => d.rx + d.tx))}\``,
+    `### Daily traffic (90d)`,
     ``,
-    `Download  \`${sparkline(series.map((d) => d.rx))}\``,
-    ``,
-    `Upload  \`${sparkline(series.map((d) => d.tx))}\``,
+    chart,
   ].join("\n");
   return (
     <Detail

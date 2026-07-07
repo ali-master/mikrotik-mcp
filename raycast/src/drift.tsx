@@ -23,7 +23,7 @@ import { diffMarkdown } from "./lib/diff";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { bytes } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
-import { bar } from "./lib/viz";
+import { chartImage, diffBars } from "./lib/charts";
 import type {
   DriftBaseline,
   DriftDeviceStatus,
@@ -56,13 +56,18 @@ function CheckView({ device }: { device: string }) {
   if (err) md = `# Error\n\n${err}`;
   else if (!report) md = "Checking…";
   else {
-    const bars = report.sections
-      .slice(0, 15)
-      .map(
-        (s) =>
-          `\`${bar(Math.min(100, (s.added + s.removed) * 5))}\` ${s.path} · +${s.added}/−${s.removed}`,
-      )
-      .join("\n\n");
+    const sectionChart = report.sections.length
+      ? chartImage(
+          diffBars(
+            report.sections.slice(0, 15).map((s) => ({
+              label: s.path,
+              added: s.added,
+              removed: s.removed,
+            })),
+          ),
+          "sections",
+        )
+      : "";
     const attrs = report.attributions.length
       ? `\n## Attribution\n\n${report.attributions
           .map(
@@ -75,7 +80,7 @@ function CheckView({ device }: { device: string }) {
       `# ${report.device} · ${report.identical ? "in sync" : "drifted"} (score ${report.score}/100)`,
       ``,
       `+${report.summary.added} / −${report.summary.removed} · ${report.summary.unchanged} unchanged`,
-      report.sections.length ? `\n## Sections\n\n${bars}` : "",
+      sectionChart ? `\n### Sections\n\n${sectionChart}` : "",
       attrs,
       report.unified ? `\n## Diff\n\n${diffMarkdown(report.unified)}` : "",
     ].join("\n");

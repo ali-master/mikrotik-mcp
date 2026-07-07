@@ -13,9 +13,9 @@ import {
   Icon,
   Keyboard,
 } from "@raycast/api";
-import { RISK_TINT, WINDOWS, bytes, ms, num } from "./lib/format";
+import { RISK_COLOR, RISK_TINT, WINDOWS, bytes, ms, num } from "./lib/format";
+import { barChart, chartImage, donutChart, multiAreaChart } from "./lib/charts";
 import { useApi } from "./lib/hooks";
-import { sparkline } from "./lib/viz";
 import type { Meta, Risk, Stats } from "./lib/types";
 
 function errColor(rate: number): Color {
@@ -23,6 +23,15 @@ function errColor(rate: number): Color {
   if (rate >= 0.05) return Color.Yellow;
   return Color.Green;
 }
+
+const TOOL_HUE = [
+  Color.Blue,
+  Color.Green,
+  Color.Purple,
+  Color.Orange,
+  Color.Magenta,
+  Color.Yellow,
+];
 
 export default function Command() {
   const [win, setWin] = useState(3_600_000);
@@ -34,24 +43,50 @@ export default function Command() {
   const { data: meta } = useApi<Meta>("/api/meta");
 
   const winLabel = WINDOWS.find(([, v]) => v === win)?.[0] ?? `${win}ms`;
-  const spark = stats ? sparkline(stats.series.map((b) => b.ok + b.error)) : "";
   const errPct = stats
     ? (stats.errorRate * 100).toFixed(stats.errorRate >= 0.05 ? 1 : 2)
     : "0";
 
-  const topTools =
+  const activity =
+    stats && stats.series.length
+      ? multiAreaChart([
+          {
+            values: stats.series.map((b) => b.ok),
+            color: Color.Blue,
+            label: "ok",
+          },
+          {
+            values: stats.series.map((b) => b.error),
+            color: Color.Red,
+            label: "error",
+          },
+        ])
+      : "";
+
+  const riskSegs = stats
+    ? (Object.entries(stats.byRisk) as [Risk, number][])
+        .filter(([, v]) => v > 0)
+        .map(([r, v]) => ({ label: r, value: v, color: RISK_COLOR[r] }))
+    : [];
+  const riskDonut = riskSegs.length
+    ? donutChart(riskSegs, {
+        centerValue: num(stats?.total ?? 0),
+        centerLabel: "calls",
+      })
+    : "";
+
+  const toolBars =
     stats && stats.byTool.length
-      ? [
-          "| Tool | Calls | p95 | Errors |",
-          "|---|--:|--:|--:|",
-          ...stats.byTool
-            .slice(0, 8)
-            .map(
-              (t) =>
-                `| \`${t.tool}\` | ${num(t.count)} | ${ms(t.p95Ms)} | ${t.errors} |`,
-            ),
-        ].join("\n")
-      : "_No calls in this window._";
+      ? barChart(
+          stats.byTool.slice(0, 8).map((t, i) => ({
+            label: t.tool,
+            value: t.count,
+            color: TOOL_HUE[i % TOOL_HUE.length],
+            sub: `p95 ${ms(t.p95Ms)}${t.errors ? ` · ${t.errors} err` : ""}`,
+          })),
+          { labelWidth: 180 },
+        )
+      : "";
 
   const recentErrors =
     stats && stats.recentErrors.length
@@ -62,7 +97,15 @@ export default function Command() {
       : "";
 
   const markdown = stats
-    ? `# Overview · ${winLabel}\n\nCalls over time  \`${spark || "—"}\`\n\n## Top tools\n\n${topTools}\n\n${recentErrors}`
+    ? [
+        `# Overview · ${winLabel}`,
+        activity
+          ? `\n### Calls over time\n\n${chartImage(activity, "activity")}`
+          : "",
+        riskDonut ? `\n### By risk\n\n${chartImage(riskDonut, "risk")}` : "",
+        toolBars ? `\n### Top tools\n\n${chartImage(toolBars, "tools")}` : "",
+        recentErrors ? `\n${recentErrors}` : "",
+      ].join("\n")
     : "Loading dashboard metrics…\n\nSet the **Dashboard URL** and **Access Token** in extension preferences if this stays empty.";
 
   return (

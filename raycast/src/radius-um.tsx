@@ -24,7 +24,7 @@ import { postJson } from "./lib/api";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { bytes } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
-import { sparkline } from "./lib/viz";
+import { chartImage, heatmapChart, multiAreaChart } from "./lib/charts";
 import { DeviceDropdown, useDevices } from "./lib/devices";
 import type { HeatmapPayload, UsagePayload } from "./lib/types";
 
@@ -771,12 +771,37 @@ function UserUsageView({ device, user }: { device: string; user: string }) {
     `/api/usage/heatmap?user=${encodeURIComponent(user)}&device=${encodeURIComponent(device)}&days=371`,
   );
   const series = usage.data?.series ?? [];
+  const days = heat.data?.days ?? [];
+  const usageChart = series.length
+    ? chartImage(
+        multiAreaChart([
+          {
+            values: series.map((d) => d.rx),
+            color: Color.Blue,
+            label: "download",
+          },
+          {
+            values: series.map((d) => d.tx),
+            color: Color.Green,
+            label: "upload",
+          },
+        ]),
+        "usage",
+      )
+    : "_No usage history._";
+  const heatChart = days.length
+    ? chartImage(
+        heatmapChart(days, { color: Color.Green, max: heat.data?.max }),
+        "heatmap",
+      )
+    : "";
   const md = [
     `# Usage · ${user}`,
     ``,
-    `Daily  \`${sparkline(series.map((d) => d.rx + d.tx))}\``,
+    `### Daily traffic (90d)`,
     ``,
-    `Connections/day  \`${sparkline((heat.data?.days ?? []).map((d) => d.count))}\``,
+    usageChart,
+    heatChart ? `\n### Connection activity\n\n${heatChart}` : "",
   ].join("\n");
   return (
     <Detail

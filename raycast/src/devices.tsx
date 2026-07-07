@@ -16,11 +16,11 @@ import {
   Toast,
   showToast,
 } from "@raycast/api";
-import { bytes, healthColor, ms, num } from "./lib/format";
+import { HEALTH_COLOR, bytes, ms, num } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
 import { postJson } from "./lib/api";
 import { showFailureToast } from "./lib/confirm";
-import { gaugeIcon, sparkline } from "./lib/viz";
+import { areaChart, chartImage, gaugeRow, sparklineIcon } from "./lib/charts";
 import type {
   DeviceInfo,
   DevicesPayload,
@@ -37,6 +37,81 @@ function reachIcon(d: DeviceInfo): { source: Icon; tintColor: Color } {
   };
 }
 
+/** Big radial gauges + health area charts for the device detail pane. */
+function deviceMarkdown(d: DeviceInfo): string {
+  const s = d.status;
+  const hist = d.history ?? [];
+  const gauges: Array<{ pct: number; label: string; color: string }> = [];
+  if (s.cpuLoad != null)
+    gauges.push({
+      pct: s.cpuLoad,
+      label: "CPU",
+      color: healthColorHex(s.cpuLoad),
+    });
+  if (s.memUsedPct != null)
+    gauges.push({
+      pct: s.memUsedPct,
+      label: "MEM",
+      color: healthColorHex(s.memUsedPct),
+    });
+  if (s.hddUsedPct != null)
+    gauges.push({
+      pct: s.hddUsedPct,
+      label: "DISK",
+      color: healthColorHex(s.hddUsedPct),
+    });
+
+  const parts = [`# ${d.name}`];
+  if (gauges.length) parts.push(`\n${chartImage(gaugeRow(gauges), "gauges")}`);
+  if (hist.length > 1) {
+    parts.push(
+      `\n${chartImage(
+        areaChart(
+          hist.map((h) => h.cpuLoad ?? null),
+          { label: "CPU load", unit: "%", color: HEALTH_COLOR.cpu },
+        ),
+        "cpu",
+      )}`,
+    );
+    parts.push(
+      `\n${chartImage(
+        areaChart(
+          hist.map((h) => h.memUsedPct ?? null),
+          { label: "Memory used", unit: "%", color: HEALTH_COLOR.mem },
+        ),
+        "mem",
+      )}`,
+    );
+    parts.push(
+      `\n${chartImage(
+        areaChart(
+          hist.map((h) => h.latencyMs ?? null),
+          { label: "Probe latency", unit: "ms", color: HEALTH_COLOR.latency },
+        ),
+        "lat",
+      )}`,
+    );
+  }
+  return parts.join("\n");
+}
+
+function healthColorHex(pct: number): string {
+  return pct >= 85 ? "#f0616d" : pct >= 60 ? "#f5c542" : "#34d399";
+}
+
+/** A tiny CPU-load sparkline accessory (collapsed rows), or nothing if no history. */
+function healthSparkAccessory(
+  d: DeviceInfo,
+): Array<{ icon: string; tooltip: string }> {
+  const hist = d.history ?? [];
+  if (hist.length < 2) return [];
+  const icon = sparklineIcon(
+    hist.map((h) => h.cpuLoad ?? null),
+    HEALTH_COLOR.cpu,
+  );
+  return icon ? [{ icon, tooltip: "CPU load" }] : [];
+}
+
 function DeviceMetadata({
   d,
   pool,
@@ -45,10 +120,6 @@ function DeviceMetadata({
   pool: SSHPoolPayload | undefined;
 }) {
   const s = d.status;
-  const hist = d.history ?? [];
-  const cpu = s.cpuLoad ?? null;
-  const mem = s.memUsedPct ?? null;
-  const disk = s.hddUsedPct ?? null;
   const poolDev = pool?.devices.find((p) => p.device === d.name);
 
   return (
@@ -84,44 +155,6 @@ function DeviceMetadata({
           text={d.jumpVia ?? `${d.jumpHost?.host}:${d.jumpHost?.port}`}
           icon={Icon.Lock}
         />
-      ) : null}
-      <List.Item.Detail.Metadata.Separator />
-      {cpu != null ? (
-        <List.Item.Detail.Metadata.Label
-          title="CPU"
-          text={`${Math.round(cpu)}%`}
-          icon={gaugeIcon(cpu, healthColor(cpu))}
-        />
-      ) : null}
-      {mem != null ? (
-        <List.Item.Detail.Metadata.Label
-          title="Memory"
-          text={`${Math.round(mem)}%`}
-          icon={gaugeIcon(mem, healthColor(mem))}
-        />
-      ) : null}
-      {disk != null ? (
-        <List.Item.Detail.Metadata.Label
-          title="Disk"
-          text={`${Math.round(disk)}%`}
-          icon={gaugeIcon(disk, healthColor(disk))}
-        />
-      ) : null}
-      {hist.length > 1 ? (
-        <>
-          <List.Item.Detail.Metadata.Label
-            title="CPU history"
-            text={sparkline(hist.map((h) => h.cpuLoad ?? NaN))}
-          />
-          <List.Item.Detail.Metadata.Label
-            title="Mem history"
-            text={sparkline(hist.map((h) => h.memUsedPct ?? NaN))}
-          />
-          <List.Item.Detail.Metadata.Label
-            title="Latency history"
-            text={sparkline(hist.map((h) => h.latencyMs ?? NaN))}
-          />
-        </>
       ) : null}
       <List.Item.Detail.Metadata.Separator />
       {s.boardName ? (
@@ -249,6 +282,7 @@ export default function Command() {
                         ]
                       : []),
                     ...(d.status.version ? [{ text: d.status.version }] : []),
+                    ...healthSparkAccessory(d),
                     ...(d.status.latencyMs != null
                       ? [{ text: ms(d.status.latencyMs) }]
                       : []),
@@ -256,6 +290,7 @@ export default function Command() {
             }
             detail={
               <List.Item.Detail
+                markdown={deviceMarkdown(d)}
                 metadata={<DeviceMetadata d={d} pool={pool} />}
               />
             }

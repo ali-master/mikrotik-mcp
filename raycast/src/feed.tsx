@@ -4,10 +4,11 @@
  * WebSocket (`useLiveStream`, SSE fallback). Client-side risk + text filtering,
  * a pushable event drawer, and delete/clear (destructive) like the dashboard.
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Action,
   ActionPanel,
+  Clipboard,
   Color,
   Detail,
   Icon,
@@ -23,7 +24,10 @@ import { useApi } from "./lib/hooks";
 import { useLiveStream } from "./lib/live";
 import type { LiveMode, Risk, ToolEvent } from "./lib/types";
 
-const CAP = 500;
+// Kept intentionally modest: the command runs inside a memory-limited Raycast
+// worker, so we retain a bounded window of events and coalesce bursts (below).
+const CAP = 150;
+const FLUSH_MS = 700;
 const RISKS: Risk[] = [
   "READ",
   "WRITE",
@@ -107,10 +111,27 @@ export default function Command() {
   const pausedRef = useRef(false);
   pausedRef.current = paused;
 
-  const seed = useApi<{ events: ToolEvent[] }>("/api/events?limit=200");
+  const seed = useApi<{ events: ToolEvent[] }>("/api/events?limit=100");
+
+  // Buffer incoming events and flush on an interval so a high-traffic firehose
+  // coalesces into ~1 render per FLUSH_MS instead of one render per event (the
+  // per-event re-render storm is what drove the worker out of heap).
+  const bufRef = useRef<ToolEvent[]>([]);
   useLiveStream((ev) => {
-    if (!pausedRef.current) setLive((prev) => [ev, ...prev].slice(0, CAP));
+    if (pausedRef.current) return;
+    bufRef.current.unshift(ev);
+    if (bufRef.current.length > CAP) bufRef.current.length = CAP;
   }, setMode);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (bufRef.current.length === 0) return;
+      const batch = bufRef.current;
+      bufRef.current = [];
+      setLive((prev) => [...batch, ...prev].slice(0, CAP));
+    }, FLUSH_MS);
+    return () => clearInterval(id);
+  }, []);
 
   const events = useMemo(() => {
     const seen = new Set<string>();
@@ -231,10 +252,16 @@ export default function Command() {
                     Windows: { modifiers: ["ctrl", "shift"], key: "p" },
                   }}
                 />
-                <Action.CopyToClipboard
+                <Action
                   title="Copy Feed as JSON"
                   icon={Icon.Clipboard}
-                  content={JSON.stringify(filtered, null, 2)}
+                  onAction={async () => {
+                    await Clipboard.copy(JSON.stringify(filtered, null, 2));
+                    await showToast({
+                      style: Toast.Style.Success,
+                      title: `Copied ${filtered.length} events`,
+                    });
+                  }}
                 />
                 <Action
                   title="Delete Event"

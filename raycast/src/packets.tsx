@@ -19,7 +19,7 @@ import { postJson, withToken } from "./lib/api";
 import { showFailureToast } from "./lib/confirm";
 import { bytes, clock, num } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
-import { bar } from "./lib/viz";
+import { barChart, chartImage } from "./lib/charts";
 import type { CapturePayload, CaptureStats } from "./lib/types";
 
 function protoColor(proto: string): Color {
@@ -33,23 +33,38 @@ function protoColor(proto: string): Color {
 
 function StatsView({ stats }: { stats: CaptureStats }) {
   const protos = Object.entries(stats.protocols).sort((a, b) => b[1] - a[1]);
-  const max = protos.reduce((m, [, n]) => Math.max(m, n), 1);
+  const protoChart = protos.length
+    ? chartImage(
+        barChart(
+          protos
+            .slice(0, 10)
+            .map(([p, n]) => ({ label: p, value: n, color: protoColor(p) })),
+          { labelWidth: 120 },
+        ),
+        "protocols",
+      )
+    : "_None yet._";
+  const talkerChart = stats.topTalkers.length
+    ? chartImage(
+        barChart(
+          stats.topTalkers
+            .slice(0, 10)
+            .map((t) => ({ label: t.addr, value: t.count, color: Color.Blue })),
+          { labelWidth: 180 },
+        ),
+        "talkers",
+      )
+    : "_None yet._";
   const md = [
     `# Capture Stats`,
     ``,
-    `## Protocols`,
+    `### Protocols`,
     ``,
-    protos.length
-      ? protos
-          .map(([p, n]) => `\`${bar((n / max) * 100)}\` **${p}** · ${num(n)}`)
-          .join("\n\n")
-      : "_None yet._",
+    protoChart,
     ``,
-    `## Top talkers`,
+    `### Top talkers`,
     ``,
-    stats.topTalkers.length
-      ? stats.topTalkers.map((t) => `- ${t.addr} — ${num(t.count)}`).join("\n")
-      : "_None yet._",
+    talkerChart,
   ].join("\n");
   return (
     <Detail
