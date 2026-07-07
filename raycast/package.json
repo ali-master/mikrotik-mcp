@@ -1,0 +1,44 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "mikrotik-mcp",
+  "description": "MikroTik MCP Dashboard",
+  "categories": [
+    "Applications",
+    "Developer Tools"
+  ],
+  "license": "MIT",
+  "author": "usestrict",
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  },
+  "dependencies": {
+    "@raycast/api": "^1.104.21",
+    "@raycast/utils": "^2.2.7"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.2.0",
+    "@types/node": "26.1.0",
+    "@types/react": "19.2.17",
+    "eslint": "^9.22.0"
+  },
+  "icon": "extension-icon.png",
+  "commands": [
+    {
+      "name": "devices",
+      "title": "Devices",
+      "description": "",
+      "mode": "no-view"
+    }
+  ],
+  "owner": "usex",
+  "platforms": [
+    "macOS",
+    "Windows"
+  ],
+  "title": "MikroTik MCP"
+}
