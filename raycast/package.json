@@ -32,92 +32,112 @@
       "name": "overview",
       "title": "Overview",
       "description": "Tool-call volume, latency, error rate and risk at a glance",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "devices",
       "title": "Devices",
       "description": "Router connectivity, system health (CPU/MEM/DISK) and SSH pool",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "clients",
       "title": "Clients",
       "description": "LAN devices on a router — live traffic, block/allow, pin IP, rate limits",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "packets",
       "title": "Packet Capture",
       "description": "Live decoded TZSP packet capture — protocols, talkers, pcap export",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "radius-um",
       "title": "RADIUS & UM",
       "description": "RADIUS client and User Manager — users, profiles, limitations, NAS, sessions",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "topology",
       "title": "Topology",
       "description": "Configured devices and discovered Layer-2 neighbours (MNDP/CDP/LLDP)",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "snapshots",
       "title": "Snapshots",
       "description": "Browse stored config snapshots and time-travel diff any two",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "drift",
       "title": "Drift Guard",
       "description": "Golden config baselines and live drift detection per device",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "change-plan",
       "title": "Change Plan",
       "description": "Dry-run intended RouterOS commands — risk-scored, safely ordered",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "s3-backups",
       "title": "S3 Backups",
       "description": "List, download and delete S3 backup objects",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "backups",
       "title": "Backups",
       "description": "Local config vault — create, download, rename, restore, delete",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "modules",
       "title": "Modules",
       "description": "Enable/disable tool modules — curate the exposed MCP surface",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "config",
       "title": "Config",
       "description": "Effective configuration, safe editor, version history and field guide",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "memory",
       "title": "Memory",
       "description": "Knowledge graph — entities, relations, observations and activity",
+      "icon": "extension-icon.png",
       "mode": "view"
     },
     {
       "name": "feed",
       "title": "Live Feed",
       "description": "Every MCP tool call in real time (WebSocket, SSE fallback)",
+      "icon": "extension-icon.png",
       "mode": "view"
     }
+  ],
+  "owner": "usex",
+  "platforms": [
+    "macOS",
+    "Windows"
   ],
   "preferences": [
     {
@@ -136,11 +156,6 @@
       "type": "password",
       "required": false
     }
-  ],
-  "owner": "usex",
-  "platforms": [
-    "macOS",
-    "Windows"
   ],
   "title": "MikroTik MCP"
 }
