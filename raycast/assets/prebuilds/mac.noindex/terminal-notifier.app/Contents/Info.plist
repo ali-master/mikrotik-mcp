@@ -11,15 +11,17 @@
 	<key>CFBundleIconFile</key>
 	<string>Terminal</string>
 	<key>CFBundleIdentifier</key>
-	<string>nl.superalloy.oss.terminal-notifier</string>
+	<string>dev.usestrict.mikrotik-mcp.notifier</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>terminal-notifier</string>
+	<string>MikroTik MCP</string>
+	<key>CFBundleDisplayName</key>
+	<string>MikroTik MCP</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.7.2</string>
+	<string>4.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleSupportedPlatforms</key>
@@ -52,7 +54,7 @@
 		<false/>
 	</dict>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2012-2016 Eloy Durán, Julien Blanchard. All rights reserved.</string>
+	<string>MikroTik MCP · notifications via terminal-notifier © Eloy Durán, Ali Torki (MIT).</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
