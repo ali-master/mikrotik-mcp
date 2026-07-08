@@ -50,7 +50,7 @@
     "build": "bunup && chmod +x dist/cli.js && bun run build:ui",
     "build:ui": "bun run --bun scripts/build-ui.ts",
     "dev": "bunup --watch",
-    "prepack": "bunup && chmod +x dist/cli.js && bun run build:ui",
+    "prepack": "bunup && chmod +x dist/cli.js && bun run build:ui && bun run gen",
     "auth-check": "bun run --bun src/cli.ts auth-check",
     "gen:schemas": "bun run --bun scripts/gen-schemas.ts",
     "gen:docs": "bun run --bun scripts/gen-tool-docs.ts",
