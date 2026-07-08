@@ -229,7 +229,8 @@ function PendingView({ resp, onDone }: { resp: SaveResp; onDone: () => void }) {
         "/api/config/rollback",
         { pendingId: resp.pendingId },
       );
-      if (!res.rolledBack) throw new Error(res.error ?? "Rollback was rejected");
+      if (!res.rolledBack)
+        throw new Error(res.error ?? "Rollback was rejected");
       toast.style = Toast.Style.Success;
       toast.title = "Reverted";
       onDone();
@@ -1133,13 +1134,19 @@ function Editor({
     );
   };
   const validateNow = async (): Promise<void> => {
-    const res = await postJson<{ ok?: boolean; error?: string; errors?: ConfigIssue[] }>(
-      "/api/config/validate",
-      cfg,
-    );
+    const res = await postJson<{
+      ok?: boolean;
+      error?: string;
+      errors?: ConfigIssue[];
+    }>("/api/config/validate", cfg);
     if (res.errors?.length) push(<IssuesView issues={res.errors} />);
-    else if (res.ok) void showToast({ style: Toast.Style.Success, title: "Valid ✓" });
-    else await showFailureToast(new Error(res.error ?? "Validation was rejected"), { title: "Validation failed" });
+    else if (res.ok)
+      void showToast({ style: Toast.Style.Success, title: "Valid ✓" });
+    else
+      await showFailureToast(
+        new Error(res.error ?? "Validation was rejected"),
+        { title: "Validation failed" },
+      );
   };
   const testDevices = (): void => {
     const devices = asObj(cfg.devices);
@@ -1177,7 +1184,10 @@ function Editor({
       if (!res.pendingId) {
         void toast.hide();
         if (res.errors?.length) push(<IssuesView issues={res.errors} />);
-        else await showFailureToast(new Error(res.error ?? "Apply was rejected"), { title: "Apply failed" });
+        else
+          await showFailureToast(new Error(res.error ?? "Apply was rejected"), {
+            title: "Apply failed",
+          });
         return;
       }
       void toast.hide();

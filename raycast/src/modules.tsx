@@ -67,7 +67,8 @@ export default function Command() {
           "/api/modules/toggle",
           { slug: m.slug, enabled },
         );
-        if (res.ok !== true) throw new Error(res.error ?? `Could not toggle ${m.slug}`);
+        if (res.ok !== true)
+          throw new Error(res.error ?? `Could not toggle ${m.slug}`);
       }
       toast.style = Toast.Style.Success;
       toast.title = `${what} ${enabled ? "enabled" : "disabled"}`;
