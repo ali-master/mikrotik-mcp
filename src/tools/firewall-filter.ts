@@ -21,52 +21,12 @@ import {
   Cmd,
 } from "../core/routeros";
 import type { ToolContext } from "../core/context";
+import { ruleResolver } from "./_resolve-rule-id";
 
 const isDigits = (s: string): boolean => /^\d+$/.test(s);
 
-/**
- * Resolve a user-supplied rule identifier to a RouterOS `.id` value.
- *
- * If the input already carries the `*` prefix (e.g. `*1F`) it is verified and
- * returned as-is. A bare number like `"3"` is ambiguous — it could be `.id=*3`
- * or positional row 3. We try `.id=*N` first; on miss we query all rule `.id`s
- * and pick by positional index.
- *
- * Returns `null` when neither interpretation matches a rule.
- */
-async function resolveFilterRuleId(ruleId: string, ctx: ToolContext): Promise<string | null> {
-  if (/^\d+$/.test(ruleId)) {
-    // Try as .id first
-    const id = `*${ruleId}`;
-    const byId = await executeMikrotikCommand(
-      `/ip firewall filter print count-only where .id=${id}`,
-      ctx,
-    );
-    if (byId.trim() !== "0") return id;
-
-    // Fall back to positional: use `:put` to dump the .id at that index.
-    // `:foreach` + `get .id` lists all ids in order; we pick by index.
-    const idsRaw = await executeMikrotikCommand(
-      `:foreach i in=[/ip firewall filter find] do={:put $i}`,
-      ctx,
-    );
-    if (isEmpty(idsRaw)) return null;
-    const ids = idsRaw
-      .trim()
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    const pos = Number.parseInt(ruleId, 10);
-    return pos >= 0 && pos < ids.length ? ids[pos] : null;
-  }
-
-  // Already prefixed — verify it exists.
-  const count = await executeMikrotikCommand(
-    `/ip firewall filter print count-only where .id=${ruleId}`,
-    ctx,
-  );
-  return count.trim() !== "0" ? ruleId : null;
-}
+/** Resolve a filter rule identifier (`*1F` or positional row index) to its `.id`. */
+const resolveFilterRuleId = ruleResolver("/ip firewall filter");
 
 /** Shared update routine — used by update/enable/disable. */
 async function updateFilterRule(

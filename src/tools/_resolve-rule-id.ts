@@ -1,11 +1,13 @@
 /**
  * Shared rule-ID resolver for ordered RouterOS lists (firewall, mangle, etc.).
  *
- * A bare number like `"3"` is ambiguous — it could be `.id=*3` (the internal
- * hex identifier) or positional row 3 in `print` output.  We try `.id=*N`
- * first; on miss we query all `.id`s in order and pick by positional index.
+ * A bare number like `"3"` is the positional row index shown in `print` output,
+ * NOT an internal `.id` — RouterOS `.id` values are always `*`-prefixed hex
+ * (`*3`, `*1F`), so a bare decimal can only mean a row.  We resolve it by
+ * listing all `.id`s in order and picking by index.  (Trying `.id=*N` first
+ * would wrongly match whichever stale rule happens to carry that internal id.)
  *
- * Returns `null` when neither interpretation matches a rule.
+ * Returns `null` when the position is out of range or the id does not exist.
  */
 import { executeMikrotikCommand } from "../core/connector";
 import { isEmpty } from "../core/routeros";
@@ -20,12 +22,7 @@ import type { ToolContext } from "../core/context";
 export function ruleResolver(scope: string) {
   return async function resolveRuleId(ruleId: string, ctx: ToolContext): Promise<string | null> {
     if (/^\d+$/.test(ruleId)) {
-      // Try as .id first.
-      const id = `*${ruleId}`;
-      const byId = await executeMikrotikCommand(`${scope} print count-only where .id=${id}`, ctx);
-      if (byId.trim() !== "0") return id;
-
-      // Fall back to positional: iterate all .id values in order and pick by
+      // Positional row index: iterate all .id values in order and pick by
       // index.  `:foreach` + `:put` lists one id per line.
       const idsRaw = await executeMikrotikCommand(
         `:foreach i in=[${scope} find] do={:put $i}`,
