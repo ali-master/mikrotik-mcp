@@ -16,9 +16,6 @@
   ],
   "license": "MIT",
   "author": "usestrict",
-  "contributors": [
-    "usestrict"
-  ],
   "scripts": {
     "build": "ray build",
     "dev": "ray develop",
