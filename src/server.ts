@@ -70,6 +70,31 @@ to use the default. Use list_mikrotik_devices to see them. For cross-device work
 (e.g. a tunnel between two routers) configure each side by passing the matching
 "device", then verify reachability with ping/traceroute from each end.`;
 
+// Persistent knowledge-graph memory usage protocol. Injected into the server
+// instructions ONLY when memory is enabled. Without this the model never learns
+// the graph exists — the memory_* tools would sit unused and "history is lost"
+// between sessions even though everything persists in SQLite. This is the one
+// channel (the MCP `instructions` field) the host feeds to the model at connect,
+// so the recall/record loop must live here, not buried in a tool description.
+const MEMORY_INSTRUCTIONS = `
+
+Persistent memory — you have a knowledge graph that survives across sessions
+(entities, observations, relations in a local SQLite database). USE IT on every
+task so context is never lost between conversations:
+  1. AT THE START of a task, recall what you already know before touching the
+     device: call \`memory_search_nodes\` for the device/subject at hand (or
+     \`memory_read_graph\` for the whole picture on a fresh device). Apply what you
+     find — do not re-discover facts you already recorded.
+  2. WHILE WORKING, when you learn a durable fact about the network, a device, a
+     user, or a config pattern (RouterOS version, port layout, VLAN scheme, WAN
+     uplink, owner, recurring fix), record it: \`memory_create_entities\` for new
+     subjects, \`memory_add_observations\` for facts about existing ones, and
+     \`memory_create_relations\` to link them (e.g. router --provides_dhcp_for-->
+     subnet). Every device you touch is auto-added as an entity, so attach
+     observations to it by name.
+  3. Prefer specific, reusable facts over transient state. Skip one-off command
+     output; record what will still be true next session.`;
+
 export interface CreatedServer {
   server: McpServer;
   toolCount: number;
@@ -93,6 +118,10 @@ export function createServer(opts: { sendLog?: SendLog } = {}): CreatedServer {
           defaultDevice,
         )
       : INSTRUCTIONS;
+
+  // Teach the model the recall/record loop only when the knowledge graph is live;
+  // otherwise the memory_* tools are inert and the instruction would be a lie.
+  if (getConfig().memory.enabled) instructions += MEMORY_INSTRUCTIONS;
 
   // If a previous run cached an update check showing a newer version, seed
   // the LLM's instructions so it naturally knows about the update. This is
