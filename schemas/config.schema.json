@@ -225,7 +225,7 @@
         "enabled": false,
         "host": "0.0.0.0",
         "port": 9090,
-        "dbPath": "/Users/username/.mikrotik-mcp/events.db",
+        "dbPath": "/Users/alimaster/.mikrotik-mcp/events.db",
         "maxEvents": 100000,
         "captureBody": true,
         "redactInput": false,
@@ -248,7 +248,7 @@
           "maximum": 9007199254740991
         },
         "dbPath": {
-          "default": "/Users/username/.mikrotik-mcp/events.db",
+          "default": "/Users/alimaster/.mikrotik-mcp/events.db",
           "type": "string"
         },
         "maxEvents": {
@@ -363,7 +363,7 @@
     "memory": {
       "default": {
         "enabled": true,
-        "dbPath": "/Users/username/.mikrotik-mcp/memory.db"
+        "dbPath": "/Users/alimaster/.mikrotik-mcp/memory.db"
       },
       "type": "object",
       "properties": {
@@ -372,7 +372,7 @@
           "type": "boolean"
         },
         "dbPath": {
-          "default": "/Users/username/.mikrotik-mcp/memory.db",
+          "default": "/Users/alimaster/.mikrotik-mcp/memory.db",
           "type": "string"
         }
       },
