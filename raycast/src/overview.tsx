@@ -15,7 +15,7 @@ import {
 } from "@raycast/api";
 import { RISK_COLOR, RISK_TINT, WINDOWS, bytes, ms, num } from "./lib/format";
 import { barChart, chartImage, donutChart, multiAreaChart } from "./lib/charts";
-import { useApi } from "./lib/hooks";
+import { useApi, usePolling } from "./lib/hooks";
 import type { Meta, Risk, Stats } from "./lib/types";
 
 function errColor(rate: number): Color {
@@ -41,6 +41,7 @@ export default function Command() {
     revalidate,
   } = useApi<Stats>(`/api/stats?window=${win}&buckets=60`);
   const { data: meta } = useApi<Meta>("/api/meta");
+  usePolling(revalidate, 5000);
 
   const winLabel = WINDOWS.find(([, v]) => v === win)?.[0] ?? `${win}ms`;
   const errPct = stats
