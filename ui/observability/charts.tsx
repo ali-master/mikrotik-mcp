@@ -1,11 +1,11 @@
 /**
- * shadcn-style charts for the observability dashboard, built on Recharts.
- *
- * Mirrors shadcn/ui's chart look (muted dashed gridlines, axis-less ticks,
- * gradient area fills, a themed tooltip card) but without Tailwind — the styling
- * lives in `styles.css` under `.chart*`, driven by the same `--page-accent` /
- * `--mt-*` design tokens as the rest of the dashboard. Each chart is a small,
- * self-contained component the views drop in.
+ * Charts for the observability dashboard, built on shadcn/ui's Recharts wrapper
+ * (`@/components/ui/chart`). `ChartContainer` supplies the themed gridlines,
+ * axis-tick colours, tooltip-cursor styling and per-chart `--color-<key>` CSS
+ * variables (from each `ChartConfig`), so the charts no longer depend on the
+ * hand-rolled `.chart*` rules in `styles.css`. Series colours come from the
+ * shared data-viz tokens (`--chart-1` … `--chart-5`); callers still pass an
+ * explicit `color` for the donut segments and health metrics.
  */
 import type { ReactNode } from "react";
 import {
@@ -18,54 +18,22 @@ import {
   PolarAngleAxis,
   RadialBar,
   RadialBarChart,
-  ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart";
 
 /** A short HH:MM label for an epoch-ms timestamp. */
 const hhmm = (t: number): string =>
   new Date(t).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
 
-/** Themed tooltip card matching shadcn's ChartTooltipContent. */
-interface TooltipEntry {
-  name?: string;
-  value?: number | string;
-  color?: string;
-  dataKey?: string | number;
-}
-function ChartTooltip({
-  active,
-  payload,
-  label,
-  unit,
-}: {
-  active?: boolean;
-  payload?: readonly TooltipEntry[];
-  label?: ReactNode;
-  unit?: string;
-}): ReactNode {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="chart-tip">
-      {label != null && <div className="chart-tip__label">{label}</div>}
-      {payload.map((e, i) => (
-        <div className="chart-tip__row" key={i}>
-          <span className="chart-tip__dot" style={{ background: e.color }} />
-          <span className="chart-tip__name">{e.name ?? e.dataKey}</span>
-          <span className="chart-tip__val">
-            {typeof e.value === "number" ? e.value.toLocaleString() : e.value}
-            {unit ?? ""}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-const GRID = "color-mix(in srgb, var(--mt-border) 80%, transparent)";
-const TICK = { fill: "var(--mt-text-faint)", fontSize: 10, fontFamily: "var(--mt-mono)" };
+const activityConfig = {
+  ok: { label: "ok", color: "var(--chart-1)" },
+  // Red for errors is a deliberate functional colour; `destructive` is the
+  // matching semantic token (there is no red among --chart-1…5).
+  error: { label: "error", color: "var(--destructive)" },
+} satisfies ChartConfig;
 
 /** Stacked area of OK vs error tool-calls over time (replaces the old bar TimeSeries). */
 export function ActivityChart({
@@ -74,62 +42,66 @@ export function ActivityChart({
   series: { t: number; ok: number; error: number }[];
 }): ReactNode {
   return (
-    <div className="chart" style={{ height: 200 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={series} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-          <defs>
-            <linearGradient id="fillOk" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--sky)" stopOpacity={0.5} />
-              <stop offset="100%" stopColor="var(--sky)" stopOpacity={0.04} />
-            </linearGradient>
-            <linearGradient id="fillErr" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--mt-bad)" stopOpacity={0.55} />
-              <stop offset="100%" stopColor="var(--mt-bad)" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid vertical={false} stroke={GRID} strokeDasharray="3 3" />
-          <XAxis
-            dataKey="t"
-            tickFormatter={hhmm}
-            tick={TICK}
-            tickLine={false}
-            axisLine={false}
-            minTickGap={48}
-          />
-          <YAxis tick={TICK} tickLine={false} axisLine={false} width={34} allowDecimals={false} />
-          <Tooltip
-            cursor={{ stroke: GRID }}
-            content={({ active, payload, label }) => (
-              <ChartTooltip
-                active={active}
-                payload={payload as readonly TooltipEntry[]}
-                label={typeof label === "number" ? hhmm(label) : label}
-              />
-            )}
-          />
-          <Area
-            type="monotone"
-            dataKey="ok"
-            name="ok"
-            stackId="1"
-            stroke="var(--sky)"
-            fill="url(#fillOk)"
-            strokeWidth={2}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="error"
-            name="error"
-            stackId="1"
-            stroke="var(--mt-bad)"
-            fill="url(#fillErr)"
-            strokeWidth={2}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartContainer config={activityConfig} className="h-[200px] w-full">
+      <AreaChart data={series} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+        <defs>
+          <linearGradient id="fillOk" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-ok)" stopOpacity={0.5} />
+            <stop offset="100%" stopColor="var(--color-ok)" stopOpacity={0.04} />
+          </linearGradient>
+          <linearGradient id="fillErr" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-error)" stopOpacity={0.55} />
+            <stop offset="100%" stopColor="var(--color-error)" stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis
+          dataKey="t"
+          tickFormatter={hhmm}
+          tick={{ fontSize: 10 }}
+          tickLine={false}
+          axisLine={false}
+          minTickGap={48}
+        />
+        <YAxis
+          tick={{ fontSize: 10 }}
+          tickLine={false}
+          axisLine={false}
+          width={34}
+          allowDecimals={false}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={(_value, payload) => {
+                const t = (payload?.[0]?.payload as { t?: number } | undefined)?.t;
+                return typeof t === "number" ? hhmm(t) : "";
+              }}
+            />
+          }
+        />
+        <Area
+          type="monotone"
+          dataKey="ok"
+          name="ok"
+          stackId="1"
+          stroke="var(--color-ok)"
+          fill="url(#fillOk)"
+          strokeWidth={2}
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="error"
+          name="error"
+          stackId="1"
+          stroke="var(--color-error)"
+          fill="url(#fillErr)"
+          strokeWidth={2}
+          isAnimationActive={false}
+        />
+      </AreaChart>
+    </ChartContainer>
   );
 }
 
@@ -143,51 +115,48 @@ export function RiskDonut({
 }): ReactNode {
   const data = segments.filter((s) => s.value > 0);
   const total = segments.reduce((a, b) => a + b.value, 0);
+  const config: ChartConfig = Object.fromEntries(
+    data.map((s) => [s.label, { label: s.label, color: s.color }]),
+  );
   return (
-    <div className="chart chart--donut">
-      <div className="chart-donut__svg">
-        <ResponsiveContainer width="100%" height={180}>
-          <PieChart>
-            <Tooltip
-              content={({ active, payload }) => (
-                <ChartTooltip active={active} payload={payload as readonly TooltipEntry[]} />
-              )}
-            />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="label"
-              innerRadius={58}
-              outerRadius={80}
-              paddingAngle={2}
-              strokeWidth={0}
-              isAnimationActive={false}
-            >
-              {data.map((s) => (
-                <Cell key={s.label} fill={s.color} />
-              ))}
-            </Pie>
-            <text
-              x="50%"
-              y="47%"
-              textAnchor="middle"
-              fill="var(--mt-text)"
-              fontSize={22}
-              fontWeight={600}
-            >
-              {total.toLocaleString()}
-            </text>
-            <text x="50%" y="59%" textAnchor="middle" fill="var(--mt-text-dim)" fontSize={10}>
-              {centerLabel}
-            </text>
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="chart-legend">
+    <div className="flex flex-1 flex-col items-center justify-center gap-3">
+      <ChartContainer config={config} className="mx-auto aspect-square w-full max-w-[180px]">
+        <PieChart>
+          <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="label"
+            innerRadius={58}
+            outerRadius={80}
+            paddingAngle={2}
+            strokeWidth={0}
+            isAnimationActive={false}
+          >
+            {data.map((s) => (
+              <Cell key={s.label} fill={s.color} />
+            ))}
+          </Pie>
+          <text
+            x="50%"
+            y="47%"
+            textAnchor="middle"
+            className="fill-foreground"
+            fontSize={22}
+            fontWeight={600}
+          >
+            {total.toLocaleString()}
+          </text>
+          <text x="50%" y="59%" textAnchor="middle" className="fill-muted-foreground" fontSize={10}>
+            {centerLabel}
+          </text>
+        </PieChart>
+      </ChartContainer>
+      <div className="flex flex-wrap justify-center gap-x-3.5 gap-y-1.5 text-[11px] text-muted-foreground">
         {data.map((s) => (
-          <span key={s.label}>
-            <i style={{ background: s.color }} />
-            {s.label} <b>{s.value}</b>
+          <span key={s.label} className="inline-flex items-center gap-1.5">
+            <i className="size-[9px] rounded-[3px]" style={{ background: s.color }} />
+            {s.label} <b className="font-medium text-foreground">{s.value}</b>
           </span>
         ))}
       </div>
@@ -212,10 +181,16 @@ export function MetricArea({
   id?: string;
 }): ReactNode {
   const nums = values.filter((v): v is number => v != null);
-  if (nums.length === 0) return <div className="spark spark--empty">no samples yet</div>;
+  if (nums.length === 0)
+    return (
+      <div className="px-1.5 py-3 text-center text-[11px] text-muted-foreground">
+        no samples yet
+      </div>
+    );
   const data = values.map((v, i) => ({ i, v }));
   const last = nums[nums.length - 1];
   const gid = `ma-${(id ?? color).replace(/[^a-z0-9]/gi, "")}`;
+  const config = { v: { label: "value", color } } satisfies ChartConfig;
 
   // Auto-scale the Y axis to the data so small-but-real movement is visible: a
   // fixed 0–100 axis crushes a 1–2% CPU load or a steady ~9% memory line into a
@@ -235,38 +210,37 @@ export function MetricArea({
   if (maxValue != null) hi = Math.min(maxValue, hi);
   if (hi <= lo) hi = lo + 1; // guard a degenerate domain so recharts still draws
   return (
-    <div className="chart chart--spark">
-      <span className="chart-spark__last" style={{ color }}>
+    <div className="relative w-full">
+      <span className="absolute right-0.5 top-0 z-10 text-[10px] font-semibold" style={{ color }}>
         {last.toFixed(unit === "%" ? 0 : 1)}
         {unit ?? ""}
       </span>
-      <ResponsiveContainer width="100%" height={46}>
+      <ChartContainer config={config} className="h-[46px] w-full">
         <AreaChart data={data} margin={{ top: 4, right: 2, left: 2, bottom: 0 }}>
           <defs>
             <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.35} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--color-v)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--color-v)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <YAxis hide domain={[lo, hi]} />
-          <Tooltip
-            cursor={{ stroke: GRID }}
-            content={({ active, payload }) => (
-              <ChartTooltip
-                active={active}
-                payload={(payload as readonly TooltipEntry[])?.map((p) => ({
-                  ...p,
-                  name: "value",
-                  color,
-                }))}
-                unit={unit}
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                hideLabel
+                formatter={(value) => (
+                  <span className="font-mono tabular-nums text-foreground">
+                    {typeof value === "number" ? value.toLocaleString() : String(value)}
+                    {unit ?? ""}
+                  </span>
+                )}
               />
-            )}
+            }
           />
           <Area
             type="monotone"
             dataKey="v"
-            stroke={color}
+            stroke="var(--color-v)"
             fill={`url(#${gid})`}
             strokeWidth={1.7}
             connectNulls={false}
@@ -274,7 +248,7 @@ export function MetricArea({
             dot={false}
           />
         </AreaChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 }
@@ -292,10 +266,11 @@ export function RadialGauge({
   const has = value != null;
   const v = has ? Math.max(0, Math.min(100, value)) : 0;
   const data = [{ name: label, value: v, fill: color }];
+  const config = { value: { label, color } } satisfies ChartConfig;
   return (
-    <div className="gauge">
-      <div className="gauge__radial">
-        <ResponsiveContainer width={72} height={72}>
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="relative grid size-[72px] place-items-center">
+        <ChartContainer config={config} className="size-[72px]">
           <RadialBarChart
             data={data}
             innerRadius="72%"
@@ -308,19 +283,19 @@ export function RadialGauge({
             <RadialBar
               dataKey="value"
               cornerRadius={4}
-              background={{ fill: "var(--mt-surface-2)" }}
+              background={{ fill: "var(--muted)" }}
               isAnimationActive={false}
             />
           </RadialBarChart>
-        </ResponsiveContainer>
+        </ChartContainer>
         <span
-          className="gauge__pct"
-          style={{ color: has ? "var(--mt-text)" : "var(--mt-text-faint)" }}
+          className="pointer-events-none absolute inset-0 grid place-items-center text-[13px] font-bold"
+          style={{ color: has ? "var(--foreground)" : "var(--muted-foreground)" }}
         >
           {has ? `${Math.round(v)}%` : "n/a"}
         </span>
       </div>
-      <span className="gauge__label">{label}</span>
+      <span className="text-[10px] tracking-[0.06em] text-muted-foreground">{label}</span>
     </div>
   );
 }

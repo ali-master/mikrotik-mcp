@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { StatCard } from "./atoms";
+import { cn } from "@/lib/utils";
 import type { DeviceInfo, SSHPoolPayload } from "./types";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -8,10 +10,10 @@ function ms(v: number): string {
 }
 
 function poolColor(d: DeviceInfo["pool"]): string {
-  if (!d || !d.pooled) return "#52525b"; // disconnected – zinc-600
-  if (d.dead) return "#ef4444"; // dead – red-500
-  if (d.inflight > 0) return "#3b82f6"; // busy – blue-500
-  return "#22c55e"; // idle/ready – green-500
+  if (!d || !d.pooled) return "var(--muted-foreground)"; // disconnected
+  if (d.dead) return "var(--destructive)"; // dead
+  if (d.inflight > 0) return "var(--chart-1)"; // busy
+  return "var(--success)"; // idle/ready
 }
 
 function poolLabel(d: DeviceInfo["pool"]): string {
@@ -25,27 +27,49 @@ function poolLabel(d: DeviceInfo["pool"]): string {
 
 function PoolDeviceCard({ device }: { device: DeviceInfo }): ReactNode {
   const p = device.pool;
-  const variant =
-    !p || !p.pooled ? "disconnected" : p.dead ? "dead" : p.inflight > 0 ? "busy" : "idle";
+  const variantCls =
+    !p || !p.pooled
+      ? "border-dashed opacity-60"
+      : p.dead
+        ? "border-destructive/50"
+        : p.inflight > 0
+          ? "border-chart-1/50"
+          : "border-success/35";
+  const busy = !!p && p.pooled && p.inflight > 0;
   const col = poolColor(p);
   // Fill width proportional to inflight: 0→8%, each channel adds ~15%, cap 100%.
   const fillPct = !p || !p.pooled ? 0 : p.inflight > 0 ? Math.min(8 + p.inflight * 15, 100) : 100;
   return (
-    <div className={`pool-card pool-card--${variant}`}>
-      <div className="pool-card__hd">
-        <span className="pool-card__dot" style={{ background: col }} />
-        <span className="pool-card__name">{device.name}</span>
-        <span className="pool-card__badge" style={{ color: col }}>
+    <div
+      className={cn(
+        "bg-card rounded-lg border px-3 py-2.5 transition-colors hover:border-muted-foreground/40",
+        variantCls,
+      )}
+    >
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <span className="size-[7px] shrink-0 rounded-full" style={{ background: col }} />
+        <span className="text-foreground overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
+          {device.name}
+        </span>
+        <span
+          className="ml-auto text-[10px] font-semibold tracking-[0.04em] uppercase"
+          style={{ color: col }}
+        >
           {poolLabel(p)}
         </span>
       </div>
-      <div className="pool-pipe">
+      <div className="bg-muted relative h-1.5 overflow-hidden rounded-[3px]">
         <div
-          className={`pool-pipe__fill${variant === "busy" ? " pool-pipe__fill--pulse" : ""}`}
+          className={cn(
+            "h-full rounded-[3px] opacity-65 transition-[width] duration-[400ms]",
+            busy && "animate-pulse",
+          )}
           style={{ width: `${fillPct}%`, background: col }}
         />
         {p && p.pooled && p.inflight > 0 && (
-          <span className="pool-pipe__label">{p.inflight} ch</span>
+          <span className="text-foreground absolute -top-px right-1 text-[8px] leading-[8px] font-bold [text-shadow:0_0_3px_rgba(0,0,0,0.6)]">
+            {p.inflight} ch
+          </span>
         )}
       </div>
     </div>
@@ -55,15 +79,7 @@ function PoolDeviceCard({ device }: { device: DeviceInfo }): ReactNode {
 // ── aggregate stat cards ────────────────────────────────────────────────────
 
 function PoolStat({ k, v, sub }: { k: string; v: string; sub?: string }): ReactNode {
-  return (
-    <div className="stat" style={{ minWidth: 100 }}>
-      <p className="k">{k}</p>
-      <div className="v">
-        {v}
-        {sub != null && <small> {sub}</small>}
-      </div>
-    </div>
-  );
+  return <StatCard k={k} v={v} sub={sub} cls="min-w-[100px]" />;
 }
 
 // ── main panel ──────────────────────────────────────────────────────────────
@@ -81,14 +97,13 @@ export function SSHPoolPanel({
 
   if (!poolEnabled && sshDevices.length === 0) {
     return (
-      <details className="pool-panel" open>
-        <summary style={{ cursor: "pointer", fontWeight: 600, marginBottom: 8 }}>
-          SSH Connection Pool
-        </summary>
-        <p className="pool-disabled">
-          Connection pooling is disabled. Enable it with <code>--ssh-keep-alive true</code> or{" "}
-          <code>MIKROTIK_SSH__KEEP_ALIVE=true</code> to keep persistent SSH connections across tool
-          calls.
+      <details className="my-3" open>
+        <summary className="mb-2 cursor-pointer font-semibold">SSH Connection Pool</summary>
+        <p className="text-muted-foreground my-1 text-[13px]">
+          Connection pooling is disabled. Enable it with{" "}
+          <code className="text-chart-1 text-xs">--ssh-keep-alive true</code> or{" "}
+          <code className="text-chart-1 text-xs">MIKROTIK_SSH__KEEP_ALIVE=true</code> to keep
+          persistent SSH connections across tool calls.
         </p>
       </details>
     );
@@ -98,14 +113,12 @@ export function SSHPoolPanel({
   const cfg = poolPayload?.config;
 
   return (
-    <details className="pool-panel" open>
-      <summary style={{ cursor: "pointer", fontWeight: 600, marginBottom: 8 }}>
-        SSH Connection Pool
-      </summary>
+    <details className="my-3" open>
+      <summary className="mb-2 cursor-pointer font-semibold">SSH Connection Pool</summary>
 
       {/* aggregate stats row */}
       {agg && (
-        <div className="pool-stats">
+        <div className="mb-3 flex flex-wrap gap-2">
           <PoolStat k="Connections" v={String(agg.totalConnections)} />
           <PoolStat k="Inflight" v={String(agg.totalInflight)} sub="channels" />
           <PoolStat k="Idle" v={String(agg.totalIdle)} />
@@ -121,7 +134,7 @@ export function SSHPoolPanel({
 
       {/* per-device pipe grid */}
       {sshDevices.length > 0 && (
-        <div className="pool-grid">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2">
           {sshDevices.map((d) => (
             <PoolDeviceCard key={d.name} device={d} />
           ))}

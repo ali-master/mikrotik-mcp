@@ -42,7 +42,12 @@ export function Panel({
   );
 }
 
-/** A single headline metric: label, value, and an optional trailing unit. */
+/**
+ * A single headline metric: label, value, and an optional trailing unit.
+ *
+ * `cls` tones the VALUE, not the card — the legacy rule was `.stat.is-bad .v`,
+ * i.e. the modifier sat on the card but only ever coloured the number.
+ */
 export function StatCard({
   k,
   v,
@@ -55,9 +60,9 @@ export function StatCard({
   cls?: string;
 }): ReactNode {
   return (
-    <Card className={cn("gap-1 px-4 py-3", cls)}>
+    <Card className="gap-1 px-4 py-3">
       <p className="text-muted-foreground text-xs tracking-wide uppercase">{k}</p>
-      <div className="text-2xl font-semibold tabular-nums">
+      <div className={cn("text-2xl font-semibold tabular-nums", cls)}>
         {v}
         {sub != null && <small className="text-muted-foreground ml-1 text-sm"> {sub}</small>}
       </div>

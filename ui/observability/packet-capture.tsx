@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { Download, Square } from "lucide-react";
 import { api, postJson, withToken } from "./api";
 import { bytes, clock, num } from "./format";
+import { Button, Dot } from "./geist";
 import type { CapturePayload } from "./types";
 
 // ── Packet Capture Studio ────────────────────────────────────────────────────
+// Protocol categories get distinct data-series colours from the chart palette.
 const PROTO_COLOR: Record<string, string> = {
-  TCP: "#e4e4e7",
-  UDP: "#d4d4d8",
-  ICMP: "#a1a1aa",
-  ICMPv6: "#a1a1aa",
-  ARP: "#e4e4e7",
-  IPv6: "#a1a1aa",
+  TCP: "var(--chart-1)",
+  UDP: "var(--chart-2)",
+  ICMP: "var(--chart-3)",
+  ICMPv6: "var(--chart-3)",
+  ARP: "var(--chart-4)",
+  IPv6: "var(--chart-5)",
 };
-const protoColor = (p: string | undefined): string => (p && PROTO_COLOR[p]) || "#71717a";
+const protoColor = (p: string | undefined): string =>
+  (p && PROTO_COLOR[p]) || "var(--muted-foreground)";
 
 /** Live packet capture: protocol mix, top talkers, a scrolling packet list, pcap export. */
 export function PacketCapture(): ReactNode {
@@ -40,74 +44,97 @@ export function PacketCapture(): ReactNode {
 
   if (!stats || (!stats.running && stats.packets === 0)) {
     return (
-      <div className="cap-idle muted">
-        No capture running. Start one with the <code>start_packet_capture</code> tool — point the
-        device's TZSP stream at this host — and decoded packets stream in here live.
+      <div className="text-muted-foreground text-[13px] leading-relaxed">
+        No capture running. Start one with the{" "}
+        <code className="text-brand font-mono">start_packet_capture</code> tool — point the device's
+        TZSP stream at this host — and decoded packets stream in here live.
       </div>
     );
   }
 
   const maxProto = Math.max(1, ...Object.values(stats.protocols));
   return (
-    <div className="cap">
-      <div className="cap-bar">
-        <span className={`cap-dot${stats.running ? " is-on" : ""}`} />
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Dot
+          color={stats.running ? "var(--success)" : "var(--muted-foreground)"}
+          pulse={stats.running}
+        />
         <b>{stats.running ? "capturing" : "stopped"}</b>
-        <span className="muted">UDP {stats.port}</span>
-        <span className="muted">
+        <span className="text-muted-foreground text-[11px]">UDP {stats.port}</span>
+        <span className="text-muted-foreground text-[11px]">
           {num(stats.packets)} pkts · {bytes(stats.bytes)}
         </span>
-        <span style={{ flex: 1 }} />
-        <a className="btn" href={withToken("/api/capture/pcap")} download="capture.pcap">
-          ⤓ pcap
+        <span className="flex-1" />
+        <a
+          className="bg-card hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs whitespace-nowrap"
+          href={withToken("/api/capture/pcap")}
+          download="capture.pcap"
+        >
+          <Download className="size-3.5" /> pcap
         </a>
-        <button
-          className="btn btn-danger"
+        <Button
+          type="error"
+          ghost
+          size="sm"
+          icon={<Square className="size-3.5" />}
           onClick={() => void stop()}
           disabled={busy || !stats.running}
         >
-          ■ Stop
-        </button>
+          Stop
+        </Button>
       </div>
-      <div className="cap-cols">
-        <div className="cap-side">
-          <div className="cap-h">Protocols</div>
+      <div className="grid grid-cols-[220px_1fr] gap-3 max-[720px]:grid-cols-1">
+        <div className="flex flex-col gap-[5px]">
+          <div className="text-muted-foreground text-[11px] tracking-[0.05em] uppercase">
+            Protocols
+          </div>
           {Object.entries(stats.protocols).map(([p, n]) => (
-            <div className="cap-pbar" key={p}>
-              <span className="cap-plabel" style={{ color: protoColor(p) }}>
-                {p}
+            <div
+              className="grid grid-cols-[52px_1fr_34px] items-center gap-1.5 font-mono text-[11px]"
+              key={p}
+            >
+              <span style={{ color: protoColor(p) }}>{p}</span>
+              <span className="bg-muted h-2 overflow-hidden rounded-full">
+                <i
+                  className="block h-full rounded-full"
+                  style={{ width: `${(n / maxProto) * 100}%`, background: protoColor(p) }}
+                />
               </span>
-              <span className="cap-ptrack">
-                <i style={{ width: `${(n / maxProto) * 100}%`, background: protoColor(p) }} />
-              </span>
-              <span className="cap-pn">{n}</span>
+              <span className="text-muted-foreground text-right">{n}</span>
             </div>
           ))}
-          <div className="cap-h" style={{ marginTop: 12 }}>
+          <div className="text-muted-foreground mt-3 text-[11px] tracking-[0.05em] uppercase">
             Top talkers
           </div>
-          {stats.topTalkers.length === 0 && <div className="muted">—</div>}
+          {stats.topTalkers.length === 0 && (
+            <div className="text-muted-foreground text-[11px]">—</div>
+          )}
           {stats.topTalkers.map((t) => (
-            <div className="cap-talker" key={t.addr}>
+            <div
+              className="text-muted-foreground flex justify-between font-mono text-[11px] [&>b]:text-foreground"
+              key={t.addr}
+            >
               <span>{t.addr}</span>
               <b>{t.count}</b>
             </div>
           ))}
         </div>
-        <div className="cap-list">
+        <div className="bg-background h-[360px] overflow-y-auto rounded-md border font-mono text-[11px]/[1.6]">
           {packets.length === 0 ? (
-            <div className="muted" style={{ padding: 10 }}>
-              waiting for packets…
-            </div>
+            <div className="text-muted-foreground p-2.5 text-[11px]">waiting for packets…</div>
           ) : (
             packets.map((p, i) => (
-              <div className="cap-row" key={i}>
-                <span className="cap-tt">{clock(p.ts)}</span>
-                <span className="cap-proto" style={{ color: protoColor(p.protocol) }}>
+              <div
+                className="grid grid-cols-[90px_64px_48px_1fr] gap-2 overflow-hidden px-2.5 py-px whitespace-nowrap odd:bg-card/40"
+                key={i}
+              >
+                <span className="text-muted-foreground">{clock(p.ts)}</span>
+                <span className="font-semibold" style={{ color: protoColor(p.protocol) }}>
                   {p.protocol ?? p.ethType}
                 </span>
-                <span className="cap-len">{p.len}</span>
-                <span className="cap-info">{p.info}</span>
+                <span className="text-muted-foreground text-right">{p.len}</span>
+                <span className="text-foreground overflow-hidden text-ellipsis">{p.info}</span>
               </div>
             ))
           )}

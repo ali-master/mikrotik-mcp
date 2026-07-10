@@ -8,6 +8,16 @@ import type { ReactNode } from "react";
 import { api, deleteJson, postJson } from "./api";
 import { Panel, StatCard } from "./atoms";
 import { clock } from "./format";
+import { Button, Dot, Input } from "./geist";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import type {
   MemoryActivityEntry,
   MemoryConfig,
@@ -26,17 +36,22 @@ function hueOf(s: string): number {
   return h % 360;
 }
 
+/**
+ * Categorical palette for entity types, as `var()` references rather than hex so
+ * both themes resolve them from `tailwind.css`. These land in SVG `fill`/`stroke`
+ * attributes and inline styles, where a Tailwind class cannot reach.
+ */
 const TYPE_COLORS = [
-  "#3291ff",
-  "#34d399",
-  "#a78bfa",
-  "#f59e0b",
-  "#ef4444",
-  "#2dd4bf",
-  "#f472b6",
-  "#60a5fa",
-  "#facc15",
-  "#fb923c",
+  "var(--entity-1)",
+  "var(--entity-2)",
+  "var(--entity-3)",
+  "var(--entity-4)",
+  "var(--entity-5)",
+  "var(--entity-6)",
+  "var(--entity-7)",
+  "var(--entity-8)",
+  "var(--entity-9)",
+  "var(--entity-10)",
 ];
 
 function typeColor(t: string): string {
@@ -182,15 +197,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
 
   if (graph.entities.length === 0) {
     return (
-      <div
-        style={{
-          height: H,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--mt-text-faint)",
-        }}
-      >
+      <div className="text-muted-foreground flex items-center justify-center" style={{ height: H }}>
         <p>No entities yet — create some via the MCP tools.</p>
       </div>
     );
@@ -212,7 +219,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
           markerHeight="6"
           orient="auto-start-reverse"
         >
-          <path d="M0 0 L10 3 L0 6Z" fill="#666" />
+          <path d="M0 0 L10 3 L0 6Z" fill="var(--muted-foreground)" />
         </marker>
       </defs>
       {/* Edges */}
@@ -247,7 +254,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
               y1={sy}
               x2={ex}
               y2={ey}
-              stroke={highlighted ? "#e4e4e7" : "#444"}
+              stroke={highlighted ? "var(--foreground)" : "var(--border)"}
               strokeWidth={highlighted ? 1.8 : 1}
               markerEnd="url(#mem-arrow)"
             />
@@ -255,7 +262,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
               x={mx}
               y={my - 5}
               textAnchor="middle"
-              fill="#888"
+              fill="var(--muted-foreground)"
               fontSize="8"
               style={{ pointerEvents: "none" }}
             >
@@ -292,7 +299,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
               ry={rx}
               fill={c}
               fillOpacity={0.15}
-              stroke={isSel ? "#fff" : c}
+              stroke={isSel ? "var(--foreground)" : c}
               strokeWidth={isSel ? 2 : 1.2}
             />
             <text
@@ -300,7 +307,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
               y={n.y + 1}
               textAnchor="middle"
               dominantBaseline="central"
-              fill="#e8eaed"
+              fill="var(--foreground)"
               fontSize="9"
               fontWeight={isSel ? 600 : 400}
               style={{ pointerEvents: "none" }}
@@ -311,7 +318,7 @@ function GraphPanel({ graph }: { graph: MemoryGraph }): ReactNode {
               x={n.x}
               y={n.y + halfH + 11}
               textAnchor="middle"
-              fill="#888"
+              fill="var(--muted-foreground)"
               fontSize="7"
               style={{ pointerEvents: "none" }}
             >
@@ -341,30 +348,21 @@ function EntityDetail({
   const outgoing = relations.filter((r) => r.from === entity.name);
 
   return (
-    <div className="panel" style={{ border: "1px solid var(--mt-border)" }}>
-      <div className="sheet__hd" style={{ marginBottom: 8 }}>
-        <h3 style={{ margin: 0 }}>
-          <span
-            style={{
-              display: "inline-block",
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              backgroundColor: typeColor(entity.entityType),
-              marginRight: 8,
-            }}
-          />
+    <div className="rounded-lg border border-border bg-card p-5">
+      <div className="mb-2 flex items-center gap-2.5">
+        <h3 className="m-0 flex items-center font-mono text-[15px]">
+          <Dot color={typeColor(entity.entityType)} className="mr-2 size-2.5" />
           {entity.name}
         </h3>
-        <span style={{ flex: 1 }} />
-        <button className="btn btn--danger btn--xs" onClick={onDelete} title="Delete entity">
+        <span className="flex-1" />
+        <Button type="error" ghost size="sm" onClick={onDelete} title="Delete entity">
           Delete
-        </button>
-        <button className="btn btn--xs" onClick={onClose} style={{ marginLeft: 6 }}>
+        </Button>
+        <Button type="secondary" size="sm" onClick={onClose}>
           Close
-        </button>
+        </Button>
       </div>
-      <p className="muted" style={{ margin: "0 0 8px", fontSize: 12 }}>
+      <p className="mt-0 mb-2 text-xs text-muted-foreground">
         Type: <strong>{entity.entityType}</strong> · Created:{" "}
         {new Date(entity.createdAt).toLocaleString()} · Updated:{" "}
         {new Date(entity.updatedAt).toLocaleString()}
@@ -372,12 +370,12 @@ function EntityDetail({
 
       {entity.observations.length > 0 && (
         <>
-          <h4 style={{ margin: "12px 0 6px", fontSize: 12, color: "#9aa3af" }}>
+          <h4 className="mt-3 mb-1.5 text-xs text-muted-foreground">
             Observations ({entity.observations.length})
           </h4>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
+          <ul className="m-0 pl-[18px] text-[13px]">
             {entity.observations.map((o, i) => (
-              <li key={i} style={{ marginBottom: 2 }}>
+              <li key={i} className="mb-0.5">
                 {o}
               </li>
             ))}
@@ -387,8 +385,8 @@ function EntityDetail({
 
       {(outgoing.length > 0 || incoming.length > 0) && (
         <>
-          <h4 style={{ margin: "12px 0 6px", fontSize: 12, color: "#9aa3af" }}>Relations</h4>
-          <div style={{ fontSize: 13 }}>
+          <h4 className="mt-3 mb-1.5 text-xs text-muted-foreground">Relations</h4>
+          <div className="text-[13px]">
             {outgoing.map((r, i) => (
               <div key={`o${i}`}>
                 → <strong>{r.relationType}</strong> → {r.to}
@@ -410,42 +408,30 @@ function EntityDetail({
 
 function ActivityPanel({ activity }: { activity: MemoryActivityEntry[] }): ReactNode {
   if (activity.length === 0) {
-    return (
-      <p className="muted" style={{ fontSize: 13 }}>
-        No activity yet.
-      </p>
-    );
+    return <p className="text-muted-foreground text-[13px]">No activity yet.</p>;
   }
   return (
-    <div style={{ maxHeight: 280, overflowY: "auto" }}>
-      <table className="tbl" style={{ fontSize: 12 }}>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Action</th>
-            <th>Subject</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="max-h-[280px] overflow-y-auto">
+      <Table className="text-xs">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Time</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead>Subject</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {activity.map((a) => (
-            <tr key={a.id}>
-              <td className="muted" style={{ whiteSpace: "nowrap" }}>
+            <TableRow key={a.id}>
+              <TableCell className="whitespace-nowrap text-muted-foreground">
                 {clock(a.ts)}
-              </td>
-              <td>{ACTION_LABELS[a.action] ?? a.action}</td>
-              <td
-                style={{
-                  maxWidth: 260,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {a.subject}
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell>{ACTION_LABELS[a.action] ?? a.action}</TableCell>
+              <TableCell className="max-w-[260px] truncate">{a.subject}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -489,45 +475,25 @@ function ConfigPanel({
 
   return (
     <div>
-      <label
-        style={{
-          fontSize: 12,
-          color: "#9aa3af",
-          display: "block",
-          marginBottom: 4,
-        }}
-      >
-        Database path
-      </label>
-      <div style={{ display: "flex", gap: 6 }}>
-        <input
+      <label className="mb-1 block text-xs text-muted-foreground">Database path</label>
+      <div className="flex gap-1.5">
+        <Input
           type="text"
           value={dbPath}
           onChange={(e) => setDbPath(e.target.value)}
-          className="input"
-          style={{ flex: 1, fontSize: 13 }}
+          className="flex-1 text-[13px]"
         />
-        <button
-          className="btn btn--sm"
-          onClick={save}
-          disabled={saving || dbPath === config.dbPath}
-        >
+        <Button size="sm" onClick={save} disabled={saving || dbPath === config.dbPath}>
           {saving ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </div>
       {msg && (
-        <p
-          style={{
-            fontSize: 12,
-            marginTop: 4,
-            color: msg === "Saved" ? "#34d399" : "#ef4444",
-          }}
-        >
+        <p className={cn("mt-1 text-xs", msg === "Saved" ? "text-success" : "text-destructive")}>
           {msg}
         </p>
       )}
       {config.stats && (
-        <div className="cards" style={{ marginTop: 12 }}>
+        <div className="mt-3 grid grid-cols-3 gap-3">
           <StatCard k="Entities" v={String(config.stats.entities)} />
           <StatCard k="Relations" v={String(config.stats.relations)} />
           <StatCard k="Observations" v={String(config.stats.observations)} />
@@ -597,7 +563,7 @@ export function MemoryView(): ReactNode {
   if (error && !graph) {
     return (
       <Panel title="Knowledge Graph">
-        <p style={{ color: "#ef4444" }}>{error}</p>
+        <p className="text-destructive">{error}</p>
       </Panel>
     );
   }
@@ -606,7 +572,7 @@ export function MemoryView(): ReactNode {
     <>
       {/* Stats row */}
       {stats && (
-        <div className="cards reveal">
+        <div className="reveal grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <StatCard k="Entities" v={String(stats.entities)} />
           <StatCard k="Relations" v={String(stats.relations)} />
           <StatCard k="Observations" v={String(stats.observations)} />
@@ -620,29 +586,29 @@ export function MemoryView(): ReactNode {
         title="Knowledge Graph"
         className="reveal"
         extra={
-          <div style={{ display: "flex", gap: 6 }}>
-            <input
+          <div className="flex gap-1.5">
+            <Input
               type="text"
               placeholder="Search entities…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="input"
-              style={{ width: 200, fontSize: 12 }}
+              className="w-[200px] text-xs"
             />
-            <button className="btn btn--xs" onClick={handleSearch}>
+            <Button size="sm" onClick={handleSearch}>
               Search
-            </button>
+            </Button>
             {search && (
-              <button
-                className="btn btn--xs"
+              <Button
+                size="sm"
+                type="secondary"
                 onClick={() => {
                   setSearch("");
                   void load();
                 }}
               >
                 Clear
-              </button>
+              </Button>
             )}
           </div>
         }
@@ -650,54 +616,42 @@ export function MemoryView(): ReactNode {
         {graph && <GraphPanel graph={graph} />}
       </Panel>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="reveal">
+      <div className="reveal grid grid-cols-2 gap-4">
         {/* Entity browser */}
         <Panel title="Entities">
           {graph && graph.entities.length > 0 ? (
-            <div style={{ maxHeight: 360, overflowY: "auto" }}>
-              <table className="tbl" style={{ fontSize: 12 }}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Obs</th>
-                    <th>Created</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="max-h-[360px] overflow-y-auto">
+              <Table className="text-xs">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Obs</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {graph.entities.map((e) => (
-                    <tr
+                    <TableRow
                       key={e.name}
-                      style={{
-                        cursor: "pointer",
-                        background:
-                          selectedEntity?.name === e.name ? "rgba(255,255,255,0.05)" : undefined,
-                      }}
+                      className="cursor-pointer"
+                      data-state={selectedEntity?.name === e.name ? "selected" : undefined}
                       onClick={() => setSelectedEntity(e)}
                     >
-                      <td>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            backgroundColor: typeColor(e.entityType),
-                            marginRight: 6,
-                          }}
-                        />
+                      <TableCell>
+                        <Dot color={typeColor(e.entityType)} className="mr-1.5" />
                         {e.name}
-                      </td>
-                      <td className="muted">{e.entityType}</td>
-                      <td>{e.observations.length}</td>
-                      <td className="muted">{clock(e.createdAt)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{e.entityType}</TableCell>
+                      <TableCell>{e.observations.length}</TableCell>
+                      <TableCell className="text-muted-foreground">{clock(e.createdAt)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           ) : (
-            <p className="muted" style={{ fontSize: 13 }}>
+            <p className="text-muted-foreground text-[13px]">
               {graph ? "No entities." : "Loading…"}
             </p>
           )}
@@ -720,37 +674,23 @@ export function MemoryView(): ReactNode {
 
       {/* Type breakdown */}
       {stats && (stats.entityTypes.length > 0 || stats.relationTypes.length > 0) && (
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-          className="reveal"
-        >
+        <div className="reveal grid grid-cols-2 gap-4">
           {stats.entityTypes.length > 0 && (
             <Panel title="Entity Types">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <div className="flex flex-wrap gap-2">
                 {stats.entityTypes.map((t) => (
                   <span
                     key={t.type}
+                    className="inline-flex items-center gap-1 rounded-xl px-2.5 py-0.5 text-xs"
+                    // Pill hues come from the per-type palette, so they stay inline.
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      padding: "2px 10px",
-                      borderRadius: 12,
                       background: `${typeColor(t.type)}22`,
                       border: `1px solid ${typeColor(t.type)}44`,
-                      fontSize: 12,
                     }}
                   >
-                    <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        backgroundColor: typeColor(t.type),
-                      }}
-                    />
+                    <Dot color={typeColor(t.type)} />
                     {t.type}
-                    <span className="muted">({t.count})</span>
+                    <span className="text-muted-foreground">({t.count})</span>
                   </span>
                 ))}
               </div>
@@ -758,23 +698,14 @@ export function MemoryView(): ReactNode {
           )}
           {stats.relationTypes.length > 0 && (
             <Panel title="Relation Types">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <div className="flex flex-wrap gap-2">
                 {stats.relationTypes.map((t) => (
                   <span
                     key={t.type}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      padding: "2px 10px",
-                      borderRadius: 12,
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid var(--mt-border)",
-                      fontSize: 12,
-                    }}
+                    className="inline-flex items-center gap-1 rounded-xl border border-border bg-muted px-2.5 py-0.5 text-xs"
                   >
                     {t.type}
-                    <span className="muted">({t.count})</span>
+                    <span className="text-muted-foreground">({t.count})</span>
                   </span>
                 ))}
               </div>

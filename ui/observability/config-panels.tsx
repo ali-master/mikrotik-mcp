@@ -4,7 +4,10 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { Star, X } from "lucide-react";
 import { api, postJson } from "./api";
+import { Button, Input } from "./geist";
+import { cn } from "@/lib/utils";
 
 // ── Config: version history (point-in-time) ─────────────────────────────────
 interface CfgVersion {
@@ -102,20 +105,25 @@ export function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): 
     if (r.ok) load();
   };
 
-  if (!data) return <div className="muted">loading history…</div>;
+  if (!data) return <div className="text-muted-foreground text-[11px]">loading history…</div>;
 
   return (
     <>
-      {msg && <div className="cfg-msg">{msg}</div>}
-      <div className="toolbar" style={{ marginBottom: 14 }}>
+      {msg && <div className="text-muted-foreground font-mono text-xs">{msg}</div>}
+      <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 14 }}>
         {labelDraft === null ? (
-          <button className="btn is-active" onClick={() => setLabelDraft("")}>
-            ★ Save checkpoint
-          </button>
+          <Button
+            size="sm"
+            type="accent"
+            icon={<Star className="size-4" />}
+            onClick={() => setLabelDraft("")}
+          >
+            Save checkpoint
+          </Button>
         ) : (
-          <span className="cfgver-cp">
-            <input
-              className="backup-path-input"
+          <span className="inline-flex items-center gap-2">
+            <Input
+              className="w-[min(48vw,380px)]"
               autoFocus
               placeholder="checkpoint name (e.g. pre-upgrade)"
               value={labelDraft}
@@ -125,97 +133,129 @@ export function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): 
                 if (e.key === "Escape") setLabelDraft(null);
               }}
             />
-            <button className="topo-btn cfg-save" onClick={() => void saveCheckpoint()}>
+            <Button size="sm" type="accent" onClick={() => void saveCheckpoint()}>
               Save
-            </button>
-            <button className="topo-btn" onClick={() => setLabelDraft(null)}>
+            </Button>
+            <Button size="sm" onClick={() => setLabelDraft(null)}>
               Cancel
-            </button>
+            </Button>
           </span>
         )}
-        <span style={{ flex: 1 }} />
-        <span className="muted">
+        <span className="flex-1" />
+        <span className="text-muted-foreground text-[11px]">
           {data.versions.length} versions · {fmtBytes(data.bytes)} · auto-keep {data.retention}
         </span>
       </div>
 
       {data.versions.length === 0 ? (
-        <div className="muted">No versions yet — they appear here after each config change.</div>
+        <div className="text-muted-foreground text-[11px]">
+          No versions yet — they appear here after each config change.
+        </div>
       ) : (
-        <ol className="cfgver">
+        <ol className="m-0 grid list-none p-0 pl-1.5">
           {data.versions.map((v, i) => {
             const changed = v.drift.added + v.drift.removed;
             return (
-              <li key={v.id} className={`cfgver__row${i === 0 ? " is-head" : ""}`}>
-                <span className="cfgver__dot" aria-hidden="true" />
-                <div className="cfgver__main">
-                  <div className="cfgver__line">
-                    <span className={`cfgver__kind cfgver__kind--${v.kind}`}>
+              <li
+                key={v.id}
+                className="hover:bg-foreground/5 [&+&]:border-border/40 relative grid grid-cols-[24px_minmax(0,1fr)_auto] items-start gap-3 rounded-md px-2.5 py-3.5 transition-colors [&+&]:border-t"
+              >
+                <span
+                  className={cn(
+                    "relative z-[1] mt-1 justify-self-center rounded-full border-[2.5px]",
+                    i === 0
+                      ? "border-brand bg-brand ring-brand/25 size-[14px] ring-4"
+                      : "border-border bg-card size-[13px]",
+                  )}
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-[9px] text-[12.5px]">
+                    <span
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 font-mono text-[10px] tracking-[0.05em] uppercase",
+                        v.kind === "checkpoint"
+                          ? "border-warning/45 bg-warning/10 text-warning"
+                          : "border-border text-muted-foreground",
+                      )}
+                    >
                       {v.kind === "checkpoint" ? "★ checkpoint" : "auto"}
                     </span>
-                    {v.label && <span className="cfgver__label">{v.label}</span>}
-                    <span className="cfgver__time">{fmtWhen(v.ts)}</span>
+                    {v.label && <span className="text-foreground font-semibold">{v.label}</span>}
+                    <span className="text-muted-foreground font-mono text-[11.5px]">
+                      {fmtWhen(v.ts)}
+                    </span>
                     {i === 0 ? (
-                      <span className="cfgver__cur">latest</span>
+                      <span className="text-brand font-mono text-[10px] font-semibold tracking-[0.05em] uppercase">
+                        latest
+                      </span>
                     ) : changed === 0 ? (
-                      <span className="cfgver__same">identical to current</span>
+                      <span className="text-muted-foreground text-[11.5px]">
+                        identical to current
+                      </span>
                     ) : (
-                      <span className="cfgver__drift">
-                        <span className="add">+{v.drift.added}</span>
-                        <span className="rem">−{v.drift.removed}</span>
-                        <span className="muted"> vs current</span>
+                      <span className="inline-flex items-baseline gap-[7px] font-mono text-[11.5px]">
+                        <span className="text-success">+{v.drift.added}</span>
+                        <span className="text-destructive">−{v.drift.removed}</span>
+                        <span className="text-muted-foreground text-[11px]"> vs current</span>
                       </span>
                     )}
                   </div>
                   {diffFor === v.id && (
-                    <div className="cfgver__diff">
+                    <div className="mt-2">
                       {diff ? (
                         diff.unified.trim() ? (
-                          <pre className="body diff">{diff.unified}</pre>
+                          <pre className="border-border bg-background text-muted-foreground m-0 max-h-[280px] overflow-auto rounded-md border p-3 font-mono text-[11px] leading-[1.5] break-words whitespace-pre-wrap">
+                            {diff.unified}
+                          </pre>
                         ) : (
-                          <span className="muted">No differences from the current config.</span>
+                          <span className="text-muted-foreground text-[11px]">
+                            No differences from the current config.
+                          </span>
                         )
                       ) : (
-                        <span className="muted">computing diff…</span>
+                        <span className="text-muted-foreground text-[11px]">computing diff…</span>
                       )}
                     </div>
                   )}
                 </div>
-                <div className="cfgver__actions">
-                  <button className="topo-btn" onClick={() => void showDiff(v.id)}>
+                <div className="mt-px inline-flex flex-none items-center gap-1.5">
+                  <Button size="sm" onClick={() => void showDiff(v.id)}>
                     {diffFor === v.id ? "Hide" : "Diff"}
-                  </button>
+                  </Button>
                   {confirmRestore === v.id ? (
                     <>
-                      <button
-                        className="topo-btn cfg-save"
+                      <Button
+                        size="sm"
+                        type="accent"
                         disabled={busy}
                         onClick={() => void restore(v.id)}
                       >
                         Confirm restore
-                      </button>
-                      <button className="topo-btn" onClick={() => setConfirmRestore(null)}>
+                      </Button>
+                      <Button size="sm" onClick={() => setConfirmRestore(null)}>
                         Cancel
-                      </button>
+                      </Button>
                     </>
                   ) : (
-                    <button
-                      className="topo-btn"
+                    <Button
+                      size="sm"
                       disabled={i === 0}
                       title={i === 0 ? "This is the current config" : "Restore this version"}
                       onClick={() => setConfirmRestore(v.id)}
                     >
                       Restore
-                    </button>
+                    </Button>
                   )}
                   {v.kind === "checkpoint" && (
-                    <button
-                      className="topo-btn cfgver__del"
+                    <Button
+                      size="sm"
+                      ghost
+                      type="error"
+                      icon={<X className="size-4" />}
                       title="Delete"
                       onClick={() => void del(v.id)}
-                    >
-                      ✕
-                    </button>
+                    />
                   )}
                 </div>
               </li>
@@ -306,46 +346,67 @@ export function FieldGuidePanel(): ReactNode {
     return [...m.entries()];
   }, [filtered]);
 
-  if (!schema) return <div className="muted">loading schema…</div>;
+  if (!schema) return <div className="text-muted-foreground text-[11px]">loading schema…</div>;
 
   return (
     <>
-      <div className="toolbar" style={{ marginBottom: 12 }}>
-        <input
-          className="backup-path-input"
-          style={{ width: "min(360px, 60vw)" }}
+      <div className="flex flex-wrap items-center gap-2" style={{ marginBottom: 12 }}>
+        <Input
+          className="w-[min(360px,60vw)]"
           placeholder="Search fields & descriptions…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <span style={{ flex: 1 }} />
-        <span className="muted">{filtered.length} options</span>
+        <span className="flex-1" />
+        <span className="text-muted-foreground text-[11px]">{filtered.length} options</span>
       </div>
       {sections.length === 0 ? (
-        <div className="muted">No fields match “{q}”.</div>
+        <div className="text-muted-foreground text-[11px]">No fields match “{q}”.</div>
       ) : (
-        <div className="fguide">
+        <div className="grid gap-[18px]">
           {sections.map(([sec, fs]) => (
-            <div key={sec} className="fguide__sec">
-              <h4 className="fguide__sechd">{sec}</h4>
-              <div className="fguide__list">
+            <div key={sec}>
+              <h4 className="text-brand m-0 mb-2 font-mono text-[11px] tracking-[0.09em] uppercase">
+                {sec}
+              </h4>
+              <div className="grid gap-2">
                 {fs.map((f) => (
-                  <div key={f.path} className="fguide__item">
-                    <div className="fguide__top">
-                      <code className="fguide__path">{f.path}</code>
-                      <span className="fguide__type">{f.type}</span>
-                      {f.required && <span className="fguide__req">required</span>}
+                  <div
+                    key={f.path}
+                    className="border-border bg-muted/45 hover:border-brand/40 rounded-md border px-[13px] py-[11px] transition-colors"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-2.5">
+                      <code className="text-foreground font-mono text-[12.5px] font-medium">
+                        {f.path}
+                      </code>
+                      <span className="text-brand bg-brand/[0.13] rounded-full px-[7px] py-px font-mono text-[10.5px]">
+                        {f.type}
+                      </span>
+                      {f.required && (
+                        <span className="text-destructive font-mono text-[10px] tracking-[0.05em] uppercase">
+                          required
+                        </span>
+                      )}
                       {f.def !== undefined && (
-                        <span className="fguide__def">
-                          default <code>{f.def}</code>
+                        <span className="text-muted-foreground text-[11px]">
+                          default <code className="text-muted-foreground">{f.def}</code>
                         </span>
                       )}
                     </div>
-                    {f.desc && <p className="fguide__desc">{f.desc}</p>}
+                    {f.desc && (
+                      <p className="text-muted-foreground mt-1.5 mb-0 text-[12.5px] leading-[1.5]">
+                        {f.desc}
+                      </p>
+                    )}
                     {f.enumv && (
-                      <div className="fguide__enum">
+                      <div className="mt-[7px] flex flex-wrap gap-1.5">
                         {f.enumv.map((e) => (
-                          <code key={e}>{e}</code>
+                          <code
+                            key={e}
+                            className="border-border text-muted-foreground rounded-md border px-[7px] py-px font-mono text-[11px]"
+                          >
+                            {e}
+                          </code>
                         ))}
                       </div>
                     )}

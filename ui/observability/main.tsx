@@ -15,7 +15,29 @@ import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { api, deleteEvents, postJson } from "./api";
+import {
+  Check,
+  HelpCircle,
+  Network,
+  Pause,
+  Pencil,
+  Play,
+  Radar,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { HBars, Panel, StatCard } from "./atoms";
+import { ThemeToggle } from "./theme";
 import { BackupsView } from "./backups";
 import { AaaView } from "./aaa";
 import { ChangePlanView } from "./change-plan";
@@ -25,8 +47,8 @@ import { ConfigHistoryPanel, FieldGuidePanel } from "./config-panels";
 import { ConfigEditor } from "./config-editor";
 import { ConnectivityGraph, DeviceCard } from "./connectivity";
 import { DetailDrawer } from "./detail-drawer";
-import { bytes, clock, FEED_CAP, ms, num, RISK_COLOR, sval, WINDOWS } from "./format";
-import { Note, Spinner } from "./geist";
+import { bytes, clock, FEED_CAP, ms, num, RISK_CLASS, RISK_COLOR, sval, WINDOWS } from "./format";
+import { Button, Dot, Input, Note, Select, Spinner } from "./geist";
 import { DeviceHealthCard } from "./health";
 import { JsonView } from "./highlight";
 import { useLiveStream, useReveals } from "./hooks";
@@ -51,7 +73,6 @@ import type {
   TopologyPayload,
 } from "./types";
 import "./tailwind.css";
-import "./styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -139,10 +160,11 @@ function initialView(): ViewId {
  * `--page-accent-2` CSS variables set on `.main[data-view]`. Colour-coding the
  * pages makes the dashboard feel alive and helps orientation at a glance.
  */
-// Monochrome chrome: every page uses the same white→light-zinc accent, so the
+// Monochrome chrome: every page uses the same foreground→muted accent, so the
 // sidebar, title, nav, glow and focus rings carry zero colour (only functional
-// status colours — error/ok — remain, elsewhere).
-const MONO_ACCENT: [string, string] = ["#ededed", "#a1a1a1"];
+// status colours — error/ok — remain, elsewhere). These are token references,
+// not literals, so the accent inverts with the light/dark theme.
+const MONO_ACCENT: [string, string] = ["var(--foreground)", "var(--muted-foreground)"];
 const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   overview: MONO_ACCENT,
   devices: MONO_ACCENT,
@@ -292,16 +314,47 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
 };
 
 /** Collapsible "About this page" guide shown under each page header. */
+/** The `.feed-empty` pattern: a centred icon, a headline and a hint. */
+function EmptyState({
+  icon,
+  title,
+  sub,
+  body,
+  className,
+}: {
+  icon?: ReactNode;
+  title: string;
+  sub?: string;
+  body?: ReactNode;
+  className?: string;
+}): ReactNode {
+  return (
+    <div
+      className={cn(
+        "text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-14 text-center",
+        className,
+      )}
+    >
+      {icon}
+      <p className="text-foreground text-sm font-medium">{title}</p>
+      {sub != null && <p className="max-w-md text-xs">{sub}</p>}
+      {body}
+    </div>
+  );
+}
+
 function HelpPanel({ view }: { view: ViewId }): ReactNode {
   const h = HELP[view];
   return (
-    <div className="pagehelp reveal" role="region" aria-label="Page help">
-      <div className="pagehelp__icon" aria-hidden="true">
-        ?
-      </div>
-      <div className="pagehelp__body">
-        <p className="pagehelp__what">{h.what}</p>
-        <ul className="pagehelp__tips">
+    <div
+      className="bg-card reveal flex gap-3 rounded-lg border p-4"
+      role="region"
+      aria-label="Page help"
+    >
+      <HelpCircle className="text-brand mt-0.5 size-4 shrink-0" aria-hidden="true" />
+      <div className="flex min-w-0 flex-col gap-2">
+        <p className="text-sm">{h.what}</p>
+        <ul className="text-muted-foreground list-disc space-y-1 pl-4 text-xs">
           {h.tips.map((t, i) => (
             <li key={i}>{t}</li>
           ))}
@@ -727,36 +780,34 @@ function App(): ReactNode {
     download("mcp-events.csv", `${cols.join(",")}\n${body}\n`, "text/csv");
   };
 
+  // Tones the error-rate figure. `is-good` was a near-neutral zinc, so it stays
+  // the default foreground rather than turning green.
   const errCls = stats
     ? stats.errorRate >= 0.2
-      ? "is-bad"
+      ? "text-destructive"
       : stats.errorRate >= 0.05
-        ? "is-warn"
-        : "is-good"
+        ? "text-warning"
+        : ""
     : "";
   const mcp = (config?.mcp ?? {}) as Record<string, unknown>;
   const dash = (config?.dashboard ?? {}) as Record<string, unknown>;
   const ssh = (config?.ssh ?? {}) as Record<string, unknown>;
+  // `""` means "no filter"; the Select wrapper maps it onto a Radix-safe sentinel.
   const sel = (key: keyof Filter, label: string, opts: string[]): ReactNode => (
-    <select
-      className="btn"
+    <Select
+      size="sm"
+      aria-label={label}
       value={filter[key]}
-      onChange={(e) => setFilter((f) => ({ ...f, [key]: e.target.value }))}
-    >
-      <option value="">{label}</option>
-      {opts.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
+      onValueChange={(v) => setFilter((f) => ({ ...f, [key]: v }))}
+      options={[{ value: "", label }, ...opts.map((o) => ({ value: o, label: o }))]}
+    />
   );
 
   const cur = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
 
   return (
     <div
-      className="shell"
+      className="bg-background text-foreground grid min-h-screen grid-cols-[240px_1fr]"
       ref={rootRef}
       data-view={view}
       style={
@@ -767,113 +818,124 @@ function App(): ReactNode {
       }
     >
       {/* sidebar nav */}
-      <aside className="nav">
-        <div className="nav__brand">
-          <div className="nav__mark">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <g stroke="#18181b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <aside className="bg-card sticky top-0 flex h-screen flex-col gap-4 border-r p-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-foreground text-background grid size-9 shrink-0 place-items-center rounded-md">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-5">
+              <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 12 L4 5 M12 12 L20 5 M12 12 L12 20" />
-                <circle cx="12" cy="12" r="3" fill="#18181b" stroke="none" />
-                <circle cx="4" cy="5" r="1.9" fill="#18181b" stroke="none" />
-                <circle cx="20" cy="5" r="1.9" fill="#18181b" stroke="none" />
-                <circle cx="12" cy="20" r="1.9" fill="#18181b" stroke="none" />
+                <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+                <circle cx="4" cy="5" r="1.9" fill="currentColor" stroke="none" />
+                <circle cx="20" cy="5" r="1.9" fill="currentColor" stroke="none" />
+                <circle cx="12" cy="20" r="1.9" fill="currentColor" stroke="none" />
               </g>
             </svg>
           </div>
-          <div className="nav__brandtext">
-            <b>MikroTik MCP</b>
+          <div className="flex min-w-0 flex-col leading-tight">
+            <b className="truncate text-sm">MikroTik MCP</b>
             <small
-              className={whatsNew.release ? "nav__version-link" : undefined}
+              className={cn(
+                "text-muted-foreground inline-flex items-center gap-1 text-[11px]",
+                whatsNew.release && "hover:text-foreground cursor-pointer",
+              )}
               title={whatsNew.release ? "View release notes" : undefined}
               onClick={whatsNew.release ? () => whatsNew.openModal() : undefined}
             >
               {meta?.version ? `v${meta.version}` : "Observability"}
               {whatsNew.showIndicator && (
                 <span
-                  className="nav__update-dot"
+                  className="bg-brand inline-block size-1.5 rounded-full"
                   title={`v${whatsNew.release?.version} available`}
                 />
               )}
             </small>
           </div>
+          <span className="flex-1" />
+          <ThemeToggle />
         </div>
-        <nav className="nav__items">
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {VIEWS.map((v) => (
             <button
               key={v.id}
-              className={`nav__item${view === v.id ? " is-active" : ""}`}
+              type="button"
+              className={cn(
+                "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors",
+                "[&_svg]:size-4 [&_svg]:shrink-0",
+                view === v.id
+                  ? "bg-accent text-accent-foreground font-medium"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              )}
               onClick={() => setView(v.id)}
             >
               <NavIcon name={v.id} />
-              <span>{v.label}</span>
+              <span className="truncate">{v.label}</span>
               {v.id === "feed" &&
                 feed.length > 0 && (
                   // `key={feed.length}` remounts the badge on every change so the
-                  // CSS pop animation replays each time a new event arrives.
-                  <span key={feed.length} className="nav__badge">
+                  // pop animation replays each time a new event arrives.
+                  <span
+                    key={feed.length}
+                    className="bg-brand text-brand-foreground animate-in zoom-in-50 ml-auto rounded-full px-1.5 py-0.5 text-[10px] tabular-nums"
+                  >
                     {feed.length > 999 ? "999+" : feed.length}
                   </span>
                 )}
             </button>
           ))}
         </nav>
-        <div className="nav__foot">
+        <div className="flex flex-col gap-1.5 border-t pt-3">
           <span
-            className={`hero__live${liveMode !== "off" ? " is-on" : ""}${
-              liveMode === "ws" ? " is-ws" : liveMode === "sse" ? " is-sse" : ""
-            }`}
+            className="inline-flex items-center gap-2 text-[11px]"
             title="Live transport: WebSocket (preferred) or SSE fallback"
           >
-            <span className="dot" />
+            <Dot type={liveMode === "off" ? "secondary" : "success"} pulse={liveMode !== "off"} />
             {liveMode === "off" ? "offline" : `live · ${liveMode}`}
           </span>
-          <small className="muted">
+          <small className="text-muted-foreground text-[11px]">
             {meta ? `${num(meta.total)} events · ${meta.transport}` : "connecting…"}
           </small>
         </div>
       </aside>
 
       {/* main content */}
-      <main className="main" data-view={view}>
-        <header className="topline reveal">
-          <div className="topline__txt">
-            <h1>{cur.label}</h1>
-            <small>{cur.sub}</small>
+      <main className="flex min-w-0 flex-col gap-5 p-6" data-view={view}>
+        <header className="reveal flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 flex-col">
+            <h1 className="truncate text-xl font-semibold">{cur.label}</h1>
+            <small className="text-muted-foreground text-xs">{cur.sub}</small>
           </div>
-          <span className="topline__spacer" />
+          <span className="flex-1" />
           {view === "overview" && (
-            <select
-              className="btn"
-              value={windowMs}
-              onChange={(e) => setWindowMs(Number(e.target.value))}
-              title="Stats time window"
-            >
-              {WINDOWS.map(([label, val]) => (
-                <option key={val} value={val}>
-                  window: {label}
-                </option>
-              ))}
-            </select>
+            <Select
+              size="sm"
+              aria-label="Stats time window"
+              value={String(windowMs)}
+              onValueChange={(v) => setWindowMs(Number(v))}
+              options={WINDOWS.map(([label, val]) => ({
+                value: String(val),
+                label: `window: ${label}`,
+              }))}
+            />
           )}
-          <button
-            className={`help-toggle${helpOpen.has(view) ? " is-on" : ""}`}
+          <Button
+            size="sm"
+            ghost
+            type={helpOpen.has(view) ? "accent" : "default"}
             onClick={() => toggleHelp(view)}
             aria-expanded={helpOpen.has(view)}
             title="About this page"
+            icon={<HelpCircle />}
           >
-            <span className="help-toggle__q" aria-hidden="true">
-              ?
-            </span>
             Help
-          </button>
+          </Button>
         </header>
 
         {helpOpen.has(view) && <HelpPanel view={view} />}
 
         {/* ── Overview ── */}
         {view === "overview" && (
-          <section className="view">
-            <div className="cards reveal">
+          <section className="grid content-start gap-[18px]">
+            <div className="reveal grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
               {stats ? (
                 <>
                   <StatCard k="Calls (window)" v={num(stats.total)} />
@@ -891,24 +953,21 @@ function App(): ReactNode {
                   <StatCard k="Output volume" v={bytes(stats.outputBytes)} />
                 </>
               ) : (
-                <div className="stat">
-                  <p className="k">Loading…</p>
-                  <div className="v">—</div>
-                </div>
+                <StatCard k="Loading…" v="—" />
               )}
             </div>
 
-            <div className="bento reveal">
-              <Panel title="Calls over time" className="b-series">
+            <div className="reveal grid grid-cols-1 gap-4 xl:grid-cols-3">
+              <Panel title="Calls over time" className="xl:col-span-2">
                 {stats ? (
                   <ActivityChart series={stats.series} />
                 ) : (
-                  <div className="muted">no data</div>
+                  <div className="text-muted-foreground text-[11px]">no data</div>
                 )}
               </Panel>
               {stats && (
                 <>
-                  <Panel title="By risk" className="b-risk">
+                  <Panel title="By risk">
                     <RiskDonut
                       segments={(Object.keys(stats.byRisk) as Risk[]).map((r) => ({
                         label: r,
@@ -917,53 +976,46 @@ function App(): ReactNode {
                       }))}
                     />
                   </Panel>
-                  <Panel title="Top tools" className="b-tools">
+                  <Panel title="Top tools" className="xl:col-span-2">
                     <HBars
                       rows={stats.byTool.map((t) => ({
                         label: t.tool,
                         value: t.count,
                         sub: `${t.count}× · ${ms(t.p95Ms)} p95${t.errors ? ` · ${t.errors} err` : ""}`,
-                        color: t.errors ? "var(--mt-bad)" : undefined,
+                        color: t.errors ? "var(--destructive)" : undefined,
                       }))}
                     />
                   </Panel>
-                  <Panel title="Status" className="b-status">
+                  <Panel title="Status">
                     <RiskDonut
                       centerLabel="calls"
                       segments={[
-                        { label: "ok", value: feedStatus.ok, color: "#a1a1a1" },
-                        { label: "error", value: feedStatus.error, color: "#ff5c5c" },
+                        { label: "ok", value: feedStatus.ok, color: "var(--muted-foreground)" },
+                        { label: "error", value: feedStatus.error, color: "var(--destructive)" },
                       ]}
                     />
                   </Panel>
-                  <Panel title="By device" className="b-device">
+                  <Panel title="By device">
                     {stats.byDevice.length ? (
                       <HBars
                         rows={stats.byDevice.map((d) => ({ label: d.device, value: d.count }))}
                       />
                     ) : (
-                      <div className="muted">single device</div>
+                      <div className="text-muted-foreground text-[11px]">single device</div>
                     )}
                   </Panel>
-                  <Panel title="Recent errors" className="b-errors">
+                  <Panel title="Recent errors">
                     {feedErrors.length ? (
-                      <div className="hbar">
+                      <div className="flex flex-col gap-2">
                         {feedErrors.slice(0, 8).map((e) => (
                           <div
-                            className="hbar__row conn-errrow"
-                            style={{ gridTemplateColumns: "auto 1fr" }}
+                            className="hover:bg-accent/50 grid cursor-pointer grid-cols-[auto_1fr] items-center gap-3 rounded-md px-1 py-0.5"
                             key={e.id}
                             onClick={() => void openDetail(e)}
                           >
-                            <span className="muted">{clock(e.ts)}</span>
+                            <span className="text-muted-foreground text-[11px]">{clock(e.ts)}</span>
                             <span
-                              style={{
-                                color: "var(--mt-bad)",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                minWidth: 0,
-                              }}
+                              className="text-destructive min-w-0 truncate text-xs"
                               title={e.error ?? e.output}
                             >
                               {e.tool}: {e.error ?? e.output ?? "error"}
@@ -972,7 +1024,7 @@ function App(): ReactNode {
                         ))}
                       </div>
                     ) : (
-                      <div className="muted">no errors 🎉</div>
+                      <div className="text-muted-foreground text-[11px]">no errors 🎉</div>
                     )}
                   </Panel>
                 </>
@@ -984,22 +1036,27 @@ function App(): ReactNode {
         {/* ── Devices ── */}
         {view === "devices" &&
           (devices && devices.devices.length > 0 ? (
-            <section className="view">
+            <section className="grid content-start gap-[18px]">
               {/* search + status filter — keeps a large fleet navigable */}
-              <div className="dev-toolbar reveal">
-                <input
-                  className="search"
+              <div className="reveal flex flex-wrap items-center gap-2">
+                <Input
+                  className="min-w-[180px] flex-1"
                   type="search"
                   placeholder="Search devices by name or address…"
                   value={deviceQuery}
                   onChange={(e) => setDeviceQuery(e.target.value)}
-                  style={{ flex: 1, minWidth: 180 }}
                 />
-                <div className="dev-filters">
+                <div className="bg-muted flex gap-0.5 rounded-md p-0.5">
                   {(["all", "online", "offline"] as const).map((f) => (
                     <button
                       key={f}
-                      className={`dev-fbtn${deviceFilter === f ? " is-active" : ""}`}
+                      type="button"
+                      className={cn(
+                        "rounded-sm px-2.5 py-1 text-xs transition-colors",
+                        deviceFilter === f
+                          ? "bg-background text-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
                       onClick={() => setDeviceFilter(f)}
                     >
                       {f === "all"
@@ -1010,16 +1067,19 @@ function App(): ReactNode {
                     </button>
                   ))}
                 </div>
-                <span className="muted">
+                <span className="text-muted-foreground text-[11px]">
                   {shownDevices.length}/{deviceCounts.total} shown
                 </span>
               </div>
 
               {/* connectivity radar — collapsible so it doesn't dominate a big fleet */}
-              <details className="dev-collapse reveal" open={deviceCounts.total <= 8}>
-                <summary>
+              <details
+                className="bg-card reveal rounded-lg border p-4"
+                open={deviceCounts.total <= 8}
+              >
+                <summary className="cursor-pointer text-sm font-medium">
                   Connectivity radar
-                  <span className="muted">
+                  <span className="text-muted-foreground text-[11px]">
                     {" "}
                     · {deviceCounts.online} online · {deviceCounts.offline} offline ·{" "}
                     {deviceCounts.total} total
@@ -1033,13 +1093,14 @@ function App(): ReactNode {
 
               {/* responsive device grid (filtered) */}
               {shownDevices.length === 0 ? (
-                <div className="feed-empty reveal">
-                  <div className="feed-empty__icon">🔍</div>
-                  <p className="feed-empty__title">No devices match</p>
-                  <p className="feed-empty__sub">Try a different search or status filter.</p>
-                </div>
+                <EmptyState
+                  className="reveal"
+                  icon={<Search className="size-6" />}
+                  title="No devices match"
+                  sub="Try a different search or status filter."
+                />
               ) : (
-                <div className="dev-grid-wide reveal">
+                <div className="reveal grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
                   {shownDevices.map((d) => (
                     <DeviceCard key={d.name} d={d} onToggle={toggleDevice} />
                   ))}
@@ -1051,9 +1112,13 @@ function App(): ReactNode {
                 <Panel
                   title="Device system health"
                   className="reveal"
-                  extra={<span className="muted">CPU · memory · disk · latency · live probe</span>}
+                  extra={
+                    <span className="text-muted-foreground text-[11px]">
+                      CPU · memory · disk · latency · live probe
+                    </span>
+                  }
                 >
-                  <div className="health-grid">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-3">
                     {shownDevices.map((d) => (
                       <DeviceHealthCard key={d.name} d={d} />
                     ))}
@@ -1062,13 +1127,15 @@ function App(): ReactNode {
               )}
             </section>
           ) : (
-            <div className="feed-empty">
-              <div className="feed-empty__icon">🖧</div>
-              <p className="feed-empty__title">No devices configured</p>
-              <Note type="secondary" label="Tip">
-                Add a device to your config to see connectivity and system health here.
-              </Note>
-            </div>
+            <EmptyState
+              icon={<Network className="size-6" />}
+              title="No devices configured"
+              body={
+                <Note type="secondary" label="Tip">
+                  Add a device to your config to see connectivity and system health here.
+                </Note>
+              }
+            />
           ))}
 
         {/* ── Clients ── */}
@@ -1080,12 +1147,12 @@ function App(): ReactNode {
         {/* ── Topology ── */}
         {view === "topology" &&
           (topology && topology.nodes.length > 0 ? (
-            <section className="view">
+            <section className="grid content-start gap-[18px]">
               <Panel
                 title="Network topology"
                 className="reveal"
                 extra={
-                  <span className="muted">
+                  <span className="text-muted-foreground text-[11px]">
                     Layer-2 neighbours via MNDP/CDP/LLDP · click a neighbour to onboard it
                   </span>
                 }
@@ -1101,22 +1168,24 @@ function App(): ReactNode {
               </Panel>
             </section>
           ) : (
-            <div className="feed-empty">
-              <div className="feed-empty__icon">🛰️</div>
-              <p className="feed-empty__title">No neighbours discovered yet</p>
-              <p className="feed-empty__sub">
-                Layer-2 neighbours (MNDP / CDP / LLDP) appear here as the device reports them.
-              </p>
-            </div>
+            <EmptyState
+              icon={<Radar className="size-6" />}
+              title="No neighbours discovered yet"
+              sub="Layer-2 neighbours (MNDP / CDP / LLDP) appear here as the device reports them."
+            />
           ))}
 
         {/* ── Packets ── */}
         {view === "packets" && (
-          <section className="view">
+          <section className="grid content-start gap-[18px]">
             <Panel
               title="Packet capture"
               className="reveal"
-              extra={<span className="muted">live TZSP decode · /tool sniffer streaming</span>}
+              extra={
+                <span className="text-muted-foreground text-[11px]">
+                  live TZSP decode · /tool sniffer streaming
+                </span>
+              }
             >
               <PacketCapture />
             </Panel>
@@ -1144,18 +1213,20 @@ function App(): ReactNode {
         {/* ── Config ── */}
         {view === "config" &&
           (config ? (
-            <section className="view">
+            <section className="grid content-start gap-[18px]">
               <Panel
                 title="Configuration"
                 className="reveal"
                 extra={
-                  <button
-                    className="btn"
+                  <Button
+                    size="sm"
+                    ghost
                     onClick={() => setEditingConfig((v) => !v)}
                     title="Edit the config JSON with autocomplete, validation and safe-apply"
+                    icon={editingConfig ? undefined : <Pencil />}
                   >
-                    {editingConfig ? "View" : "✎ Edit config"}
-                  </button>
+                    {editingConfig ? "View" : "Edit config"}
+                  </Button>
                 }
               >
                 {editingConfig ? (
@@ -1185,7 +1256,7 @@ function App(): ReactNode {
                   />
                 ) : (
                   <>
-                    <div className="legend" style={{ margin: "0 0 10px" }}>
+                    <div className="text-muted-foreground mb-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
                       <span>transport: {sval(mcp.transport)}</span>
                       <span>read-only: {config.readOnly ? "yes" : "no"}</span>
                       <span>
@@ -1195,8 +1266,10 @@ function App(): ReactNode {
                       <span>s3: {config.s3 ? "configured" : "off"}</span>
                       <span>ssh pool: {ssh.keepAlive !== false ? "on" : "off"}</span>
                     </div>
-                    <details className="cfg">
-                      <summary>Full effective configuration (secrets redacted)</summary>
+                    <details>
+                      <summary className="cursor-pointer text-sm">
+                        Full effective configuration (secrets redacted)
+                      </summary>
                       <JsonView value={config} maxHeight={340} />
                     </details>
                   </>
@@ -1206,7 +1279,11 @@ function App(): ReactNode {
               <Panel
                 title="Version history"
                 className="reveal"
-                extra={<span className="muted">point-in-time snapshots · diff &amp; restore</span>}
+                extra={
+                  <span className="text-muted-foreground text-[11px]">
+                    point-in-time snapshots · diff &amp; restore
+                  </span>
+                }
               >
                 <ConfigHistoryPanel
                   onRestored={() =>
@@ -1221,17 +1298,16 @@ function App(): ReactNode {
                 title="Field guide"
                 className="reveal"
                 extra={
-                  <span className="muted">every config option, documented from the schema</span>
+                  <span className="text-muted-foreground text-[11px]">
+                    every config option, documented from the schema
+                  </span>
                 }
               >
                 <FieldGuidePanel />
               </Panel>
             </section>
           ) : (
-            <div className="feed-empty">
-              <Spinner />
-              <p className="feed-empty__title">Loading configuration…</p>
-            </div>
+            <EmptyState icon={<Spinner />} title="Loading configuration…" />
           ))}
 
         {/* ── Memory ── */}
@@ -1239,24 +1315,23 @@ function App(): ReactNode {
 
         {/* ── Live Feed ── */}
         {view === "feed" && (
-          <div className="panel reveal">
-            <div className="sheet__hd" style={{ marginBottom: 12 }}>
-              <h2 style={{ margin: 0 }}>Live tool calls</h2>
-              <span style={{ flex: 1 }} />
-              <span className="muted">
+          <Panel
+            className="reveal"
+            title="Live tool calls"
+            extra={
+              <span className="text-muted-foreground text-[11px]">
                 {visible.length} shown · {feed.length} buffered
               </span>
-            </div>
-            <div className="toolbar" style={{ marginBottom: 12 }}>
-              <div className="grow" style={{ flex: 1, minWidth: 180 }}>
-                <input
-                  className="search"
-                  type="search"
-                  placeholder="Search tool / input / output / error…"
-                  value={filter.q}
-                  onChange={(e) => setFilter((f) => ({ ...f, q: e.target.value }))}
-                />
-              </div>
+            }
+          >
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Input
+                className="min-w-[180px] flex-1"
+                type="search"
+                placeholder="Search tool / input / output / error…"
+                value={filter.q}
+                onChange={(e) => setFilter((f) => ({ ...f, q: e.target.value }))}
+              />
               {sel("tool", "all tools", meta?.tools ?? [])}
               {sel("risk", "all risk", [
                 "READ",
@@ -1268,146 +1343,170 @@ function App(): ReactNode {
               {sel("device", "all devices", meta?.devices ?? [])}
               {sel("status", "all status", ["ok", "error"])}
               {/* time window selector lives in the Overview header */}
-              <button
-                className={`btn${paused ? " is-active" : ""}`}
+              <Button
+                size="sm"
+                ghost
+                type={paused ? "accent" : "default"}
                 onClick={() => setPaused((p) => !p)}
+                icon={paused ? <Play /> : <Pause />}
               >
-                {paused ? "▶ Resume" : "⏸ Pause"}
-              </button>
-              <button className="btn" onClick={() => exportRows("csv")}>
+                {paused ? "Resume" : "Pause"}
+              </Button>
+              <Button size="sm" ghost onClick={() => exportRows("csv")}>
                 CSV
-              </button>
-              <button className="btn" onClick={() => exportRows("json")}>
+              </Button>
+              <Button size="sm" ghost onClick={() => exportRows("json")}>
                 JSON
-              </button>
-              <button
-                className="btn"
+              </Button>
+              <Button
+                size="sm"
+                ghost
                 onClick={() => setFilter({ tool: "", risk: "", device: "", status: "", q: "" })}
               >
                 Clear
-              </button>
+              </Button>
               {confirmingDelete && selectedIds.size > 0 ? (
                 <>
-                  <button className="btn btn-danger" onClick={() => void deleteSelected()}>
-                    ✓ Confirm delete ({selectedIds.size})
-                  </button>
-                  <button className="btn" onClick={() => setConfirmingDelete(false)}>
+                  <Button
+                    size="sm"
+                    type="error"
+                    onClick={() => void deleteSelected()}
+                    icon={<Check />}
+                  >
+                    Confirm delete ({selectedIds.size})
+                  </Button>
+                  <Button size="sm" ghost onClick={() => setConfirmingDelete(false)}>
                     Cancel
-                  </button>
+                  </Button>
                 </>
               ) : (
-                <button
-                  className="btn"
+                <Button
+                  size="sm"
+                  ghost
                   disabled={selectedIds.size === 0}
                   onClick={() => setConfirmingDelete(true)}
                   title="Delete the selected rows"
+                  icon={<Trash2 />}
                 >
-                  🗑 Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
-                </button>
+                  Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ""}
+                </Button>
               )}
             </div>
             {visible.length === 0 ? (
               hasFilters ? (
-                <div className="feed-empty">
-                  <div className="feed-empty__icon">🔍</div>
-                  <p className="feed-empty__title">No calls match your filters</p>
-                  <p className="feed-empty__sub">
-                    {feed.length} call{feed.length === 1 ? "" : "s"} buffered — try widening the
-                    search or the risk / device / status filters.
-                  </p>
-                  <button
-                    className="btn"
-                    onClick={() => setFilter({ tool: "", risk: "", device: "", status: "", q: "" })}
-                  >
-                    Clear filters
-                  </button>
-                </div>
+                <EmptyState
+                  icon={<Search className="size-6" />}
+                  title="No calls match your filters"
+                  sub={`${feed.length} call${feed.length === 1 ? "" : "s"} buffered — try widening the search or the risk / device / status filters.`}
+                  body={
+                    <Button
+                      size="sm"
+                      ghost
+                      className="mt-2"
+                      onClick={() =>
+                        setFilter({ tool: "", risk: "", device: "", status: "", q: "" })
+                      }
+                    >
+                      Clear filters
+                    </Button>
+                  }
+                />
               ) : (
-                <div className="feed-empty">
-                  <div className={`feed-empty__pulse${liveMode !== "off" ? " is-on" : ""}`} />
-                  <p className="feed-empty__title">
-                    {liveMode === "off" ? "Not connected" : "Listening for tool calls…"}
-                  </p>
-                  <p className="feed-empty__sub">
-                    {liveMode === "off"
+                <EmptyState
+                  icon={
+                    <Dot
+                      type={liveMode === "off" ? "secondary" : "success"}
+                      pulse={liveMode !== "off"}
+                      className="size-3"
+                    />
+                  }
+                  title={liveMode === "off" ? "Not connected" : "Listening for tool calls…"}
+                  sub={
+                    liveMode === "off"
                       ? "The live stream is offline — it will reconnect automatically."
-                      : "Tool calls the LLM makes against this server stream in here in real time."}
-                  </p>
-                </div>
+                      : "Tool calls the LLM makes against this server stream in here in real time."
+                  }
+                />
               )
             ) : (
-              <div className="feedwrap">
-                <table className="feed">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 28 }}>
-                        <input
-                          type="checkbox"
+              <div className="max-h-[60vh] overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-7">
+                        <Checkbox
                           aria-label="Select all shown rows"
-                          checked={allShownSelected}
-                          ref={(el) => {
-                            if (el) el.indeterminate = someShownSelected;
-                          }}
-                          onChange={toggleSelectAll}
+                          // Radix models the tri-state directly, so the old
+                          // `ref.indeterminate` DOM poke is no longer needed.
+                          checked={
+                            allShownSelected ? true : someShownSelected ? "indeterminate" : false
+                          }
+                          onCheckedChange={toggleSelectAll}
                         />
-                      </th>
-                      <th>time</th>
-                      <th>tool</th>
-                      <th>risk</th>
-                      <th>device</th>
-                      <th className="num">dur</th>
-                      <th>status</th>
-                      <th>output</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                      <TableHead>time</TableHead>
+                      <TableHead>tool</TableHead>
+                      <TableHead>risk</TableHead>
+                      <TableHead>device</TableHead>
+                      <TableHead className="text-right">dur</TableHead>
+                      <TableHead>status</TableHead>
+                      <TableHead>output</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {shownRows.map((e) => (
-                      <tr
+                      <TableRow
                         key={e.id}
-                        className={
-                          `${e.isError ? "is-err" : ""}${selectedIds.has(e.id) ? " is-selected" : ""}`.trim() ||
-                          undefined
-                        }
+                        data-state={selectedIds.has(e.id) ? "selected" : undefined}
+                        className={cn("cursor-pointer", e.isError && "bg-destructive/8")}
                         onClick={() => void openDetail(e)}
                       >
-                        <td onClick={(ev) => ev.stopPropagation()}>
-                          <input
-                            type="checkbox"
+                        <TableCell onClick={(ev) => ev.stopPropagation()}>
+                          <Checkbox
                             aria-label="Select row"
                             checked={selectedIds.has(e.id)}
-                            onChange={() => toggleSelect(e.id)}
+                            onCheckedChange={() => toggleSelect(e.id)}
                           />
-                        </td>
-                        <td>{clock(e.ts)}</td>
-                        <td>{e.tool}</td>
-                        <td>
-                          <span className={`risk risk-${e.risk}`}>
+                        </TableCell>
+                        <TableCell className="tabular-nums">{clock(e.ts)}</TableCell>
+                        <TableCell>{e.tool}</TableCell>
+                        <TableCell>
+                          <span
+                            className={cn(
+                              "rounded-full border px-1.5 py-0.5 text-[10px]",
+                              RISK_CLASS[e.risk],
+                            )}
+                          >
                             {e.risk.replace("WRITE_IDEMPOTENT", "WRITE·I")}
                           </span>
-                        </td>
-                        <td>{e.device ?? "—"}</td>
-                        <td className="num">{ms(e.durationMs)}</td>
-                        <td>
-                          <span className={e.isError ? "status-err" : "status-ok"}>
+                        </TableCell>
+                        <TableCell>{e.device ?? "—"}</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {ms(e.durationMs)}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={e.isError ? "text-destructive" : "text-muted-foreground"}
+                          >
                             {e.isError ? "error" : "ok"}
                           </span>
-                        </td>
-                        <td className="preview">
+                        </TableCell>
+                        <TableCell className="text-muted-foreground max-w-[24rem] truncate">
                           {e.isError ? (
                             (e.error ?? "error")
                           ) : e.reason ? (
-                            <span className="reason-preview">{e.reason}</span>
+                            <span className="italic">{e.reason}</span>
                           ) : (
                             e.output || "—"
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
-          </div>
+          </Panel>
         )}
       </main>
 

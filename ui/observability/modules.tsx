@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
+import { Button, Input } from "./geist";
 
 // ── Tool Modules view ────────────────────────────────────────────────────────
 // Every catalog module with a live on/off toggle. Flipping one writes the
@@ -37,6 +40,13 @@ interface ToggleResult extends ModuleSurface {
   error?: string;
 }
 
+/** The shared surface for a toggle row (module row or the app-views row). */
+const rowClass = (on: boolean): string =>
+  cn(
+    "flex items-start gap-2.5 rounded-md border px-[11px] py-[9px] cursor-pointer select-none transition-colors",
+    on ? "border-brand/50 bg-brand/10" : "border-border bg-card hover:border-brand/35",
+  );
+
 /** A single module row: checkbox + name/slug + tool count + scope description. */
 function ModuleRow({
   m,
@@ -48,21 +58,24 @@ function ModuleRow({
   onToggle: (slug: string, enabled: boolean) => void;
 }): ReactNode {
   return (
-    <label className="mod-row" data-on={m.enabled ? "1" : undefined} title={m.description}>
+    <label className={rowClass(m.enabled)} title={m.description}>
       <input
         type="checkbox"
+        className="mt-0.5 cursor-pointer accent-brand"
         checked={m.enabled}
         disabled={busy}
         onChange={() => onToggle(m.slug, !m.enabled)}
       />
-      <span className="mod-row__main">
-        <span className="mod-row__name">
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="flex flex-wrap items-center gap-[7px] text-xs font-semibold text-foreground">
           {m.label}
-          <code className="mod-row__slug">{m.slug}</code>
+          <code className="rounded border border-border bg-background px-[5px] py-px font-mono text-[10px] text-muted-foreground">
+            {m.slug}
+          </code>
         </span>
-        <span className="mod-row__desc muted">{m.description}</span>
+        <span className="text-[11px] leading-[1.35] text-muted-foreground">{m.description}</span>
       </span>
-      <span className="mod-row__count muted">
+      <span className="whitespace-nowrap pt-px font-mono text-[10px] text-muted-foreground">
         {m.toolCount} tool{m.toolCount === 1 ? "" : "s"}
       </span>
     </label>
@@ -135,33 +148,30 @@ export function ModulesView(): ReactNode {
     [toggle],
   );
 
-  const toggleAppViews = useCallback(
-    async (enabled: boolean): Promise<void> => {
-      setAppViewsBusy(true);
-      setAppViews(enabled);
-      const r = await postJson<{
-        ok?: boolean;
-        persisted?: boolean;
-        warning?: string;
-        error?: string;
-        appViews?: boolean;
-      }>("/api/modules/app-views", { enabled }).catch(() => ({ error: "request failed" }));
-      setAppViewsBusy(false);
-      if ("error" in r && r.error) {
-        setMsg(r.error);
-        setAppViews(!enabled);
-        return;
-      }
-      if ("appViews" in r && r.appViews !== undefined) setAppViews(r.appViews);
-      const where = "persisted" in r && r.persisted ? "saved to config" : "applied live (not saved)";
-      const warn = "warning" in r && r.warning ? ` — ${r.warning}` : "";
-      setMsg(
-        `App views ${enabled ? "enabled" : "disabled"} — ${where}. ` +
-          `Restart the server for the change to take effect.${warn}`,
-      );
-    },
-    [],
-  );
+  const toggleAppViews = useCallback(async (enabled: boolean): Promise<void> => {
+    setAppViewsBusy(true);
+    setAppViews(enabled);
+    const r = await postJson<{
+      ok?: boolean;
+      persisted?: boolean;
+      warning?: string;
+      error?: string;
+      appViews?: boolean;
+    }>("/api/modules/app-views", { enabled }).catch(() => ({ error: "request failed" }));
+    setAppViewsBusy(false);
+    if ("error" in r && r.error) {
+      setMsg(r.error);
+      setAppViews(!enabled);
+      return;
+    }
+    if ("appViews" in r && r.appViews !== undefined) setAppViews(r.appViews);
+    const where = "persisted" in r && r.persisted ? "saved to config" : "applied live (not saved)";
+    const warn = "warning" in r && r.warning ? ` — ${r.warning}` : "";
+    setMsg(
+      `App views ${enabled ? "enabled" : "disabled"} — ${where}. ` +
+        `Restart the server for the change to take effect.${warn}`,
+    );
+  }, []);
 
   const groups = useMemo(() => {
     if (!data) return [];
@@ -182,56 +192,59 @@ export function ModulesView(): ReactNode {
     return [...byGroup.entries()].map(([group, modules]) => ({ group, modules }));
   }, [data, query]);
 
-  if (!data) return <div className="muted">loading modules…</div>;
+  if (!data) return <div className="text-muted-foreground text-[11px]">loading modules…</div>;
 
   const shown = groups.reduce((n, g) => n + g.modules.length, 0);
 
   return (
-    <section className="view">
+    <section className="grid content-start gap-[18px]">
       <Panel
         title="Tool modules"
         className="reveal"
         extra={
-          <>
-            <span className="muted">
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground text-[11px]">
               {data.enabledModules}/{data.total} modules · {data.enabledTools}/{data.totalTools}{" "}
               tools exposed
             </span>
-            <button className="btn" onClick={load} style={{ marginLeft: 10 }}>
-              ↻ Refresh
-            </button>
-          </>
+            <Button size="sm" ghost icon={<RefreshCw />} onClick={load}>
+              Refresh
+            </Button>
+          </div>
         }
       >
         <label
-          className="mod-row"
-          data-on={appViews ? "1" : undefined}
+          className={cn(rowClass(appViews), "mb-2.5")}
           title="Emit MCP App view metadata (_meta.ui) on read tools"
-          style={{ marginBottom: 10, border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px" }}
         >
           <input
             type="checkbox"
+            className="mt-0.5 cursor-pointer accent-brand"
             checked={appViews}
             disabled={appViewsBusy}
             onChange={() => void toggleAppViews(!appViews)}
           />
-          <span className="mod-row__main">
-            <span className="mod-row__name">MCP App Views</span>
-            <span className="mod-row__desc muted">
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="flex flex-wrap items-center gap-[7px] text-xs font-semibold text-foreground">
+              MCP App Views
+            </span>
+            <span className="text-[11px] leading-[1.35] text-muted-foreground">
               When on, read tools emit interactive table/detail widgets via <code>_meta.ui</code>.
               Disable to keep the LLM context lean. Requires server restart.
             </span>
           </span>
         </label>
 
-        <div className="legend" style={{ margin: "0 0 10px" }}>
-          <span>
+        <div className="mb-2.5 flex flex-wrap gap-3 font-mono text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-[5px]">
             writes to: <code>{data.source?.path ?? "config file"}</code>
           </span>
-          <span>{data.hasAllowList ? "allow-list active" : "all modules on by default"}</span>
+          <span className="inline-flex items-center gap-[5px]">
+            {data.hasAllowList ? "allow-list active" : "all modules on by default"}
+          </span>
         </div>
 
-        <p className="muted" style={{ margin: "0 0 12px", fontSize: 12 }}>
+        <p className="mb-3 text-muted-foreground text-xs">
           Toggle a module to expose or hide all of its tools. Disabling adds it to{" "}
           <code>tools.disabledModules</code> in your config file; enabling removes it (or adds it to{" "}
           <code>tools.enabledModules</code> when an allow-list is in force). Trimming the surface
@@ -239,16 +252,15 @@ export function ModulesView(): ReactNode {
           client must reconnect for changes to take effect.
         </p>
 
-        <div className="mod-toolbar">
-          <input
-            className="input"
+        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <Input
             placeholder="Filter modules by name, slug, group or description…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <span style={{ flex: 1 }} />
-          <button
-            className="btn"
+          <span className="flex-1" />
+          <Button
+            size="sm"
             onClick={() =>
               void bulk(
                 data.modules.filter((m) => !m.enabled).map((m) => m.slug),
@@ -257,9 +269,9 @@ export function ModulesView(): ReactNode {
             }
           >
             Enable all
-          </button>{" "}
-          <button
-            className="btn"
+          </Button>
+          <Button
+            size="sm"
             onClick={() =>
               void bulk(
                 data.modules.filter((m) => m.enabled).map((m) => m.slug),
@@ -268,34 +280,28 @@ export function ModulesView(): ReactNode {
             }
           >
             Disable all
-          </button>
+          </Button>
         </div>
 
-        {msg && (
-          <div className="cfg-msg" style={{ marginTop: 12 }}>
-            {msg}
-          </div>
-        )}
+        {msg && <div className="mt-3 font-mono text-xs text-muted-foreground">{msg}</div>}
 
         {shown === 0 ? (
-          <div className="muted" style={{ padding: 12 }}>
-            No modules match “{query}”.
-          </div>
+          <div className="p-3 text-muted-foreground text-[11px]">No modules match “{query}”.</div>
         ) : (
-          <div className="mod-groups">
+          <div className="mt-3 flex flex-col gap-[18px]">
             {groups.map(({ group, modules }) => {
               const on = modules.filter((m) => m.enabled).length;
               const slugs = modules.map((m) => m.slug);
               return (
-                <div key={group} className="mod-group">
-                  <div className="mod-group__hd">
-                    <h3 className="mod-group__title">{group}</h3>
-                    <span className="muted">
+                <div key={group}>
+                  <div className="mb-2 flex items-center gap-2.5 border-b border-border pb-1.5">
+                    <h3 className="m-0 text-[13px] font-semibold text-foreground">{group}</h3>
+                    <span className="text-muted-foreground text-[11px]">
                       {on}/{modules.length} on
                     </span>
-                    <span style={{ flex: 1 }} />
-                    <button
-                      className="btn btn-sm"
+                    <span className="flex-1" />
+                    <Button
+                      size="sm"
                       onClick={() =>
                         void bulk(
                           slugs.filter((s) => {
@@ -307,9 +313,9 @@ export function ModulesView(): ReactNode {
                       }
                     >
                       Enable group
-                    </button>{" "}
-                    <button
-                      className="btn btn-sm"
+                    </Button>
+                    <Button
+                      size="sm"
                       onClick={() =>
                         void bulk(
                           slugs.filter((s) => {
@@ -321,9 +327,9 @@ export function ModulesView(): ReactNode {
                       }
                     >
                       Disable group
-                    </button>
+                    </Button>
                   </div>
-                  <div className="mod-list">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,360px),1fr))] gap-2">
                     {modules.map((m) => (
                       <ModuleRow
                         key={m.slug}

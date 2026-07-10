@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { Check, Download, Pencil, Plus, RefreshCw, Trash2, Upload, X } from "lucide-react";
 import { api, postJson, withToken } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
-import { Button } from "./geist";
+import { Button, Input, Select } from "./geist";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 // ── Local backup vault view ──────────────────────────────────────────────────
 interface BackupItem {
@@ -154,29 +164,37 @@ export function BackupsView(): ReactNode {
     if (r.ok) load();
   };
 
-  if (!data) return <div className="muted">loading backups…</div>;
+  if (!data) return <div className="text-muted-foreground text-[11px]">loading backups…</div>;
+
+  const deviceOptions =
+    data.devices.length === 0
+      ? [{ value: "", label: "no devices" }]
+      : data.devices.map((d) => ({ value: d, label: d }));
 
   return (
-    <section className="view">
+    <section className="grid content-start gap-[18px]">
       <Panel
         title="Local backup vault"
         className="reveal"
         extra={
           dirEdit === null ? (
-            <span className="muted backup-path">
-              <span title={data.dir}>{data.dir}</span>
+            <span className="inline-flex max-w-[min(60vw,520px)] items-center gap-2 text-muted-foreground text-[11px]">
+              <span className="truncate" title={data.dir}>
+                {data.dir}
+              </span>
               <button
-                className="linkish"
+                type="button"
+                className="inline-flex items-center gap-1 whitespace-nowrap text-brand hover:underline"
                 title="Change backup directory"
                 onClick={() => setDirEdit(data.dir)}
               >
-                ✎ edit path
+                <Pencil className="size-3" /> edit path
               </button>
             </span>
           ) : (
-            <span className="backup-path">
-              <input
-                className="backup-path-input"
+            <span className="inline-flex items-center gap-2">
+              <Input
+                className="w-[min(48vw,380px)] text-xs"
                 value={dirEdit}
                 autoFocus
                 spellCheck={false}
@@ -187,57 +205,56 @@ export function BackupsView(): ReactNode {
                   if (e.key === "Escape") setDirEdit(null);
                 }}
               />
-              <button className="topo-btn cfg-save" onClick={() => void saveDir()} disabled={busy}>
+              <Button type="accent" size="sm" onClick={() => void saveDir()} disabled={busy}>
                 Save path
-              </button>
-              <button className="topo-btn" onClick={() => setDirEdit(null)}>
+              </Button>
+              <Button type="secondary" size="sm" ghost onClick={() => setDirEdit(null)}>
                 Cancel
-              </button>
+              </Button>
             </span>
           )
         }
       >
-        {msg && <div className="cfg-msg">{msg}</div>}
-        <div className="toolbar" style={{ marginBottom: 12 }}>
-          <select className="btn" value={device} onChange={(e) => setDevice(e.target.value)}>
-            {data.devices.length === 0 && <option value="">no devices</option>}
-            {data.devices.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-          <button
-            className="btn is-active"
+        {msg && <div className="mb-3 font-mono text-xs text-muted-foreground">{msg}</div>}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Select
+            value={device}
+            onValueChange={setDevice}
+            aria-label="Device"
+            options={deviceOptions}
+          />
+          <Button
+            type="accent"
+            size="sm"
+            icon={<Plus />}
             onClick={() => void create()}
             disabled={busy || !device}
           >
-            ⤓ Create backup
-          </button>
-          <button className="btn" onClick={() => fileRef.current?.click()}>
-            ⤒ Upload .rsc
-          </button>
+            Create backup
+          </Button>
+          <Button size="sm" icon={<Upload />} onClick={() => fileRef.current?.click()}>
+            Upload .rsc
+          </Button>
           <input
             ref={fileRef}
             type="file"
             accept=".rsc,text/plain"
-            style={{ display: "none" }}
+            className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void upload(f);
               e.currentTarget.value = "";
             }}
           />
-          <button className="btn" onClick={load}>
-            ↻ Refresh
-          </button>
+          <Button size="sm" icon={<RefreshCw />} onClick={load}>
+            Refresh
+          </Button>
         </div>
 
         {/* /export options applied to "Create backup" */}
-        <div className="toolbar backup-opts" style={{ marginBottom: 12, gap: 10 }}>
-          <input
-            className="backup-path-input"
-            style={{ maxWidth: 200 }}
+        <div className="mb-3 flex flex-wrap items-center gap-2.5">
+          <Input
+            className="max-w-[200px] text-xs"
             value={label}
             spellCheck={false}
             placeholder="label (optional), e.g. pre-upgrade"
@@ -250,141 +267,173 @@ export function BackupsView(): ReactNode {
               ["compact", "compact", "Only non-default values (ignored if verbose)"],
               ["terse", "terse", "One machine-readable line per item"],
             ] as const
-          ).map(([k, lbl, tip]) => (
-            <label
-              key={k}
-              className="backup-opt"
-              title={tip}
-              data-on={opts[k] ? "1" : undefined}
-              data-disabled={k === "compact" && opts.verbose ? "1" : undefined}
-            >
-              <input
-                type="checkbox"
-                checked={opts[k]}
-                disabled={k === "compact" && opts.verbose}
-                onChange={() => toggle(k)}
-              />
-              {lbl}
-            </label>
-          ))}
+          ).map(([k, lbl, tip]) => {
+            const disabled = k === "compact" && opts.verbose;
+            return (
+              <label
+                key={k}
+                className={cn(
+                  "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1.5 font-mono text-[11px] select-none",
+                  opts[k]
+                    ? "border-brand/55 bg-brand/10 text-foreground"
+                    : "border-border bg-muted/40 text-muted-foreground",
+                  disabled && "cursor-not-allowed opacity-45",
+                )}
+                title={tip}
+              >
+                <input
+                  type="checkbox"
+                  className="accent-brand"
+                  checked={opts[k]}
+                  disabled={disabled}
+                  onChange={() => toggle(k)}
+                />
+                {lbl}
+              </label>
+            );
+          })}
         </div>
 
         {restoreName && (
-          <div className="cfg-banner" style={{ marginBottom: 12 }}>
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-warning/45 bg-warning/10 px-3 py-2.5 text-xs">
             <strong>Restore {restoreName}</strong> onto{" "}
-            <select
-              className="cfg-select"
+            <Select
               value={device}
-              onChange={(e) => setDevice(e.target.value)}
-            >
-              {data.devices.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>{" "}
+              onValueChange={setDevice}
+              size="sm"
+              aria-label="Restore target device"
+              options={data.devices.map((d) => ({ value: d, label: d }))}
+            />{" "}
             via Safe Mode (auto-reverts on lock-out).
-            <span style={{ flex: 1 }} />
-            <button className="topo-btn" onClick={() => void restore(false)} disabled={busy}>
-              Dry-run
-            </button>
-            <button
-              className="topo-btn cfg-save"
-              onClick={() => void restore(true)}
+            <span className="flex-1" />
+            <Button
+              type="secondary"
+              size="sm"
+              ghost
+              onClick={() => void restore(false)}
               disabled={busy}
             >
+              Dry-run
+            </Button>
+            <Button type="accent" size="sm" onClick={() => void restore(true)} disabled={busy}>
               Restore (commit)
-            </button>
-            <button className="topo-btn" onClick={() => setRestoreName(null)}>
+            </Button>
+            <Button type="secondary" size="sm" ghost onClick={() => setRestoreName(null)}>
               Cancel
-            </button>
+            </Button>
           </div>
         )}
 
         {data.backups.length === 0 ? (
-          <div className="muted" style={{ padding: 12 }}>
+          <div className="p-3 text-muted-foreground text-[11px]">
             No backups yet. Click “Create backup” to capture this device’s config, or upload a
             `.rsc`.
           </div>
         ) : (
-          <div className="feedwrap">
-            <table className="feed">
-              <thead>
-                <tr>
-                  <th>name</th>
-                  <th>device</th>
-                  <th className="num">size</th>
-                  <th>captured</th>
-                  <th style={{ width: 280 }}>actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="max-h-[60vh] overflow-auto rounded-lg border border-border">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
+                <TableRow>
+                  <TableHead>name</TableHead>
+                  <TableHead>device</TableHead>
+                  <TableHead className="text-right">size</TableHead>
+                  <TableHead>captured</TableHead>
+                  <TableHead className="w-[280px]">actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data.backups.map((b) => (
-                  <tr key={b.name} className={body?.name === b.name ? "is-selected" : undefined}>
-                    <td>{b.name}</td>
-                    <td>{b.device ?? "—"}</td>
-                    <td className="num">{bytes(b.bytes)}</td>
-                    <td>{new Date(b.modified).toLocaleString(undefined, { hour12: false })}</td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <button className="btn" onClick={() => viewBody(b.name)}>
-                        view
-                      </button>{" "}
-                      <a
-                        className="btn"
-                        href={withToken(`/api/backups/raw?name=${encodeURIComponent(b.name)}`)}
-                        download={b.name}
-                      >
-                        ⤓
-                      </a>{" "}
-                      {renaming?.name === b.name ? (
-                        <>
-                          <input
-                            className="search"
-                            style={{ display: "inline-block", width: 150 }}
-                            value={renaming.value}
-                            autoFocus
-                            onChange={(e) => setRenaming({ name: b.name, value: e.target.value })}
-                            onKeyDown={(e) => e.key === "Enter" && void rename()}
-                          />{" "}
-                          <button className="btn cfg-save" onClick={() => void rename()}>
-                            ✓
-                          </button>{" "}
-                          <button className="btn" onClick={() => setRenaming(null)}>
-                            ✕
-                          </button>{" "}
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            className="btn"
-                            onClick={() => setRenaming({ name: b.name, value: b.name })}
-                          >
-                            rename
-                          </button>{" "}
-                          <button className="btn cfg-save" onClick={() => setRestoreName(b.name)}>
-                            restore
-                          </button>{" "}
-                        </>
-                      )}
-                      {confirmDel === b.name ? (
-                        <>
-                          <button className="btn btn-danger" onClick={() => void del(b.name)}>
-                            ✓
-                          </button>{" "}
-                          <button className="btn" onClick={() => setConfirmDel(null)}>
-                            ✕
-                          </button>
-                        </>
-                      ) : (
-                        <button className="btn" onClick={() => setConfirmDel(b.name)}>
-                          🗑
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <TableRow
+                    key={b.name}
+                    data-state={body?.name === b.name ? "selected" : undefined}
+                  >
+                    <TableCell>{b.name}</TableCell>
+                    <TableCell>{b.device ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">{bytes(b.bytes)}</TableCell>
+                    <TableCell>
+                      {new Date(b.modified).toLocaleString(undefined, { hour12: false })}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Button size="sm" onClick={() => viewBody(b.name)}>
+                          view
+                        </Button>
+                        <a
+                          className="inline-flex items-center rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                          href={withToken(`/api/backups/raw?name=${encodeURIComponent(b.name)}`)}
+                          download={b.name}
+                          title="Download"
+                        >
+                          <Download className="size-3.5" />
+                        </a>
+                        {renaming?.name === b.name ? (
+                          <>
+                            <Input
+                              className="inline-block w-[150px] text-xs"
+                              value={renaming.value}
+                              autoFocus
+                              onChange={(e) => setRenaming({ name: b.name, value: e.target.value })}
+                              onKeyDown={(e) => e.key === "Enter" && void rename()}
+                            />
+                            <Button
+                              type="accent"
+                              size="sm"
+                              icon={<Check />}
+                              onClick={() => void rename()}
+                            />
+                            <Button
+                              type="secondary"
+                              size="sm"
+                              ghost
+                              icon={<X />}
+                              onClick={() => setRenaming(null)}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => setRenaming({ name: b.name, value: b.name })}
+                            >
+                              rename
+                            </Button>
+                            <Button type="accent" size="sm" onClick={() => setRestoreName(b.name)}>
+                              restore
+                            </Button>
+                          </>
+                        )}
+                        {confirmDel === b.name ? (
+                          <>
+                            <Button
+                              type="error"
+                              size="sm"
+                              ghost
+                              icon={<Check />}
+                              onClick={() => void del(b.name)}
+                            />
+                            <Button
+                              type="secondary"
+                              size="sm"
+                              ghost
+                              icon={<X />}
+                              onClick={() => setConfirmDel(null)}
+                            />
+                          </>
+                        ) : (
+                          <Button
+                            type="error"
+                            size="sm"
+                            ghost
+                            icon={<Trash2 />}
+                            onClick={() => setConfirmDel(b.name)}
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </Panel>
@@ -394,12 +443,15 @@ export function BackupsView(): ReactNode {
           title={`Backup · ${body.name}`}
           className="reveal"
           extra={
-            <Button type="secondary" size="sm" onClick={() => setBody(null)}>
-              ✕ Close
+            <Button type="secondary" size="sm" icon={<X />} onClick={() => setBody(null)}>
+              Close
             </Button>
           }
         >
-          <pre className="body" style={{ maxHeight: 460 }}>
+          <pre
+            className="m-0 overflow-auto rounded border border-border bg-background p-3 font-mono text-xs break-words whitespace-pre-wrap"
+            style={{ maxHeight: 460 }}
+          >
             {body.content || "(empty)"}
           </pre>
         </Panel>

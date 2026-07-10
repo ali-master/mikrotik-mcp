@@ -7,11 +7,15 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { api } from "./api";
-import { Badge, Button, Input, Note, Select } from "./geist";
+import { Badge, Button, Card, Input, Note, Select } from "./geist";
 import { Sheet } from "./sheet";
 import { CONFIG_SECTIONS, DEVICE_FIELDS } from "./config-spec";
 import type { CfgField, CfgSection } from "./config-spec";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 type Cfg = Record<string, unknown>;
 const REDACTED = "«redacted»";
@@ -58,18 +62,10 @@ function FieldRow({
   onChange: (v: unknown) => void;
 }): ReactNode {
   const id = `f_${field.key}`;
+  const isBool = field.type === "bool";
   let control: ReactNode;
   if (field.type === "bool") {
-    control = (
-      <label className="dev-toggle">
-        <input
-          type="checkbox"
-          checked={value === true}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className="dev-toggle__slider" />
-      </label>
-    );
+    control = <Switch checked={value === true} onCheckedChange={onChange} />;
   } else if (field.type === "select") {
     control = (
       <Select
@@ -100,13 +96,24 @@ function FieldRow({
     );
   }
   return (
-    <div className={`cfg-field${field.type === "bool" ? " cfg-field--bool" : ""}`}>
-      <label className="cfg-field__label" htmlFor={id}>
+    <div
+      className={cn(
+        "flex min-w-0",
+        isBool ? "flex-row items-center justify-between gap-2.5" : "flex-col gap-1.5",
+      )}
+    >
+      <Label htmlFor={id} className="text-muted-foreground text-xs font-semibold">
         {field.label}
-        {field.secret && <span className="cfg-field__secret"> secret</span>}
-      </label>
+        {field.secret && (
+          <span className="text-warning text-[10px] font-semibold tracking-[0.04em] uppercase">
+            secret
+          </span>
+        )}
+      </Label>
       {control}
-      {field.help && <span className="cfg-field__help muted">{field.help}</span>}
+      {field.help && (
+        <span className="text-muted-foreground text-[11px] leading-[1.4]">{field.help}</span>
+      )}
     </div>
   );
 }
@@ -124,14 +131,19 @@ function FieldForm({
   const basic = fields.filter((f) => !f.advanced);
   const adv = fields.filter((f) => f.advanced);
   return (
-    <div className="cfg-fields">
+    <div className="mt-1 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-x-4 gap-y-3">
       {basic.map((f) => (
         <FieldRow key={f.key} field={f} value={value[f.key]} onChange={(v) => onField(f.key, v)} />
       ))}
       {adv.length > 0 && (
         <>
-          <button type="button" className="cfg-adv-toggle" onClick={() => setShowAdv((s) => !s)}>
-            {showAdv ? "▾" : "▸"} Advanced ({adv.length})
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground col-span-full flex cursor-pointer items-center gap-1 border-0 bg-transparent py-1 text-left text-xs font-semibold"
+            onClick={() => setShowAdv((s) => !s)}
+          >
+            {showAdv ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}{" "}
+            Advanced ({adv.length})
           </button>
           {showAdv &&
             adv.map((f) => (
@@ -207,33 +219,29 @@ function ObjectCard({
   const summary = sectionSummary(cfg, section);
 
   return (
-    <div className={`cfg-card${active ? "" : " is-off"}`}>
-      <div className="cfg-card__hd">
-        <span className="cfg-card__icon" aria-hidden="true">
+    <Card className={cn("px-4 py-3.5 transition-opacity", !active && "opacity-50")}>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-lg leading-none" aria-hidden="true">
           {section.icon}
         </span>
-        <div className="cfg-card__titles">
-          <div className="cfg-card__title">
+        <div className="min-w-0">
+          <div className="text-foreground flex items-center gap-2 text-sm font-bold">
             {section.title}
             {section.enable && (
               <Badge type={active ? "success" : "secondary"}>{active ? "active" : "off"}</Badge>
             )}
           </div>
-          {summary ? (
-            <div className="cfg-card__sum muted">{summary}</div>
-          ) : (
-            <div className="cfg-card__sum muted">{section.blurb}</div>
-          )}
+          <div className="text-muted-foreground mt-0.5 max-w-[520px] truncate font-mono text-xs">
+            {summary || section.blurb}
+          </div>
         </div>
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         {section.enable && (
-          <label
-            className="dev-toggle"
+          <Switch
+            checked={active}
+            onCheckedChange={toggle}
             title={`${active ? "Deactivate" : "Activate"} ${section.enable.label ?? section.title}`}
-          >
-            <input type="checkbox" checked={active} onChange={(e) => toggle(e.target.checked)} />
-            <span className="dev-toggle__slider" />
-          </label>
+          />
         )}
         <Button
           size="sm"
@@ -252,15 +260,8 @@ function ObjectCard({
           onClose={() => setEditing(false)}
         >
           {section.enable && (
-            <label className="cfg-sheet-enable">
-              <span className="dev-toggle">
-                <input
-                  type="checkbox"
-                  checked={active}
-                  onChange={(e) => toggle(e.target.checked)}
-                />
-                <span className="dev-toggle__slider" />
-              </span>
+            <label className="border-border bg-muted text-foreground flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-[13px] font-semibold">
+              <Switch checked={active} onCheckedChange={toggle} />
               {active ? "Active" : `Inactive — enable ${section.enable.label ?? section.title}`}
             </label>
           )}
@@ -277,7 +278,7 @@ function ObjectCard({
           )}
         </Sheet>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -327,11 +328,11 @@ function DeviceSheet({
         </Button>
       }
     >
-      <div className="cfg-field">
-        <label className="cfg-field__label" htmlFor="dev_name">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <Label htmlFor="dev_name" className="text-muted-foreground text-xs font-semibold">
           Name
-        </label>
-        <div style={{ display: "flex", gap: 6 }}>
+        </Label>
+        <div className="flex gap-1.5">
           <Input
             id="dev_name"
             value={newName}
@@ -384,57 +385,67 @@ function DevicesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
   };
 
   return (
-    <div className="cfg-card">
-      <div className="cfg-card__hd">
-        <span className="cfg-card__icon" aria-hidden="true">
+    <Card className="px-4 py-3.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-lg leading-none" aria-hidden="true">
           🖧
         </span>
-        <div className="cfg-card__titles">
-          <div className="cfg-card__title">Devices</div>
-          <div className="cfg-card__sum muted">
+        <div className="min-w-0">
+          <div className="text-foreground flex items-center gap-2 text-sm font-bold">Devices</div>
+          <div className="text-muted-foreground mt-0.5 max-w-[520px] truncate font-mono text-xs">
             {names.length} device{names.length === 1 ? "" : "s"} · default: {defaultDevice || "—"}
           </div>
         </div>
-        <span style={{ flex: 1 }} />
-        <label className="cfg-inline">
-          <span className="muted">Default</span>
+        <span className="flex-1" />
+        <label className="inline-flex items-center gap-1.5">
+          <span className="text-muted-foreground text-[11px]">Default</span>
           <Select
             value={defaultDevice}
             onValueChange={(v) => onChange({ ...cfg, defaultDevice: v })}
             options={names.map((n) => ({ value: n, label: n }))}
           />
         </label>
-        <Button size="sm" onClick={addDevice} icon="＋">
+        <Button size="sm" onClick={addDevice} icon={<Plus className="size-4" />}>
           Add device
         </Button>
       </div>
 
-      <div className="cfg-devgrid">
+      <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
         {names.map((n) => {
           const d = asObj(devices[n]);
           const off = d.disabled === true;
           const addr = d.mac ? str(d.mac) : `${str(d.host) || "?"}:${str(d.port) || "22"}`;
           return (
-            <div key={n} className="dev-card cfg-devcard" data-disabled={off ? "1" : undefined}>
-              <div className="dev-card__top">
-                <span className={`dot dot--status ${off ? "is-off" : "is-on"}`} />
-                <span className="dev-card__name">{n}</span>
+            <div
+              key={n}
+              className={cn(
+                "border-border bg-card hover:border-brand/40 flex flex-col gap-1.5 rounded-lg border px-[15px] py-3.5 transition-colors",
+                off && "opacity-50 grayscale-[0.4]",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "inline-block size-2 shrink-0 rounded-full",
+                    off ? "bg-muted-foreground/60" : "bg-success",
+                  )}
+                />
+                <span className="font-mono text-[13px] font-medium">{n}</span>
                 {defaultDevice === n && <Badge type="accent">default</Badge>}
-                <span style={{ flex: 1 }} />
-                <label className="dev-toggle" title={off ? "Enable device" : "Disable device"}>
-                  <input
-                    type="checkbox"
-                    checked={!off}
-                    onChange={(e) => toggleDisabled(n, !e.target.checked)}
-                  />
-                  <span className="dev-toggle__slider" />
-                </label>
+                <span className="flex-1" />
+                <Switch
+                  checked={!off}
+                  onCheckedChange={(c) => toggleDisabled(n, !c)}
+                  title={off ? "Enable device" : "Disable device"}
+                />
               </div>
-              <div className="dev-card__meta muted">{addr}</div>
+              <div className="text-muted-foreground font-mono text-[11px] break-words">{addr}</div>
               {d.description ? (
-                <div className="dev-card__meta muted">{str(d.description)}</div>
+                <div className="text-muted-foreground font-mono text-[11px] break-words">
+                  {str(d.description)}
+                </div>
               ) : null}
-              <div className="cfg-devcard__actions">
+              <div className="mt-auto flex gap-1.5 pt-1">
                 <Button size="sm" ghost onClick={() => setSheet({ name: n, isNew: false })}>
                   Edit
                 </Button>
@@ -467,7 +478,7 @@ function DevicesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
           onClose={() => setSheet(null)}
         />
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -532,61 +543,71 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
   const enabledCount = (catalog ?? []).filter((m) => moduleEnabled(tools, m)).length;
 
   return (
-    <div className="cfg-card">
-      <div className="cfg-card__hd">
-        <span className="cfg-card__icon" aria-hidden="true">
+    <Card className="px-4 py-3.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-lg leading-none" aria-hidden="true">
           🧩
         </span>
-        <div className="cfg-card__titles">
-          <div className="cfg-card__title">Tool Modules</div>
-          <div className="cfg-card__sum muted">
+        <div className="min-w-0">
+          <div className="text-foreground flex items-center gap-2 text-sm font-bold">
+            Tool Modules
+          </div>
+          <div className="text-muted-foreground mt-0.5 max-w-[520px] truncate font-mono text-xs">
             {catalog ? `${enabledCount}/${catalog.length} modules enabled` : "loading…"} · applied
             on Save
           </div>
         </div>
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         <Input
           placeholder="Filter modules…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="cfg-modfilter"
+          className="max-w-[190px]"
         />
-        <label className="cfg-inline">
-          <span className="dev-toggle" title="MCP App Views">
-            <input
-              type="checkbox"
-              checked={asObj(cfg.mcp).appViews === true}
-              onChange={(e) =>
-                onChange({ ...cfg, mcp: { ...asObj(cfg.mcp), appViews: e.target.checked } })
-              }
-            />
-            <span className="dev-toggle__slider" />
-          </span>
-          <span className="muted">App Views</span>
+        <label className="inline-flex items-center gap-1.5">
+          <Switch
+            checked={asObj(cfg.mcp).appViews === true}
+            onCheckedChange={(c) => onChange({ ...cfg, mcp: { ...asObj(cfg.mcp), appViews: c } })}
+            title="MCP App Views"
+          />
+          <span className="text-muted-foreground text-[11px]">App Views</span>
         </label>
       </div>
-      <div className="cfg-modgroups">
+      <div className="mt-3 grid max-h-[440px] gap-[18px] overflow-auto">
         {[...groups.entries()].map(([group, items]) => (
-          <div key={group} className="cfg-modgroup">
-            <div className="cfg-modgroup__hd muted">{group}</div>
+          <div key={group} className="grid gap-2">
+            <div className="text-muted-foreground mt-2 mb-0.5 font-bold text-[11px] tracking-[0.05em] uppercase">
+              {group}
+            </div>
             {items.map((m) => {
               const on = moduleEnabled(tools, m);
               return (
                 <label
                   key={m.slug}
-                  className="mod-row"
-                  data-on={on ? "1" : undefined}
+                  className={cn(
+                    "bg-muted hover:border-brand/40 flex cursor-pointer items-start gap-2.5 rounded-md border px-[11px] py-[9px] transition-colors select-none",
+                    on ? "border-brand/50 bg-brand/10" : "border-border",
+                  )}
                   title={m.description}
                 >
-                  <input type="checkbox" checked={on} onChange={() => toggle(m, !on)} />
-                  <span className="mod-row__main">
-                    <span className="mod-row__name">
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => toggle(m, !on)}
+                    className="accent-brand mt-0.5 cursor-pointer"
+                  />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-foreground flex flex-wrap items-center gap-[7px] text-xs font-semibold">
                       {m.label}
-                      <code className="mod-row__slug">{m.slug}</code>
+                      <code className="text-muted-foreground bg-background border-border rounded border px-1.5 py-px font-mono text-[10px]">
+                        {m.slug}
+                      </code>
                     </span>
-                    <span className="mod-row__desc muted">{m.description}</span>
+                    <span className="text-muted-foreground text-[11px] leading-[1.35]">
+                      {m.description}
+                    </span>
                   </span>
-                  <span className="mod-row__count muted">
+                  <span className="text-muted-foreground pt-px font-mono text-[10px] whitespace-nowrap">
                     {m.toolCount} tool{m.toolCount === 1 ? "" : "s"}
                   </span>
                 </label>
@@ -595,10 +616,10 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
           </div>
         ))}
         {catalog && modules.length === 0 && (
-          <span className="muted">No modules match “{query}”.</span>
+          <span className="text-muted-foreground text-[11px]">No modules match “{query}”.</span>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -606,7 +627,7 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
 
 export function ConfigForm({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }): ReactNode {
   return (
-    <div className="cfg-formgrid">
+    <div className="mt-1 grid gap-3.5">
       {CONFIG_SECTIONS.map((s) =>
         s.kind === "deviceMap" ? (
           <DevicesCard key={s.id} cfg={cfg} onChange={onChange} />

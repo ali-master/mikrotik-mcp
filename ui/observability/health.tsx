@@ -16,13 +16,13 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
   const probed = s.reachable === true || hist.length > 0;
   if (!probed) {
     return (
-      <div className="card health-card health-card--na">
-        <div className="health-card__hd">
+      <div className="bg-card text-card-foreground flex min-h-[120px] flex-col justify-center gap-1.5 rounded-lg border p-4">
+        <div className="flex items-center gap-2">
           <Dot color={statusInfo(s).color} />
-          <span className="dev-card__name">{d.name}</span>
+          <span className="font-mono text-[13px] font-medium">{d.name}</span>
           {d.isDefault && <Badge type="accent">default</Badge>}
         </div>
-        <p className="muted" style={{ margin: 0 }}>
+        <p className="text-muted-foreground m-0 text-[11px]">
           {s.reachable === false
             ? `Offline — ${s.error ?? "unreachable"}`
             : d.mac
@@ -33,28 +33,30 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
     );
   }
   return (
-    <div className="card health-card">
-      <div className="health-card__hd">
+    <div className="bg-card text-card-foreground flex flex-col gap-2.5 rounded-lg border p-4">
+      <div className="flex items-center gap-2">
         <Dot color={statusInfo(s).color} />
-        <span className="dev-card__name">{d.name}</span>
+        <span className="font-mono text-[13px] font-medium">{d.name}</span>
         {d.isDefault && <Badge type="accent">default</Badge>}
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
         <Badge type={s.version ? "success" : "default"}>{s.version ? `v${s.version}` : "—"}</Badge>
       </div>
-      <div className="health-card__sub muted">
+      <div className="text-muted-foreground -mt-1 font-mono text-[11px]">
         {s.boardName ?? "router"}
         {s.architecture ? ` · ${s.architecture}` : ""}
         {s.cpuCount ? ` · ${s.cpuCount} cpu` : ""}
         {s.uptime ? ` · up ${s.uptime}` : ""}
       </div>
-      <div className="health-card__gauges">
+      <div className="flex justify-around gap-3.5">
         <RadialGauge value={s.cpuLoad} label="CPU" color={HEALTH_COLOR.cpu} />
         <RadialGauge value={s.memUsedPct} label="MEM" color={HEALTH_COLOR.mem} />
         <RadialGauge value={s.hddUsedPct} label="DISK" color={HEALTH_COLOR.disk} />
       </div>
-      <div className="health-card__charts">
-        <div className="health-chart">
-          <span className="health-chart__k">CPU load</span>
+      <div className="grid gap-2">
+        <div className="grid gap-0.5">
+          <span className="text-muted-foreground font-mono text-[10px] tracking-[0.05em] uppercase">
+            CPU load
+          </span>
           <MetricArea
             id={`${d.name}-cpu`}
             values={hist.map((h) => h.cpuLoad)}
@@ -63,8 +65,10 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
             unit="%"
           />
         </div>
-        <div className="health-chart">
-          <span className="health-chart__k">Memory used</span>
+        <div className="grid gap-0.5">
+          <span className="text-muted-foreground font-mono text-[10px] tracking-[0.05em] uppercase">
+            Memory used
+          </span>
           <MetricArea
             id={`${d.name}-mem`}
             values={hist.map((h) => h.memUsedPct)}
@@ -73,8 +77,10 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
             unit="%"
           />
         </div>
-        <div className="health-chart">
-          <span className="health-chart__k">Probe latency</span>
+        <div className="grid gap-0.5">
+          <span className="text-muted-foreground font-mono text-[10px] tracking-[0.05em] uppercase">
+            Probe latency
+          </span>
           <MetricArea
             id={`${d.name}-lat`}
             values={hist.map((h) => h.latencyMs)}
@@ -83,7 +89,7 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
           />
         </div>
       </div>
-      <div className="health-card__foot muted">
+      <div className="text-muted-foreground font-mono text-[11px]">
         RAM {memHuman(s.totalMemory && s.freeMemory ? s.totalMemory - s.freeMemory : undefined)} /{" "}
         {memHuman(s.totalMemory)} · free disk {memHuman(s.freeHdd)}
       </div>

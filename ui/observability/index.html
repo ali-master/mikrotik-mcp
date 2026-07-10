@@ -10,9 +10,10 @@
       // Resolve the theme before first paint so a stored light preference never
       // flashes the dark default. Dark is the historical default, so an absent
       // preference stays dark regardless of the OS setting.
-      // (No <link rel=stylesheet> here on purpose: scripts/build-ui.ts inlines
-      // every stylesheet link by reading it off disk, so a remote href breaks it.
-      // The web font is an @import url() at the top of tailwind.css instead.)
+      //
+      // Note: this file deliberately declares no external stylesheet. The build
+      // inliner (scripts/build-ui.ts) resolves every stylesheet href off disk, so
+      // a remote one would break it — the web font is imported from tailwind.css.
       (() => {
         try {
           document.documentElement.classList.toggle(

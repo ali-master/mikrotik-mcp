@@ -22,6 +22,8 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
+/* SVG geometry, filters and @keyframes that utilities cannot express. */
+@import "./viz.css";
 
 /* shadcn's dark variant keys off a `.dark` class on <html>, set by main.tsx. */
 @custom-variant dark (&:is(.dark *));
@@ -64,6 +66,23 @@
   --chart-3: #3d8f2f;
   --chart-4: #a35200;
   --chart-5: #7048c4;
+
+  /*
+   * Categorical palette for the memory graph's entity types, which hashes a type
+   * name onto a hue. Ten of them, so it needs more than the five chart series —
+   * and they are darkened here because the dark set (e.g. #facc15) is illegible
+   * on white.
+   */
+  --entity-1: #0068d6;
+  --entity-2: #087a52;
+  --entity-3: #6d3fc4;
+  --entity-4: #a35200;
+  --entity-5: #c02a2a;
+  --entity-6: #0f8a7e;
+  --entity-7: #c0267a;
+  --entity-8: #2563eb;
+  --entity-9: #8a6a00;
+  --entity-10: #b4530f;
 }
 
 /* ── Dark (the dashboard's historical default) ────────────────────────────── */
@@ -95,6 +114,17 @@
   --chart-3: #69d05a;
   --chart-4: #f5a623;
   --chart-5: #9d7bff;
+
+  --entity-1: #3291ff;
+  --entity-2: #34d399;
+  --entity-3: #a78bfa;
+  --entity-4: #f59e0b;
+  --entity-5: #ef4444;
+  --entity-6: #2dd4bf;
+  --entity-7: #f472b6;
+  --entity-8: #60a5fa;
+  --entity-9: #facc15;
+  --entity-10: #fb923c;
 }
 
 /* Expose the tokens to Tailwind as `bg-*`, `text-*`, `border-*`, `rounded-*`. */

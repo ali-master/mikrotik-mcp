@@ -10,7 +10,18 @@
  * (CoA) and UM global settings are singleton forms.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Plus, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { Badge, Button, Input, Note, Select } from "./geist";
@@ -59,6 +70,14 @@ const isDisabled = (r: Row): boolean => (r.flags ?? "").includes("X") || r.disab
 function rowLabel(r: Row, cfg: EntityConfig): string {
   return r[cfg.idKey] || r.name || r.address || r.user || "(row)";
 }
+
+// Shared surface for the inline add/edit and singleton forms.
+const FORM_BOX = "mb-3.5 rounded-md border border-border bg-card p-3.5";
+const FORM_TITLE = "mb-2.5 text-[13px] font-semibold";
+const FORM_GRID = "grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-x-3.5 gap-y-2.5";
+const FORM_ACTIONS = "mt-3.5 flex items-center gap-2.5";
+const FIELD = "flex flex-col gap-1";
+const FIELD_LABEL = "text-[11.5px] text-muted-foreground";
 
 // ── one CRUD entity (table + inline add/edit form) ───────────────────────────
 function EntityManager({ config, device }: { config: EntityConfig; device: string }): ReactNode {
@@ -155,39 +174,39 @@ function EntityManager({ config, device }: { config: EntityConfig; device: strin
   }
 
   return (
-    <div className="aaa-entity">
-      <div className="aaa-entity__toolbar">
+    <div>
+      <div className="mb-3 flex items-center gap-2.5">
         <Input
+          className="w-[200px]"
           placeholder="Filter…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="aaa-filter"
         />
-        <span className="muted">{rows.length} rows</span>
-        <span style={{ flex: 1 }} />
-        <Button size="sm" ghost onClick={() => void load()}>
-          ↻ Refresh
+        <span className="text-muted-foreground text-[11px]">{rows.length} rows</span>
+        <span className="flex-1" />
+        <Button size="sm" ghost icon={<RefreshCw />} onClick={() => void load()}>
+          Refresh
         </Button>
-        <Button size="sm" type="accent" onClick={openAdd}>
-          + Add
+        <Button size="sm" type="accent" icon={<Plus />} onClick={openAdd}>
+          Add
         </Button>
       </div>
 
       {error && (
-        <Note type="error" className="aaa-error">
+        <Note type="error" className="mb-2.5">
           {error}
         </Note>
       )}
 
       {editing && (
-        <div className="aaa-form">
-          <div className="aaa-form__title">
+        <div className={FORM_BOX}>
+          <div className={FORM_TITLE}>
             {editing === "new" ? `New ${config.slug}` : `Edit ${editing}`}
           </div>
-          <div className="aaa-form__grid">
+          <div className={FORM_GRID}>
             {config.fields.map((fd) => (
-              <label key={fd.key} className="aaa-field">
-                <span className="aaa-field__label">
+              <label key={fd.key} className={FIELD}>
+                <span className={FIELD_LABEL}>
                   {fd.label}
                   {fd.required && editing === "new" ? " *" : ""}
                 </span>
@@ -223,7 +242,7 @@ function EntityManager({ config, device }: { config: EntityConfig; device: strin
               </label>
             ))}
           </div>
-          <div className="aaa-form__actions">
+          <div className={FORM_ACTIONS}>
             <Button size="sm" type="accent" loading={busy} onClick={() => void save()}>
               {editing === "new" ? "Create" : "Save"}
             </Button>
@@ -235,77 +254,78 @@ function EntityManager({ config, device }: { config: EntityConfig; device: strin
       )}
 
       {!data ? (
-        <div className="muted">loading…</div>
+        <div className="text-muted-foreground text-[11px]">loading…</div>
       ) : rows.length === 0 ? (
-        <div className="muted aaa-empty">{config.empty ?? "Nothing here yet."}</div>
-      ) : (
-        <div className="aaa-table">
-          <div className="aaa-row aaa-row--head" style={gridCols(config)}>
-            {config.columns.map((c) => (
-              <span key={c.key}>{c.label}</span>
-            ))}
-            <span className="aaa-actions-h">Actions</span>
-          </div>
-          {rows.map((r) => {
-            const id = r[config.idKey];
-            const off = isDisabled(r);
-            return (
-              <div
-                key={id || rowLabel(r, config)}
-                className={`aaa-row${off ? " is-off" : ""}`}
-                style={gridCols(config)}
-              >
-                {config.columns.map((c) => (
-                  <span key={c.key} className="aaa-cell" title={r[c.key] ?? ""}>
-                    {c.key === "_status" ? (
-                      <Badge type={off ? "secondary" : "success"}>
-                        {off ? "disabled" : "enabled"}
-                      </Badge>
-                    ) : (
-                      (r[c.key] ?? "")
-                    )}
-                  </span>
-                ))}
-                <span className="aaa-actions">
-                  {config.toggle && (
-                    <Button
-                      size="sm"
-                      ghost
-                      disabled={busy}
-                      onClick={() => void post("toggle", { id, enable: off })}
-                    >
-                      {off ? "Enable" : "Disable"}
-                    </Button>
-                  )}
-                  {!config.addOnly && (
-                    <Button size="sm" ghost disabled={busy} onClick={() => openEdit(r)}>
-                      Edit
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    type="error"
-                    ghost
-                    disabled={busy}
-                    onClick={() => void post("remove", { id })}
-                  >
-                    Remove
-                  </Button>
-                </span>
-              </div>
-            );
-          })}
+        <div className="px-1 py-5 text-muted-foreground text-[11px]">
+          {config.empty ?? "Nothing here yet."}
         </div>
+      ) : (
+        <Table className="text-[13px]">
+          <TableHeader>
+            <TableRow>
+              {config.columns.map((c) => (
+                <TableHead key={c.key}>{c.label}</TableHead>
+              ))}
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => {
+              const id = r[config.idKey];
+              const off = isDisabled(r);
+              return (
+                <TableRow key={id || rowLabel(r, config)}>
+                  {config.columns.map((c) => (
+                    <TableCell
+                      key={c.key}
+                      className={cn(off && "text-muted-foreground")}
+                      title={r[c.key] ?? ""}
+                    >
+                      {c.key === "_status" ? (
+                        <Badge type={off ? "secondary" : "success"}>
+                          {off ? "disabled" : "enabled"}
+                        </Badge>
+                      ) : (
+                        (r[c.key] ?? "")
+                      )}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right">
+                    <span className="flex justify-end gap-1.5">
+                      {config.toggle && (
+                        <Button
+                          size="sm"
+                          ghost
+                          disabled={busy}
+                          onClick={() => void post("toggle", { id, enable: off })}
+                        >
+                          {off ? "Enable" : "Disable"}
+                        </Button>
+                      )}
+                      {!config.addOnly && (
+                        <Button size="sm" ghost disabled={busy} onClick={() => openEdit(r)}>
+                          Edit
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        type="error"
+                        ghost
+                        disabled={busy}
+                        onClick={() => void post("remove", { id })}
+                      >
+                        Remove
+                      </Button>
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
-}
-
-function gridCols(config: EntityConfig): CSSProperties {
-  // One column per field + an auto actions column.
-  return {
-    gridTemplateColumns: `${config.columns.map(() => "1fr").join(" ")} minmax(200px, auto)`,
-  };
 }
 
 // ── read-only sessions table ─────────────────────────────────────────────────
@@ -351,42 +371,48 @@ function SessionsTable({ device }: { device: string }): ReactNode {
     (r) => !filter.trim() || (r.user ?? "").toLowerCase().includes(filter.trim().toLowerCase()),
   );
   return (
-    <div className="aaa-entity">
-      <div className="aaa-entity__toolbar">
+    <div>
+      <div className="mb-3 flex items-center gap-2.5">
         <Input
+          className="w-[200px]"
           placeholder="Filter by user…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="aaa-filter"
         />
-        <span className="muted">{rows.length} sessions</span>
-        <span style={{ flex: 1 }} />
-        <Button size="sm" ghost onClick={() => void load()}>
-          ↻ Refresh
+        <span className="text-muted-foreground text-[11px]">{rows.length} sessions</span>
+        <span className="flex-1" />
+        <Button size="sm" ghost icon={<RefreshCw />} onClick={() => void load()}>
+          Refresh
         </Button>
       </div>
       {error && <Note type="error">{error}</Note>}
       {!data ? (
-        <div className="muted">loading…</div>
+        <div className="text-muted-foreground text-[11px]">loading…</div>
       ) : rows.length === 0 ? (
-        <div className="muted aaa-empty">No accounting sessions recorded.</div>
-      ) : (
-        <div className="aaa-table aaa-table--scroll">
-          <div className="aaa-row aaa-row--head aaa-row--sessions">
-            {SESSION_COLS.map((c) => (
-              <span key={c}>{c.replace(/-/g, " ")}</span>
-            ))}
-          </div>
-          {rows.map((r, i) => (
-            <div key={r[".id"] || i} className="aaa-row aaa-row--sessions">
-              {SESSION_COLS.map((c) => (
-                <span key={c} className="aaa-cell" title={r[c] ?? ""}>
-                  {r[c] ?? ""}
-                </span>
-              ))}
-            </div>
-          ))}
+        <div className="px-1 py-5 text-muted-foreground text-[11px]">
+          No accounting sessions recorded.
         </div>
+      ) : (
+        <Table className="text-[13px]">
+          <TableHeader>
+            <TableRow>
+              {SESSION_COLS.map((c) => (
+                <TableHead key={c}>{c.replace(/-/g, " ")}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r, i) => (
+              <TableRow key={r[".id"] || i}>
+                {SESSION_COLS.map((c) => (
+                  <TableCell key={c} title={r[c] ?? ""}>
+                    {r[c] ?? ""}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
@@ -449,17 +475,17 @@ function SingletonForm({
     );
   }
   return (
-    <div className="aaa-singleton">
-      <div className="aaa-singleton__title">{title}</div>
+    <div className={FORM_BOX}>
+      <div className={FORM_TITLE}>{title}</div>
       {row && (
-        <div className="aaa-singleton__current muted">
+        <div className="mb-3 text-muted-foreground text-xs">
           {fields.map((f) => `${f.label}: ${row[f.key] ?? "—"}`).join("  ·  ")}
         </div>
       )}
-      <div className="aaa-form__grid">
+      <div className={FORM_GRID}>
         {fields.map((f) => (
-          <label key={f.key} className="aaa-field">
-            <span className="aaa-field__label">{f.label}</span>
+          <label key={f.key} className={FIELD}>
+            <span className={FIELD_LABEL}>{f.label}</span>
             {f.type === "bool" ? (
               <Select
                 value={form[f.key] ?? ""}
@@ -481,12 +507,12 @@ function SingletonForm({
           </label>
         ))}
       </div>
-      <div className="aaa-form__actions">
+      <div className={FORM_ACTIONS}>
         <Button size="sm" type="accent" loading={busy} onClick={() => void save()}>
           Save
         </Button>
         {extra}
-        {msg && <span className="muted">{msg}</span>}
+        {msg && <span className="text-muted-foreground text-[11px]">{msg}</span>}
       </div>
     </div>
   );
@@ -715,9 +741,9 @@ function UsageTab({ device }: { device: string }): ReactNode {
   const dev = device ? `&device=${encodeURIComponent(device)}` : "";
 
   return (
-    <div className="aaa-usage">
-      <div className="aaa-usage__bar">
-        <span className="muted">User</span>
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-muted-foreground text-[11px]">User</span>
         <Select
           value={user}
           onValueChange={setUser}
@@ -739,22 +765,28 @@ function UsageTab({ device }: { device: string }): ReactNode {
       ) : (
         user && (
           <>
-            <div className="aaa-usage__section">
-              <div className="aaa-usage__title">Download / upload · last 3 months</div>
+            <div className="mt-4">
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                Download / upload · last 3 months
+              </div>
               <UsageHistoryChart
                 endpoint={`/api/usage/um-user?user=${encodeURIComponent(user)}${dev}&days=90`}
                 days={90}
               />
             </div>
-            <div className="aaa-usage__section">
-              <div className="aaa-usage__title">Connection heatmap · {user}</div>
+            <div className="mt-4">
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                Connection heatmap · {user}
+              </div>
               <Heatmap
                 endpoint={`/api/usage/heatmap?user=${encodeURIComponent(user)}${dev}&days=371`}
                 label={`${user} — connections`}
               />
             </div>
-            <div className="aaa-usage__section">
-              <div className="aaa-usage__title">All users · connections</div>
+            <div className="mt-4">
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                All users · connections
+              </div>
               <Heatmap endpoint={`/api/usage/heatmap?days=371${dev}`} label="All users" />
             </div>
           </>
@@ -810,15 +842,15 @@ function SamplerSettings(): ReactNode {
   };
 
   return (
-    <div className="aaa-card">
-      <div className="aaa-form-title">Usage sampling</div>
-      <div className="aaa-current muted">
+    <div className="rounded-md border border-border bg-card p-3.5">
+      <div className={FORM_TITLE}>Usage sampling</div>
+      <div className="mb-3 text-muted-foreground text-xs">
         How often client traffic + User Manager sessions are recorded into the usage history.
         Current: {current == null ? "…" : fmtInterval(current)} · default 1 minute · range 30s–6h.
       </div>
-      <div className="aaa-form-grid">
-        <label className="aaa-field">
-          <span className="aaa-field-label">Interval (minutes)</span>
+      <div className={FORM_GRID}>
+        <label className={FIELD}>
+          <span className={FIELD_LABEL}>Interval (minutes)</span>
           <Input
             type="number"
             step="0.5"
@@ -829,7 +861,7 @@ function SamplerSettings(): ReactNode {
           />
         </label>
       </div>
-      <div className="aaa-form-actions">
+      <div className={FORM_ACTIONS}>
         <Button size="sm" type="accent" loading={busy} onClick={() => void save()}>
           Save
         </Button>
@@ -845,7 +877,7 @@ function SamplerSettings(): ReactNode {
             {m}m
           </Button>
         ))}
-        {msg && <span className="muted">{msg}</span>}
+        {msg && <span className="text-muted-foreground text-[11px]">{msg}</span>}
       </div>
     </div>
   );
@@ -876,7 +908,7 @@ export function AaaView(): ReactNode {
   const routerOptions = routers?.devices ?? [];
 
   return (
-    <section className="view">
+    <section className="grid content-start gap-[18px]">
       <Panel
         title="RADIUS & User Manager"
         className="reveal"
@@ -894,59 +926,76 @@ export function AaaView(): ReactNode {
           ) : undefined
         }
       >
-        <div className="aaa-tabs">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              className={`aaa-tab${tab === t.id ? " is-active" : ""}`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
+          <TabsList
+            variant="line"
+            className="mb-3.5 h-auto w-full flex-wrap justify-start border-b border-border"
+          >
+            {TABS.map((t) => (
+              <TabsTrigger key={t.id} value={t.id}>
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        {tab === "radius" && <EntityManager config={RADIUS_CONFIG} device={device} />}
-        {tab === "users" && <EntityManager config={UM_USERS_CONFIG} device={device} />}
-        {tab === "profiles" && <EntityManager config={UM_PROFILES_CONFIG} device={device} />}
-        {tab === "limitations" && <EntityManager config={UM_LIMITATIONS_CONFIG} device={device} />}
-        {tab === "nas" && <EntityManager config={UM_ROUTERS_CONFIG} device={device} />}
-        {tab === "assignments" && <EntityManager config={UM_ASSIGN_CONFIG} device={device} />}
-        {tab === "sessions" && <SessionsTable device={device} />}
-        {tab === "usage" && <UsageTab device={device} />}
-        {tab === "settings" && (
-          <div className="aaa-settings">
-            <SingletonForm
-              device={device}
-              getPath="/api/aaa/radius-incoming"
-              setPath="/api/aaa/radius-incoming"
-              title="RADIUS Incoming (CoA listener)"
-              fields={RADIUS_INCOMING_FIELDS}
-              unwrap={(p) => ({ available: true, row: (p as Row) ?? {} })}
-              extra={
-                <Button
-                  size="sm"
-                  ghost
-                  onClick={() => void postJson("/api/aaa/radius-reset-counters", { device })}
-                >
-                  Reset RADIUS counters
-                </Button>
-              }
-            />
-            <SingletonForm
-              device={device}
-              getPath="/api/aaa/um-settings"
-              setPath="/api/aaa/um-settings"
-              title="User Manager (built-in RADIUS server)"
-              fields={UM_SETTINGS_FIELDS}
-              unwrap={(p) => {
-                const o = (p as { available?: boolean; settings?: Row }) ?? {};
-                return { available: o.available !== false, row: o.settings ?? {} };
-              }}
-            />
-            <SamplerSettings />
-          </div>
-        )}
+          <TabsContent value="radius">
+            <EntityManager config={RADIUS_CONFIG} device={device} />
+          </TabsContent>
+          <TabsContent value="users">
+            <EntityManager config={UM_USERS_CONFIG} device={device} />
+          </TabsContent>
+          <TabsContent value="profiles">
+            <EntityManager config={UM_PROFILES_CONFIG} device={device} />
+          </TabsContent>
+          <TabsContent value="limitations">
+            <EntityManager config={UM_LIMITATIONS_CONFIG} device={device} />
+          </TabsContent>
+          <TabsContent value="nas">
+            <EntityManager config={UM_ROUTERS_CONFIG} device={device} />
+          </TabsContent>
+          <TabsContent value="assignments">
+            <EntityManager config={UM_ASSIGN_CONFIG} device={device} />
+          </TabsContent>
+          <TabsContent value="sessions">
+            <SessionsTable device={device} />
+          </TabsContent>
+          <TabsContent value="usage">
+            <UsageTab device={device} />
+          </TabsContent>
+          <TabsContent value="settings">
+            <div className="flex flex-col gap-2">
+              <SingletonForm
+                device={device}
+                getPath="/api/aaa/radius-incoming"
+                setPath="/api/aaa/radius-incoming"
+                title="RADIUS Incoming (CoA listener)"
+                fields={RADIUS_INCOMING_FIELDS}
+                unwrap={(p) => ({ available: true, row: (p as Row) ?? {} })}
+                extra={
+                  <Button
+                    size="sm"
+                    ghost
+                    onClick={() => void postJson("/api/aaa/radius-reset-counters", { device })}
+                  >
+                    Reset RADIUS counters
+                  </Button>
+                }
+              />
+              <SingletonForm
+                device={device}
+                getPath="/api/aaa/um-settings"
+                setPath="/api/aaa/um-settings"
+                title="User Manager (built-in RADIUS server)"
+                fields={UM_SETTINGS_FIELDS}
+                unwrap={(p) => {
+                  const o = (p as { available?: boolean; settings?: Row }) ?? {};
+                  return { available: o.available !== false, row: o.settings ?? {} };
+                }}
+              />
+              <SamplerSettings />
+            </div>
+          </TabsContent>
+        </Tabs>
       </Panel>
     </section>
   );

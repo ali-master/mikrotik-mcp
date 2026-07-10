@@ -7,14 +7,18 @@
  */
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { Braces, LayoutGrid, X } from "lucide-react";
 import { postJson } from "./api";
 import { ConfigForm } from "./config-form";
 import { JsonEditor, ROLLBACK_OPTS } from "./config-studio";
 import type { ConfigIssue, DiffSummary, SaveResp } from "./config-studio";
+import { Button, Select } from "./geist";
 import type { DeviceStatus } from "./types";
+import { cn } from "@/lib/utils";
 
 type Cfg = Record<string, unknown>;
-const asObj = (v: unknown): Cfg => (v && typeof v === "object" && !Array.isArray(v) ? (v as Cfg) : {});
+const asObj = (v: unknown): Cfg =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as Cfg) : {};
 
 export function ConfigEditor({
   initial,
@@ -71,10 +75,15 @@ export function ConfigEditor({
     const out: Record<string, { ok: boolean; label: string }> = {};
     type TestResp = { ok: boolean; status?: DeviceStatus; errors?: ConfigIssue[] };
     for (const [name, dc] of Object.entries(devices)) {
-      const r = await postJson<TestResp>("/api/config/test-device", { name, config: dc }).catch((): TestResp => ({ ok: false }));
+      const r = await postJson<TestResp>("/api/config/test-device", { name, config: dc }).catch(
+        (): TestResp => ({ ok: false }),
+      );
       out[name] =
         r.ok && r.status?.reachable === true
-          ? { ok: true, label: `${Math.round(r.status.latencyMs ?? 0)}ms · ${r.status.identity ?? "ok"}` }
+          ? {
+              ok: true,
+              label: `${Math.round(r.status.latencyMs ?? 0)}ms · ${r.status.identity ?? "ok"}`,
+            }
           : { ok: false, label: r.status?.error ?? r.errors?.[0]?.message ?? "unreachable" };
       setTests({ ...out });
     }
@@ -114,69 +123,98 @@ export function ConfigEditor({
   };
 
   return (
-    <div className="cfgstudio">
-      <div className="cfg-toolbar">
-        <div className="cfg-modeswitch">
+    <div className="flex flex-col gap-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="border-border bg-muted inline-flex gap-0.5 rounded-md border p-0.5">
           <button
-            className={`cfg-mode${mode === "form" ? " is-active" : ""}`}
+            className={cn(
+              "flex cursor-pointer items-center gap-1.5 rounded-[6px] border-0 bg-transparent px-[11px] py-1 text-xs font-semibold",
+              mode === "form" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+            )}
             onClick={() => {
               setJsonErr(null);
               setMode("form");
             }}
           >
-            ⊞ Form
+            <LayoutGrid className="size-3.5" /> Form
           </button>
-          <button className={`cfg-mode${mode === "json" ? " is-active" : ""}`} onClick={() => setMode("json")}>
-            {"{ } "}JSON
+          <button
+            className={cn(
+              "flex cursor-pointer items-center gap-1.5 rounded-[6px] border-0 bg-transparent px-[11px] py-1 text-xs font-semibold",
+              mode === "json" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+            )}
+            onClick={() => setMode("json")}
+          >
+            <Braces className="size-3.5" /> JSON
           </button>
         </div>
-        <span className={`cfg-status ${valid ? "is-ok" : "is-bad"}`}>
-          {jsonErr ? "invalid JSON" : errors.length ? `${errors.length} schema issue(s)` : "valid ✓"}
+        <span
+          className={cn(
+            "rounded-full border px-2.5 py-1 font-mono text-[11px]",
+            valid
+              ? "border-success/40 bg-success/10 text-success"
+              : "border-destructive/40 bg-destructive/10 text-destructive",
+          )}
+        >
+          {jsonErr
+            ? "invalid JSON"
+            : errors.length
+              ? `${errors.length} schema issue(s)`
+              : "valid ✓"}
         </span>
-        <span style={{ flex: 1 }} />
-        <button className="topo-btn" onClick={() => void testDevices()}>
+        <span className="flex-1" />
+        <Button size="sm" onClick={() => void testDevices()}>
           Test devices
-        </button>
-        <button className="topo-btn" onClick={() => void doPreview()} disabled={!valid}>
+        </Button>
+        <Button size="sm" onClick={() => void doPreview()} disabled={!valid}>
           Preview diff
-        </button>
-        <select className="cfg-select" value={rollbackMs} onChange={(e) => setRollbackMs(Number(e.target.value))} title="Auto-revert window">
-          {ROLLBACK_OPTS.map(([label, v]) => (
-            <option key={v} value={v}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <button className="topo-btn cfg-save" onClick={() => void doSave()} disabled={!valid || !!pending}>
+        </Button>
+        <Select
+          size="sm"
+          value={String(rollbackMs)}
+          onValueChange={(v) => setRollbackMs(Number(v))}
+          options={ROLLBACK_OPTS.map(([label, v]) => ({ value: String(v), label }))}
+          aria-label="Auto-revert window"
+        />
+        <Button
+          size="sm"
+          type="accent"
+          onClick={() => void doSave()}
+          disabled={!valid || !!pending}
+        >
           Save
-        </button>
-        <button className="topo-btn" onClick={onClose}>
+        </Button>
+        <Button size="sm" onClick={onClose}>
           Close
-        </button>
+        </Button>
       </div>
 
-      {msg && <div className="cfg-msg">{msg}</div>}
+      {msg && <div className="text-muted-foreground font-mono text-xs">{msg}</div>}
 
       {pending && (
-        <div className="cfg-banner">
+        <div className="border-warning/40 bg-warning/10 flex flex-wrap items-center gap-2 rounded-md border px-3 py-2.5 text-xs">
           <strong>Applied.</strong>{" "}
           {(pending.rollbackMs ?? 0) > 0 ? (
             <>
-              Reverting in <span className="cfg-count">{countdown}s</span> unless you keep it.
+              Reverting in <span className="text-warning font-mono font-bold">{countdown}s</span>{" "}
+              unless you keep it.
             </>
           ) : (
             <>Saved without an auto-revert window.</>
           )}
           {pending.devicesChanged && (
-            <span className="cfg-warn"> · device list changed — reconnect the MCP client to expose it to the model</span>
+            <span className="text-warning text-[11px]">
+              {" "}
+              · device list changed — reconnect the MCP client to expose it to the model
+            </span>
           )}
-          <span style={{ flex: 1 }} />
-          <button className="topo-btn cfg-save" onClick={() => void doKeep()}>
+          <span className="flex-1" />
+          <Button size="sm" type="accent" onClick={() => void doKeep()}>
             Keep changes
-          </button>
-          <button className="topo-btn" onClick={() => void doRollback()}>
+          </Button>
+          <Button size="sm" onClick={() => void doRollback()}>
             Revert now
-          </button>
+          </Button>
         </div>
       )}
 
@@ -187,9 +225,15 @@ export function ConfigEditor({
       )}
 
       {Object.keys(tests).length > 0 && (
-        <div className="cfg-chips">
+        <div className="flex flex-wrap gap-1.5">
           {Object.entries(tests).map(([name, r]) => (
-            <span key={name} className={`cfg-chip ${r.ok ? "is-ok" : "is-bad"}`}>
+            <span
+              key={name}
+              className={cn(
+                "rounded-full border px-2.5 py-1 font-mono text-[11px]",
+                r.ok ? "border-success/40 text-success" : "border-destructive/40 text-destructive",
+              )}
+            >
               {r.ok ? "●" : "○"} {name}: {r.label}
             </span>
           ))}
@@ -197,13 +241,13 @@ export function ConfigEditor({
       )}
 
       {(jsonErr || errors.length > 0) && (
-        <div className="cfg-errors">
+        <div className="flex flex-col gap-[3px]">
           {jsonErr ? (
-            <div className="cfg-err">JSON: {jsonErr}</div>
+            <div className="text-destructive font-mono text-[11px]">JSON: {jsonErr}</div>
           ) : (
             errors.slice(0, 12).map((e, i) => (
-              <div className="cfg-err" key={i}>
-                <code>{e.path}</code> — {e.message}
+              <div className="text-destructive font-mono text-[11px]" key={i}>
+                <code className="text-warning">{e.path}</code> — {e.message}
               </div>
             ))
           )}
@@ -211,20 +255,37 @@ export function ConfigEditor({
       )}
 
       {preview && (
-        <div className="cfg-preview">
-          <div className="cfg-preview__hd">
+        <div className="border-border overflow-hidden rounded-md border">
+          <div className="bg-muted flex items-center gap-2 px-[13px] py-[9px] text-xs">
             <strong>Diff vs current</strong>
-            <span className="muted">
-              {preview.summary?.changed ? `+${preview.summary.added} / -${preview.summary.removed}` : "no changes"}
+            <span className="text-muted-foreground text-[11px]">
+              {preview.summary?.changed
+                ? `+${preview.summary.added} / -${preview.summary.removed}`
+                : "no changes"}
             </span>
-            <span style={{ flex: 1 }} />
-            <button className="topo-btn" onClick={() => setPreview(null)}>
-              ✕
-            </button>
+            <span className="flex-1" />
+            <Button
+              size="sm"
+              ghost
+              icon={<X className="size-4" />}
+              onClick={() => setPreview(null)}
+              aria-label="Close preview"
+            />
           </div>
-          <pre className="cfg-diff">
+          <pre className="bg-background text-muted-foreground m-0 max-h-[320px] overflow-auto px-3 py-2.5 font-mono text-[11px] leading-[1.5]">
             {(preview.unified || "(identical)").split("\n").map((l, i) => (
-              <div key={i} className={l.startsWith("+") ? "d-add" : l.startsWith("-") ? "d-del" : l.startsWith("@@") ? "d-hunk" : ""}>
+              <div
+                key={i}
+                className={
+                  l.startsWith("+")
+                    ? "text-success"
+                    : l.startsWith("-")
+                      ? "text-destructive"
+                      : l.startsWith("@@")
+                        ? "text-brand"
+                        : ""
+                }
+              >
                 {l || " "}
               </div>
             ))}

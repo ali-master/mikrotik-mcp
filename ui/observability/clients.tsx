@@ -12,6 +12,16 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { RefreshCw, Wifi } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
@@ -94,13 +104,18 @@ function TrafficChart({ history }: { history: { rx: number; tx: number }[] }): R
   };
 
   return (
-    <svg className="clients-chart" viewBox={`0 0 ${W} ${H}`} xmlns={SVG_NS} role="img">
+    <svg
+      className="block h-[150px] w-full max-w-[520px] rounded-md border border-border bg-background"
+      viewBox={`0 0 ${W} ${H}`}
+      xmlns={SVG_NS}
+      role="img"
+    >
       {history.length >= 2 && (
         <>
-          <polygon className="rx area" points={area((p) => p.rx)} />
-          <polygon className="tx area" points={area((p) => p.tx)} />
-          <polyline className="rx line" points={path((p) => p.rx)} />
-          <polyline className="tx line" points={path((p) => p.tx)} />
+          <polygon className="fill-success/20 stroke-none" points={area((p) => p.rx)} />
+          <polygon className="fill-warning/15 stroke-none" points={area((p) => p.tx)} />
+          <polyline className="fill-none stroke-success stroke-2" points={path((p) => p.rx)} />
+          <polyline className="fill-none stroke-warning stroke-2" points={path((p) => p.tx)} />
         </>
       )}
     </svg>
@@ -112,7 +127,8 @@ function MiniSparkline({ history }: { history: { rx: number; tx: number }[] }): 
   const W = 80;
   const H = 18;
   const pad = 1;
-  if (history.length < 2) return <svg className="mini-spark" viewBox={`0 0 ${W} ${H}`} />;
+  const cls = "block h-[18px] w-20 shrink-0 rounded-[3px] bg-muted/40";
+  if (history.length < 2) return <svg className={cls} viewBox={`0 0 ${W} ${H}`} />;
   const max = Math.max(1, ...history.flatMap((p) => [p.rx, p.tx]));
   const x = (i: number): number => pad + (i * (W - 2 * pad)) / Math.max(1, MINI_SAMPLES - 1);
   const y = (v: number): number => H - pad - (v / max) * (H - 2 * pad);
@@ -125,11 +141,19 @@ function MiniSparkline({ history }: { history: { rx: number; tx: number }[] }): 
     return `${first},${base} ${pts(pick)} ${last},${base}`;
   };
   return (
-    <svg className="mini-spark" viewBox={`0 0 ${W} ${H}`} xmlns={SVG_NS}>
-      <polygon className="rx area" points={filled((p) => p.rx)} />
-      <polygon className="tx area" points={filled((p) => p.tx)} />
-      <polyline className="rx line" points={pts((p) => p.rx)} />
-      <polyline className="tx line" points={pts((p) => p.tx)} />
+    <svg className={cls} viewBox={`0 0 ${W} ${H}`} xmlns={SVG_NS}>
+      <polygon className="fill-success/20 stroke-none" points={filled((p) => p.rx)} />
+      <polygon className="fill-warning/15 stroke-none" points={filled((p) => p.tx)} />
+      <polyline
+        className="fill-none stroke-success stroke-1"
+        vectorEffect="non-scaling-stroke"
+        points={pts((p) => p.rx)}
+      />
+      <polyline
+        className="fill-none stroke-warning stroke-1"
+        vectorEffect="non-scaling-stroke"
+        points={pts((p) => p.tx)}
+      />
     </svg>
   );
 }
@@ -189,17 +213,18 @@ function LimitsEditor({
 
   const hasLimit = Boolean(current.download || current.upload);
   return (
-    <div className="clients-limits">
-      <div className="clients-limits__hd">
-        <span className="clients-limits__label">Rate limits</span>
-        <span className="muted">
+    <div className="mt-3.5 max-w-[520px] border-t border-border pt-3">
+      <div className="mb-2 flex items-baseline gap-3">
+        <span className="text-[13px] font-semibold">Rate limits</span>
+        <span className="text-muted-foreground text-[11px]">
           current: ↓ {current.download || "unlimited"} · ↑ {current.upload || "unlimited"}
         </span>
       </div>
-      <div className="clients-limits__row">
-        <label className="clients-limits__field">
-          <span className="muted">↓ Download</span>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-[3px] text-[11.5px]">
+          <span className="text-muted-foreground text-[11px]">↓ Download</span>
           <Input
+            className="w-[150px]"
             placeholder="10M · blank = unlimited"
             value={dl}
             onChange={(e) => {
@@ -208,9 +233,10 @@ function LimitsEditor({
             }}
           />
         </label>
-        <label className="clients-limits__field">
-          <span className="muted">↑ Upload</span>
+        <label className="flex flex-col gap-[3px] text-[11.5px]">
+          <span className="text-muted-foreground text-[11px]">↑ Upload</span>
           <Input
+            className="w-[150px]"
             placeholder="2M · blank = unlimited"
             value={ul}
             onChange={(e) => {
@@ -235,7 +261,7 @@ function LimitsEditor({
           Remove
         </Button>
       </div>
-      {msg && <div className="muted clients-limits__msg">{msg}</div>}
+      {msg && <div className="mt-1.5 text-muted-foreground text-xs">{msg}</div>}
     </div>
   );
 }
@@ -254,10 +280,10 @@ function DeviceDetail({
 }): ReactNode {
   const hasQueue = traffic !== undefined;
   return (
-    <div className="clients-detail">
-      <div className="clients-detail__hd">
-        <span className="clients-detail__title">{device.host || device.comment || device.ip}</span>
-        <span className="muted">
+    <div className="mt-3.5 border-t border-border pt-3.5">
+      <div className="mb-2.5 flex flex-wrap items-baseline gap-3">
+        <span className="text-sm font-semibold">{device.host || device.comment || device.ip}</span>
+        <span className="text-muted-foreground text-[11px]">
           {device.ip || "no IP"} · {device.mac} · {device.iface || "?"} · {device.status}
         </span>
       </div>
@@ -268,12 +294,12 @@ function DeviceDetail({
         </Note>
       ) : (
         <>
-          <div className="clients-rates">
-            <span className="rate rx">↓ {mbps(traffic.rxRate)}</span>
-            <span className="rate tx">↑ {mbps(traffic.txRate)}</span>
+          <div className="mb-2 flex gap-[18px] tabular-nums">
+            <span className="font-semibold text-success">↓ {mbps(traffic.rxRate)}</span>
+            <span className="font-semibold text-warning">↑ {mbps(traffic.txRate)}</span>
           </div>
           <TrafficChart history={traffic.history} />
-          <div className="muted clients-totals">
+          <div className="mt-2 text-muted-foreground text-xs tabular-nums">
             total ↓ {bytes(traffic.rxBytes)} · ↑ {bytes(traffic.txBytes)}
           </div>
         </>
@@ -290,8 +316,10 @@ function DeviceDetail({
         />
       )}
       {device.ip && (
-        <div className="clients-history">
-          <div className="clients-history__hd">Usage history · last 3 months</div>
+        <div className="mt-4">
+          <div className="mb-2 text-xs font-semibold text-muted-foreground">
+            Usage history · last 3 months
+          </div>
           <UsageHistoryChart
             endpoint={`/api/usage/client?ip=${encodeURIComponent(device.ip)}${
               deviceName ? `&device=${encodeURIComponent(deviceName)}` : ""
@@ -476,12 +504,12 @@ export function ClientsView(): ReactNode {
   const counts = view?.counts;
 
   return (
-    <section className="view">
+    <section className="grid content-start gap-[18px]">
       <Panel
         title="Connected clients"
         className="reveal"
         extra={
-          <div className="clients-toolbar">
+          <div className="flex items-center gap-2">
             {routerOptions.length > 1 && (
               <Select
                 value={deviceName}
@@ -493,148 +521,162 @@ export function ClientsView(): ReactNode {
                 }))}
               />
             )}
-            <input
-              className="geist-input"
+            <Input
+              className="w-[200px]"
               placeholder="Filter IP / MAC / name…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
-            <Button size="sm" ghost onClick={() => void load()}>
-              ↻ Refresh
+            <Button size="sm" ghost icon={<RefreshCw />} onClick={() => void load()}>
+              Refresh
             </Button>
           </div>
         }
       >
         {counts && (
-          <div className="clients-counts muted">
+          <div className="mb-2.5 text-muted-foreground text-xs">
             {counts.total} total · {counts.static} static · {counts.blocked} blocked
           </div>
         )}
 
         {error && (
-          <Note type="error" className="clients-error">
+          <Note type="error" className="mb-2.5">
             {error}
           </Note>
         )}
 
         {!view ? (
-          <div className="muted">loading connected devices…</div>
+          <div className="text-muted-foreground text-[11px]">loading connected devices…</div>
         ) : shown.length === 0 ? (
-          <div className="feed-empty">
-            <div className="feed-empty__icon">📡</div>
-            <p className="feed-empty__title">No connected devices</p>
-            <p className="feed-empty__sub">
+          <div className="grid justify-items-center gap-2 rounded-lg border border-dashed border-border px-4 py-[54px] text-center">
+            <Wifi className="size-7 text-muted-foreground opacity-80" />
+            <p className="m-0 font-semibold text-foreground">No connected devices</p>
+            <p className="m-0 max-w-[460px] text-muted-foreground text-xs">
               Nothing in this router's DHCP-lease or ARP table{filter ? " matches the filter" : ""}.
             </p>
           </div>
         ) : (
-          <div className="clients-table">
-            <div className="clients-row clients-row--head">
-              <span>IP</span>
-              <span>Name</span>
-              <span>MAC</span>
-              <span>Iface</span>
-              <span>Status</span>
-              <span>Traffic</span>
-              <span className="clients-actions-h">Actions</span>
-            </div>
-            {shown.map((d) => {
-              const isSel = d.mac === selected;
-              const isBusy = busy === d.mac;
-              const t = d.ip ? trafficMap.get(d.ip) : undefined;
-              return (
-                <div
-                  key={d.mac}
-                  className={[
-                    "clients-row",
-                    isSel ? "is-selected" : "",
-                    d.blocked ? "is-blocked" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => setSelected(isSel ? null : d.mac)}
-                >
-                  <span className="clients-ip">{d.ip || "\u2014"}</span>
-                  <span className="clients-name">{d.host || d.comment || "(unknown)"}</span>
-                  <span className="clients-mac">{d.mac}</span>
-                  <span className="muted">{d.iface || ""}</span>
-                  <span className="clients-badges">
-                    {d.static && <Badge type="secondary">static</Badge>}
-                    {d.blocked ? (
-                      <Badge type="error">blocked</Badge>
-                    ) : (
-                      <span className="muted">{d.status}</span>
-                    )}
-                  </span>
-                  <span className="clients-traffic">
-                    {t ? (
-                      <>
-                        <span className="clients-traffic__rates">
-                          <span className="rx">↓{compact(t.rxRate)}</span>
-                          <span className="tx">↑{compact(t.txRate)}</span>
-                        </span>
-                        <MiniSparkline history={t.history} />
-                      </>
-                    ) : (
-                      <span className="muted">{d.ip ? "\u2014" : ""}</span>
-                    )}
-                  </span>
-                  <span
-                    className="clients-actions"
-                    onClick={(e) => e.stopPropagation()}
-                    role="presentation"
+          <Table className="text-[13px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>IP</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>MAC</TableHead>
+                <TableHead>Iface</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Traffic</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {shown.map((d) => {
+                const isSel = d.mac === selected;
+                const isBusy = busy === d.mac;
+                const t = d.ip ? trafficMap.get(d.ip) : undefined;
+                const strike = d.blocked && "text-muted-foreground line-through";
+                return (
+                  <TableRow
+                    key={d.mac}
+                    data-state={isSel ? "selected" : undefined}
+                    className="cursor-pointer"
+                    onClick={() => setSelected(isSel ? null : d.mac)}
                   >
-                    {d.blocked ? (
-                      <Button
-                        size="sm"
-                        type="success"
-                        ghost
-                        loading={isBusy}
-                        onClick={() => void act("allow", d.mac)}
-                      >
-                        Allow
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        type="error"
-                        ghost
-                        loading={isBusy}
-                        onClick={() => void act("block", d.mac)}
-                      >
-                        Block
-                      </Button>
-                    )}
-                    {!d.static && (
-                      <Button
-                        size="sm"
-                        ghost
-                        loading={isBusy}
-                        onClick={() => void act("pin", d.mac)}
-                      >
-                        Pin IP
-                      </Button>
-                    )}
-                    <Button size="sm" ghost disabled={isBusy} onClick={() => openEdit(d, "ip")}>
-                      Set IP
-                    </Button>
-                    <Button size="sm" ghost disabled={isBusy} onClick={() => openEdit(d, "label")}>
-                      Label
-                    </Button>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                    <TableCell className={cn("max-w-[120px] truncate", strike)}>
+                      {d.ip || "—"}
+                    </TableCell>
+                    <TableCell className={cn("max-w-[200px] truncate", strike)}>
+                      {d.host || d.comment || "(unknown)"}
+                    </TableCell>
+                    <TableCell className="font-mono text-[11.5px] text-muted-foreground">
+                      {d.mac}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-[11px]">
+                      {d.iface || ""}
+                    </TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-1.5">
+                        {d.static && <Badge type="secondary">static</Badge>}
+                        {d.blocked ? (
+                          <Badge type="error">blocked</Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-[11px]">{d.status}</span>
+                        )}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {t ? (
+                        <span className="flex items-center gap-1 overflow-hidden tabular-nums">
+                          <span className="flex min-w-[48px] flex-col whitespace-nowrap leading-tight">
+                            <span className="text-success">↓{compact(t.rxRate)}</span>
+                            <span className="text-warning">↑{compact(t.txRate)}</span>
+                          </span>
+                          <MiniSparkline history={t.history} />
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-[11px]">{d.ip ? "—" : ""}</span>
+                      )}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <span className="flex justify-end gap-1.5">
+                        {d.blocked ? (
+                          <Button
+                            size="sm"
+                            type="success"
+                            ghost
+                            loading={isBusy}
+                            onClick={() => void act("allow", d.mac)}
+                          >
+                            Allow
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            type="error"
+                            ghost
+                            loading={isBusy}
+                            onClick={() => void act("block", d.mac)}
+                          >
+                            Block
+                          </Button>
+                        )}
+                        {!d.static && (
+                          <Button
+                            size="sm"
+                            ghost
+                            loading={isBusy}
+                            onClick={() => void act("pin", d.mac)}
+                          >
+                            Pin IP
+                          </Button>
+                        )}
+                        <Button size="sm" ghost disabled={isBusy} onClick={() => openEdit(d, "ip")}>
+                          Set IP
+                        </Button>
+                        <Button
+                          size="sm"
+                          ghost
+                          disabled={isBusy}
+                          onClick={() => openEdit(d, "label")}
+                        >
+                          Label
+                        </Button>
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
 
         {edit && selectedDevice?.mac === edit.mac && (
-          <div className="clients-edit">
-            <span className="clients-edit__label">
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 rounded-md border border-border bg-card px-3 py-2.5">
+            <span className="text-[13px] text-muted-foreground">
               {edit.field === "ip" ? "Reserve IP for" : "Label for"}{" "}
               <b>{selectedDevice.host || selectedDevice.mac}</b>:
             </span>
             <Input
+              className="w-[220px]"
               autoFocus
               value={edit.value}
               placeholder={edit.field === "ip" ? "e.g. 192.168.88.50" : "e.g. Ali phone"}
