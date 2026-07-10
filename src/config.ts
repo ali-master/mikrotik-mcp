@@ -221,6 +221,13 @@ export const DashboardConfigSchema = z.object({
   maxBodyBytes: z.coerce.number().int().nonnegative().default(16_384),
   /** Optional bearer token; when set, the dashboard page and API require it. */
   token: z.string().optional(),
+  /**
+   * How many rows the Live Feed table renders. A display cap only — the in-memory
+   * event buffer is separate and larger. Kept here (not in the browser) so it
+   * shows in the effective config, is editable in the config editor, and is the
+   * same for every viewer.
+   */
+  feedLimit: z.coerce.number().int().positive().max(10_000).default(200),
 });
 export type DashboardConfig = z.infer<typeof DashboardConfigSchema>;
 
@@ -638,6 +645,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): MikrotikConf
     redactInput: boolOpt(pick("dashboard-redact-input", "MIKROTIK_DASHBOARD__REDACT_INPUT")),
     maxBodyBytes: pick("dashboard-max-body-bytes", "MIKROTIK_DASHBOARD__MAX_BODY_BYTES"),
     token: pick("dashboard-token", "MIKROTIK_DASHBOARD__TOKEN"),
+    feedLimit: pick("dashboard-feed-limit", "MIKROTIK_DASHBOARD__FEED_LIMIT"),
   });
 
   // 5) SSH connection pooling. Config-file block is the baseline; env/flags override.

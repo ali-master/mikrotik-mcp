@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { HBars, Panel, StatCard } from "./atoms";
-import { DEFAULT_FEED_LIMIT, FEED_LIMITS, loadFeedLimit, saveFeedLimit } from "./prefs";
+import { DEFAULT_FEED_LIMIT, FEED_LIMITS } from "./prefs";
 import { ThemeToggle } from "./theme";
 import { BackupsView } from "./backups";
 import { AaaView } from "./aaa";
@@ -497,13 +497,29 @@ function App(): ReactNode {
   const [seed, setSeed] = useState<{ name: string; body: Record<string, unknown> } | null>(null);
   const [feed, setFeed] = useState<ToolEvent[]>([]);
   const [windowMs, setWindowMs] = useState(3_600_000);
-  // How many feed rows to render. Lifted here (rather than owned by the Config
-  // page) because the Config panel and the feed table are siblings in this tree.
-  const [feedLimit, setFeedLimitState] = useState(loadFeedLimit);
-  const setFeedLimit = useCallback((n: number): void => {
-    setFeedLimitState(n);
-    saveFeedLimit(n);
-  }, []);
+  // The Live Feed row limit is a real config value (`dashboard.feedLimit`), so it
+  // shows in the effective config and the config editor and is shared by every
+  // viewer. Derive it from the loaded config; the Config-page control persists a
+  // change through the same apply endpoint the editor uses.
+  const feedLimit =
+    Number((config?.dashboard as Record<string, unknown> | undefined)?.feedLimit) ||
+    DEFAULT_FEED_LIMIT;
+  const setFeedLimit = useCallback(
+    async (n: number): Promise<void> => {
+      if (!config) return;
+      const dashboard = { ...(config.dashboard as Record<string, unknown>), feedLimit: n };
+      // rollbackMs: 0 → apply + persist immediately, no rollback countdown; the
+      // server merges back any redacted secrets. Refetch so the JSON view, the
+      // editor and the feed table all pick up the new value.
+      await postJson("/api/config", { config: { ...config, dashboard }, rollbackMs: 0 }).catch(
+        () => {},
+      );
+      await api<Record<string, unknown>>("/api/config")
+        .then(setConfig)
+        .catch(() => {});
+    },
+    [config],
+  );
   const [paused, setPaused] = useState(false);
   const [liveMode, setLiveMode] = useState<LiveMode>("off");
   const [selected, setSelected] = useState<ToolEvent | null>(null);
@@ -1283,7 +1299,7 @@ function App(): ReactNode {
                 className="reveal"
                 extra={
                   <span className="text-muted-foreground text-[11px]">
-                    stored in this browser · not server config
+                    saved to <code>dashboard.feedLimit</code> in the config
                   </span>
                 }
               >
@@ -1301,7 +1317,7 @@ function App(): ReactNode {
                     size="sm"
                     aria-label="Live Feed rows"
                     value={String(feedLimit)}
-                    onValueChange={(v) => setFeedLimit(Number(v))}
+                    onValueChange={(v) => void setFeedLimit(Number(v))}
                     options={FEED_LIMITS.map((n) => ({
                       value: String(n),
                       label: `${num(n)} rows${n === DEFAULT_FEED_LIMIT ? " (default)" : ""}`,

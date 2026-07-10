@@ -122,11 +122,10 @@ async function enableKidControl(ctx: ToolContext): Promise<string | null> {
   if (looksLikeError(count)) return firstLine(count);
   if ((parseLeadingNumber(count.trim()) ?? 0) > 0) return null; // already monitoring
 
+  // No `comment=` — `/ip kid-control add` rejects it on some RouterOS builds
+  // ("bad parameter comment"). The `mcp-monitor` name is enough to identify it.
   const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d) => `${d}=0s-1d`).join(" ");
-  const add = await executeMikrotikCommand(
-    `/ip kid-control add name=mcp-monitor ${days} comment="traffic monitor (mikrotik-mcp) — 24/7 allow, no devices assigned; blocks nothing"`,
-    ctx,
-  );
+  const add = await executeMikrotikCommand(`/ip kid-control add name=mcp-monitor ${days}`, ctx);
   return looksLikeError(add) ? firstLine(add) : null;
 }
 

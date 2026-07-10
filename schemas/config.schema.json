@@ -229,7 +229,8 @@
         "maxEvents": 100000,
         "captureBody": true,
         "redactInput": false,
-        "maxBodyBytes": 16384
+        "maxBodyBytes": 16384,
+        "feedLimit": 200
       },
       "type": "object",
       "properties": {
@@ -273,6 +274,12 @@
         },
         "token": {
           "type": "string"
+        },
+        "feedLimit": {
+          "default": 200,
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 10000
         }
       },
       "required": [
@@ -283,7 +290,8 @@
         "maxEvents",
         "captureBody",
         "redactInput",
-        "maxBodyBytes"
+        "maxBodyBytes",
+        "feedLimit"
       ],
       "additionalProperties": false
     },
