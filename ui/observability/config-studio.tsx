@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import { api } from "./api";
 import { highlightJson } from "./highlight";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 // ── Config types + helpers (shared across the config editor) ─────────────────
 export interface ConfigIssue {
@@ -59,7 +61,10 @@ export function collectHints(schema: unknown): SchemaHints {
 }
 
 /** The word being typed at the caret + whether we're after a `:` (a value position). */
-export function wordAtCaret(text: string, caret: number): { word: string; start: number; isValue: boolean } {
+export function wordAtCaret(
+  text: string,
+  caret: number,
+): { word: string; start: number; isValue: boolean } {
   let start = caret;
   while (start > 0 && /[A-Za-z0-9_.-]/.test(text[start - 1])) start--;
   const word = text.slice(start, caret);
@@ -94,7 +99,13 @@ export function JsonEditor({
 }): ReactNode {
   const [text, setText] = useState(() => JSON.stringify(value, null, 2));
   const [hints, setHints] = useState<SchemaHints>({ keys: [], enums: [] });
-  const [ac, setAc] = useState<{ items: string[]; index: number; start: number; x: number; y: number } | null>(null);
+  const [ac, setAc] = useState<{
+    items: string[];
+    index: number;
+    start: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const caretRef = useRef<number | null>(null);
   const hlRef = useRef<HTMLPreElement | null>(null);
@@ -184,18 +195,26 @@ export function JsonEditor({
   const lines = text.split("\n").length;
 
   return (
-    <div className="cfg-editor">
-      <pre className="cfg-gutter" aria-hidden="true" ref={gutterRef}>
+    <div className="border-border bg-background flex max-h-[420px] overflow-hidden rounded-md border">
+      <pre
+        className="bg-muted text-muted-foreground m-0 min-w-[38px] overflow-hidden px-2 py-2.5 text-right font-mono text-xs leading-[1.5] select-none"
+        aria-hidden="true"
+        ref={gutterRef}
+      >
         {Array.from({ length: lines }, (_, i) => i + 1).join("\n")}
       </pre>
-      <div className="cfg-ta-wrap">
-        <pre className="cfg-hl" aria-hidden="true" ref={hlRef}>
+      <div className="relative flex-1">
+        <pre
+          className="text-muted-foreground pointer-events-none absolute inset-0 z-0 m-0 box-border overflow-hidden px-3 py-2.5 font-mono text-xs leading-[1.5] whitespace-pre [tab-size:2] [&_.j-bool]:text-chart-4 [&_.j-key]:text-chart-1 [&_.j-null]:text-muted-foreground [&_.j-num]:text-chart-3 [&_.j-str]:text-chart-2"
+          aria-hidden="true"
+          ref={hlRef}
+        >
           {highlightJson(text)}
           {"\n"}
         </pre>
-        <textarea
+        <Textarea
           ref={taRef}
-          className="cfg-ta"
+          className="caret-brand selection:bg-brand/35 relative z-[1] m-0 box-border h-[400px] min-h-0 w-full resize-y rounded-none border-0 bg-transparent px-3 py-2.5 font-mono text-xs leading-[1.5] whitespace-pre text-transparent shadow-none [field-sizing:fixed] [tab-size:2] outline-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
           spellCheck={false}
           wrap="off"
           value={text}
@@ -215,11 +234,17 @@ export function JsonEditor({
           }}
         />
         {ac && (
-          <div className="cfg-ac" style={{ left: ac.x, top: ac.y }}>
+          <div
+            className="border-brand bg-card absolute z-[5] max-h-[184px] min-w-[150px] overflow-y-auto rounded-md border shadow-lg"
+            style={{ left: ac.x, top: ac.y }}
+          >
             {ac.items.map((it, i) => (
               <div
                 key={it}
-                className={`cfg-ac-item${i === ac.index ? " is-sel" : ""}`}
+                className={cn(
+                  "cursor-pointer px-[11px] py-[5px] font-mono text-xs",
+                  i === ac.index ? "bg-brand/20 text-foreground" : "text-muted-foreground",
+                )}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   accept(it);

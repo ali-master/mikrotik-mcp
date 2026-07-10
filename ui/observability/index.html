@@ -1,11 +1,30 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#04080d" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="color-scheme" content="dark light" />
     <title>MikroTik MCP — Observability</title>
+    <script>
+      // Resolve the theme before first paint so a stored light preference never
+      // flashes the dark default. Dark is the historical default, so an absent
+      // preference stays dark regardless of the OS setting.
+      //
+      // Note: this file deliberately declares no external stylesheet. The build
+      // inliner (scripts/build-ui.ts) resolves every stylesheet href off disk, so
+      // a remote one would break it — the web font is imported from tailwind.css.
+      (() => {
+        try {
+          document.documentElement.classList.toggle(
+            "dark",
+            localStorage.getItem("mt-theme") !== "light",
+          );
+        } catch {
+          /* storage blocked — keep the dark default */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

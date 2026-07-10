@@ -97,11 +97,12 @@ export function UsageHistoryChart({
     return out;
   }, [data, days]);
 
-  if (loading) return <div className="muted usage-chart__empty">loading usage…</div>;
+  if (loading)
+    return <div className="px-1 py-4 text-[12.5px] text-muted-foreground">loading usage…</div>;
   const hasData = (data?.totalRx ?? 0) + (data?.totalTx ?? 0) > 0;
   if (!hasData) {
     return (
-      <div className="muted usage-chart__empty">
+      <div className="px-1 py-4 text-[12.5px] text-muted-foreground">
         No usage recorded yet. The dashboard samples on a configurable interval (1 minute by default
         — see the RADIUS &amp; UM Settings tab); history fills in over time (kept ~3 months).
       </div>
@@ -123,25 +124,31 @@ export function UsageHistoryChart({
   };
 
   return (
-    <div className="usage-chart">
-      <div className="usage-chart__legend">
-        <span className="rate rx">↓ {bytes(data?.totalRx ?? 0)} down</span>
-        <span className="rate tx">↑ {bytes(data?.totalTx ?? 0)} up</span>
-        <span className="muted">
+    <div>
+      <div className="mb-1.5 flex items-baseline gap-3.5 text-xs tabular-nums">
+        <span className="font-semibold text-chart-3">↓ {bytes(data?.totalRx ?? 0)} down</span>
+        <span className="font-semibold text-chart-4">↑ {bytes(data?.totalTx ?? 0)} up</span>
+        <span className="text-[11px] text-muted-foreground">
           · peak/day {bytes(max)} · last {days} days
         </span>
       </div>
       <svg
-        className="usage-chart__svg"
+        className="block h-40 w-full rounded-md border border-border bg-card"
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
         xmlns={SVG_NS}
         role="img"
       >
-        <polygon className="rx area" points={area((d) => d.rx)} />
-        <polygon className="tx area" points={area((d) => d.tx)} />
-        <polyline className="rx line" points={path((d) => d.rx)} />
-        <polyline className="tx line" points={path((d) => d.tx)} />
+        <polygon className="fill-chart-3/20" points={area((d) => d.rx)} />
+        <polygon className="fill-chart-4/15" points={area((d) => d.tx)} />
+        <polyline
+          className="fill-none stroke-chart-3 stroke-2 [vector-effect:non-scaling-stroke]"
+          points={path((d) => d.rx)}
+        />
+        <polyline
+          className="fill-none stroke-chart-4 stroke-2 [vector-effect:non-scaling-stroke]"
+          points={path((d) => d.tx)}
+        />
       </svg>
     </div>
   );
@@ -152,6 +159,15 @@ const WEEKS = 53;
 const CELL = 12;
 const GAP = 3;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Contribution-level fill, indexed by level 0–4 (built from the shared tokens). */
+const HEAT = [
+  "var(--muted)",
+  "color-mix(in srgb, var(--chart-3) 30%, var(--muted))",
+  "color-mix(in srgb, var(--chart-3) 50%, var(--muted))",
+  "color-mix(in srgb, var(--chart-3) 72%, transparent)",
+  "var(--chart-3)",
+];
 
 interface Cell {
   day: string;
@@ -244,14 +260,16 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
   };
 
   return (
-    <div className="heatmap" ref={wrapRef}>
-      <div className="heatmap__hd">
-        <span className="heatmap__title">{label ?? "Connections"}</span>
-        <span className="muted">{data ? `${data.total} total` : "…"}</span>
+    <div className="relative" ref={wrapRef}>
+      <div className="mb-1.5 flex items-baseline gap-2.5">
+        <span className="text-[12.5px] font-semibold">{label ?? "Connections"}</span>
+        <span className="text-[11px] text-muted-foreground">
+          {data ? `${data.total} total` : "…"}
+        </span>
       </div>
-      <div className="heatmap__scroll" onMouseLeave={() => setTip(null)}>
+      <div className="overflow-x-auto pb-1" onMouseLeave={() => setTip(null)}>
         <svg
-          className="heatmap__svg"
+          className="block"
           viewBox={`0 0 ${leftPad + gridW} ${H}`}
           width={leftPad + gridW}
           height={H}
@@ -261,7 +279,7 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
           {monthLabels.map((m) => (
             <text
               key={`${m.col}-${m.text}`}
-              className="heatmap__month"
+              className="fill-muted-foreground text-[9px]"
               x={leftPad + m.col * (CELL + GAP)}
               y={11}
             >
@@ -271,7 +289,7 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
           {["Mon", "Wed", "Fri"].map((d, i) => (
             <text
               key={d}
-              className="heatmap__wd"
+              className="fill-muted-foreground text-[9px]"
               x={0}
               y={topPad + (i * 2 + 1) * (CELL + GAP) + CELL - 2}
             >
@@ -281,9 +299,10 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
           {cells.map((c) => (
             <rect
               key={c.day}
-              className={`heatmap__cell lvl${level(c.count)}${
-                tip?.day === c.day ? " is-hover" : ""
+              className={`cursor-pointer stroke-1 [transition:stroke_0.1s_ease] ${
+                tip?.day === c.day ? "stroke-foreground stroke-[1.5px]" : "stroke-border/60"
               }`}
+              style={{ fill: HEAT[level(c.count)] }}
               x={leftPad + c.col * (CELL + GAP)}
               y={topPad + c.row * (CELL + GAP)}
               width={CELL}
@@ -295,22 +314,36 @@ export function Heatmap({ endpoint, label }: { endpoint: string; label?: string 
         </svg>
       </div>
       {tip && (
-        <div className="heatmap__tip" style={{ left: tip.left, top: tip.top }} role="tooltip">
-          <div className="heatmap__tip-head">
-            <span className={`heatmap__swatch lvl${tip.lvl}`} />
-            <b>
+        <div
+          className="pointer-events-none absolute z-30 min-w-[150px] -translate-x-1/2 translate-y-[calc(-100%-9px)] rounded-[10px] border border-chart-3/35 bg-popover px-2.5 py-2 shadow-xl"
+          style={{ left: tip.left, top: tip.top }}
+          role="tooltip"
+        >
+          <span className="absolute -bottom-1.5 left-1/2 size-[11px] -translate-x-1/2 rotate-45 border-r border-b border-chart-3/35 bg-popover" />
+          <div className="flex items-center gap-1.5 text-[13px]">
+            <span
+              className="inline-block size-[12px] rounded-[2px]"
+              style={{ background: HEAT[tip.lvl] }}
+            />
+            <b className="font-semibold">
               {tip.count === 0
                 ? "No connections"
                 : `${tip.count} connection${tip.count === 1 ? "" : "s"}`}
             </b>
           </div>
-          <div className="heatmap__tip-date">{fmtFullDate(tip.day)}</div>
+          <div className="mt-[3px] text-[11.5px] text-muted-foreground tabular-nums">
+            {fmtFullDate(tip.day)}
+          </div>
         </div>
       )}
-      <div className="heatmap__legend muted">
+      <div className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
         Less
         {[0, 1, 2, 3, 4].map((l) => (
-          <span key={l} className={`heatmap__swatch lvl${l}`} />
+          <span
+            key={l}
+            className="inline-block size-[11px] rounded-[2px]"
+            style={{ background: HEAT[l] }}
+          />
         ))}
         More
       </div>

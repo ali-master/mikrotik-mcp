@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { api, deleteJson, postJson } from "./api";
 import { Panel, StatCard } from "./atoms";
+import { Badge, Button, Dot, Input, Select } from "./geist";
+import type { GeistType } from "./geist";
 import type {
   DriftAttribution,
   DriftBaseline,
@@ -13,6 +15,15 @@ import type {
   DriftReport,
   DriftSection,
 } from "./types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -29,11 +40,12 @@ function ago(ms: number): string {
   return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  "in-sync": "#22c55e",
-  drifted: "#f59e0b",
-  unknown: "#a1a1a1",
-  "no-baseline": "#6b7280",
+/** Status → Geist semantic variant, shared by the status badge/dot. */
+const STATUS_TYPE: Record<string, GeistType> = {
+  "in-sync": "success",
+  drifted: "warning",
+  unknown: "secondary",
+  "no-baseline": "secondary",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -89,8 +101,8 @@ function SetBaselineForm({ device, onDone }: { device: string; onDone: () => voi
 
   if (snapshots.length === 0) {
     return (
-      <div style={{ padding: 8 }}>
-        <span className="muted">
+      <div className="p-2">
+        <span className="text-muted-foreground text-[11px]">
           No snapshots for this device. Capture one with capture_config_snapshot first.
         </span>
       </div>
@@ -98,31 +110,27 @@ function SetBaselineForm({ device, onDone }: { device: string; onDone: () => voi
   }
 
   return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: 8 }}>
-      <select
-        className="input"
+    <div className="flex flex-wrap items-center gap-2 p-2">
+      <Select
         value={selected}
-        onChange={(e) => setSelected(e.target.value)}
-        style={{ flex: 1, minWidth: 200 }}
-      >
-        {snapshots.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.id} — {clock(s.ts)} — {s.lines} lines
-            {s.label ? ` "${s.label}"` : ""}
-          </option>
-        ))}
-      </select>
-      <input
-        className="input"
+        onValueChange={setSelected}
+        aria-label="Baseline snapshot"
+        className="min-w-[200px] flex-1"
+        options={snapshots.map((s) => ({
+          value: s.id,
+          label: `${s.id} — ${clock(s.ts)} — ${s.lines} lines${s.label ? ` "${s.label}"` : ""}`,
+        }))}
+      />
+      <Input
         placeholder="Label (optional)"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        style={{ width: 160 }}
+        className="w-40"
       />
-      <button className="btn btn--sm" onClick={() => void submit()} disabled={loading || !selected}>
+      <Button size="sm" onClick={() => void submit()} disabled={loading || !selected}>
         {loading ? "Setting..." : "Set as Baseline"}
-      </button>
-      {msg && <span style={{ color: "#ef4444", fontSize: 12 }}>{msg}</span>}
+      </Button>
+      {msg && <span className="text-destructive text-xs">{msg}</span>}
     </div>
   );
 }
@@ -130,38 +138,24 @@ function SetBaselineForm({ device, onDone }: { device: string; onDone: () => voi
 // ── Diff viewer ─────────────────────────────────────────────────────────────
 
 function DiffViewer({ unified }: { unified: string }): ReactNode {
-  if (!unified) return <span className="muted">No differences.</span>;
+  if (!unified) return <span className="text-muted-foreground text-[11px]">No differences.</span>;
   const lines = unified.split("\n");
   return (
-    <pre
-      style={{
-        fontSize: 11,
-        lineHeight: 1.5,
-        overflow: "auto",
-        maxHeight: 500,
-        margin: 0,
-        padding: 12,
-        background: "var(--mt-surface-2, #111)",
-        borderRadius: 6,
-      }}
-    >
+    <pre className="m-0 max-h-[500px] overflow-auto rounded bg-background p-3 font-mono text-[11px] leading-normal">
       {lines.map((line, i) => {
-        let color = "var(--mt-text-dim, #aaa)";
-        let bg = "transparent";
+        let cls = "text-muted-foreground";
         if (line.startsWith("+")) {
-          color = "#22c55e";
-          bg = "rgba(34,197,94,0.08)";
+          cls = "text-success bg-success/10";
         } else if (line.startsWith("-")) {
-          color = "#ef4444";
-          bg = "rgba(239,68,68,0.08)";
+          cls = "text-destructive bg-destructive/10";
         } else if (line.startsWith("@@")) {
-          color = "#3b82f6";
+          cls = "text-brand";
         } else if (line.startsWith("/")) {
-          color = "#f59e0b";
+          cls = "text-warning";
         }
         return (
-          <div key={i} style={{ color, background: bg, padding: "0 4px" }}>
-            {line || "\u00A0"}
+          <div key={i} className={cn("px-1", cls)}>
+            {line || " "}
           </div>
         );
       })}
@@ -175,49 +169,25 @@ function SectionBars({ sections }: { sections: DriftSection[] }): ReactNode {
   if (sections.length === 0) return null;
   const maxChanges = Math.max(...sections.map((s) => s.added + s.removed), 1);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div className="flex flex-col gap-1.5">
       {sections.slice(0, 15).map((s) => {
         return (
-          <div key={s.path} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span
-              style={{
-                width: 220,
-                fontSize: 11,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                color: "var(--mt-text, #eee)",
-              }}
-              title={s.path}
-            >
+          <div key={s.path} className="flex items-center gap-2">
+            <span className="w-[220px] truncate text-[11px] text-foreground" title={s.path}>
               {s.path}
             </span>
-            <div
-              style={{
-                flex: 1,
-                height: 14,
-                background: "var(--mt-surface-2, #222)",
-                borderRadius: 3,
-                overflow: "hidden",
-                display: "flex",
-              }}
-            >
+            <div className="flex h-3.5 flex-1 overflow-hidden rounded-[3px] bg-muted">
+              {/* Widths are data-driven, so they stay inline. */}
               <div
-                style={{
-                  width: `${(s.added / maxChanges) * 100}%`,
-                  background: "#22c55e",
-                  height: "100%",
-                }}
+                className="h-full bg-success"
+                style={{ width: `${(s.added / maxChanges) * 100}%` }}
               />
               <div
-                style={{
-                  width: `${(s.removed / maxChanges) * 100}%`,
-                  background: "#ef4444",
-                  height: "100%",
-                }}
+                className="h-full bg-destructive"
+                style={{ width: `${(s.removed / maxChanges) * 100}%` }}
               />
             </div>
-            <span style={{ fontSize: 11, color: "var(--mt-text-dim, #aaa)", minWidth: 60 }}>
+            <span className="min-w-[60px] text-[11px] text-muted-foreground">
               +{s.added} -{s.removed}
             </span>
           </div>
@@ -231,64 +201,42 @@ function SectionBars({ sections }: { sections: DriftSection[] }): ReactNode {
 
 function AttributionTable({ attributions }: { attributions: DriftAttribution[] }): ReactNode {
   if (attributions.length === 0) {
-    return <span className="muted">No config-related log entries found.</span>;
+    return (
+      <span className="text-muted-foreground text-[11px]">
+        No config-related log entries found.
+      </span>
+    );
   }
   return (
-    <div style={{ maxHeight: 250, overflowY: "auto" }}>
-      <table className="tbl" style={{ fontSize: 11 }}>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>User</th>
-            <th>Action</th>
-            <th>Section</th>
-            <th>Log</th>
-          </tr>
-        </thead>
-        <tbody>
+    <div className="max-h-[250px] overflow-auto">
+      <Table className="text-[11px]">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Time</TableHead>
+            <TableHead>User</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead>Section</TableHead>
+            <TableHead>Log</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {attributions.map((a, i) => (
-            <tr key={i}>
-              <td style={{ whiteSpace: "nowrap" }}>{a.timestamp ?? "—"}</td>
-              <td>{a.user ?? "—"}</td>
-              <td>
-                <span
-                  style={{
-                    padding: "1px 6px",
-                    borderRadius: 4,
-                    background: "var(--mt-surface-2, #222)",
-                    fontSize: 10,
-                  }}
-                >
-                  {a.action ?? "?"}
-                </span>
-              </td>
-              <td
-                style={{
-                  maxWidth: 160,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-                title={a.section}
-              >
+            <TableRow key={i}>
+              <TableCell className="whitespace-nowrap">{a.timestamp ?? "—"}</TableCell>
+              <TableCell>{a.user ?? "—"}</TableCell>
+              <TableCell>
+                <span className="rounded bg-muted px-1.5 py-px text-[10px]">{a.action ?? "?"}</span>
+              </TableCell>
+              <TableCell className="max-w-[160px] truncate" title={a.section}>
                 {a.section}
-              </td>
-              <td
-                style={{
-                  maxWidth: 300,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  color: "var(--mt-text-dim, #aaa)",
-                }}
-                title={a.logLine}
-              >
+              </TableCell>
+              <TableCell className="max-w-[300px] truncate text-muted-foreground" title={a.logLine}>
                 {a.logLine}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -345,45 +293,27 @@ function DeviceDetail({
       title={`${device} — Drift Detail`}
       className="reveal"
       extra={
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn--sm" onClick={() => void check()} disabled={loading}>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => void check()} disabled={loading}>
             {loading ? "Checking..." : "Check Now"}
-          </button>
-          <button className="btn btn--sm btn--danger" onClick={() => void remove()}>
+          </Button>
+          <Button size="sm" type="error" ghost onClick={() => void remove()}>
             Remove Baseline
-          </button>
-          <button className="btn btn--xs" onClick={onClose}>
+          </Button>
+          <Button size="sm" type="secondary" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
       }
     >
-      {error && <div style={{ color: "#ef4444" }}>{error}</div>}
+      {error && <div className="text-destructive">{error}</div>}
 
       {report && (
         <div>
           {/* Summary bar */}
-          <div
-            style={{
-              display: "flex",
-              gap: 24,
-              alignItems: "center",
-              padding: "12px 0",
-              borderBottom: "1px solid var(--mt-border, #333)",
-              marginBottom: 12,
-            }}
-          >
-            <div>
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: report.identical ? "#22c55e" : "#f59e0b",
-                  marginRight: 6,
-                }}
-              />
+          <div className="mb-3 flex items-center gap-6 border-b border-border py-3">
+            <div className="flex items-center gap-1.5">
+              <Dot type={report.identical ? "success" : "warning"} />
               <strong>{report.identical ? "In Sync" : "Drifted"}</strong>
             </div>
             {!report.identical && (
@@ -391,31 +321,33 @@ function DeviceDetail({
                 <div>
                   Score: <strong>{report.score}</strong>/100
                 </div>
-                <div style={{ color: "#22c55e" }}>+{report.summary.added}</div>
-                <div style={{ color: "#ef4444" }}>-{report.summary.removed}</div>
-                <div className="muted">{report.summary.unchanged} unchanged</div>
-                <button className="btn btn--sm" onClick={() => void promote()}>
+                <div className="text-success">+{report.summary.added}</div>
+                <div className="text-destructive">-{report.summary.removed}</div>
+                <div className="text-muted-foreground text-[11px]">
+                  {report.summary.unchanged} unchanged
+                </div>
+                <Button size="sm" onClick={() => void promote()}>
                   Promote as Baseline
-                </button>
+                </Button>
               </>
             )}
-            <div className="muted" style={{ marginLeft: "auto" }}>
+            <div className="text-muted-foreground ml-auto text-[11px]">
               Checked: {clock(report.capturedAt)}
             </div>
           </div>
 
           {/* Section breakdown */}
           {report.sections.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13 }}>Sections with drift</h4>
+            <div className="mb-4">
+              <h4 className="mt-0 mb-2 text-[13px]">Sections with drift</h4>
               <SectionBars sections={report.sections} />
             </div>
           )}
 
           {/* Change attribution */}
           {report.attributions.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13 }}>Change attribution</h4>
+            <div className="mb-4">
+              <h4 className="mt-0 mb-2 text-[13px]">Change attribution</h4>
               <AttributionTable attributions={report.attributions} />
             </div>
           )}
@@ -423,7 +355,7 @@ function DeviceDetail({
           {/* Unified diff */}
           {!report.identical && (
             <div>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13 }}>Unified diff</h4>
+              <h4 className="mt-0 mb-2 text-[13px]">Unified diff</h4>
               <DiffViewer unified={report.unified} />
             </div>
           )}
@@ -431,7 +363,7 @@ function DeviceDetail({
       )}
 
       {!report && !loading && !error && (
-        <p className="muted" style={{ textAlign: "center" }}>
+        <p className="text-muted-foreground text-center text-[11px]">
           Click "Check Now" to run a live drift check against the golden baseline.
         </p>
       )}
@@ -471,7 +403,7 @@ export function DriftView(): ReactNode {
   if (error && devices.length === 0) {
     return (
       <Panel className="reveal">
-        <p style={{ color: "#ef4444" }}>{error}</p>
+        <p className="text-destructive">{error}</p>
       </Panel>
     );
   }
@@ -481,7 +413,7 @@ export function DriftView(): ReactNode {
   return (
     <>
       {/* Stats row */}
-      <div className="cards reveal">
+      <div className="reveal grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard k="Devices" v={String(devices.length)} />
         <StatCard k="With Baseline" v={String(withBaseline.length)} />
         <StatCard k="In Sync" v={String(devices.filter((d) => d.status === "in-sync").length)} />
@@ -490,60 +422,42 @@ export function DriftView(): ReactNode {
 
       {/* Fleet overview cards */}
       <Panel title="Fleet Drift Overview" className="reveal">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: 12,
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
           {devices.map((d) => (
             <div
               key={d.device}
               onClick={() => {
                 if (d.status !== "no-baseline") setSelectedDevice(d.device);
               }}
-              style={{
-                padding: 16,
-                borderRadius: "var(--mt-radius, 8px)",
-                border: `1px solid ${selectedDevice === d.device ? "var(--mt-accent, #3b82f6)" : "var(--mt-border, #333)"}`,
-                background: "var(--mt-surface-2, #111)",
-                cursor: d.status !== "no-baseline" ? "pointer" : "default",
-                transition: "border-color 0.2s",
-              }}
+              className={cn(
+                "rounded-lg border bg-card p-4 transition-colors",
+                selectedDevice === d.device ? "border-brand" : "border-border",
+                d.status !== "no-baseline"
+                  ? "cursor-pointer hover:border-brand/40"
+                  : "cursor-default",
+              )}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <strong style={{ fontSize: 14 }}>{d.device}</strong>
-                <span
-                  style={{
-                    padding: "2px 8px",
-                    borderRadius: 10,
-                    fontSize: 11,
-                    background: `${STATUS_COLORS[d.status]}22`,
-                    color: STATUS_COLORS[d.status],
-                    fontWeight: 600,
-                  }}
-                >
-                  {STATUS_LABELS[d.status]}
-                </span>
+              <div className="mb-2 flex justify-between">
+                <strong className="text-sm">{d.device}</strong>
+                <Badge type={STATUS_TYPE[d.status]}>{STATUS_LABELS[d.status]}</Badge>
               </div>
               {d.baseline && (
-                <div style={{ fontSize: 11, color: "var(--mt-text-dim, #aaa)" }}>
+                <div className="text-muted-foreground text-[11px]">
                   <div>Baseline: {ago(d.baseline.setAt)}</div>
                   {d.baseline.label && <div>Label: {d.baseline.label}</div>}
                 </div>
               )}
               {d.status === "no-baseline" && (
-                <button
-                  className="btn btn--xs"
-                  style={{ marginTop: 8 }}
+                <Button
+                  size="sm"
+                  className="mt-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowSetBaseline(d.device);
                   }}
                 >
                   Set Baseline
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -556,9 +470,9 @@ export function DriftView(): ReactNode {
           title={`Set baseline for ${showSetBaseline}`}
           className="reveal"
           extra={
-            <button className="btn btn--xs" onClick={() => setShowSetBaseline(null)}>
+            <Button size="sm" type="secondary" onClick={() => setShowSetBaseline(null)}>
               Cancel
-            </button>
+            </Button>
           }
         >
           <SetBaselineForm
@@ -586,41 +500,43 @@ export function DriftView(): ReactNode {
       {/* Baseline manager table */}
       {baselines.length > 0 && (
         <Panel title="Baseline Manager" className="reveal">
-          <div style={{ overflowX: "auto" }}>
-            <table className="tbl" style={{ fontSize: 12 }}>
-              <thead>
-                <tr>
-                  <th>Device</th>
-                  <th>Snapshot ID</th>
-                  <th>Set At</th>
-                  <th>Set By</th>
-                  <th>Label</th>
-                  <th>Size</th>
-                  <th>SHA</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
+          <div className="overflow-x-auto">
+            <Table className="text-xs">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Snapshot ID</TableHead>
+                  <TableHead>Set At</TableHead>
+                  <TableHead>Set By</TableHead>
+                  <TableHead>Label</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>SHA</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {baselines.map((b) => (
-                  <tr key={b.device}>
-                    <td>
+                  <TableRow key={b.device}>
+                    <TableCell>
                       <strong>{b.device}</strong>
-                    </td>
-                    <td style={{ fontFamily: "monospace", fontSize: 11 }}>{b.snapshotId}</td>
-                    <td title={clock(b.setAt)}>{ago(b.setAt)}</td>
-                    <td>{b.setBy}</td>
-                    <td>{b.label ?? "—"}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell className="font-mono text-[11px]">{b.snapshotId}</TableCell>
+                    <TableCell title={clock(b.setAt)}>{ago(b.setAt)}</TableCell>
+                    <TableCell>{b.setBy}</TableCell>
+                    <TableCell>{b.label ?? "—"}</TableCell>
+                    <TableCell>
                       {b.snapshot
                         ? `${b.snapshot.lines} lines / ${b.snapshot.bytes} bytes`
                         : "deleted"}
-                    </td>
-                    <td style={{ fontFamily: "monospace", fontSize: 10 }}>
+                    </TableCell>
+                    <TableCell className="font-mono text-[10px]">
                       {b.snapshot?.sha?.slice(0, 8) ?? "—"}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn--xs btn--danger"
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        type="error"
+                        ghost
                         onClick={() => {
                           void deleteJson(
                             `/api/drift/baseline/${encodeURIComponent(b.device)}`,
@@ -629,12 +545,12 @@ export function DriftView(): ReactNode {
                         }}
                       >
                         Remove
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </Panel>
       )}
@@ -642,7 +558,7 @@ export function DriftView(): ReactNode {
       {/* Empty state */}
       {devices.length === 0 && !error && (
         <Panel className="reveal">
-          <p className="muted" style={{ textAlign: "center" }}>
+          <p className="text-muted-foreground text-center text-[11px]">
             No devices configured. Add devices to start using Drift Guard.
           </p>
         </Panel>

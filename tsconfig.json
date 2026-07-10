@@ -17,7 +17,13 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
-    "types": ["bun"]
+    "types": ["bun"],
+    // The observability dashboard's shadcn layer. Declared here (not just in
+    // ui/tsconfig.json) because the shadcn CLI reads the root tsconfig to resolve
+    // the aliases in components.json.
+    "paths": {
+      "@/*": ["./ui/observability/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["**/node_modules", "dist", "coverage", "tests"]

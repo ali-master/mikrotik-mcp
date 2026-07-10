@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { History, RefreshCw, X } from "lucide-react";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import type { DiffSummary } from "./config-studio";
 import { bytes, clock } from "./format";
-import { Button } from "./geist";
+import { Button, Select } from "./geist";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // ── Config snapshots view ────────────────────────────────────────────────────
 interface Snapshot {
@@ -46,13 +55,13 @@ export function SnapshotsView(): ReactNode {
       .catch(() => {});
   };
 
-  if (!snaps) return <div className="muted">loading snapshots…</div>;
+  if (!snaps) return <div className="text-muted-foreground text-[11px]">loading snapshots…</div>;
   if (snaps.length === 0) {
     return (
-      <div className="feed-empty">
-        <div className="feed-empty__icon">🕰️</div>
-        <p className="feed-empty__title">No config snapshots yet</p>
-        <p className="feed-empty__sub">
+      <div className="grid justify-items-center gap-2 rounded-lg border border-dashed border-border px-4 py-[54px] text-center">
+        <History className="size-7 text-muted-foreground" />
+        <p className="font-semibold text-foreground">No config snapshots yet</p>
+        <p className="max-w-[460px] text-xs text-muted-foreground">
           Capture one with the <code>capture_config_snapshot</code> tool — then time-travel diff any
           two here.
         </p>
@@ -60,68 +69,74 @@ export function SnapshotsView(): ReactNode {
     );
   }
 
-  const opts = snaps.map((s) => (
-    <option key={s.id} value={s.id}>
-      {s.device} · {s.label ?? s.id} · {clock(s.ts)}
-    </option>
-  ));
+  const opts = snaps.map((s) => ({
+    value: s.id,
+    label: `${s.device} · ${s.label ?? s.id} · ${clock(s.ts)}`,
+  }));
 
   return (
-    <section className="view">
+    <section className="grid content-start gap-[18px]">
       <Panel
         title="Config snapshots"
         className="reveal"
         extra={
-          <button className="btn" onClick={load}>
-            ↻ Refresh
-          </button>
+          <Button size="sm" icon={<RefreshCw />} onClick={load}>
+            Refresh
+          </Button>
         }
       >
-        <div className="toolbar" style={{ marginBottom: 12 }}>
-          <select className="btn" value={from} onChange={(e) => setFrom(e.target.value)}>
-            <option value="">diff from…</option>
-            {opts}
-          </select>
-          <select className="btn" value={to} onChange={(e) => setTo(e.target.value)}>
-            <option value="">to…</option>
-            {opts}
-          </select>
-          <button className="btn is-active" onClick={runDiff} disabled={!from || !to}>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Select
+            value={from}
+            onValueChange={setFrom}
+            aria-label="Diff from snapshot"
+            options={[{ value: "", label: "diff from…" }, ...opts]}
+          />
+          <Select
+            value={to}
+            onValueChange={setTo}
+            aria-label="Diff to snapshot"
+            options={[{ value: "", label: "to…" }, ...opts]}
+          />
+          <Button size="sm" onClick={runDiff} disabled={!from || !to}>
             Diff →
-          </button>
-          <span className="muted">{snaps.length} snapshots</span>
+          </Button>
+          <span className="text-muted-foreground text-[11px]">{snaps.length} snapshots</span>
         </div>
-        <div className="feedwrap">
-          <table className="feed">
-            <thead>
-              <tr>
-                <th>captured</th>
-                <th>device</th>
-                <th>label</th>
-                <th>version</th>
-                <th className="num">lines</th>
-                <th className="num">size</th>
-                <th>output</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="max-h-[60vh] overflow-auto rounded-lg border border-border">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-card">
+              <TableRow>
+                <TableHead>captured</TableHead>
+                <TableHead>device</TableHead>
+                <TableHead>label</TableHead>
+                <TableHead>version</TableHead>
+                <TableHead className="text-right">lines</TableHead>
+                <TableHead className="text-right">size</TableHead>
+                <TableHead>output</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {snaps.map((s) => (
-                <tr
+                <TableRow
                   key={s.id}
-                  className={sel?.id === s.id ? "is-selected" : undefined}
+                  className="cursor-pointer"
+                  data-state={sel?.id === s.id ? "selected" : undefined}
                   onClick={() => viewBody(s.id)}
                 >
-                  <td>{clock(s.ts)}</td>
-                  <td>{s.device}</td>
-                  <td>{s.label ?? "—"}</td>
-                  <td>{s.rosVersion ?? "—"}</td>
-                  <td className="num">{s.lines}</td>
-                  <td className="num">{bytes(s.bytes)}</td>
-                  <td className="preview">view export →</td>
-                </tr>
+                  <TableCell>{clock(s.ts)}</TableCell>
+                  <TableCell>{s.device}</TableCell>
+                  <TableCell>{s.label ?? "—"}</TableCell>
+                  <TableCell>{s.rosVersion ?? "—"}</TableCell>
+                  <TableCell className="text-right tabular-nums">{s.lines}</TableCell>
+                  <TableCell className="text-right tabular-nums">{bytes(s.bytes)}</TableCell>
+                  <TableCell className="max-w-[320px] truncate text-muted-foreground">
+                    view export →
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Panel>
 
@@ -130,24 +145,24 @@ export function SnapshotsView(): ReactNode {
           title="Time-travel diff"
           className="reveal"
           extra={
-            <span className="muted">
+            <span className="text-muted-foreground text-[11px]">
               {diff.summary.changed
                 ? `+${diff.summary.added} / -${diff.summary.removed}`
                 : "identical"}
             </span>
           }
         >
-          <pre className="cfg-diff">
+          <pre className="m-0 max-h-80 overflow-auto rounded bg-background p-3 font-mono text-[11px] leading-normal text-muted-foreground">
             {(diff.unified || "(identical)").split("\n").map((l, i) => (
               <div
                 key={i}
                 className={
                   l.startsWith("+")
-                    ? "d-add"
+                    ? "text-success"
                     : l.startsWith("-")
-                      ? "d-del"
+                      ? "text-destructive"
                       : l.startsWith("@@")
-                        ? "d-hunk"
+                        ? "text-brand"
                         : ""
                 }
               >
@@ -163,12 +178,15 @@ export function SnapshotsView(): ReactNode {
           title={`Snapshot · ${sel.label ?? sel.id}`}
           className="reveal"
           extra={
-            <Button type="secondary" size="sm" onClick={() => setSel(null)}>
-              ✕ Close
+            <Button type="secondary" size="sm" icon={<X />} onClick={() => setSel(null)}>
+              Close
             </Button>
           }
         >
-          <pre className="body" style={{ maxHeight: 460 }}>
+          <pre
+            className="m-0 overflow-auto rounded border border-border bg-background p-3 font-mono text-xs break-words whitespace-pre-wrap"
+            style={{ maxHeight: 460 }}
+          >
             {sel.body || "(empty)"}
           </pre>
         </Panel>
