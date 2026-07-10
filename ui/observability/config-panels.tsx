@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Star, X } from "lucide-react";
 import { api, postJson } from "./api";
 import { Button, Input } from "./geist";
+import { JsonDiffView } from "./highlight";
 import { cn } from "@/lib/utils";
 
 // ── Config: version history (point-in-time) ─────────────────────────────────
@@ -212,9 +213,7 @@ export function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): 
                     <div className="mt-2">
                       {diff ? (
                         diff.unified.trim() ? (
-                          <pre className="border-border bg-background text-muted-foreground m-0 max-h-[280px] overflow-auto rounded-md border p-3 font-mono text-[11px] leading-[1.5] break-words whitespace-pre-wrap">
-                            {diff.unified}
-                          </pre>
+                          <JsonDiffView unified={diff.unified} maxHeight={280} />
                         ) : (
                           <span className="text-muted-foreground text-[11px]">
                             No differences from the current config.
