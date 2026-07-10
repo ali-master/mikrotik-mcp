@@ -104,6 +104,7 @@ import {
   stopHealthChecks,
 } from "./health";
 import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./recorder";
+import { subscribeTraffic } from "./traffic-hub";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
 import { openUsageStore } from "./usage-store";
@@ -129,6 +130,8 @@ const SERVER_TAG = "mikrotik-mcp";
 
 interface SocketData {
   unsub?: () => void;
+  /** Set when this socket is a traffic stream (`?traffic=<device>`), else a tool feed. */
+  traffic?: string;
 }
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
@@ -337,6 +340,44 @@ function sseResponse(transportLabel: string): Response {
       };
       send(`event: hello\ndata: ${JSON.stringify({ transport: transportLabel })}\n\n`);
       unsub = subscribe((e: ToolEvent) => send(`event: tool\ndata: ${JSON.stringify(e)}\n\n`));
+      ping = setInterval(() => send(`: ping\n\n`), 15_000);
+    },
+    cancel() {
+      unsub?.();
+      if (ping) clearInterval(ping);
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+    },
+  });
+}
+
+/**
+ * SSE variant of the traffic channel — the fallback when a client can't open a
+ * WebSocket. Subscribes to the per-device traffic hub and emits one `traffic`
+ * event per sample, with keep-alive pings.
+ */
+function sseTrafficResponse(device: string, transportLabel: string): Response {
+  let unsub: (() => void) | undefined;
+  let ping: ReturnType<typeof setInterval> | undefined;
+  const stream = new ReadableStream({
+    start(controller) {
+      const enc = new TextEncoder();
+      const send = (text: string): void => {
+        try {
+          controller.enqueue(enc.encode(text));
+        } catch {
+          /* stream closed */
+        }
+      };
+      send(`event: hello\ndata: ${JSON.stringify({ transport: transportLabel })}\n\n`);
+      unsub = subscribeTraffic(device, (sample) => {
+        send(`event: traffic\ndata: ${JSON.stringify(sample)}\n\n`);
+      });
       ping = setInterval(() => send(`: ping\n\n`), 15_000);
     },
     cancel() {
@@ -565,7 +606,12 @@ async function modulesRoutes(req: Request, url: URL): Promise<Response | null> {
   if (p === "/api/modules" && req.method === "GET") {
     const cfg = getConfig();
     const src = getConfigSource();
-    return json({ ...moduleSurface(cfg.tools), filter: cfg.tools, source: src, appViews: cfg.mcp.appViews });
+    return json({
+      ...moduleSurface(cfg.tools),
+      filter: cfg.tools,
+      source: src,
+      appViews: cfg.mcp.appViews,
+    });
   }
 
   if (p === "/api/modules/toggle" && req.method === "POST") {
@@ -1218,16 +1264,24 @@ export async function runDashboard(
     ca: typeof configAdmin,
     tl: string,
   ): Promise<Response> {
-    // Live event stream — Bun-native WebSocket (preferred).
+    // Live stream — Bun-native WebSocket (preferred). One endpoint serves two
+    // channels: `?traffic=<device>` is the Clients-page traffic feed, otherwise
+    // it's the tool-event feed. `open()` branches on `ws.data.traffic`.
     if (url.pathname === "/api/stream") {
-      if (srv.upgrade(req, { data: {} })) return undefined as unknown as Response;
+      const traffic = url.searchParams.has("traffic")
+        ? (url.searchParams.get("traffic") ?? "")
+        : undefined;
+      if (srv.upgrade(req, { data: { traffic } })) return undefined as unknown as Response;
       return new Response("WebSocket upgrade failed", { status: 400 });
     }
 
-    // Live event stream — Server-Sent Events (the front-end's automatic
-    // fallback when WebSocket can't connect, e.g. through some proxies).
+    // Live stream — Server-Sent Events (the front-end's automatic fallback when
+    // WebSocket can't connect, e.g. through some proxies). Same two channels.
     if (url.pathname === "/api/sse") {
-      return sseResponse(tl);
+      const traffic = url.searchParams.has("traffic")
+        ? (url.searchParams.get("traffic") ?? "")
+        : undefined;
+      return traffic === undefined ? sseResponse(tl) : sseTrafficResponse(traffic, tl);
     }
 
     // Config Studio routes are independent of the event store, so dispatch
@@ -1428,13 +1482,24 @@ export async function runDashboard(
     },
     websocket: {
       open(ws: ServerWebSocket<SocketData>) {
-        ws.data.unsub = subscribe((e: ToolEvent) => {
-          try {
-            ws.send(JSON.stringify({ type: "event", event: e }));
-          } catch {
-            // client went away mid-send; close() will clean up
-          }
-        });
+        if (ws.data.traffic !== undefined) {
+          // Traffic channel: push each broadcast sample for the chosen device.
+          ws.data.unsub = subscribeTraffic(ws.data.traffic, (sample) => {
+            try {
+              ws.send(JSON.stringify({ type: "traffic", sample }));
+            } catch {
+              // client went away mid-send; close() will clean up
+            }
+          });
+        } else {
+          ws.data.unsub = subscribe((e: ToolEvent) => {
+            try {
+              ws.send(JSON.stringify({ type: "event", event: e }));
+            } catch {
+              // client went away mid-send; close() will clean up
+            }
+          });
+        }
         ws.send(JSON.stringify({ type: "hello", transport: transportLabel }));
       },
       message() {

@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { api, postJson } from "./api";
+import { api, postJson, withToken } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
 import { Badge, Button, Input, Note, Select } from "./geist";
@@ -348,12 +348,49 @@ function DeviceDetail({
 const EMPTY_TRAFFIC: BulkTraffic = { map: new Map(), source: "accounting" };
 
 /**
- * Polls `/api/clients/traffic-bulk` every second. The server already normalises
- * both RouterOS sources — `/ip accounting` (v6) and Kid Control (v7) — into live
- * rates (bits/sec) plus cumulative bytes per IP, so this just carries the
- * sparkline history forward: a zero is pushed for an idle host so its line decays
- * smoothly instead of vanishing, and idle hosts with no rate limit are pruned
- * once their whole window is quiet, keeping the map from growing without bound.
+ * Fold one server sample into the traffic map. The server normalises both
+ * RouterOS sources — `/ip accounting` (v6) and Kid Control (v7) — into live rates
+ * (bits/sec) plus cumulative bytes per IP, so this just carries the sparkline
+ * history forward: a zero is pushed for an idle host so its line decays smoothly
+ * instead of vanishing, and idle hosts with no rate limit are pruned once their
+ * whole window is quiet, keeping the map from growing without bound.
+ */
+function applyTrafficSample(old: BulkTraffic, sample: BulkTrafficSample): BulkTraffic {
+  const ids = new Set<string>([
+    ...old.map.keys(),
+    ...Object.keys(sample.hosts),
+    ...Object.keys(sample.limits),
+  ]);
+  const next = new Map<string, IpTraffic>();
+  for (const ip of ids) {
+    const h = sample.hosts[ip];
+    const rxRate = h?.rxRate ?? 0;
+    const txRate = h?.txRate ?? 0;
+    const ex = old.map.get(ip);
+    const history = [...(ex?.history ?? []), { rx: rxRate, tx: txRate }].slice(-MINI_SAMPLES);
+    const lim = sample.limits[ip];
+    if (!lim && !history.some((p) => p.rx > 0 || p.tx > 0)) continue;
+    next.set(ip, {
+      rxRate,
+      txRate,
+      rxBytes: h?.rxBytes ?? ex?.rxBytes ?? 0,
+      txBytes: h?.txBytes ?? ex?.txBytes ?? 0,
+      downloadLimit: lim?.download ?? "",
+      uploadLimit: lim?.upload ?? "",
+      history,
+    });
+  }
+  return { map: next, source: sample.source, note: sample.note };
+}
+
+/**
+ * Live per-client traffic, received over — in order of preference — a WebSocket,
+ * an SSE stream, then 1-second HTTP polling as the third fallback. The server
+ * runs a single poller per device and pushes each sample to all subscribers, so
+ * the router is sampled once per interval no matter how many dashboards are open
+ * (which also keeps the `/ip accounting` snapshot from being reset by racing
+ * pollers). Every transport delivers the same sample shape through
+ * {@link applyTrafficSample}.
  */
 function useBulkTraffic(deviceName: string): BulkTraffic {
   const [traffic, setTraffic] = useState<BulkTraffic>(EMPTY_TRAFFIC);
@@ -364,54 +401,92 @@ function useBulkTraffic(deviceName: string): BulkTraffic {
 
   useEffect(() => {
     if (!deviceName) return;
-    let cancelled = false;
+    let closed = false;
+    let ws: WebSocket | null = null;
+    let es: EventSource | null = null;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    const q = `traffic=${encodeURIComponent(deviceName)}`;
 
-    const poll = async (): Promise<void> => {
-      try {
-        const q = deviceName ? `?device=${encodeURIComponent(deviceName)}` : "";
-        const sample = await api<BulkTrafficSample>(`/api/clients/traffic-bulk${q}`);
-        if (cancelled) return;
-
-        setTraffic((old) => {
-          const ids = new Set<string>([
-            ...old.map.keys(),
-            ...Object.keys(sample.hosts),
-            ...Object.keys(sample.limits),
-          ]);
-          const next = new Map<string, IpTraffic>();
-          for (const ip of ids) {
-            const h = sample.hosts[ip];
-            const rxRate = h?.rxRate ?? 0;
-            const txRate = h?.txRate ?? 0;
-            const ex = old.map.get(ip);
-            const history = [...(ex?.history ?? []), { rx: rxRate, tx: txRate }].slice(
-              -MINI_SAMPLES,
-            );
-            const lim = sample.limits[ip];
-            // Drop a host that has no rate limit and no traffic anywhere in its
-            // window, so the map doesn't accumulate every IP ever seen.
-            if (!lim && !history.some((p) => p.rx > 0 || p.tx > 0)) continue;
-            next.set(ip, {
-              rxRate,
-              txRate,
-              rxBytes: h?.rxBytes ?? ex?.rxBytes ?? 0,
-              txBytes: h?.txBytes ?? ex?.txBytes ?? 0,
-              downloadLimit: lim?.download ?? "",
-              uploadLimit: lim?.upload ?? "",
-              history,
-            });
-          }
-          return { map: next, source: sample.source, note: sample.note };
-        });
-      } catch {
-        /* transient poll error */
-      }
+    const onSample = (sample: BulkTrafficSample): void => {
+      if (!closed) setTraffic((old) => applyTrafficSample(old, sample));
     };
-    void poll();
-    const t = setInterval(() => void poll(), BULK_POLL_MS);
+
+    // 3rd fallback: 1-second HTTP polling.
+    const startPolling = (): void => {
+      if (closed || pollTimer) return;
+      const poll = async (): Promise<void> => {
+        try {
+          onSample(
+            await api<BulkTrafficSample>(
+              `/api/clients/traffic-bulk?device=${encodeURIComponent(deviceName)}`,
+            ),
+          );
+        } catch {
+          /* transient poll error */
+        }
+      };
+      void poll();
+      pollTimer = setInterval(() => void poll(), BULK_POLL_MS);
+    };
+
+    // 2nd: Server-Sent Events.
+    const connectSse = (): void => {
+      if (closed) return;
+      es = new EventSource(withToken(`/api/sse?${q}`));
+      let opened = false;
+      es.onopen = () => {
+        opened = true;
+      };
+      es.addEventListener("traffic", (ev) => {
+        try {
+          onSample(JSON.parse((ev as MessageEvent).data) as BulkTrafficSample);
+        } catch {
+          /* ignore */
+        }
+      });
+      es.onerror = () => {
+        // Never established → give up on SSE and fall to polling. If it had
+        // opened, leave EventSource to auto-reconnect on its own.
+        if (!opened && es) {
+          es.close();
+          es = null;
+          startPolling();
+        }
+      };
+    };
+
+    // 1st: WebSocket.
+    const connectWs = (): void => {
+      if (closed) return;
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      ws = new WebSocket(withToken(`${proto}://${location.host}/api/stream?${q}`));
+      let opened = false;
+      ws.onopen = () => {
+        opened = true;
+      };
+      ws.onerror = () => ws?.close();
+      ws.onmessage = (m) => {
+        try {
+          const msg = JSON.parse(m.data) as { type: string; sample?: BulkTrafficSample };
+          if (msg.type === "traffic" && msg.sample) onSample(msg.sample);
+        } catch {
+          /* ignore */
+        }
+      };
+      ws.onclose = () => {
+        if (closed) return;
+        if (opened)
+          setTimeout(connectWs, 2000); // was working — reconnect
+        else connectSse(); // never opened — fall to SSE
+      };
+    };
+
+    connectWs();
     return () => {
-      cancelled = true;
-      clearInterval(t);
+      closed = true;
+      ws?.close();
+      es?.close();
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [deviceName]);
 
