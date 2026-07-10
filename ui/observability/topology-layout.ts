@@ -99,3 +99,25 @@ export function arcDash(r: number, pct: number | undefined): string {
   const on = (Math.min(100, Math.max(0, pct ?? 0)) / 100) * len;
   return `${on} ${len - on}`;
 }
+
+/**
+ * The radar sweep: a wedge with its apex at the hub, spanning `2 * halfDeg`
+ * about the +x axis and closed by an arc of radius `r`.
+ *
+ * Both arc endpoints must lie exactly `r` from the apex. Placing them at a fixed
+ * vertical offset instead (`CY ± 46`) puts them at `√(r² + offset²)`, which an
+ * `A r r` arc cannot reach — SVG then scales the radii up per spec and draws a
+ * bulge rather than a wedge.
+ */
+export function sweepPath(r: number, halfDeg = 7): string {
+  const t = (halfDeg * Math.PI) / 180;
+  const dx = r * Math.cos(t);
+  const dy = r * Math.sin(t);
+  const x1 = CX + dx;
+  const y1 = CY - dy;
+  const x2 = CX + dx;
+  const y2 = CY + dy;
+  // sweep-flag 1 = clockwise in SVG's y-down space, taking the short way through
+  // (CX + r, CY); large-arc 0 because the wedge spans well under half a turn.
+  return `M ${CX} ${CY} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
+}

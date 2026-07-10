@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "./atoms";
 import { Button, Input } from "./geist";
-import { arcDash, CX, CY, H, HUB_ID, layout, W } from "./topology-layout";
+import { arcDash, CX, CY, H, HUB_ID, layout, sweepPath, W } from "./topology-layout";
 import type { TopoNode, TopologyPayload } from "./types";
 
 /** Colour a 0–100 metric: calm → warm → hot. */
@@ -254,12 +254,13 @@ export function TopologyMap({
               ))}
             </g>
 
-            {/* sweep beam */}
-            <g className="topo-sweep">
-              <path
-                d={`M ${CX} ${CY} L ${CX + rOuter + 62} ${CY - 46} A ${rOuter + 62} ${rOuter + 62} 0 0 1 ${CX + rOuter + 62} ${CY + 46} Z`}
-                fill="url(#topo-beam)"
-              />
+            {/*
+              The beam pivots on its apex — the hub — so the origin is given in user
+              units, and `.topo-sweep` must NOT set `transform-box: fill-box`, which
+              would pivot on the wedge's bounding-box centre instead.
+            */}
+            <g className="topo-sweep" style={{ transformOrigin: `${CX}px ${CY}px` }}>
+              <path d={sweepPath(rOuter + 62)} fill="url(#topo-beam)" />
             </g>
 
             {/* links */}

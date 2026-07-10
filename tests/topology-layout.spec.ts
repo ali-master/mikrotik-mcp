@@ -6,7 +6,7 @@
  * repulsion term divides by.
  */
 import { describe, expect, test } from "vite-plus/test";
-import { arcDash, CX, CY, HUB_ID, layout } from "../ui/observability/topology-layout";
+import { arcDash, CX, CY, HUB_ID, layout, sweepPath } from "../ui/observability/topology-layout";
 
 const dev = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `dev${i}` }));
 const nbr = (n: number, parent: string) => ({
@@ -97,6 +97,51 @@ describe("topology layout", () => {
     test("half is half", () => {
       const [on] = arcDash(20, 50).split(" ").map(Number);
       expect(on).toBeCloseTo(len(20) / 2, 5);
+    });
+  });
+
+  /**
+   * The radar sweep regressed once already: its arc endpoints were placed at a
+   * fixed vertical offset from the hub rather than on the circle, so `A r r`
+   * could not reach them and SVG silently scaled the radii, drawing a bulge.
+   */
+  describe("sweepPath", () => {
+    const PATH =
+      /^M ([\d.-]+) ([\d.-]+) L ([\d.-]+) ([\d.-]+) A [\d.-]+ [\d.-]+ 0 0 1 ([\d.-]+) ([\d.-]+) Z$/;
+
+    /** Pull the apex and both arc endpoints out of the path data. */
+    const points = (d: string): { apex: number[]; p1: number[]; p2: number[] } => {
+      const m = d.match(PATH);
+      if (!m) throw new Error(`unexpected path: ${d}`);
+      const n = m.slice(1).map(Number);
+      return { apex: [n[0]!, n[1]!], p1: [n[2]!, n[3]!], p2: [n[4]!, n[5]!] };
+    };
+
+    test("starts at the hub", () => {
+      expect(points(sweepPath(300)).apex).toEqual([CX, CY]);
+    });
+
+    test("both arc endpoints lie exactly r from the hub", () => {
+      const r = 317;
+      const { p1, p2 } = points(sweepPath(r));
+      expect(Math.hypot(p1[0]! - CX, p1[1]! - CY)).toBeCloseTo(r, 6);
+      expect(Math.hypot(p2[0]! - CX, p2[1]! - CY)).toBeCloseTo(r, 6);
+    });
+
+    test("the wedge is symmetric about the +x axis", () => {
+      const { p1, p2 } = points(sweepPath(250));
+      expect(p1[0]).toBeCloseTo(p2[0]!, 6);
+      expect(CY - p1[1]!).toBeCloseTo(p2[1]! - CY, 6);
+    });
+
+    test("half-angle controls the span", () => {
+      const r = 200;
+      const narrow = points(sweepPath(r, 3));
+      const wide = points(sweepPath(r, 20));
+      const span = (p: { p1: number[]; p2: number[] }): number => p.p2[1]! - p.p1[1]!;
+      expect(span(wide)).toBeGreaterThan(span(narrow));
+      // A 20° half-angle means the chord is 2·r·sin(20°).
+      expect(span(wide)).toBeCloseTo(2 * r * Math.sin((20 * Math.PI) / 180), 6);
     });
   });
 });
