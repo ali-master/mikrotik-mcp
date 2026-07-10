@@ -61,47 +61,100 @@ export interface DeviceTraffic {
   uploadLimit: string;
 }
 
-/**
- * Bulk traffic snapshot for the Clients page.
- *
- * `hosts` are per-IP byte **deltas** measured by `/ip accounting` since the
- * previous snapshot — so, unlike a queue's cumulative counter, they cover EVERY
- * LAN host without needing a per-device queue. `limits` still comes from
- * `/queue simple` (the only place rate limits live), so the limits editor keeps
- * working for the clients that have one.
- */
-export interface BulkTrafficPayload {
-  ts: number;
-  /** How the traffic figures were obtained. `none` → `note` says why. */
-  source: "accounting" | "none";
-  /** Diagnostic shown to the user when `source` is `none`. */
-  note?: string;
-  /** Per-IP byte deltas since the previous snapshot (NOT cumulative totals). */
-  hosts: Record<string, { rxBytes: number; txBytes: number }>;
-  /** Per-IP rate limits from `/queue simple`, for the limits editor. */
-  limits: Record<string, { download: string; upload: string }>;
+/** Where the per-host traffic figures came from. */
+export type TrafficSource = "accounting" | "kid-control" | "none";
+
+/** Live rates (bits/sec) + cumulative bytes for one host, normalised across sources. */
+export interface HostTraffic {
+  rxRate: number;
+  txRate: number;
+  rxBytes: number;
+  txBytes: number;
 }
 
 /**
- * Devices whose `/ip accounting` we have already ensured is on, so we don't send
- * the enable command on every 1s poll. Keyed by device name (`""` = default).
- * Process-lifetime cache; a restart re-checks, which is harmless (idempotent).
+ * Bulk traffic snapshot for the Clients page, covering EVERY LAN host (not just
+ * those with a queue). Two sources are used depending on RouterOS version:
+ *
+ *   - **v6:** `/ip accounting` — per-host-pair byte counters, read by snapshot.
+ *   - **v7:** Kid Control — accounting was removed in v7; `/ip kid-control`
+ *     exposes per-device rate + byte counters once a monitor entry exists.
+ *
+ * Both are normalised to `hosts` (rates in bits/sec + cumulative bytes), so the
+ * frontend has one code path. `limits` still comes from `/queue simple` — the
+ * only place rate limits live — so the limits editor keeps working.
  */
-const accountingEnabled = new Set<string>();
+export interface BulkTrafficPayload {
+  ts: number;
+  source: TrafficSource;
+  /** Diagnostic shown to the user when `source` is `none`. */
+  note?: string;
+  hosts: Record<string, HostTraffic>;
+  limits: Record<string, { download: string; upload: string }>;
+}
 
-/** Enable `/ip accounting` once per device. Returns an error note, or null on success. */
-async function ensureAccounting(ctx: ToolContext): Promise<string | null> {
-  const key = ctx.device ?? "";
-  if (accountingEnabled.has(key)) return null;
+/** Resolved traffic source per device (`""` = default). Process-lifetime cache. */
+const resolvedSource = new Map<string, TrafficSource>();
+
+/** First line of a device error, for a compact note. */
+const firstLine = (s: string): string => s.trim().split("\n")[0]!.trim();
+
+/**
+ * Enable `/ip accounting` (v6). Returns an error note (e.g. "bad command name
+ * accounting" on v7, where it was removed), or null on success.
+ */
+async function enableAccounting(ctx: ToolContext): Promise<string | null> {
   // `threshold` caps how many host pairs are tracked between snapshots; the
-  // default (256) truncates on a busy LAN, so raise it. Local (router-originated)
-  // traffic stays excluded — we only care about hosts passing through.
+  // default (256) truncates on a busy LAN, so raise it.
   const out = await executeMikrotikCommand("/ip accounting set enabled=yes threshold=2000", ctx);
-  if (looksLikeError(out)) {
-    return `Could not enable /ip accounting on this device: ${out.trim().split("\n")[0]}`;
+  return looksLikeError(out) ? firstLine(out) : null;
+}
+
+/**
+ * Ensure Kid Control is monitoring (v7). Kid Control tracks per-device traffic
+ * for ALL devices as soon as at least one control entry exists, so if none does
+ * we add a monitor-only one: a 24/7-allowed schedule (`0s-1d` every day) with no
+ * device assigned, which never blocks or limits anything — it only turns the
+ * counters on. Existing Kid Control setups are left untouched.
+ */
+async function enableKidControl(ctx: ToolContext): Promise<string | null> {
+  const count = await executeMikrotikCommand("/ip kid-control print count-only", ctx);
+  if (looksLikeError(count)) return firstLine(count);
+  if ((parseLeadingNumber(count.trim()) ?? 0) > 0) return null; // already monitoring
+
+  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d) => `${d}=0s-1d`).join(" ");
+  const add = await executeMikrotikCommand(
+    `/ip kid-control add name=mcp-monitor ${days} comment="traffic monitor (mikrotik-mcp) — 24/7 allow, no devices assigned; blocks nothing"`,
+    ctx,
+  );
+  return looksLikeError(add) ? firstLine(add) : null;
+}
+
+/**
+ * Decide (once per device, then cache) which per-host traffic source works:
+ * `/ip accounting` on v6, else Kid Control on v7. Returns the source and, when
+ * `none`, a note explaining why both were unavailable.
+ */
+async function resolveSource(ctx: ToolContext): Promise<{ source: TrafficSource; note?: string }> {
+  const key = ctx.device ?? "";
+  const cached = resolvedSource.get(key);
+  if (cached) return { source: cached };
+
+  const accErr = await enableAccounting(ctx);
+  if (!accErr) {
+    resolvedSource.set(key, "accounting");
+    return { source: "accounting" };
   }
-  accountingEnabled.add(key);
-  return null;
+  const kidErr = await enableKidControl(ctx);
+  if (!kidErr) {
+    resolvedSource.set(key, "kid-control");
+    return { source: "kid-control" };
+  }
+  // Don't cache "none" — the router may just be transiently unreachable.
+  return {
+    source: "none",
+    note: `No per-host traffic source. /ip accounting (v6): ${accErr}. Kid Control (v7): ${kidErr}.`,
+  };
 }
 
 /** Result of a device mutation, shared by the tools (text) and dashboard (JSON). */
@@ -214,54 +267,32 @@ async function readQueueLimits(ctx: ToolContext): Promise<BulkTrafficPayload["li
   return limits;
 }
 
-/**
- * Bulk-sample per-host traffic for the Clients page via `/ip accounting`.
- *
- * Unlike the old `/queue simple` counters — which only exist for clients that
- * have a queue — IP accounting measures EVERY LAN host passing through the
- * router. It works by snapshot: `snapshot take` moves the live per-host-pair
- * counters into a frozen table AND resets the live ones, so each snapshot is the
- * traffic **since the previous take**. The dashboard is the single poller, so
- * successive snapshots are clean ~1s deltas (the frontend discards the first,
- * which spans "since accounting was enabled").
- *
- * For a LAN client: bytes with `dst = client` are its download (rx); bytes with
- * `src = client` are its upload (tx). Rate limits still come from `/queue simple`.
- */
-export async function sampleAllTraffic(ctx: ToolContext): Promise<BulkTrafficPayload> {
-  const ts = Date.now();
-  const limits = await readQueueLimits(ctx);
-
-  const enableErr = await ensureAccounting(ctx);
-  if (enableErr) return { ts, source: "none", note: enableErr, hosts: {}, limits };
-
-  // `take` snapshots + resets the live table; `print` reads the frozen snapshot.
-  await executeMikrotikCommand("/ip accounting snapshot take", ctx);
-  const out = await executeMikrotikCommand("/ip accounting snapshot print", ctx);
-  if (looksLikeError(out)) {
-    return {
-      ts,
-      source: "none",
-      note: `Reading accounting failed: ${out.trim()}`,
-      hosts: {},
-      limits,
-    };
-  }
-
-  return { ts, source: "accounting", hosts: aggregateHostTraffic(parseRecords(out).rows), limits };
+/** Parse a RouterOS number that may carry a k/M/G/T suffix (e.g. `1.5M`, `512000`). */
+export function parseMagnitude(v: string | undefined): number {
+  const m = (v ?? "").trim().match(/^(-?\d+(?:\.\d+)?)\s*([kMGT])?/i);
+  if (!m) return 0;
+  const u = (m[2] ?? "").toLowerCase();
+  const factor = u === "k" ? 1e3 : u === "m" ? 1e6 : u === "g" ? 1e9 : u === "t" ? 1e12 : 1;
+  return Number(m[1]) * factor;
 }
 
+/** Accounting per-device state: cumulative bytes + last snapshot time, per device. */
+const acctState = new Map<
+  string,
+  { lastTs: number; cum: Map<string, { rx: number; tx: number }> }
+>();
+
 /**
- * Fold `/ip accounting` snapshot rows (src → dst → bytes) into per-host totals.
- *
- * A row records traffic from one address to another, so for any host: bytes
- * where it is the **destination** are its download (rx), and bytes where it is
- * the **source** are its upload (tx). A LAN↔LAN transfer therefore counts as
- * upload for the sender and download for the receiver, which is what each host
- * actually did. Pure, so `tests/accounting-traffic.spec.ts` can pin the mapping.
+ * Fold `/ip accounting` snapshot rows (src → dst → bytes) into per-host byte
+ * DELTAS. A row is traffic from one address to another, so for any host, bytes
+ * where it is the destination are its download and bytes where it is the source
+ * are its upload — a LAN↔LAN transfer counting as upload for the sender and
+ * download for the receiver. Pure, so `tests/accounting-traffic.spec.ts` pins it.
  */
-export function aggregateHostTraffic(rows: Record<string, string>[]): BulkTrafficPayload["hosts"] {
-  const hosts: BulkTrafficPayload["hosts"] = {};
+export function aggregateHostTraffic(
+  rows: Record<string, string>[],
+): Record<string, { rxBytes: number; txBytes: number }> {
+  const hosts: Record<string, { rxBytes: number; txBytes: number }> = {};
   const bump = (ip: string, key: "rxBytes" | "txBytes", b: number): void => {
     if (!ip) return;
     (hosts[ip] ??= { rxBytes: 0, txBytes: 0 })[key] += b;
@@ -269,10 +300,107 @@ export function aggregateHostTraffic(rows: Record<string, string>[]): BulkTraffi
   for (const row of rows) {
     const bytes = parseLeadingNumber(row.bytes) ?? 0;
     if (bytes <= 0) continue;
-    bump((row["dst-address"] ?? "").trim(), "rxBytes", bytes); // traffic TO host = download
-    bump((row["src-address"] ?? "").trim(), "txBytes", bytes); // traffic FROM host = upload
+    bump((row["dst-address"] ?? "").trim(), "rxBytes", bytes); // TO host = download
+    bump((row["src-address"] ?? "").trim(), "txBytes", bytes); // FROM host = upload
   }
   return hosts;
+}
+
+/**
+ * v6: snapshot `/ip accounting`, turn per-host byte deltas into rates.
+ *
+ * `snapshot take` freezes the live per-host-pair counters and resets them, so
+ * each snapshot is the traffic since the previous take. The rate is that delta
+ * over the elapsed wall-clock, and cumulative bytes are accumulated per host in
+ * `acctState` (accounting has no device-lifetime total of its own).
+ */
+async function sampleAccounting(
+  ctx: ToolContext,
+  ts: number,
+): Promise<Record<string, HostTraffic>> {
+  const key = ctx.device ?? "";
+  await executeMikrotikCommand("/ip accounting snapshot take", ctx);
+  const out = await executeMikrotikCommand("/ip accounting snapshot print", ctx);
+  if (looksLikeError(out)) throw new Error(firstLine(out));
+
+  const deltas = aggregateHostTraffic(parseRecords(out).rows);
+  const st = acctState.get(key) ?? { lastTs: 0, cum: new Map() };
+  const dtSec = st.lastTs ? Math.max(0.1, (ts - st.lastTs) / 1000) : 0;
+  const hosts: Record<string, HostTraffic> = {};
+  for (const [ip, d] of Object.entries(deltas)) {
+    const c = st.cum.get(ip) ?? { rx: 0, tx: 0 };
+    c.rx += d.rxBytes;
+    c.tx += d.txBytes;
+    st.cum.set(ip, c);
+    hosts[ip] = {
+      rxRate: dtSec ? (d.rxBytes / dtSec) * 8 : 0,
+      txRate: dtSec ? (d.txBytes / dtSec) * 8 : 0,
+      rxBytes: c.rx,
+      txBytes: c.tx,
+    };
+  }
+  st.lastTs = ts;
+  acctState.set(key, st);
+  return hosts;
+}
+
+/**
+ * Parse `/ip kid-control device print detail` rows into per-IP traffic.
+ *
+ * Kid Control already exposes instantaneous `rate-down`/`rate-up` (bits/sec) and
+ * cumulative `bytes-down`/`bytes-up` per device, so no delta math is needed:
+ * down = the device's download (rx), up = its upload (tx). Keyed by `ip-address`
+ * (rows without one — e.g. a device seen only by MAC — are skipped). Pure.
+ */
+export function parseKidDevices(rows: Record<string, string>[]): Record<string, HostTraffic> {
+  const hosts: Record<string, HostTraffic> = {};
+  for (const row of rows) {
+    const ip = (row["ip-address"] ?? "").trim();
+    if (!ip) continue;
+    hosts[ip] = {
+      rxRate: parseMagnitude(row["rate-down"]),
+      txRate: parseMagnitude(row["rate-up"]),
+      rxBytes: parseMagnitude(row["bytes-down"]),
+      txBytes: parseMagnitude(row["bytes-up"]),
+    };
+  }
+  return hosts;
+}
+
+/** v7: read Kid Control's per-device counters. */
+async function sampleKidControl(ctx: ToolContext): Promise<Record<string, HostTraffic>> {
+  const out = await executeMikrotikCommand("/ip kid-control device print detail", ctx);
+  if (looksLikeError(out)) throw new Error(firstLine(out));
+  if (isEmpty(out)) return {};
+  return parseKidDevices(parseRecords(out).rows);
+}
+
+/**
+ * Bulk-sample per-host traffic for the Clients page, from whichever source the
+ * RouterOS version provides (`/ip accounting` on v6, Kid Control on v7). Rate
+ * limits always come from `/queue simple`. Returns `source: "none"` with a note
+ * when neither is available.
+ */
+export async function sampleAllTraffic(ctx: ToolContext): Promise<BulkTrafficPayload> {
+  const ts = Date.now();
+  const limits = await readQueueLimits(ctx);
+  const { source, note } = await resolveSource(ctx);
+  if (source === "none") return { ts, source, note, hosts: {}, limits };
+
+  try {
+    const hosts =
+      source === "accounting" ? await sampleAccounting(ctx, ts) : await sampleKidControl(ctx);
+    return { ts, source, hosts, limits };
+  } catch (e) {
+    // A read failure after the source resolved: report it but keep limits.
+    return {
+      ts,
+      source: "none",
+      note: e instanceof Error ? e.message : String(e),
+      hosts: {},
+      limits,
+    };
+  }
 }
 
 /**

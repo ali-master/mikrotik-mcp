@@ -4,13 +4,14 @@
  *
  * Talks to the dashboard's `/api/clients*` routes, which call the very same
  * RouterOS operations the connected-device MCP tools wrap — so a block/allow/
- * pin from this page and from chat run identical commands. Traffic rates come
- * from `/ip accounting` — per-host byte deltas measured for EVERY LAN client, so
- * no per-device queue is needed — and are shown inline with a mini sparkline,
- * polled every second. Rate limits still come from `/queue simple`. Mutations
- * return a refreshed device `view` so the table updates without a second request.
+ * pin from this page and from chat run identical commands. Traffic rates cover
+ * EVERY LAN client with no per-device queue: the server reads `/ip accounting`
+ * on RouterOS v6, or Kid Control on v7 (where accounting was removed), and
+ * normalises both to per-host rates shown inline with a mini sparkline, polled
+ * every second. Rate limits still come from `/queue simple`. Mutations return a
+ * refreshed device `view` so the table updates without a second request.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { RefreshCw, Wifi } from "lucide-react";
 import {
@@ -50,10 +51,10 @@ interface DevicesView {
 interface BulkTrafficSample {
   ts: number;
   /** How the server obtained traffic; `none` → `note` explains why it's empty. */
-  source: "accounting" | "none";
+  source: "accounting" | "kid-control" | "none";
   note?: string;
-  /** Per-IP byte DELTAS since the previous snapshot (not cumulative). */
-  hosts: Record<string, { rxBytes: number; txBytes: number }>;
+  /** Per-IP live rates (bits/sec) + cumulative bytes, normalised across sources. */
+  hosts: Record<string, { rxRate: number; txRate: number; rxBytes: number; txBytes: number }>;
   /** Per-IP rate limits from `/queue simple`, for the limits editor. */
   limits: Record<string, { download: string; upload: string }>;
 }
@@ -77,7 +78,7 @@ interface IpTraffic {
 /** What `useBulkTraffic` returns: the per-IP map plus the source diagnostic. */
 interface BulkTraffic {
   map: Map<string, IpTraffic>;
-  source: "accounting" | "none";
+  source: "accounting" | "kid-control" | "none";
   note?: string;
 }
 
@@ -299,8 +300,8 @@ function DeviceDetail({
       </div>
       {!hasTraffic ? (
         <Note type="secondary" label="No traffic yet">
-          No traffic seen for <code>{device.ip}</code> since this page opened. Rates appear here as
-          soon as the device sends or receives, measured by <code>/ip accounting</code>.
+          No traffic seen for <code>{device.ip}</code> yet. Rates appear here as soon as the device
+          sends or receives.
         </Note>
       ) : (
         <>
@@ -347,22 +348,17 @@ function DeviceDetail({
 const EMPTY_TRAFFIC: BulkTraffic = { map: new Map(), source: "accounting" };
 
 /**
- * Polls `/api/clients/traffic-bulk` every second and turns per-host byte deltas
- * from `/ip accounting` into live rates + sparkline history per IP.
- *
- * Each server sample already carries the bytes seen **since the previous
- * snapshot**, so a rate is just `bytes × 8 / dt`. The very first sample spans
- * "since accounting was enabled" and is discarded (like the old cumulative path
- * needed two reads). History is carried forward per IP and a zero is pushed for
- * an idle host, so a sparkline decays smoothly instead of vanishing; idle hosts
- * with no rate limit are pruned once their whole window is quiet.
+ * Polls `/api/clients/traffic-bulk` every second. The server already normalises
+ * both RouterOS sources — `/ip accounting` (v6) and Kid Control (v7) — into live
+ * rates (bits/sec) plus cumulative bytes per IP, so this just carries the
+ * sparkline history forward: a zero is pushed for an idle host so its line decays
+ * smoothly instead of vanishing, and idle hosts with no rate limit are pruned
+ * once their whole window is quiet, keeping the map from growing without bound.
  */
 function useBulkTraffic(deviceName: string): BulkTraffic {
   const [traffic, setTraffic] = useState<BulkTraffic>(EMPTY_TRAFFIC);
-  const prevTsRef = useRef<number | null>(null);
 
   useEffect(() => {
-    prevTsRef.current = null;
     setTraffic(EMPTY_TRAFFIC);
   }, [deviceName]);
 
@@ -370,38 +366,12 @@ function useBulkTraffic(deviceName: string): BulkTraffic {
     if (!deviceName) return;
     let cancelled = false;
 
-    const limitsOnly = (sample: BulkTrafficSample): Map<string, IpTraffic> => {
-      const m = new Map<string, IpTraffic>();
-      for (const [ip, lim] of Object.entries(sample.limits)) {
-        m.set(ip, {
-          rxRate: 0,
-          txRate: 0,
-          rxBytes: 0,
-          txBytes: 0,
-          downloadLimit: lim.download,
-          uploadLimit: lim.upload,
-          history: [],
-        });
-      }
-      return m;
-    };
-
     const poll = async (): Promise<void> => {
       try {
         const q = deviceName ? `?device=${encodeURIComponent(deviceName)}` : "";
         const sample = await api<BulkTrafficSample>(`/api/clients/traffic-bulk${q}`);
         if (cancelled) return;
-        const prevTs = prevTsRef.current;
-        prevTsRef.current = sample.ts;
 
-        // First sample after (re)start: its deltas span "since enabled" and are
-        // meaningless as a rate — seed limits-only entries and wait for the next.
-        if (prevTs == null) {
-          setTraffic({ map: limitsOnly(sample), source: sample.source, note: sample.note });
-          return;
-        }
-
-        const dtSec = Math.max(0.1, (sample.ts - prevTs) / 1000);
         setTraffic((old) => {
           const ids = new Set<string>([
             ...old.map.keys(),
@@ -410,9 +380,9 @@ function useBulkTraffic(deviceName: string): BulkTraffic {
           ]);
           const next = new Map<string, IpTraffic>();
           for (const ip of ids) {
-            const d = sample.hosts[ip] ?? { rxBytes: 0, txBytes: 0 };
-            const rxRate = (d.rxBytes / dtSec) * 8;
-            const txRate = (d.txBytes / dtSec) * 8;
+            const h = sample.hosts[ip];
+            const rxRate = h?.rxRate ?? 0;
+            const txRate = h?.txRate ?? 0;
             const ex = old.map.get(ip);
             const history = [...(ex?.history ?? []), { rx: rxRate, tx: txRate }].slice(
               -MINI_SAMPLES,
@@ -420,12 +390,12 @@ function useBulkTraffic(deviceName: string): BulkTraffic {
             const lim = sample.limits[ip];
             // Drop a host that has no rate limit and no traffic anywhere in its
             // window, so the map doesn't accumulate every IP ever seen.
-            if (!lim && !history.some((h) => h.rx > 0 || h.tx > 0)) continue;
+            if (!lim && !history.some((p) => p.rx > 0 || p.tx > 0)) continue;
             next.set(ip, {
               rxRate,
               txRate,
-              rxBytes: (ex?.rxBytes ?? 0) + d.rxBytes,
-              txBytes: (ex?.txBytes ?? 0) + d.txBytes,
+              rxBytes: h?.rxBytes ?? ex?.rxBytes ?? 0,
+              txBytes: h?.txBytes ?? ex?.txBytes ?? 0,
               downloadLimit: lim?.download ?? "",
               uploadLimit: lim?.upload ?? "",
               history,
@@ -464,7 +434,7 @@ export function ClientsView(): ReactNode {
     null,
   );
 
-  // Bulk traffic: polls every 1s, returns per-IP rates from /ip accounting.
+  // Bulk traffic: polls every 1s; server picks /ip accounting (v6) or Kid Control (v7).
   const { map: trafficMap, source: trafficSource, note: trafficNote } = useBulkTraffic(deviceName);
 
   // Discover the configured routers so the user can pick which one to inspect.
@@ -598,8 +568,8 @@ export function ClientsView(): ReactNode {
 
         {trafficSource === "none" && trafficNote && (
           <Note type="warning" label="Traffic unavailable" className="mb-2.5">
-            {trafficNote} The Traffic column needs per-host byte counters from{" "}
-            <code>/ip accounting</code>.
+            {trafficNote} The Traffic column needs per-host counters — <code>/ip accounting</code>{" "}
+            on RouterOS v6, or Kid Control on v7.
           </Note>
         )}
 
