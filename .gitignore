@@ -197,3 +197,9 @@ results/
 plans/
 
 ./mcp-inspector.config.local.json
+
+# MCP Bundle build artifacts (bun run build:mcp)
+.mcpb-build/
+.mcpb-cache/
+dist-mcpb/
+*.mcpb

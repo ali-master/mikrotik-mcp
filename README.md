@@ -119,6 +119,34 @@ bun run start            # serve from source
 bun run build            # bundle to dist/
 ```
 
+### As an MCP Bundle (`.mcpb`)
+
+A one-click install for Claude Desktop and other MCPB hosts — no Bun, Node or npm
+needed on the machine, and the router credentials are entered in the host's UI
+rather than a shell.
+
+```bash
+bun run build:mcp                       # bundle for this machine
+bun run build:mcp --target linux-x64    # or one specific target
+bun run build:mcp:all                   # every target
+```
+
+Bundles land in `dist-mcpb/` as `mikrotik-mcp-<version>-<platform>-<arch>.mcpb`.
+Open one with your MCPB host (on Claude Desktop, drag it onto Settings →
+Extensions) and fill in the router address and credentials it prompts for.
+
+Because the server is Bun-native — `bun:sqlite`, `Bun.serve`, `Bun.S3Client`, and
+`@tikoci/centrs`, which ships raw TypeScript — it cannot run on the Node runtime an
+MCPB host provides. Each bundle therefore **vendors the Bun binary it was built
+against** and runs `runtime/bun dist/cli.js serve`, so every subsystem (MAC-Telnet,
+the dashboard, S3 backups) behaves exactly as it does from source. That costs about
+60 MB per bundle and makes each one platform-specific — hence one artifact per
+platform/arch rather than a single universal file.
+
+The build stages the bundle, validates the manifest, and drives the staged server
+over stdio (`initialize` + `tools/list`, asserting the tool count matches the
+manifest) before packing. Pass `--no-smoke` to skip that last check.
+
 ## The tool catalog
 
 **706 tools across 111 modules.** Full, always-current reference (parameters +

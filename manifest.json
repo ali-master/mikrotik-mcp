@@ -1,38 +1,129 @@
 {
-  "manifest_version": "0.2",
-  "name": "@usex/mikrotik-mcp",
+  "manifest_version": "0.3",
+  "name": "mikrotik-mcp",
   "display_name": "MikroTik MCP",
   "version": "4.3.0",
   "description": "MCP server for MikroTik RouterOS — 780+ tools over SSH for firewall, NAT, routing, DHCP, DNS, WireGuard, wireless, QoS and more.",
+  "long_description": "Exposes a MikroTik RouterOS device as several hundred risk-annotated MCP tools, one module per RouterOS scope, so an MCP client can read and configure a router in natural language.\n\nEvery tool reaches the device through a single choke point over SSH, and every command is built with an escaping command builder rather than string concatenation, so tool arguments cannot break out of the command they are interpolated into. Each tool carries a risk annotation (read, write, idempotent write, destructive, dangerous) that the host surfaces before the call runs.\n\nThe bundle vendors the Bun runtime it was built against, so the host needs no Bun, Node or npm install of its own.",
   "author": {
     "name": "Ali Torki",
     "email": "ali_4286@live.com",
     "url": "https://github.com/ali-master"
   },
   "homepage": "https://mikrotik-mcp.usestrict.dev",
+  "documentation": "https://github.com/mikrotik-mcp/mikrotik-mcp#readme",
+  "support": "https://github.com/mikrotik-mcp/mikrotik-mcp/issues",
   "icon": "assets/icon.png",
-  "server": {
-    "type": "node",
-    "entry_point": "dist/cli.js",
-    "mcp_config": {
-      "command": "node",
-      "args": ["${__dirname}/dist/cli.js"],
-      "env": {}
-    }
-  },
-  "user_config": {
-    "dashboard_token": {
-      "type": "string",
-      "title": "Dashboard Token",
-      "description": "Bearer token to protect the dashboard",
-      "required": false,
-      "sensitive": true
-    }
-  },
-  "keywords": ["mikrotik", "routeros"],
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/mikrotik-mcp/mikrotik-mcp.git"
+  },
+  "license": "MIT",
+  "keywords": ["mikrotik", "routeros", "networking", "firewall", "ssh", "router"],
+  "server": {
+    "type": "binary",
+    "entry_point": "runtime/bun",
+    "mcp_config": {
+      "command": "${__dirname}/runtime/bun",
+      "args": ["${__dirname}/dist/cli.js", "serve"],
+      "env": {
+        "MIKROTIK_HOST": "${user_config.host}",
+        "MIKROTIK_USERNAME": "${user_config.username}",
+        "MIKROTIK_PASSWORD": "${user_config.password}",
+        "MIKROTIK_PORT": "${user_config.port}",
+        "MIKROTIK_KEY_FILENAME": "${user_config.ssh_key_file}",
+        "MIKROTIK_KEY_PASSPHRASE": "${user_config.ssh_key_passphrase}",
+        "MIKROTIK_TIMEOUT_MS": "${user_config.timeout_ms}",
+        "MIKROTIK_CONFIG_FILE": "${user_config.devices_config_file}",
+        "MIKROTIK_DASHBOARD__ENABLED": "${user_config.dashboard_enabled}",
+        "MIKROTIK_DASHBOARD__TOKEN": "${user_config.dashboard_token}",
+        "MIKROTIK_DISABLE_UPDATE_CHECK": "1"
+      },
+      "platform_overrides": {
+        "win32": {
+          "command": "${__dirname}/runtime/bun.exe"
+        }
+      }
+    }
+  },
+  "user_config": {
+    "host": {
+      "type": "string",
+      "title": "Router Address",
+      "description": "Hostname or IP of the RouterOS device to manage. Ignored for devices defined in a multi-device config file.",
+      "default": "192.168.88.1",
+      "required": false
+    },
+    "username": {
+      "type": "string",
+      "title": "SSH Username",
+      "description": "RouterOS user to log in as. Give it only the permissions the model should have.",
+      "default": "admin",
+      "required": false
+    },
+    "password": {
+      "type": "string",
+      "title": "SSH Password",
+      "description": "Password for the RouterOS user. Leave empty when authenticating with an SSH key.",
+      "sensitive": true,
+      "required": false
+    },
+    "port": {
+      "type": "number",
+      "title": "SSH Port",
+      "description": "Port the RouterOS SSH service listens on (/ip service).",
+      "default": 22,
+      "min": 1,
+      "max": 65535,
+      "required": false
+    },
+    "ssh_key_file": {
+      "type": "file",
+      "title": "SSH Private Key",
+      "description": "Path to a private key file. Takes precedence over the password when set.",
+      "required": false
+    },
+    "ssh_key_passphrase": {
+      "type": "string",
+      "title": "SSH Key Passphrase",
+      "description": "Only needed when the private key above is encrypted.",
+      "sensitive": true,
+      "required": false
+    },
+    "timeout_ms": {
+      "type": "number",
+      "title": "Connection Timeout (ms)",
+      "description": "How long to wait for the device to answer before giving up.",
+      "default": 10000,
+      "min": 1000,
+      "max": 120000,
+      "required": false
+    },
+    "devices_config_file": {
+      "type": "file",
+      "title": "Multi-Device Config File",
+      "description": "Path to a JSON file describing several routers. When set, the model targets one per call via a `device` argument, and the single-device fields above become the \"default\" device.",
+      "required": false
+    },
+    "dashboard_enabled": {
+      "type": "boolean",
+      "title": "Enable Observability Dashboard",
+      "description": "Serve a local dashboard that records every tool call. Binds a port on this machine.",
+      "default": false,
+      "required": false
+    },
+    "dashboard_token": {
+      "type": "string",
+      "title": "Dashboard Token",
+      "description": "Bearer token required to view the dashboard. Strongly recommended whenever the dashboard is enabled.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "tools_generated": false,
+  "prompts_generated": true,
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "linux", "win32"]
   }
 }

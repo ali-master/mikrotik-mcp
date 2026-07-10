@@ -22,6 +22,7 @@ bun run test:types                # tsc --noEmit typecheck
 bun run lint                      # vp lint (vite-plus / oxlint); lint:fix to autofix
 bun run gen                       # regenerate schemas/ + docs/tools-reference.md
 bun run build                     # bunup -> dist/cli.js (+ build:ui single-file views)
+bun run build:mcp                 # .mcpb bundle for this platform (build:mcp:all for every target)
 bun run start                     # serve (stdio transport by default)
 bun run inspect                   # MCP Inspector against the server
 ```
@@ -82,6 +83,20 @@ raw RouterOS parser errors into `isError` results.
 registers every module exactly once (`{label, slug, group, description, tools}`).
 The catalog test enforces unique slugs, unique snake_case tool names, valid
 Zod→JSON-Schema, and `moduleCatalog.length === allToolModules.length`.
+
+**MCP Bundle (`.mcpb`) packaging.** `manifest.json` + `scripts/build-mcpb.ts` pack a
+one-click bundle. The server can **not** run on the Node runtime an MCPB host
+supplies — `src/core/s3.ts` does `import { S3Client } from "bun"` (bunup lowers it to
+a module-scope `globalThis.Bun` destructure) and `@tikoci/centrs` ships raw `.ts` that
+Node refuses to type-strip inside `node_modules`; both throw at import, before any
+tool runs. So the manifest is `server.type: "binary"` and each bundle **vendors the
+Bun binary** pinned by `packageManager`, running `runtime/bun dist/cli.js serve`.
+The build stages `package.json` + `dist/` + `prompts/` + prod `node_modules` (installed
+with **npm**, since Bun's `catalog:` protocol isn't npm-parseable and its isolated
+linker leaves symlinks a zip may not survive), so `src/paths.ts`'s walk-up-to-
+`package.json` root resolution works unchanged. `tests/mcpb-manifest.spec.ts` pins
+these invariants; bundles are per-platform/arch because `platform_overrides` has no
+arch axis. Never switch the manifest back to `type: "node"`.
 
 **Config & runtime.** `src/config.ts` `loadConfig()` layers defaults → env → CLI
 flags: single-device (`MIKROTIK_*`), multi-device (`--config`/`MIKROTIK_CONFIG_FILE`
