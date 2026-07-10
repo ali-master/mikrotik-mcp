@@ -22,6 +22,11 @@ export default defineConfig({
   root: here,
   base: "./",
   plugins: [tailwindcss()],
+  // `@/*` → the dashboard's own directory, matching the shadcn aliases in
+  // components.json and the `paths` entry in the root tsconfig.
+  resolve: {
+    alias: { "@": resolve(here, "observability") },
+  },
   build: {
     outDir: resolve(here, "../dist/ui-build"),
     emptyOutDir: false,

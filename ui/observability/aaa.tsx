@@ -194,24 +194,22 @@ function EntityManager({ config, device }: { config: EntityConfig; device: strin
                 {fd.type === "bool" ? (
                   <Select
                     value={form[fd.key] ?? ""}
-                    onChange={(e) => setForm({ ...form, [fd.key]: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    <option value="no">no</option>
-                    <option value="yes">yes</option>
-                  </Select>
+                    onValueChange={(v) => setForm({ ...form, [fd.key]: v })}
+                    options={[
+                      { value: "", label: "—" },
+                      { value: "no", label: "no" },
+                      { value: "yes", label: "yes" },
+                    ]}
+                  />
                 ) : fd.type === "select" ? (
                   <Select
                     value={form[fd.key] ?? ""}
-                    onChange={(e) => setForm({ ...form, [fd.key]: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {(fd.options ?? []).map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </Select>
+                    onValueChange={(v) => setForm({ ...form, [fd.key]: v })}
+                    options={[
+                      { value: "", label: "—" },
+                      ...(fd.options ?? []).map((o) => ({ value: o, label: o })),
+                    ]}
+                  />
                 ) : (
                   <Input
                     type={
@@ -465,12 +463,13 @@ function SingletonForm({
             {f.type === "bool" ? (
               <Select
                 value={form[f.key] ?? ""}
-                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-              >
-                <option value="">(unchanged)</option>
-                <option value="no">no</option>
-                <option value="yes">yes</option>
-              </Select>
+                onValueChange={(v) => setForm({ ...form, [f.key]: v })}
+                options={[
+                  { value: "", label: "(unchanged)" },
+                  { value: "no", label: "no" },
+                  { value: "yes", label: "yes" },
+                ]}
+              />
             ) : (
               <Input
                 type={f.type === "number" ? "number" : "text"}
@@ -719,14 +718,16 @@ function UsageTab({ device }: { device: string }): ReactNode {
     <div className="aaa-usage">
       <div className="aaa-usage__bar">
         <span className="muted">User</span>
-        <Select value={user} onChange={(e) => setUser(e.target.value)} aria-label="User">
-          {(users ?? []).map((u) => (
-            <option key={u} value={u}>
-              {u}
-            </option>
-          ))}
-          {(!users || users.length === 0) && <option value="">— no sessions recorded yet —</option>}
-        </Select>
+        <Select
+          value={user}
+          onValueChange={setUser}
+          aria-label="User"
+          options={
+            users && users.length > 0
+              ? users.map((u) => ({ value: u, label: u }))
+              : [{ value: "", label: "— no sessions recorded yet —" }]
+          }
+        />
       </div>
 
       {users && users.length === 0 ? (
@@ -881,14 +882,15 @@ export function AaaView(): ReactNode {
         className="reveal"
         extra={
           routerOptions.length > 1 ? (
-            <Select value={device} onChange={(e) => setDevice(e.target.value)} aria-label="Router">
-              {routerOptions.map((d) => (
-                <option key={d.name} value={d.name}>
-                  {d.name}
-                  {d.isDefault ? " (default)" : ""}
-                </option>
-              ))}
-            </Select>
+            <Select
+              value={device}
+              onValueChange={setDevice}
+              aria-label="Router"
+              options={routerOptions.map((d) => ({
+                value: d.name,
+                label: `${d.name}${d.isDefault ? " (default)" : ""}`,
+              }))}
+            />
           ) : undefined
         }
       >
