@@ -158,7 +158,14 @@ export function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): 
             return (
               <li
                 key={v.id}
-                className="hover:bg-foreground/5 [&+&]:border-border/40 relative grid grid-cols-[24px_minmax(0,1fr)_auto] items-start gap-3 rounded-md px-2.5 py-3.5 transition-colors [&+&]:border-t"
+                /*
+                 * The rail is a `before:` pseudo-element running from this row's dot
+                 * down through the bottom of the row, so consecutive rows join into
+                 * one continuous line. `last:before:hidden` stops it dangling past
+                 * the final dot. Geometry: py-3.5 (14px) + the dot's mt-1 (4px) +
+                 * half the 14px dot = 25px to the dot's centre.
+                 */
+                className="hover:bg-foreground/5 relative grid grid-cols-[24px_minmax(0,1fr)_auto] items-start gap-3 rounded-md px-2.5 py-3.5 transition-colors before:absolute before:top-[25px] before:bottom-0 before:left-[22px] before:w-px before:bg-border last:before:hidden"
               >
                 <span
                   className={cn(

@@ -27,6 +27,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { HBars, Panel, StatCard } from "./atoms";
+import { DEFAULT_FEED_LIMIT, FEED_LIMITS, loadFeedLimit, saveFeedLimit } from "./prefs";
 import { ThemeToggle } from "./theme";
 import { BackupsView } from "./backups";
 import { AaaView } from "./aaa";
@@ -495,6 +497,13 @@ function App(): ReactNode {
   const [seed, setSeed] = useState<{ name: string; body: Record<string, unknown> } | null>(null);
   const [feed, setFeed] = useState<ToolEvent[]>([]);
   const [windowMs, setWindowMs] = useState(3_600_000);
+  // How many feed rows to render. Lifted here (rather than owned by the Config
+  // page) because the Config panel and the feed table are siblings in this tree.
+  const [feedLimit, setFeedLimitState] = useState(loadFeedLimit);
+  const setFeedLimit = useCallback((n: number): void => {
+    setFeedLimitState(n);
+    saveFeedLimit(n);
+  }, []);
   const [paused, setPaused] = useState(false);
   const [liveMode, setLiveMode] = useState<LiveMode>("off");
   const [selected, setSelected] = useState<ToolEvent | null>(null);
@@ -711,9 +720,10 @@ function App(): ReactNode {
     }
   }, []);
 
-  // The rows actually rendered (the table caps at 200) — selection + "select
-  // all" operate over exactly these so the header checkbox matches what's shown.
-  const shownRows = useMemo(() => visible.slice(0, 200), [visible]);
+  // The rows actually rendered (the table caps at `feedLimit`) — selection and
+  // "select all" operate over exactly these, so the header checkbox always
+  // matches what is on screen rather than the whole buffer.
+  const shownRows = useMemo(() => visible.slice(0, feedLimit), [visible, feedLimit]);
   const shownIds = useMemo(() => shownRows.map((e) => e.id), [shownRows]);
   const allShownSelected = shownIds.length > 0 && shownIds.every((id) => selectedIds.has(id));
   const someShownSelected = !allShownSelected && shownIds.some((id) => selectedIds.has(id));
@@ -1147,25 +1157,17 @@ function App(): ReactNode {
         {/* ── Topology ── */}
         {view === "topology" &&
           (topology && topology.nodes.length > 0 ? (
-            <section className="grid content-start gap-[18px]">
-              <Panel
-                title="Network topology"
-                className="reveal"
-                extra={
-                  <span className="text-muted-foreground text-[11px]">
-                    Layer-2 neighbours via MNDP/CDP/LLDP · click a neighbour to onboard it
-                  </span>
-                }
-              >
-                <TopologyMap
-                  topo={topology}
-                  onOnboard={(name, body) => {
-                    setSeed({ name, body });
-                    setEditingConfig(true);
-                    setView("config");
-                  }}
-                />
-              </Panel>
+            // The map brings its own toolbar, HUD and inspector, so it gets the
+            // page rather than sitting inside a Panel's second frame.
+            <section className="reveal grid content-start gap-[18px]">
+              <TopologyMap
+                topo={topology}
+                onOnboard={(name, body) => {
+                  setSeed({ name, body });
+                  setEditingConfig(true);
+                  setView("config");
+                }}
+              />
             </section>
           ) : (
             <EmptyState
@@ -1277,6 +1279,38 @@ function App(): ReactNode {
               </Panel>
 
               <Panel
+                title="Dashboard preferences"
+                className="reveal"
+                extra={
+                  <span className="text-muted-foreground text-[11px]">
+                    stored in this browser · not server config
+                  </span>
+                }
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex min-w-0 flex-col">
+                    {/* The Select carries its own aria-label; this is a caption. */}
+                    <Label className="text-[12.5px]">Live Feed rows</Label>
+                    <span className="text-muted-foreground text-[11px]">
+                      How many matching calls the feed table renders. Up to {num(FEED_CAP)} are kept
+                      in memory regardless; this only bounds what is drawn.
+                    </span>
+                  </div>
+                  <span className="flex-1" />
+                  <Select
+                    size="sm"
+                    aria-label="Live Feed rows"
+                    value={String(feedLimit)}
+                    onValueChange={(v) => setFeedLimit(Number(v))}
+                    options={FEED_LIMITS.map((n) => ({
+                      value: String(n),
+                      label: `${num(n)} rows${n === DEFAULT_FEED_LIMIT ? " (default)" : ""}`,
+                    }))}
+                  />
+                </div>
+              </Panel>
+
+              <Panel
                 title="Version history"
                 className="reveal"
                 extra={
@@ -1320,7 +1354,9 @@ function App(): ReactNode {
             title="Live tool calls"
             extra={
               <span className="text-muted-foreground text-[11px]">
-                {visible.length} shown · {feed.length} buffered
+                {num(shownRows.length)} shown
+                {visible.length > shownRows.length && ` of ${num(visible.length)} matching`} ·{" "}
+                {num(feed.length)} buffered
               </span>
             }
           >
