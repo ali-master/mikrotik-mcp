@@ -16,11 +16,13 @@ import type { CfgField, CfgSection } from "./config-spec";
 type Cfg = Record<string, unknown>;
 const REDACTED = "«redacted»";
 
-const asObj = (v: unknown): Cfg => (v && typeof v === "object" && !Array.isArray(v) ? (v as Cfg) : {});
+const asObj = (v: unknown): Cfg =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as Cfg) : {};
 const arr = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
 const uniq = (a: string[]): string[] => [...new Set(a)];
 /** Safe stringify of an untyped config value (never "[object Object]"). */
-const str = (v: unknown): string => (v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
+const str = (v: unknown): string =>
+  v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
 
 function sectionObj(cfg: Cfg, s: CfgSection): Cfg {
   return s.path ? asObj(cfg[s.path]) : cfg;
@@ -46,25 +48,35 @@ function isActive(cfg: Cfg, s: CfgSection): boolean {
 
 // ── one field control ────────────────────────────────────────────────────────
 
-function FieldRow({ field, value, onChange }: { field: CfgField; value: unknown; onChange: (v: unknown) => void }): ReactNode {
+function FieldRow({
+  field,
+  value,
+  onChange,
+}: {
+  field: CfgField;
+  value: unknown;
+  onChange: (v: unknown) => void;
+}): ReactNode {
   const id = `f_${field.key}`;
   let control: ReactNode;
   if (field.type === "bool") {
     control = (
       <label className="dev-toggle">
-        <input type="checkbox" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={value === true}
+          onChange={(e) => onChange(e.target.checked)}
+        />
         <span className="dev-toggle__slider" />
       </label>
     );
   } else if (field.type === "select") {
     control = (
-      <Select value={str(value ?? field.options?.[0] ?? "")} onChange={(e) => onChange(e.target.value)}>
-        {(field.options ?? []).map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </Select>
+      <Select
+        value={str(value ?? field.options?.[0] ?? "")}
+        onValueChange={onChange}
+        options={(field.options ?? []).map((o) => ({ value: o, label: o }))}
+      />
     );
   } else if (field.type === "number") {
     control = (
@@ -121,7 +133,15 @@ function FieldForm({
           <button type="button" className="cfg-adv-toggle" onClick={() => setShowAdv((s) => !s)}>
             {showAdv ? "▾" : "▸"} Advanced ({adv.length})
           </button>
-          {showAdv && adv.map((f) => <FieldRow key={f.key} field={f} value={value[f.key]} onChange={(v) => onField(f.key, v)} />)}
+          {showAdv &&
+            adv.map((f) => (
+              <FieldRow
+                key={f.key}
+                field={f}
+                value={value[f.key]}
+                onChange={(v) => onField(f.key, v)}
+              />
+            ))}
         </>
       )}
     </div>
@@ -137,23 +157,41 @@ function sectionSummary(cfg: Cfg, s: CfgSection): string {
   const pick = (k: string): string => (o[k] != null && o[k] !== "" ? str(o[k]) : "");
   const addr = pick("host") ? `${pick("host")}:${pick("port")}` : "";
   if (s.id === "mcp") return [pick("transport"), addr].filter(Boolean).join(" · ");
-  if (s.id === "dashboard") return [addr, o.token ? "token set" : "open"].filter(Boolean).join(" · ");
-  if (s.id === "ssh") return `interval ${pick("keepAliveInterval") || "?"}ms · idle ${pick("idleTimeout") || "?"}ms`;
+  if (s.id === "dashboard")
+    return [addr, o.token ? "token set" : "open"].filter(Boolean).join(" · ");
+  if (s.id === "ssh")
+    return `interval ${pick("keepAliveInterval") || "?"}ms · idle ${pick("idleTimeout") || "?"}ms`;
   if (s.id === "s3")
-    return isActive(cfg, s) ? [pick("bucket"), pick("region"), pick("endpoint")].filter(Boolean).join(" · ") || "not configured" : "";
+    return isActive(cfg, s)
+      ? [pick("bucket"), pick("region"), pick("endpoint")].filter(Boolean).join(" · ") ||
+          "not configured"
+      : "";
   if (s.id === "memory") return pick("dbPath");
-  if (s.id === "general") return `${cfg.readOnly ? "read-only" : "read-write"}${cfg.disableUpdateCheck ? " · no update check" : ""}`;
+  if (s.id === "general")
+    return `${cfg.readOnly ? "read-only" : "read-write"}${cfg.disableUpdateCheck ? " · no update check" : ""}`;
   return "";
 }
 
-function ObjectCard({ cfg, onChange, section }: { cfg: Cfg; onChange: (c: Cfg) => void; section: CfgSection }): ReactNode {
+function ObjectCard({
+  cfg,
+  onChange,
+  section,
+}: {
+  cfg: Cfg;
+  onChange: (c: Cfg) => void;
+  section: CfgSection;
+}): ReactNode {
   const [editing, setEditing] = useState(false);
   const stash = useRef<Cfg | null>(null);
   const active = isActive(cfg, section);
 
   const toggle = (on: boolean): void => {
     if (section.enable?.presence) {
-      if (on) onChange({ ...cfg, [section.path!]: stash.current ?? (section.id === "s3" ? DEFAULT_S3 : {}) });
+      if (on)
+        onChange({
+          ...cfg,
+          [section.path!]: stash.current ?? (section.id === "s3" ? DEFAULT_S3 : {}),
+        });
       else {
         stash.current = asObj(cfg[section.path!]);
         const next = { ...cfg };
@@ -177,35 +215,61 @@ function ObjectCard({ cfg, onChange, section }: { cfg: Cfg; onChange: (c: Cfg) =
         <div className="cfg-card__titles">
           <div className="cfg-card__title">
             {section.title}
-            {section.enable && <Badge type={active ? "success" : "secondary"}>{active ? "active" : "off"}</Badge>}
+            {section.enable && (
+              <Badge type={active ? "success" : "secondary"}>{active ? "active" : "off"}</Badge>
+            )}
           </div>
-          {summary ? <div className="cfg-card__sum muted">{summary}</div> : <div className="cfg-card__sum muted">{section.blurb}</div>}
+          {summary ? (
+            <div className="cfg-card__sum muted">{summary}</div>
+          ) : (
+            <div className="cfg-card__sum muted">{section.blurb}</div>
+          )}
         </div>
         <span style={{ flex: 1 }} />
         {section.enable && (
-          <label className="dev-toggle" title={`${active ? "Deactivate" : "Activate"} ${section.enable.label ?? section.title}`}>
+          <label
+            className="dev-toggle"
+            title={`${active ? "Deactivate" : "Activate"} ${section.enable.label ?? section.title}`}
+          >
             <input type="checkbox" checked={active} onChange={(e) => toggle(e.target.checked)} />
             <span className="dev-toggle__slider" />
           </label>
         )}
-        <Button size="sm" ghost onClick={() => setEditing(true)} disabled={section.enable?.presence && !active}>
+        <Button
+          size="sm"
+          ghost
+          onClick={() => setEditing(true)}
+          disabled={section.enable?.presence && !active}
+        >
           Edit
         </Button>
       </div>
 
       {editing && (
-        <Sheet title={`${section.icon} ${section.title}`} subtitle={section.blurb} onClose={() => setEditing(false)}>
+        <Sheet
+          title={`${section.icon} ${section.title}`}
+          subtitle={section.blurb}
+          onClose={() => setEditing(false)}
+        >
           {section.enable && (
             <label className="cfg-sheet-enable">
               <span className="dev-toggle">
-                <input type="checkbox" checked={active} onChange={(e) => toggle(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={(e) => toggle(e.target.checked)}
+                />
                 <span className="dev-toggle__slider" />
               </span>
               {active ? "Active" : `Inactive — enable ${section.enable.label ?? section.title}`}
             </label>
           )}
           {active ? (
-            <FieldForm fields={section.fields} value={sectionObj(cfg, section)} onField={(k, v) => onChange(setField(cfg, section, k, v))} />
+            <FieldForm
+              fields={section.fields}
+              value={sectionObj(cfg, section)}
+              onField={(k, v) => onChange(setField(cfg, section, k, v))}
+            />
           ) : (
             <Note type="secondary" label={false}>
               This section is turned off. Toggle it on to edit its settings.
@@ -257,14 +321,23 @@ function DeviceSheet({
       title={isNew ? "Add device" : `Device · ${name}`}
       subtitle={isNew ? "New MikroTik router" : undefined}
       onClose={onClose}
-      footer={<Button type="success" size="sm" onClick={onClose}>Done</Button>}
+      footer={
+        <Button type="success" size="sm" onClick={onClose}>
+          Done
+        </Button>
+      }
     >
       <div className="cfg-field">
         <label className="cfg-field__label" htmlFor="dev_name">
           Name
         </label>
         <div style={{ display: "flex", gap: 6 }}>
-          <Input id="dev_name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="core-router" />
+          <Input
+            id="dev_name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="core-router"
+          />
           {!isNew && newName.trim() !== name && (
             <Button size="sm" ghost onClick={commitName}>
               Rename
@@ -289,7 +362,13 @@ function DevicesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
     let i = 1;
     let n = base;
     while (devices[n]) n = `${base}-${++i}`;
-    onChange({ ...cfg, devices: { ...devices, [n]: { host: "192.168.88.1", port: 22, username: "admin", password: "", timeoutMs: 10000 } } });
+    onChange({
+      ...cfg,
+      devices: {
+        ...devices,
+        [n]: { host: "192.168.88.1", port: 22, username: "admin", password: "", timeoutMs: 10000 },
+      },
+    });
     setSheet({ name: n, isNew: true });
   };
   const toggleDisabled = (n: string, disabled: boolean): void => {
@@ -319,13 +398,11 @@ function DevicesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
         <span style={{ flex: 1 }} />
         <label className="cfg-inline">
           <span className="muted">Default</span>
-          <Select value={defaultDevice} onChange={(e) => onChange({ ...cfg, defaultDevice: e.target.value })}>
-            {names.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </Select>
+          <Select
+            value={defaultDevice}
+            onValueChange={(v) => onChange({ ...cfg, defaultDevice: v })}
+            options={names.map((n) => ({ value: n, label: n }))}
+          />
         </label>
         <Button size="sm" onClick={addDevice} icon="＋">
           Add device
@@ -345,12 +422,18 @@ function DevicesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
                 {defaultDevice === n && <Badge type="accent">default</Badge>}
                 <span style={{ flex: 1 }} />
                 <label className="dev-toggle" title={off ? "Enable device" : "Disable device"}>
-                  <input type="checkbox" checked={!off} onChange={(e) => toggleDisabled(n, !e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={!off}
+                    onChange={(e) => toggleDisabled(n, !e.target.checked)}
+                  />
                   <span className="dev-toggle__slider" />
                 </label>
               </div>
               <div className="dev-card__meta muted">{addr}</div>
-              {d.description ? <div className="dev-card__meta muted">{str(d.description)}</div> : null}
+              {d.description ? (
+                <div className="dev-card__meta muted">{str(d.description)}</div>
+              ) : null}
               <div className="cfg-devcard__actions">
                 <Button size="sm" ghost onClick={() => setSheet({ name: n, isNew: false })}>
                   Edit
@@ -375,7 +458,15 @@ function DevicesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
         )}
       </div>
 
-      {sheet && <DeviceSheet cfg={cfg} onChange={onChange} name={sheet.name} isNew={sheet.isNew} onClose={() => setSheet(null)} />}
+      {sheet && (
+        <DeviceSheet
+          cfg={cfg}
+          onChange={onChange}
+          name={sheet.name}
+          isNew={sheet.isNew}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </div>
   );
 }
@@ -415,7 +506,8 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
     const dm = new Set(arr(tools.disabledModules));
     if (enable) {
       dm.delete(m.slug);
-      if (arr(tools.enabledModules).length > 0 || arr(tools.enabledGroups).length > 0) em.add(m.slug);
+      if (arr(tools.enabledModules).length > 0 || arr(tools.enabledGroups).length > 0)
+        em.add(m.slug);
     } else {
       em.delete(m.slug);
       dm.add(m.slug);
@@ -429,7 +521,11 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
   const modules = (catalog ?? []).filter((m) => {
     if (!query) return true;
     const q = query.toLowerCase();
-    return m.label.toLowerCase().includes(q) || m.slug.toLowerCase().includes(q) || m.group.toLowerCase().includes(q);
+    return (
+      m.label.toLowerCase().includes(q) ||
+      m.slug.toLowerCase().includes(q) ||
+      m.group.toLowerCase().includes(q)
+    );
   });
   const groups = new Map<string, ModuleItem[]>();
   for (const m of modules) groups.set(m.group, [...(groups.get(m.group) ?? []), m]);
@@ -444,17 +540,25 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
         <div className="cfg-card__titles">
           <div className="cfg-card__title">Tool Modules</div>
           <div className="cfg-card__sum muted">
-            {catalog ? `${enabledCount}/${catalog.length} modules enabled` : "loading…"} · applied on Save
+            {catalog ? `${enabledCount}/${catalog.length} modules enabled` : "loading…"} · applied
+            on Save
           </div>
         </div>
         <span style={{ flex: 1 }} />
-        <Input placeholder="Filter modules…" value={query} onChange={(e) => setQuery(e.target.value)} className="cfg-modfilter" />
+        <Input
+          placeholder="Filter modules…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="cfg-modfilter"
+        />
         <label className="cfg-inline">
           <span className="dev-toggle" title="MCP App Views">
             <input
               type="checkbox"
               checked={asObj(cfg.mcp).appViews === true}
-              onChange={(e) => onChange({ ...cfg, mcp: { ...asObj(cfg.mcp), appViews: e.target.checked } })}
+              onChange={(e) =>
+                onChange({ ...cfg, mcp: { ...asObj(cfg.mcp), appViews: e.target.checked } })
+              }
             />
             <span className="dev-toggle__slider" />
           </span>
@@ -468,7 +572,12 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
             {items.map((m) => {
               const on = moduleEnabled(tools, m);
               return (
-                <label key={m.slug} className="mod-row" data-on={on ? "1" : undefined} title={m.description}>
+                <label
+                  key={m.slug}
+                  className="mod-row"
+                  data-on={on ? "1" : undefined}
+                  title={m.description}
+                >
                   <input type="checkbox" checked={on} onChange={() => toggle(m, !on)} />
                   <span className="mod-row__main">
                     <span className="mod-row__name">
@@ -485,7 +594,9 @@ function ModulesCard({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }
             })}
           </div>
         ))}
-        {catalog && modules.length === 0 && <span className="muted">No modules match “{query}”.</span>}
+        {catalog && modules.length === 0 && (
+          <span className="muted">No modules match “{query}”.</span>
+        )}
       </div>
     </div>
   );

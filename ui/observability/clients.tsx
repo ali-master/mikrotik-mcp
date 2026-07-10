@@ -485,16 +485,13 @@ export function ClientsView(): ReactNode {
             {routerOptions.length > 1 && (
               <Select
                 value={deviceName}
-                onChange={(e) => setDeviceName(e.target.value)}
+                onValueChange={setDeviceName}
                 aria-label="Router"
-              >
-                {routerOptions.map((d) => (
-                  <option key={d.name} value={d.name}>
-                    {d.name}
-                    {d.isDefault ? " (default)" : ""}
-                  </option>
-                ))}
-              </Select>
+                options={routerOptions.map((d) => ({
+                  value: d.name,
+                  label: `${d.name}${d.isDefault ? " (default)" : ""}`,
+                }))}
+              />
             )}
             <input
               className="geist-input"

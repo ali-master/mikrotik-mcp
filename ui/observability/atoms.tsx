@@ -1,7 +1,18 @@
+/**
+ * Small UI atoms, built on the shadcn primitives in `components/ui/*`.
+ *
+ * `Panel` and `StatCard` are Cards; `CopyButton` is a Button. `HBars` stays a
+ * hand-rolled bar list — a horizontal bar whose width is a data-driven
+ * percentage is an inline style, not a utility class.
+ */
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-// ── small UI atoms ───────────────────────────────────────────────────────────
+/** A titled surface grouping related content, with an optional right-aligned slot. */
 export function Panel({
   title,
   extra,
@@ -14,23 +25,24 @@ export function Panel({
   className?: string;
 }): ReactNode {
   return (
-    <div className={`panel${className ? ` ${className}` : ""}`}>
+    <Card className={cn("gap-0 py-5", className)}>
       {title != null && (
-        <div className="sheet__hd" style={{ marginBottom: 12 }}>
-          <h2 style={{ margin: 0 }}>{title}</h2>
+        <CardHeader className="flex flex-row items-center gap-3 px-5 pb-3">
+          <CardTitle className="text-base font-semibold">{title}</CardTitle>
           {extra != null && (
             <>
-              <span style={{ flex: 1 }} />
+              <span className="flex-1" />
               {extra}
             </>
           )}
-        </div>
+        </CardHeader>
       )}
-      {children}
-    </div>
+      <CardContent className="px-5">{children}</CardContent>
+    </Card>
   );
 }
 
+/** A single headline metric: label, value, and an optional trailing unit. */
 export function StatCard({
   k,
   v,
@@ -43,16 +55,17 @@ export function StatCard({
   cls?: string;
 }): ReactNode {
   return (
-    <div className={`stat${cls ? ` ${cls}` : ""}`}>
-      <p className="k">{k}</p>
-      <div className="v">
+    <Card className={cn("gap-1 px-4 py-3", cls)}>
+      <p className="text-muted-foreground text-xs tracking-wide uppercase">{k}</p>
+      <div className="text-2xl font-semibold tabular-nums">
         {v}
-        {sub != null && <small> {sub}</small>}
+        {sub != null && <small className="text-muted-foreground ml-1 text-sm"> {sub}</small>}
       </div>
-    </div>
+    </Card>
   );
 }
 
+/** A horizontal bar chart for a handful of labelled values. */
 export function HBars({
   rows,
 }: {
@@ -60,22 +73,20 @@ export function HBars({
 }): ReactNode {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
-    <div className="hbar">
+    <div className="flex flex-col gap-2">
       {rows.map((r) => (
-        <div className="hbar__row" key={r.label}>
-          <span className="hbar__label" title={r.label}>
+        <div className="grid grid-cols-[minmax(0,7rem)_1fr_auto] items-center gap-3" key={r.label}>
+          <span className="text-muted-foreground truncate text-xs" title={r.label}>
             {r.label}
           </span>
-          <div className="hbar__track">
+          <div className="bg-muted h-2 overflow-hidden rounded-full">
             <div
-              className="hbar__fill"
-              style={{
-                width: `${(r.value / max) * 100}%`,
-                background: r.color,
-              }}
+              className={cn("h-full rounded-full", !r.color && "bg-brand")}
+              // Width is data-driven, so it can't be a utility class.
+              style={{ width: `${(r.value / max) * 100}%`, background: r.color }}
             />
           </div>
-          <span className="hbar__val">{r.sub ?? String(r.value)}</span>
+          <span className="text-xs tabular-nums">{r.sub ?? String(r.value)}</span>
         </div>
       ))}
     </div>
@@ -84,33 +95,18 @@ export function HBars({
 
 /** A clipboard glyph for icon-only copy affordances. */
 export function CopyIcon(): ReactNode {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="14"
-      height="14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="9" y="9" width="11" height="11" rx="2" />
-      <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />
-    </svg>
-  );
+  return <Copy aria-hidden="true" />;
 }
 
 /**
- * Copy-to-clipboard button with an inline "Copied!" confirmation tooltip. Pass
+ * Copy-to-clipboard button that swaps to a check for a moment on success. Pass
  * `icon` for an icon-only affordance (e.g. next to a title); otherwise a text
- * label is shown. The tooltip auto-dismisses after a moment.
+ * label is shown.
  */
 export function CopyButton({
   text,
   label = "Copy",
-  className = "btn",
+  className,
   icon = false,
   title,
 }: {
@@ -134,17 +130,21 @@ export function CopyButton({
     );
   };
   return (
-    <button
+    <Button
       type="button"
-      className={`copybtn ${className}${icon ? " copybtn--icon" : ""}${copied ? " is-copied" : ""}`}
+      variant="outline"
+      size={icon ? "icon-sm" : "sm"}
+      className={className}
       onClick={onClick}
       title={title ?? "Copy to clipboard"}
       aria-label={title ?? "Copy to clipboard"}
     >
-      {icon ? <CopyIcon /> : label}
-      <span className="copybtn__tip" role="status" aria-live="polite">
-        Copied!
-      </span>
-    </button>
+      {copied ? <Check className="text-success" /> : icon ? <Copy /> : label}
+      {copied && (
+        <span className="sr-only" role="status" aria-live="polite">
+          Copied!
+        </span>
+      )}
+    </Button>
   );
 }

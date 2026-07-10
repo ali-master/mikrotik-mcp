@@ -1,21 +1,73 @@
 /*
- * Tailwind v4 entry for the shadcn / geistcn component layer.
+ * Tailwind v4 entry for the observability dashboard's shadcn component layer.
  *
- * Preflight (Tailwind's global reset) is deliberately OMITTED so the dashboard's
- * existing hand-rolled `styles.css` keeps full control of layout and the legacy
- * components — only the THEME tokens and UTILITY classes are pulled in, which the
- * shadcn/geistcn components under `components/ui/*` consume. Because utilities
- * live in `@layer utilities` (lower precedence than the unlayered legacy CSS),
- * the two systems coexist: old classes win for old markup, utilities drive the
- * new components.
+ * Unlike the in-chat MCP App views (which inherit the host's tokens via
+ * `ui/shared/base.css`), the dashboard is a standalone localhost page and owns
+ * its full design system: Preflight, the shadcn token vocabulary, both colour
+ * schemes, and one monospace voice for headings and data alike.
+ *
+ * Two token families live here and they mean different things:
+ *
+ *   --accent  is shadcn's MUTED HOVER SURFACE (`hover:bg-accent`). It is NOT a
+ *             brand colour. An earlier revision aliased it to the bright
+ *             per-view accent, which lights up every hover state.
+ *   --brand   is the per-view accent (nav, focus ring, chart series). It is set
+ *             inline on `.main[data-view]` as `--page-accent` from `VIEW_ACCENT`
+ *             in `main.tsx`, and falls back to the foreground so a view that
+ *             declares no accent stays monochrome.
  */
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+/* Must precede every other rule: `@import url()` is only legal at the top of a
+   stylesheet. Kept in CSS (not an index.html <link>) because the build inliner
+   reads stylesheet links off disk and would choke on a remote href. */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
 
-/* shadcn design tokens, mapped onto the dashboard's Geist palette. `--accent`
-   follows the live per-page accent so geistcn components are colour-coded too. */
+/* shadcn's dark variant keys off a `.dark` class on <html>, set by main.tsx. */
+@custom-variant dark (&:is(.dark *));
+
+/* ── Light ────────────────────────────────────────────────────────────────── */
 :root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  /* Geist's inverted primary: a near-black solid button on light. */
+  --primary: #0a0a0a;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #0a0a0a;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --success: #18794e;
+  --warning: #ab6400;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --radius: 0.5rem;
+
+  /* Per-view accent, overridden inline on `.main[data-view]`. */
+  --page-accent: var(--foreground);
+  --page-accent-2: var(--muted-foreground);
+  --brand: var(--page-accent);
+  --brand-foreground: var(--background);
+  --ring: var(--brand);
+
+  /* Data-visualisation palette, shared by recharts and the SVG views. */
+  --chart-1: #0068d6;
+  --chart-2: #0f8a7e;
+  --chart-3: #3d8f2f;
+  --chart-4: #a35200;
+  --chart-5: #7048c4;
+}
+
+/* ── Dark (the dashboard's historical default) ────────────────────────────── */
+.dark {
   --background: #0a0a0a;
   --foreground: #ededed;
   --card: #111111;
@@ -28,16 +80,21 @@
   --secondary-foreground: #ededed;
   --muted: #1a1a1a;
   --muted-foreground: #a1a1a1;
-  --accent: var(--page-accent, #3291ff);
-  --accent-foreground: #0a0a0a;
+  --accent: #1a1a1a;
+  --accent-foreground: #ededed;
   --destructive: #ff5c5c;
   --destructive-foreground: #ffffff;
   --success: #2dd4a7;
   --warning: #f5a623;
   --border: #2a2a2a;
   --input: #2a2a2a;
-  --ring: var(--page-accent, #3291ff);
-  --radius: 0.5rem;
+
+  /* Geist's vibrant series, legible on near-black. */
+  --chart-1: #3291ff;
+  --chart-2: #2dd4bf;
+  --chart-3: #69d05a;
+  --chart-4: #f5a623;
+  --chart-5: #9d7bff;
 }
 
 /* Expose the tokens to Tailwind as `bg-*`, `text-*`, `border-*`, `rounded-*`. */
@@ -63,9 +120,47 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --font-sans: var(--mt-sans);
-  --font-mono: var(--mt-mono);
+  --font-sans: var(--font-mt);
+  --font-mono: var(--font-mt);
+}
+
+@layer base {
+  :root {
+    --font-mt: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-mono antialiased;
+  }
+}
+
+/*
+ * GSAP scroll-reveal hook. `useReveals()` in `hooks.ts` animates each `.reveal`
+ * element in with ScrollTrigger, writing opacity/transform as INLINE styles — so
+ * the only job left for CSS is hiding them before the first paint. `.js-motion`
+ * is added to <html> by that hook, so reduced-motion users and a bundle that
+ * never runs both get full opacity immediately rather than a blank page.
+ */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    .js-motion .reveal {
+      opacity: 0;
+    }
+  }
 }
