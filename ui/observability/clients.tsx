@@ -4,11 +4,11 @@
  *
  * Talks to the dashboard's `/api/clients*` routes, which call the very same
  * RouterOS operations the connected-device MCP tools wrap — so a block/allow/
- * pin from this page and from chat run identical commands. Traffic rates are
- * computed from cumulative byte deltas (not the unreliable instantaneous `rate`
- * field) and displayed inline in each row with a mini sparkline, polled every
- * 1 second. Mutations return a refreshed device `view` so the table updates
- * without a second request.
+ * pin from this page and from chat run identical commands. Traffic rates come
+ * from `/ip accounting` — per-host byte deltas measured for EVERY LAN client, so
+ * no per-device queue is needed — and are shown inline with a mini sparkline,
+ * polled every second. Rate limits still come from `/queue simple`. Mutations
+ * return a refreshed device `view` so the table updates without a second request.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -49,10 +49,13 @@ interface DevicesView {
 }
 interface BulkTrafficSample {
   ts: number;
-  queues: Record<
-    string,
-    { txBytes: number; rxBytes: number; downloadLimit: string; uploadLimit: string }
-  >;
+  /** How the server obtained traffic; `none` → `note` explains why it's empty. */
+  source: "accounting" | "none";
+  note?: string;
+  /** Per-IP byte DELTAS since the previous snapshot (not cumulative). */
+  hosts: Record<string, { rxBytes: number; txBytes: number }>;
+  /** Per-IP rate limits from `/queue simple`, for the limits editor. */
+  limits: Record<string, { download: string; upload: string }>;
 }
 interface OpResult {
   ok: boolean;
@@ -62,13 +65,20 @@ interface OpResult {
 
 /** Per-IP computed traffic state (delta rates + sparkline history). */
 interface IpTraffic {
-  rxRate: number; // bits/sec
+  rxRate: number; // bits/sec, this interval
   txRate: number;
-  rxBytes: number;
+  rxBytes: number; // cumulative for this dashboard session (sum of deltas)
   txBytes: number;
   downloadLimit: string;
   uploadLimit: string;
   history: { rx: number; tx: number }[];
+}
+
+/** What `useBulkTraffic` returns: the per-IP map plus the source diagnostic. */
+interface BulkTraffic {
+  map: Map<string, IpTraffic>;
+  source: "accounting" | "none";
+  note?: string;
 }
 
 const MAX_SAMPLES = 40;
@@ -278,7 +288,7 @@ function DeviceDetail({
   deviceName: string;
   traffic: IpTraffic | undefined;
 }): ReactNode {
-  const hasQueue = traffic !== undefined;
+  const hasTraffic = traffic !== undefined;
   return (
     <div className="mt-3.5 border-t border-border pt-3.5">
       <div className="mb-2.5 flex flex-wrap items-baseline gap-3">
@@ -287,10 +297,10 @@ function DeviceDetail({
           {device.ip || "no IP"} · {device.mac} · {device.iface || "?"} · {device.status}
         </span>
       </div>
-      {!hasQueue ? (
-        <Note type="secondary" label="No per-device counter">
-          Set a rate limit below to start tracking this device's Download/Upload (it creates a
-          simple queue targeting <code>{device.ip}</code>), or leave it unlimited.
+      {!hasTraffic ? (
+        <Note type="secondary" label="No traffic yet">
+          No traffic seen for <code>{device.ip}</code> since this page opened. Rates appear here as
+          soon as the device sends or receives, measured by <code>/ip accounting</code>.
         </Note>
       ) : (
         <>
@@ -334,53 +344,94 @@ function DeviceDetail({
 
 // ── Bulk traffic hook ───────────────────────────────────────────────────────
 
-/** Polls /api/clients/traffic-bulk every 1s and computes delta-rates per IP. */
-function useBulkTraffic(deviceName: string): Map<string, IpTraffic> {
-  const [trafficMap, setTrafficMap] = useState<Map<string, IpTraffic>>(new Map());
-  const prevRef = useRef<{ ts: number; queues: BulkTrafficSample["queues"] } | null>(null);
+const EMPTY_TRAFFIC: BulkTraffic = { map: new Map(), source: "accounting" };
+
+/**
+ * Polls `/api/clients/traffic-bulk` every second and turns per-host byte deltas
+ * from `/ip accounting` into live rates + sparkline history per IP.
+ *
+ * Each server sample already carries the bytes seen **since the previous
+ * snapshot**, so a rate is just `bytes × 8 / dt`. The very first sample spans
+ * "since accounting was enabled" and is discarded (like the old cumulative path
+ * needed two reads). History is carried forward per IP and a zero is pushed for
+ * an idle host, so a sparkline decays smoothly instead of vanishing; idle hosts
+ * with no rate limit are pruned once their whole window is quiet.
+ */
+function useBulkTraffic(deviceName: string): BulkTraffic {
+  const [traffic, setTraffic] = useState<BulkTraffic>(EMPTY_TRAFFIC);
+  const prevTsRef = useRef<number | null>(null);
 
   useEffect(() => {
-    prevRef.current = null;
-    setTrafficMap(new Map());
+    prevTsRef.current = null;
+    setTraffic(EMPTY_TRAFFIC);
   }, [deviceName]);
 
   useEffect(() => {
     if (!deviceName) return;
     let cancelled = false;
+
+    const limitsOnly = (sample: BulkTrafficSample): Map<string, IpTraffic> => {
+      const m = new Map<string, IpTraffic>();
+      for (const [ip, lim] of Object.entries(sample.limits)) {
+        m.set(ip, {
+          rxRate: 0,
+          txRate: 0,
+          rxBytes: 0,
+          txBytes: 0,
+          downloadLimit: lim.download,
+          uploadLimit: lim.upload,
+          history: [],
+        });
+      }
+      return m;
+    };
+
     const poll = async (): Promise<void> => {
       try {
         const q = deviceName ? `?device=${encodeURIComponent(deviceName)}` : "";
         const sample = await api<BulkTrafficSample>(`/api/clients/traffic-bulk${q}`);
         if (cancelled) return;
-        const prev = prevRef.current;
-        prevRef.current = { ts: sample.ts, queues: sample.queues };
-        if (!prev) return; // need two samples for deltas
+        const prevTs = prevTsRef.current;
+        prevTsRef.current = sample.ts;
 
-        const dtSec = Math.max(0.1, (sample.ts - prev.ts) / 1000);
-        setTrafficMap((old) => {
+        // First sample after (re)start: its deltas span "since enabled" and are
+        // meaningless as a rate — seed limits-only entries and wait for the next.
+        if (prevTs == null) {
+          setTraffic({ map: limitsOnly(sample), source: sample.source, note: sample.note });
+          return;
+        }
+
+        const dtSec = Math.max(0.1, (sample.ts - prevTs) / 1000);
+        setTraffic((old) => {
+          const ids = new Set<string>([
+            ...old.map.keys(),
+            ...Object.keys(sample.hosts),
+            ...Object.keys(sample.limits),
+          ]);
           const next = new Map<string, IpTraffic>();
-          for (const [ip, cur] of Object.entries(sample.queues)) {
-            const p = prev.queues[ip];
-            const existing = old.get(ip);
-            // Compute byte deltas → bits/sec (× 8). Guard against counter reset.
-            const dRx = p ? Math.max(0, cur.rxBytes - p.rxBytes) : 0;
-            const dTx = p ? Math.max(0, cur.txBytes - p.txBytes) : 0;
-            const rxRate = (dRx / dtSec) * 8;
-            const txRate = (dTx / dtSec) * 8;
-            const history = [...(existing?.history ?? []), { rx: rxRate, tx: txRate }].slice(
+          for (const ip of ids) {
+            const d = sample.hosts[ip] ?? { rxBytes: 0, txBytes: 0 };
+            const rxRate = (d.rxBytes / dtSec) * 8;
+            const txRate = (d.txBytes / dtSec) * 8;
+            const ex = old.map.get(ip);
+            const history = [...(ex?.history ?? []), { rx: rxRate, tx: txRate }].slice(
               -MINI_SAMPLES,
             );
+            const lim = sample.limits[ip];
+            // Drop a host that has no rate limit and no traffic anywhere in its
+            // window, so the map doesn't accumulate every IP ever seen.
+            if (!lim && !history.some((h) => h.rx > 0 || h.tx > 0)) continue;
             next.set(ip, {
               rxRate,
               txRate,
-              rxBytes: cur.rxBytes,
-              txBytes: cur.txBytes,
-              downloadLimit: cur.downloadLimit,
-              uploadLimit: cur.uploadLimit,
+              rxBytes: (ex?.rxBytes ?? 0) + d.rxBytes,
+              txBytes: (ex?.txBytes ?? 0) + d.txBytes,
+              downloadLimit: lim?.download ?? "",
+              uploadLimit: lim?.upload ?? "",
               history,
             });
           }
-          return next;
+          return { map: next, source: sample.source, note: sample.note };
         });
       } catch {
         /* transient poll error */
@@ -394,7 +445,7 @@ function useBulkTraffic(deviceName: string): Map<string, IpTraffic> {
     };
   }, [deviceName]);
 
-  return trafficMap;
+  return traffic;
 }
 
 // ── Main view ───────────────────────────────────────────────────────────────
@@ -413,8 +464,8 @@ export function ClientsView(): ReactNode {
     null,
   );
 
-  // Bulk traffic: polls every 1s, returns computed delta-rates per IP.
-  const trafficMap = useBulkTraffic(deviceName);
+  // Bulk traffic: polls every 1s, returns per-IP rates from /ip accounting.
+  const { map: trafficMap, source: trafficSource, note: trafficNote } = useBulkTraffic(deviceName);
 
   // Discover the configured routers so the user can pick which one to inspect.
   useEffect(() => {
@@ -542,6 +593,13 @@ export function ClientsView(): ReactNode {
         {error && (
           <Note type="error" className="mb-2.5">
             {error}
+          </Note>
+        )}
+
+        {trafficSource === "none" && trafficNote && (
+          <Note type="warning" label="Traffic unavailable" className="mb-2.5">
+            {trafficNote} The Traffic column needs per-host byte counters from{" "}
+            <code>/ip accounting</code>.
           </Note>
         )}
 

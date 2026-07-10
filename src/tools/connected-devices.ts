@@ -61,13 +61,47 @@ export interface DeviceTraffic {
   uploadLimit: string;
 }
 
-/** Bulk traffic snapshot: cumulative bytes per IP, for delta-rate computation. */
+/**
+ * Bulk traffic snapshot for the Clients page.
+ *
+ * `hosts` are per-IP byte **deltas** measured by `/ip accounting` since the
+ * previous snapshot — so, unlike a queue's cumulative counter, they cover EVERY
+ * LAN host without needing a per-device queue. `limits` still comes from
+ * `/queue simple` (the only place rate limits live), so the limits editor keeps
+ * working for the clients that have one.
+ */
 export interface BulkTrafficPayload {
   ts: number;
-  queues: Record<
-    string,
-    { txBytes: number; rxBytes: number; downloadLimit: string; uploadLimit: string }
-  >;
+  /** How the traffic figures were obtained. `none` → `note` says why. */
+  source: "accounting" | "none";
+  /** Diagnostic shown to the user when `source` is `none`. */
+  note?: string;
+  /** Per-IP byte deltas since the previous snapshot (NOT cumulative totals). */
+  hosts: Record<string, { rxBytes: number; txBytes: number }>;
+  /** Per-IP rate limits from `/queue simple`, for the limits editor. */
+  limits: Record<string, { download: string; upload: string }>;
+}
+
+/**
+ * Devices whose `/ip accounting` we have already ensured is on, so we don't send
+ * the enable command on every 1s poll. Keyed by device name (`""` = default).
+ * Process-lifetime cache; a restart re-checks, which is harmless (idempotent).
+ */
+const accountingEnabled = new Set<string>();
+
+/** Enable `/ip accounting` once per device. Returns an error note, or null on success. */
+async function ensureAccounting(ctx: ToolContext): Promise<string | null> {
+  const key = ctx.device ?? "";
+  if (accountingEnabled.has(key)) return null;
+  // `threshold` caps how many host pairs are tracked between snapshots; the
+  // default (256) truncates on a busy LAN, so raise it. Local (router-originated)
+  // traffic stays excluded — we only care about hosts passing through.
+  const out = await executeMikrotikCommand("/ip accounting set enabled=yes threshold=2000", ctx);
+  if (looksLikeError(out)) {
+    return `Could not enable /ip accounting on this device: ${out.trim().split("\n")[0]}`;
+  }
+  accountingEnabled.add(key);
+  return null;
 }
 
 /** Result of a device mutation, shared by the tools (text) and dashboard (JSON). */
@@ -164,33 +198,81 @@ export async function sampleDeviceTraffic(ctx: ToolContext, ip: string): Promise
   };
 }
 
-/**
- * Bulk-sample ALL simple queues' cumulative byte counters in one command.
- * Returns a `{ ts, queues }` payload keyed by IP, designed for the frontend to
- * compute delta-rate (bytes difference / time difference × 8 → bits/sec).
- *
- * This avoids the unreliable instantaneous `rate` field: cumulative `bytes`
- * only ever increases, so two consecutive samples always yield a meaningful rate.
- */
-export async function sampleAllTraffic(ctx: ToolContext): Promise<BulkTrafficPayload> {
-  const ts = Date.now();
-  const out = await executeMikrotikCommand("/queue simple print stats detail", ctx);
-  if (isEmpty(out) || looksLikeError(out)) return { ts, queues: {} };
-  const queues: BulkTrafficPayload["queues"] = {};
-  const limit = (v: string | undefined): string => (v && v !== "0" ? v : "");
+/** Per-IP rate limits from `/queue simple` — the only place limits are stored. */
+async function readQueueLimits(ctx: ToolContext): Promise<BulkTrafficPayload["limits"]> {
+  const limits: BulkTrafficPayload["limits"] = {};
+  const out = await executeMikrotikCommand("/queue simple print detail", ctx);
+  if (isEmpty(out) || looksLikeError(out)) return limits;
+  const val = (v: string | undefined): string => (v && v !== "0" ? v : "");
   for (const row of parseRecords(out).rows) {
     const ip = (row.target ?? "").split("/")[0]?.trim();
     if (!ip) continue;
-    const [txB, rxB] = (row.bytes ?? "0/0").split("/");
+    // RouterOS `max-limit` is `upload/download` (tx/rx).
     const [upLim, downLim] = (row["max-limit"] ?? "0/0").split("/");
-    queues[ip] = {
-      txBytes: parseLeadingNumber(txB) ?? 0,
-      rxBytes: parseLeadingNumber(rxB) ?? 0,
-      downloadLimit: limit(downLim),
-      uploadLimit: limit(upLim),
+    limits[ip] = { download: val(downLim), upload: val(upLim) };
+  }
+  return limits;
+}
+
+/**
+ * Bulk-sample per-host traffic for the Clients page via `/ip accounting`.
+ *
+ * Unlike the old `/queue simple` counters — which only exist for clients that
+ * have a queue — IP accounting measures EVERY LAN host passing through the
+ * router. It works by snapshot: `snapshot take` moves the live per-host-pair
+ * counters into a frozen table AND resets the live ones, so each snapshot is the
+ * traffic **since the previous take**. The dashboard is the single poller, so
+ * successive snapshots are clean ~1s deltas (the frontend discards the first,
+ * which spans "since accounting was enabled").
+ *
+ * For a LAN client: bytes with `dst = client` are its download (rx); bytes with
+ * `src = client` are its upload (tx). Rate limits still come from `/queue simple`.
+ */
+export async function sampleAllTraffic(ctx: ToolContext): Promise<BulkTrafficPayload> {
+  const ts = Date.now();
+  const limits = await readQueueLimits(ctx);
+
+  const enableErr = await ensureAccounting(ctx);
+  if (enableErr) return { ts, source: "none", note: enableErr, hosts: {}, limits };
+
+  // `take` snapshots + resets the live table; `print` reads the frozen snapshot.
+  await executeMikrotikCommand("/ip accounting snapshot take", ctx);
+  const out = await executeMikrotikCommand("/ip accounting snapshot print", ctx);
+  if (looksLikeError(out)) {
+    return {
+      ts,
+      source: "none",
+      note: `Reading accounting failed: ${out.trim()}`,
+      hosts: {},
+      limits,
     };
   }
-  return { ts, queues };
+
+  return { ts, source: "accounting", hosts: aggregateHostTraffic(parseRecords(out).rows), limits };
+}
+
+/**
+ * Fold `/ip accounting` snapshot rows (src → dst → bytes) into per-host totals.
+ *
+ * A row records traffic from one address to another, so for any host: bytes
+ * where it is the **destination** are its download (rx), and bytes where it is
+ * the **source** are its upload (tx). A LAN↔LAN transfer therefore counts as
+ * upload for the sender and download for the receiver, which is what each host
+ * actually did. Pure, so `tests/accounting-traffic.spec.ts` can pin the mapping.
+ */
+export function aggregateHostTraffic(rows: Record<string, string>[]): BulkTrafficPayload["hosts"] {
+  const hosts: BulkTrafficPayload["hosts"] = {};
+  const bump = (ip: string, key: "rxBytes" | "txBytes", b: number): void => {
+    if (!ip) return;
+    (hosts[ip] ??= { rxBytes: 0, txBytes: 0 })[key] += b;
+  };
+  for (const row of rows) {
+    const bytes = parseLeadingNumber(row.bytes) ?? 0;
+    if (bytes <= 0) continue;
+    bump((row["dst-address"] ?? "").trim(), "rxBytes", bytes); // traffic TO host = download
+    bump((row["src-address"] ?? "").trim(), "txBytes", bytes); // traffic FROM host = upload
+  }
+  return hosts;
 }
 
 /**
