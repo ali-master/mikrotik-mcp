@@ -158,10 +158,15 @@
 
 /* ── topology radar ───────────────────────────────────────────────────────── */
 
-/* Slow sweep of the radar beam around the hub. */
+/*
+ * Slow sweep of the radar beam around the hub.
+ *
+ * NO `transform-box: fill-box` here, unlike the rings/halo/pulse below. The
+ * wedge's pivot is its apex (the hub), not its bounding-box centre, so it keeps
+ * the default `view-box` box and `topology.tsx` supplies `transform-origin` in
+ * user units. With fill-box the beam orbits a point off to its right.
+ */
 .topo-sweep {
-  transform-box: fill-box;
-  transform-origin: center;
   animation: topo-sweep 8s linear infinite;
 }
 
