@@ -49,6 +49,7 @@
   "scripts": {
     "build": "bunup && chmod +x dist/cli.js && bun run build:ui",
     "build:ui": "bun run --bun scripts/build-ui.ts",
+    "build:mcp": "mcpb pack",
     "dev": "bunup --watch",
     "prepack": "bunup && chmod +x dist/cli.js && bun run build:ui && bun run gen",
     "auth-check": "bun run --bun src/cli.ts auth-check",
@@ -57,11 +58,17 @@
     "gen": "bun run --bun gen:schemas && bun run --bun gen:docs",
     "start": "bun run --bun src/cli.ts serve",
     "discover": "bun run --bun scripts/discover-macs.ts",
+    "chat": "bunx mcp-chat --server \"./dist/cli.js serve\"",
     "inspect": "bunx @modelcontextprotocol/inspector bun run --bun src/cli.ts serve",
     "inspect:built": "bun run --bun build && bunx @modelcontextprotocol/inspector bun dist/cli.js serve",
     "inspect:config": "bunx @modelcontextprotocol/inspector --config mcp-inspector.config.json --server mikrotik",
     "inspect:cli": "bunx @modelcontextprotocol/inspector --cli bun run --bun src/cli.ts serve --method tools/list",
     "inspect:config:local": "bunx @modelcontextprotocol/inspector --config /var/open-source/mikrotik-mcp/mcp-inspector.config.local.json --server mikrotik",
+    "security:audit": "bun audit --audit-level=moderate",
+    "security:audit:fix": "bun audit fix",
+    "security:licenses": "license-checker --summary",
+    "security:all": "bun run security:audit && bun run security:licenses",
+    "prepublish:security": "npm run security:all",
     "test": "vp test run",
     "test:watch": "vp test",
     "release": "release-it",
@@ -84,11 +91,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "^2.1.2",
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/vite": "^4.3.2",
     "@types/bun": "latest",
     "@types/figlet": "^1.7.0",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/ssh2": "^1.15.5",
@@ -97,6 +105,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gsap": "^3.15.0",
+    "license-checker": "^25.0.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "recharts": "^3.9.2",
@@ -107,7 +116,7 @@
     "vite-plus": "catalog:"
   },
   "peerDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "vite": "catalog:"
@@ -117,8 +126,8 @@
   },
   "packageManager": "bun@1.3.14",
   "catalog": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.3",
-    "vite-plus": "0.2.3"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.2.4",
+    "vite-plus": "0.2.4"
   },
   "changelog": {
     "labels": {

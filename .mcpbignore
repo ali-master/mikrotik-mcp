@@ -1,0 +1,46 @@
+# npx-based bundle - exclude everything except manifest and icon
+# The actual code is fetched from npm at runtime
+
+# Source code
+src/
+build/
+scripts/
+raycast/
+
+*.ts
+*.js
+!manifest.json
+
+# Documentation
+docs/
+*.md
+
+# Package management
+node_modules/
+package.json
+package-lock.json
+*.lock
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+nginx.conf
+
+# Development
+.git/
+.github/
+.gitignore
+.npmignore
+.vscode/
+*.log
+*.sh
+*.ps1
+
+# Tests
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
+coverage/
