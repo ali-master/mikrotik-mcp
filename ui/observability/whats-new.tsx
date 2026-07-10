@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { renderMarkdown } from "./markdown";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,152 +63,8 @@ function checkVersionChanged(version: string): boolean {
   }
 }
 
-// ── Lightweight markdown → HTML ──────────────────────────────────────────────
-
-function renderMarkdown(md: string): string {
-  // 0. Normalize line endings (GitHub API may return \r\n)
-  let html = md.replace(/\r\n?/g, "\n");
-
-  // 1. Escape HTML entities
-  html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  // 2. Fenced code blocks — extract before inline processing
-  const codeBlocks: string[] = [];
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, _lang, code) => {
-    codeBlocks.push(`<pre><code>${code.trim()}</code></pre>`);
-    return `%%CB${codeBlocks.length - 1}%%`;
-  });
-
-  // 3. Inline code — protect from further transforms
-  const inlines: string[] = [];
-  html = html.replace(/`([^`]+)`/g, (_, code) => {
-    inlines.push(`<code>${code}</code>`);
-    return `%%IC${inlines.length - 1}%%`;
-  });
-
-  // 4. Images: ![alt](url)
-  html = html.replace(
-    /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" style="max-width:100%;border-radius:6px;margin:6px 0"/>',
-  );
-
-  // 5. Links: [text](url)
-  html = html.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener">$1</a>',
-  );
-
-  // 5b. Auto-link bare URLs not already inside an href or src attribute
-  html = html.replace(
-    /(?<!=["'])(https?:\/\/[^\s<>")\]]+)/g,
-    '<a href="$1" target="_blank" rel="noopener">$1</a>',
-  );
-
-  // 6. Bold + italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
-
-  // 7. Strikethrough: ~~text~~
-  html = html.replace(/~~(.+?)~~/g, "<del>$1</del>");
-
-  // 8. Headings
-  html = html.replace(/^#### (.+)$/gm, "<h5>$1</h5>");
-  html = html.replace(/^### (.+)$/gm, "<h4>$1</h4>");
-  html = html.replace(/^## (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^# (.+)$/gm, "<h2>$1</h2>");
-
-  // 9. Blockquotes (multi-line support)
-  html = html.replace(/^&gt; (.+)$/gm, "<blockquote>$1</blockquote>");
-  // Merge consecutive blockquotes
-  html = html.replace(/<\/blockquote>\n<blockquote>/g, "\n");
-
-  // 10. Horizontal rules
-  html = html.replace(/^---$/gm, "<hr/>");
-
-  // 11. Tables: | col | col | ... with optional alignment row
-  html = html.replace(/((?:^\|.+\|\n?)+)/gm, (block) => {
-    const rows = block.trim().split("\n").filter(Boolean);
-    if (rows.length < 2) return block;
-    const parseRow = (r: string): string[] =>
-      r
-        .split("|")
-        .slice(1, -1)
-        .map((c) => c.trim());
-    const headerCells = parseRow(rows[0]);
-    // Check if second row is alignment (all dashes/colons)
-    const isAlign = /^(\|[\s:*-]+)+\|$/.test(rows[1].replace(/[^|:*-\s]/g, ""));
-    const alignRow = isAlign ? parseRow(rows[1]) : null;
-    const aligns = alignRow
-      ? alignRow.map((c) => {
-          if (c.startsWith(":") && c.endsWith(":")) return "center";
-          if (c.endsWith(":")) return "right";
-          return "left";
-        })
-      : headerCells.map(() => "left" as const);
-    const bodyRows = rows.slice(isAlign ? 2 : 1);
-    let t = '<div class="wn-table-wrap"><table><thead><tr>';
-    for (let i = 0; i < headerCells.length; i++)
-      t += `<th style="text-align:${aligns[i]}">${headerCells[i]}</th>`;
-    t += "</tr></thead><tbody>";
-    for (const row of bodyRows) {
-      const cells = parseRow(row);
-      t += "<tr>";
-      for (let i = 0; i < headerCells.length; i++)
-        t += `<td style="text-align:${aligns[i]}">${cells[i] ?? ""}</td>`;
-      t += "</tr>";
-    }
-    t += "</tbody></table></div>";
-    return t;
-  });
-
-  // 12. Ordered lists: 1. item
-  html = html.replace(/^(\d+)\. (.+)$/gm, "<oli>$2</oli>");
-  html = html.replace(/<\/oli>\n\n+<oli>/g, "</oli>\n<oli>");
-  html = html.replace(
-    /((?:<oli>.*<\/oli>\n?)+)/g,
-    (m) => `<ol>${m.trimEnd().replace(/<\/?oli>/g, (tag) => tag.replace("oli", "li"))}</ol>`,
-  );
-
-  // 13. Unordered lists: - item or * item
-  html = html.replace(/^[-*] (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/<\/li>\n\n+<li>/g, "</li>\n<li>");
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (m) => `<ul>${m.trimEnd()}</ul>`);
-
-  // 14. Task lists: - [x] or - [ ]
-  html = html.replace(
-    /<li>\[x\] (.+?)<\/li>/g,
-    '<li class="wn-task done"><span class="wn-check">&#10003;</span> $1</li>',
-  );
-  html = html.replace(
-    /<li>\[ \] (.+?)<\/li>/g,
-    '<li class="wn-task"><span class="wn-check">&#9744;</span> $1</li>',
-  );
-
-  // 15. Paragraphs for remaining lines
-  const lines = html.split("\n");
-  const result: string[] = [];
-  for (const line of lines) {
-    const t = line.trim();
-    if (!t) {
-      result.push("");
-    } else if (/^<\/?(h[2-5]|ul|ol|li|pre|blockquote|hr|div|table|img)/.test(t)) {
-      result.push(t);
-    } else {
-      result.push(`<p>${t}</p>`);
-    }
-  }
-  html = result.join("\n");
-
-  // 16. Restore code blocks and inline code
-  html = html.replace(/%%CB(\d+)%%/g, (_, i) => codeBlocks[Number(i)]);
-  html = html.replace(/%%IC(\d+)%%/g, (_, i) => inlines[Number(i)]);
-
-  return html;
-}
-
 // ── Rendered-markdown styling ────────────────────────────────────────────────
-// The release body is injected HTML (see renderMarkdown), so its descendant tags
+// The release body is injected HTML (see `./markdown`), so its descendant tags
 // are styled via arbitrary variants on the container rather than a stylesheet.
 const MARKDOWN =
   "text-[13px] leading-[1.7] text-muted-foreground " +
@@ -215,8 +72,12 @@ const MARKDOWN =
   "[&_h3]:mt-[18px] [&_h3]:mb-1.5 [&_h3]:text-[15px] [&_h3]:font-bold [&_h3]:text-foreground " +
   "[&_h4]:mt-[18px] [&_h4]:mb-1.5 [&_h4]:text-[14px] [&_h4]:font-bold [&_h4]:text-foreground " +
   "[&_h5]:mt-[18px] [&_h5]:mb-1.5 [&_h5]:text-[14px] [&_h5]:font-bold [&_h5]:text-foreground " +
-  "[&_p]:my-[5px] [&_ul]:my-[5px] [&_ul]:pl-[18px] [&_ol]:my-[5px] [&_ol]:pl-[22px] " +
+  "[&_p]:my-[5px] " +
+  // Preflight resets `list-style: none` on ul/ol, so the markers must be asked
+  // for explicitly — without these the release notes render as unbulleted lines.
+  "[&_ul]:my-[5px] [&_ul]:list-disc [&_ul]:pl-[18px] [&_ol]:my-[5px] [&_ol]:list-decimal [&_ol]:pl-[22px] " +
   "[&_li]:my-[3px] [&_li]:marker:text-brand " +
+  "[&_img]:my-1.5 [&_img]:max-w-full [&_img]:rounded-md [&_img]:border [&_img]:border-border " +
   "[&_code]:rounded [&_code]:border [&_code]:border-border [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-brand " +
   "[&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border [&_pre]:bg-background [&_pre]:p-3 " +
   "[&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-muted-foreground " +
