@@ -331,14 +331,22 @@ export function BackupsView(): ReactNode {
           </div>
         ) : (
           <div className="max-h-[60vh] overflow-auto rounded-lg border border-border">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-card">
+            {/*
+              `table-fixed` + explicit widths: backup names are arbitrarily long
+              filenames, and with auto layout a single long one starved every other
+              column. The name cell truncates instead; `min-w` makes the container
+              scroll horizontally rather than crushing the action buttons.
+            */}
+            <Table className="min-w-[980px] table-fixed">
+              <TableHeader className="bg-card sticky top-0 z-10">
                 <TableRow>
                   <TableHead>name</TableHead>
-                  <TableHead>device</TableHead>
-                  <TableHead className="text-right">size</TableHead>
-                  <TableHead>captured</TableHead>
-                  <TableHead className="w-[280px]">actions</TableHead>
+                  <TableHead className="w-[130px]">device</TableHead>
+                  <TableHead className="w-[90px] text-right">size</TableHead>
+                  <TableHead className="w-[170px]">captured</TableHead>
+                  {/* Sized for the widest state: the rename input plus its
+                      confirm/cancel buttons alongside view/download/delete. */}
+                  <TableHead className="w-[380px]">actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -347,14 +355,16 @@ export function BackupsView(): ReactNode {
                     key={b.name}
                     data-state={body?.name === b.name ? "selected" : undefined}
                   >
-                    <TableCell>{b.name}</TableCell>
-                    <TableCell>{b.device ?? "—"}</TableCell>
+                    <TableCell className="truncate font-mono" title={b.name}>
+                      {b.name}
+                    </TableCell>
+                    <TableCell className="truncate">{b.device ?? "—"}</TableCell>
                     <TableCell className="text-right tabular-nums">{bytes(b.bytes)}</TableCell>
-                    <TableCell>
+                    <TableCell className="tabular-nums whitespace-nowrap">
                       {new Date(b.modified).toLocaleString(undefined, { hour12: false })}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="flex items-center gap-1.5">
                         <Button size="sm" onClick={() => viewBody(b.name)}>
                           view
                         </Button>
@@ -369,7 +379,7 @@ export function BackupsView(): ReactNode {
                         {renaming?.name === b.name ? (
                           <>
                             <Input
-                              className="inline-block w-[150px] text-xs"
+                              className="inline-block w-[120px] text-xs"
                               value={renaming.value}
                               autoFocus
                               onChange={(e) => setRenaming({ name: b.name, value: e.target.value })}
