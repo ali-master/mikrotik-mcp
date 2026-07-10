@@ -1,7 +1,7 @@
 # Documentation
 
 `@usex/mikrotik-mcp` is a Bun-native [Model Context Protocol](https://modelcontextprotocol.io)
-server that exposes **660+ tools across 90+ modules** for managing MikroTik
+server that exposes **780+ tools across 90+ modules** for managing MikroTik
 RouterOS devices over SSH (or Layer-2 MAC-Telnet) — firewall, NAT, routing, DHCP,
 DNS, wireless, QoS, and a complete **VPN suite** (WireGuard, IPsec, L2TP, PPTP,
 SSTP, OpenVPN, and GRE/IPIP/EoIP/VXLAN tunnels). It can manage **multiple named

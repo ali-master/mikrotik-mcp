@@ -1,0 +1,38 @@
+{
+  "manifest_version": "0.2",
+  "name": "@usex/mikrotik-mcp",
+  "display_name": "MikroTik MCP",
+  "version": "4.3.0",
+  "description": "MCP server for MikroTik RouterOS — 780+ tools over SSH for firewall, NAT, routing, DHCP, DNS, WireGuard, wireless, QoS and more.",
+  "author": {
+    "name": "Ali Torki",
+    "email": "ali_4286@live.com",
+    "url": "https://github.com/ali-master"
+  },
+  "homepage": "https://mikrotik-mcp.usestrict.dev",
+  "icon": "assets/icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/cli.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/cli.js"],
+      "env": {}
+    }
+  },
+  "user_config": {
+    "dashboard_token": {
+      "type": "string",
+      "title": "Dashboard Token",
+      "description": "Bearer token to protect the dashboard",
+      "required": false,
+      "sensitive": true
+    }
+  },
+  "keywords": ["mikrotik", "routeros"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mikrotik-mcp/mikrotik-mcp.git"
+  }
+}
