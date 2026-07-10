@@ -16,10 +16,12 @@ export function highlightJson(json: string): ReactNode[] {
     const idx = m.index ?? 0;
     if (idx > last) parts.push(json.slice(last, idx));
     const tok = m[0];
+    // Semantic-token colours: keys→foreground, strings→success, numbers→chart-1,
+    // booleans/null→warning (punctuation is coloured by the container).
     let cls: string;
-    if (m[1] !== undefined) cls = /:\s*$/.test(tok) ? "j-key" : "j-str";
-    else if (m[2] !== undefined) cls = tok === "null" ? "j-null" : "j-bool";
-    else cls = "j-num";
+    if (m[1] !== undefined) cls = /:\s*$/.test(tok) ? "text-foreground" : "text-success";
+    else if (m[2] !== undefined) cls = "text-warning";
+    else cls = "text-chart-1";
     parts.push(
       <span className={cls} key={i++}>
         {tok}
@@ -63,16 +65,25 @@ export function highlightDeviceOutput(text: string): ReactNode[] {
     const idx = m.index ?? 0;
     if (idx > last) parts.push(text.slice(last, idx));
     const tok = m[0];
-    let cls = "ros-num";
-    if (m[1] !== undefined) cls = "ros-comment";
-    else if (m[2] !== undefined) cls = "ros-str";
-    else if (m[3] !== undefined) cls = "ros-mac";
-    else if (m[4] !== undefined) cls = "ros-ip";
-    else if (m[5] !== undefined) cls = "ros-key";
-    else if (m[6] !== undefined) cls = "ros-good";
-    else if (m[7] !== undefined) cls = "ros-bad";
-    else if (m[8] !== undefined) cls = "ros-bool";
-    else if (m[9] !== undefined) cls = "ros-dim";
+    // Semantic-token colours per RouterOS group (see ROS_TOKEN order above).
+    let cls = "text-chart-1"; // number
+    if (m[1] !== undefined)
+      cls = "text-muted-foreground italic"; // comment
+    else if (m[2] !== undefined)
+      cls = "text-success"; // quoted string
+    else if (m[3] !== undefined)
+      cls = "text-chart-5"; // MAC
+    else if (m[4] !== undefined)
+      cls = "text-chart-2"; // IPv4 / CIDR
+    else if (m[5] !== undefined)
+      cls = "text-foreground"; // key
+    else if (m[6] !== undefined)
+      cls = "text-success font-medium"; // good status
+    else if (m[7] !== undefined)
+      cls = "text-destructive font-medium"; // bad status
+    else if (m[8] !== undefined)
+      cls = "text-warning"; // boolean
+    else if (m[9] !== undefined) cls = "text-muted-foreground"; // dim keyword
     parts.push(
       <span className={cls} key={i++}>
         {tok}
@@ -118,7 +129,10 @@ export function formatInputJson(raw: string, pretty: boolean): string {
 export function JsonView({ value, maxHeight }: { value: unknown; maxHeight?: number }): ReactNode {
   const json = typeof value === "string" ? value : JSON.stringify(value, null, 2);
   return (
-    <pre className="body json" style={maxHeight ? { maxHeight } : undefined}>
+    <pre
+      className="m-0 max-h-[40vh] overflow-auto rounded border border-border bg-background p-3 font-mono text-xs break-words whitespace-pre-wrap text-muted-foreground"
+      style={maxHeight ? { maxHeight } : undefined}
+    >
       {highlightJson(json)}
     </pre>
   );

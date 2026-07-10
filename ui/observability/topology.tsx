@@ -1,15 +1,18 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 import { CopyButton } from "./atoms";
+import { Button } from "./geist";
+import { cn } from "@/lib/utils";
 import type { TopoNode, TopologyPayload } from "./types";
 
 // ── live Layer-2 topology map ────────────────────────────────────────────────
-/** Colour a 0–100 metric: green (ok) → amber (warm) → red (hot). */
+/** Colour a 0–100 metric: neutral (ok) → dim (warm) → red (hot). */
 function metricColor(v: number | undefined): string {
-  if (v == null) return "#3f3f46";
-  if (v >= 85) return "#f87171";
-  if (v >= 60) return "#a1a1aa";
-  return "#d4d4d8";
+  if (v == null) return "var(--muted-foreground)";
+  if (v >= 85) return "var(--destructive)";
+  if (v >= 60) return "var(--muted-foreground)";
+  return "var(--foreground)";
 }
 
 /**
@@ -84,12 +87,18 @@ export function TopologyMap({
   const pickedNode = picked ? byId.get(picked) : null;
 
   return (
-    <div className="topo">
+    <div className="flex flex-col gap-2.5">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         width="100%"
         height={Math.min(H, 540)}
         preserveAspectRatio="xMidYMid meet"
+        className="block w-full rounded-md"
+        // Subtle brand-tinted radial backdrop — an SVG-level gradient, not a utility.
+        style={{
+          background:
+            "radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--brand) 8%, transparent), transparent 60%)",
+        }}
       >
         {/* links */}
         {topo.edges.map((e, i) => {
@@ -100,7 +109,10 @@ export function TopologyMap({
           return (
             <line
               key={`e-${i}`}
-              className={`topo-edge${dashed ? " is-dashed" : ""}`}
+              className={cn(
+                dashed ? "stroke-brand/60 [stroke-dasharray:4_4]" : "stroke-muted-foreground/55",
+              )}
+              strokeWidth={1.4}
               x1={a.x}
               y1={a.y}
               x2={b.x}
@@ -125,31 +137,46 @@ export function TopologyMap({
           const y = p.y - h / 2;
           const border =
             n.reachable === true
-              ? "#d4d4d8"
+              ? "var(--foreground)"
               : n.reachable === false
-                ? "#f87171"
+                ? "var(--destructive)"
                 : isDev
-                  ? "#71717a"
-                  : "#e4e4e7";
+                  ? "var(--muted-foreground)"
+                  : "var(--border)";
           const isPicked = picked === n.id;
+          const rectCls = cn(
+            isDev ? "fill-muted" : "fill-card/70 [stroke-dasharray:4_3]",
+            n.onboardable && "[stroke-dasharray:4_3]",
+            isPicked
+              ? "[stroke-width:2.2] [filter:drop-shadow(0_0_6px_var(--brand))]"
+              : "[stroke-width:1.5]",
+            "transition-[filter] group-hover:[filter:drop-shadow(0_0_6px_var(--brand))]",
+          );
           return (
             <g
               key={n.id}
-              className={`topo-node${isDev ? " is-device" : " is-neighbor"}${n.onboardable ? " is-onboard" : ""}${isPicked ? " is-picked" : ""}`}
+              className="group cursor-pointer"
               transform={`translate(${x},${y})`}
               onClick={() => setPicked((cur) => (cur === n.id ? null : n.id))}
             >
-              <rect width={w} height={h} rx={9} style={{ stroke: border }} />
-              <text className="topo-label" x={9} y={16}>
+              <rect width={w} height={h} rx={9} className={rectCls} style={{ stroke: border }} />
+              <text className="fill-foreground font-mono text-xs font-semibold" x={9} y={16}>
                 {(n.label || n.id).slice(0, 16)}
               </text>
               {isDev ? (
                 <>
-                  <text className="topo-sub" x={9} y={30}>
+                  <text className="fill-muted-foreground font-mono text-[10px]" x={9} y={30}>
                     {(n.board || n.ip || "").slice(0, 18)}
                   </text>
                   {/* inline CPU / memory health bars */}
-                  <rect className="topo-bar-bg" x={9} y={37} width={w - 18} height={4} rx={2} />
+                  <rect
+                    className="fill-muted-foreground/35"
+                    x={9}
+                    y={37}
+                    width={w - 18}
+                    height={4}
+                    rx={2}
+                  />
                   <rect
                     x={9}
                     y={37}
@@ -158,7 +185,14 @@ export function TopologyMap({
                     rx={2}
                     style={{ fill: metricColor(n.cpuLoad) }}
                   />
-                  <rect className="topo-bar-bg" x={9} y={43} width={w - 18} height={4} rx={2} />
+                  <rect
+                    className="fill-muted-foreground/35"
+                    x={9}
+                    y={43}
+                    width={w - 18}
+                    height={4}
+                    rx={2}
+                  />
                   <rect
                     x={9}
                     y={43}
@@ -169,7 +203,7 @@ export function TopologyMap({
                   />
                 </>
               ) : (
-                <text className="topo-sub" x={9} y={29}>
+                <text className="fill-muted-foreground font-mono text-[10px]" x={9} y={29}>
                   {n.onboardable ? "＋ onboard" : n.ip || n.mac || ""}
                 </text>
               )}
@@ -178,43 +212,59 @@ export function TopologyMap({
         })}
       </svg>
 
-      <div className="topo-foot">
-        <span className="legend">
-          <span>
-            <i className="dot" style={{ background: "#d4d4d8" }} /> online
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <span className="text-muted-foreground flex flex-wrap items-center gap-3 font-mono text-[11px]">
+          <span className="inline-flex items-center gap-[5px]">
+            <i
+              className="inline-block size-[9px] rounded-[2px]"
+              style={{ background: "var(--foreground)" }}
+            />{" "}
+            online
           </span>
-          <span>
-            <i className="dot" style={{ background: "#f87171" }} /> offline
+          <span className="inline-flex items-center gap-[5px]">
+            <i
+              className="inline-block size-[9px] rounded-[2px]"
+              style={{ background: "var(--destructive)" }}
+            />{" "}
+            offline
           </span>
-          <span>
-            <i className="dot" style={{ background: "#e4e4e7" }} /> neighbour
+          <span className="inline-flex items-center gap-[5px]">
+            <i
+              className="inline-block size-[9px] rounded-[2px]"
+              style={{ background: "var(--border)" }}
+            />{" "}
+            neighbour
           </span>
-          <span className="muted">
+          <span className="text-muted-foreground text-[11px]">
             {topo.stats.devices} devices · {topo.stats.neighbors} discovered ·{" "}
             {topo.stats.onboardable} onboardable
           </span>
         </span>
 
         {pickedNode && (
-          <div className="topo-pop">
-            <div className="topo-pop__hd">
+          <div className="bg-card min-w-[280px] max-w-[460px] flex-1 rounded-md border p-3">
+            <div className="mb-1.5 flex items-center gap-2">
               <strong>{pickedNode.label}</strong>
-              <span className="muted">
+              <span className="text-muted-foreground text-[11px]">
                 {[pickedNode.board, pickedNode.version, pickedNode.mac]
                   .filter(Boolean)
                   .join(" · ") || "no details advertised"}
               </span>
-              <span style={{ flex: 1 }} />
-              <button className="topo-btn" onClick={() => setPicked(null)}>
-                ✕
-              </button>
+              <span className="flex-1" />
+              <Button
+                ghost
+                size="sm"
+                icon={<X />}
+                onClick={() => setPicked(null)}
+                aria-label="Close"
+              />
             </div>
             {pickedNode.suggestedConfig ? (
               <>
-                <div className="muted" style={{ margin: "2px 0 6px" }}>
+                <div className="text-muted-foreground mt-0.5 mb-1.5 text-[11px]">
                   Not managed yet — add this to your device config to onboard it:
                 </div>
-                <pre className="topo-stub">
+                <pre className="bg-background text-foreground m-0 mb-2 overflow-x-auto rounded-md border px-2.5 py-2 font-mono text-[11px]/[1.5] whitespace-pre">
                   {JSON.stringify(
                     { [pickedNode.suggestedConfig.name]: stubBody(pickedNode.suggestedConfig) },
                     null,
@@ -222,7 +272,6 @@ export function TopologyMap({
                   )}
                 </pre>
                 <CopyButton
-                  className="topo-btn"
                   title="Copy config stub"
                   label="Copy config stub"
                   text={JSON.stringify(
@@ -232,8 +281,9 @@ export function TopologyMap({
                   )}
                 />
                 {onOnboard && (
-                  <button
-                    className="topo-btn cfg-save"
+                  <Button
+                    type="accent"
+                    size="sm"
                     onClick={() =>
                       onOnboard(
                         pickedNode.suggestedConfig!.name,
@@ -242,11 +292,11 @@ export function TopologyMap({
                     }
                   >
                     Add to config →
-                  </button>
+                  </Button>
                 )}
               </>
             ) : (
-              <div className="muted">
+              <div className="text-muted-foreground text-[11px]">
                 Managed device{pickedNode.ip ? ` · ${pickedNode.ip}` : ""}
                 {pickedNode.uptime ? ` · up ${pickedNode.uptime}` : ""}
               </div>

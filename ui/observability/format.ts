@@ -22,25 +22,40 @@ export const sval = (v: unknown): string => {
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   return JSON.stringify(v);
 };
-/** Per-metric accent for the device system-health gauges & sparkline charts.
- * Reuses the dashboard's accent vocabulary (blue `--page-accent`, teal
- * `--page-accent-2`) plus violet/amber so each metric is distinct yet on-theme. */
+/**
+ * Per-metric accent for the device system-health gauges & sparkline charts, one
+ * distinct chart series each. As `var()` references, not literals, so both
+ * themes resolve them — these land in SVG attributes and inline styles, where a
+ * Tailwind class cannot reach.
+ */
 export const HEALTH_COLOR = {
-  cpu: "#3291ff", // blue
-  mem: "#a78bfa", // violet
-  disk: "#2dd4bf", // teal
-  latency: "#f59e0b", // amber
+  cpu: "var(--chart-1)", // blue
+  mem: "var(--chart-5)", // violet
+  disk: "var(--chart-2)", // teal
+  latency: "var(--chart-4)", // amber
 } as const;
 
-// Per-risk severity palette (safe → danger). Kept in sync with the `.risk-*`
-// pill colors in styles.css so a risk reads the same hue in the feed and the
-// "By risk" donut.
+/**
+ * Per-risk severity palette (safe → danger), as CSS custom properties rather
+ * than literal hex so both themes resolve them from `tailwind.css`. These feed
+ * SVG `fill`/`stroke` attributes and inline styles, where a Tailwind class can't
+ * reach — a `var()` can.
+ */
 export const RISK_COLOR: Record<Risk, string> = {
-  READ: "#34d399", // emerald — read-only, safe
-  WRITE: "#3291ff", // blue — normal write
-  WRITE_IDEMPOTENT: "#2dd4bf", // teal — idempotent write
-  DESTRUCTIVE: "#f59e0b", // amber — removes/replaces config
-  DANGEROUS: "#ef4444", // red — can lock you out
+  READ: "var(--chart-3)", // green — read-only, safe
+  WRITE: "var(--chart-1)", // blue — normal write
+  WRITE_IDEMPOTENT: "var(--chart-2)", // teal — idempotent write
+  DESTRUCTIVE: "var(--chart-4)", // amber — removes/replaces config
+  DANGEROUS: "var(--destructive)", // red — can lock you out
+};
+
+/** Tailwind text/background classes per risk, for the feed's risk pills. */
+export const RISK_CLASS: Record<Risk, string> = {
+  READ: "border-chart-3/40 text-chart-3",
+  WRITE: "border-chart-1/40 text-chart-1",
+  WRITE_IDEMPOTENT: "border-chart-2/40 text-chart-2",
+  DESTRUCTIVE: "border-chart-4/40 text-chart-4",
+  DANGEROUS: "border-destructive/40 text-destructive",
 };
 
 export const WINDOWS: [string, number][] = [

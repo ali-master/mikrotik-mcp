@@ -1,6 +1,9 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ms } from "./format";
+import { RadioTower, ShieldCheck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { Badge } from "./geist";
 import type { DeviceInfo, DevicesPayload, DeviceStatus } from "./types";
 
@@ -54,9 +57,11 @@ function PillLabel({
 
 // ── connectivity graph ───────────────────────────────────────────────────────
 export function statusInfo(s: DeviceStatus): { label: string; color: string } {
-  if (s.reachable === true) return { label: "online", color: "#d4d4d8" };
-  if (s.reachable === false) return { label: "offline", color: "#f87171" };
-  return { label: "checking…", color: "#71717a" };
+  // `var()` rather than hex: these land in SVG attributes and inline styles,
+  // where a utility class can't reach, and they must follow the theme.
+  if (s.reachable === true) return { label: "online", color: "var(--foreground)" };
+  if (s.reachable === false) return { label: "offline", color: "var(--destructive)" };
+  return { label: "checking…", color: "var(--muted-foreground)" };
 }
 
 /**
@@ -97,9 +102,12 @@ export function qAngle(
   return (Math.atan2(dy, dx) * 180) / Math.PI;
 }
 
-export const FLOW_CMD = "#e4e4e7"; // command: LLM → device
-export const FLOW_RES = "#d4d4d8"; // response: device → LLM
-export const JUMP_HUE = "#f59e0b"; // SSH jump tunnel (ProxyJump) — amber accent
+// `var()` rather than hex: these feed SVG stroke/fill attributes and inline
+// styles, where a utility class cannot reach, and they must follow the theme.
+export const FLOW_CMD = "var(--foreground)"; // command: LLM → device
+export const FLOW_RES = "var(--muted-foreground)"; // response: device → LLM
+export const JUMP_HUE = "var(--warning)"; // SSH jump tunnel (ProxyJump)
+export const POOL_HUE = "var(--success)"; // pooled SSH connection
 
 /**
  * The bastion a device is reached through, or null. A `jumpVia` names another
@@ -178,18 +186,21 @@ export function ConnectivityGraph({
       >
         <defs>
           <radialGradient id="conn-hub" cx="0.5" cy="0.34" r="0.75">
-            <stop offset="0" stopColor="#fafafa" />
-            <stop offset="0.6" stopColor="#d4d4d8" />
-            <stop offset="1" stopColor="#a1a1aa" />
+            <stop offset="0" stopColor="var(--foreground)" />
+            <stop
+              offset="0.6"
+              stopColor="color-mix(in srgb, var(--foreground) 70%, var(--muted-foreground))"
+            />
+            <stop offset="1" stopColor="var(--muted-foreground)" />
           </radialGradient>
           <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
-            <stop offset="0" stopColor="#27272a" />
-            <stop offset="1" stopColor="#18181b" />
+            <stop offset="0" stopColor="var(--muted)" />
+            <stop offset="1" stopColor="var(--card)" />
           </radialGradient>
           <radialGradient id="conn-burst" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stopColor="#fafafa" />
-            <stop offset="0.5" stopColor="#e4e4e7" />
-            <stop offset="1" stopColor="#a1a1aa" stopOpacity="0" />
+            <stop offset="0" stopColor="var(--foreground)" />
+            <stop offset="0.5" stopColor="color-mix(in srgb, var(--foreground) 80%, transparent)" />
+            <stop offset="1" stopColor="var(--muted-foreground)" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="conn-tunnel-grad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stopColor={JUMP_HUE} stopOpacity="0.15" />
@@ -394,7 +405,7 @@ export function ConnectivityGraph({
                     cx={from.x}
                     cy={from.y}
                     r={11}
-                    fill="#1c1917"
+                    fill="var(--background)"
                     stroke={JUMP_HUE}
                   />
                   <text x={from.x} y={from.y + 3.5} textAnchor="middle" fontSize={11}>
@@ -424,14 +435,44 @@ export function ConnectivityGraph({
         {/* core hub */}
         <circle className="conn-hub-glow" cx={cx} cy={cy} r={42} />
         <circle className="conn-hub-ring" cx={cx} cy={cy} r={37} />
-        <circle cx={cx} cy={cy} r={29} fill="url(#conn-hub)" stroke="#71717a" strokeWidth={1.5} />
-        <text x={cx} y={cy - 4} textAnchor="middle" fill="#09090b" fontSize={12} fontWeight={700}>
+        <circle
+          cx={cx}
+          cy={cy}
+          r={29}
+          fill="url(#conn-hub)"
+          stroke="var(--border)"
+          strokeWidth={1.5}
+        />
+        <text
+          x={cx}
+          y={cy - 4}
+          textAnchor="middle"
+          fill="var(--background)"
+          fontSize={12}
+          fontWeight={700}
+        >
           LLM
         </text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#3f3f46" fontSize={8} fontWeight={600}>
+        <text
+          x={cx}
+          y={cy + 8}
+          textAnchor="middle"
+          fill="var(--background)"
+          fillOpacity={0.66}
+          fontSize={8}
+          fontWeight={600}
+        >
           ⇄ MCP
         </text>
-        <text x={cx} y={cy + 18} textAnchor="middle" fill="#3f3f46" fontSize={7.5} fontWeight={600}>
+        <text
+          x={cx}
+          y={cy + 18}
+          textAnchor="middle"
+          fill="var(--background)"
+          fillOpacity={0.66}
+          fontSize={7.5}
+          fontWeight={600}
+        >
           server
         </text>
 
@@ -453,7 +494,7 @@ export function ConnectivityGraph({
                   cy={y}
                   r={r + 5}
                   fill="none"
-                  stroke={d.pool.inflight > 0 ? "#3b82f6" : "#22c55e"}
+                  stroke={d.pool.inflight > 0 ? "var(--chart-1)" : "var(--success)"}
                   strokeWidth={1.5}
                   strokeDasharray={d.pool.inflight > 0 ? undefined : "4 4"}
                   opacity={0.5}
@@ -470,20 +511,26 @@ export function ConnectivityGraph({
                 cy={y - r * 0.7}
                 r={4.5}
                 fill={info.color}
-                stroke="#0a121b"
+                stroke="var(--background)"
                 strokeWidth={1.5}
               />
               <text
                 x={x}
                 y={y + 3.5}
                 textAnchor="middle"
-                fill="#fafafa"
+                fill="var(--foreground)"
                 fontSize={10}
                 fontWeight={600}
               >
                 {label}
               </text>
-              <text x={x} y={y + r + 14} textAnchor="middle" fill="#a1a1aa" fontSize={9}>
+              <text
+                x={x}
+                y={y + r + 14}
+                textAnchor="middle"
+                fill="var(--muted-foreground)"
+                fontSize={9}
+              >
                 {d.address ?? d.host}
               </text>
               <text
@@ -500,7 +547,7 @@ export function ConnectivityGraph({
           );
         })}
       </svg>
-      <div className="conn-legend">
+      <div className="text-muted-foreground mt-2 flex flex-wrap justify-center gap-4 text-[11px] [&>span]:inline-flex [&>span]:items-center [&>span]:gap-1.5 [&_i]:inline-block [&_i]:size-2.5 [&_i]:rounded-[3px]">
         <span>
           <i style={{ background: FLOW_CMD }} /> command · LLM → device
         </span>
@@ -508,7 +555,7 @@ export function ConnectivityGraph({
           <i style={{ background: FLOW_RES }} /> response · device → LLM
         </span>
         <span>
-          <i style={{ background: "#e4e4e7" }} /> live call (round-trip)
+          <i style={{ background: FLOW_CMD }} /> live call (round-trip)
         </span>
         {payload.devices.some((d) => jumpLabel(d)) && (
           <span>
@@ -517,7 +564,7 @@ export function ConnectivityGraph({
         )}
         {payload.devices.some((d) => d.pool?.pooled) && (
           <span>
-            <i style={{ background: "#22c55e" }} /> pooled SSH connection
+            <i style={{ background: POOL_HUE }} /> pooled SSH connection
           </span>
         )}
       </div>
@@ -542,32 +589,40 @@ export function DeviceCard({
   const col = deviceColor(d.name);
   return (
     <div
-      className="card dev-card"
+      className={cn(
+        "bg-card grid gap-2 rounded-lg border px-[15px] py-3.5 transition-[transform,border-color] duration-300",
+        "hover:border-chart-2/35 hover:-translate-y-0.5",
+        d.disabled && "opacity-50 grayscale-[0.4]",
+      )}
       style={{ borderLeft: `3px solid ${col}` }}
       data-disabled={d.disabled ? "1" : undefined}
     >
-      <div className="dev-card__top">
-        <span className="dot" style={{ background: col }} title="device colour" />
-        <span className="dev-card__name">{d.name}</span>
+      <div className="flex items-center gap-2">
+        <span
+          className="size-[9px] shrink-0 rounded-full"
+          style={{ background: col }}
+          title="device colour"
+        />
+        <span className="text-[13px] font-medium">{d.name}</span>
         {d.isDefault && <Badge type="accent">default</Badge>}
         {d.disabled && <Badge type="warning">disabled</Badge>}
-        <span className="dot dot--status" style={{ background: info.color }} title={info.label} />
-        <span style={{ flex: 1 }} />
-        <label
-          className="dev-toggle"
-          title={d.disabled ? "Enable device" : "Disable device"}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <input
-            type="checkbox"
+        <span
+          className="size-[7px] shrink-0 rounded-full"
+          style={{ background: info.color }}
+          title={info.label}
+        />
+        <span className="flex-1" />
+        <span onClick={(e) => e.stopPropagation()}>
+          <Switch
             checked={!d.disabled}
-            onChange={() => onToggle?.(d.name, !d.disabled)}
+            onCheckedChange={() => onToggle?.(d.name, !d.disabled)}
+            title={d.disabled ? "Enable device" : "Disable device"}
+            aria-label={d.disabled ? "Enable device" : "Disable device"}
           />
-          <span className="dev-toggle__slider" />
-        </label>
-        <span className="chip">{d.authMode}</span>
+        </span>
+        <Badge type="secondary">{d.authMode}</Badge>
       </div>
-      <div className="dev-card__meta">
+      <div className="text-muted-foreground [&_b]:text-foreground grid grid-cols-[auto_1fr] gap-x-3 gap-y-[3px] text-[11px] [&_b]:font-medium [&_b]:break-words">
         <span>{d.mac ? "mac" : "host"}</span>
         <b>{d.address ?? `${d.host}:${d.port}`}</b>
         <span>user</span>
@@ -583,15 +638,15 @@ export function DeviceCard({
           <>
             <span>pool</span>
             <b
-              style={{
-                color: d.pool.dead
-                  ? "#ef4444"
+              className={
+                d.pool.dead
+                  ? "text-destructive"
                   : d.pool.inflight > 0
-                    ? "#3b82f6"
+                    ? "text-chart-1"
                     : d.pool.pooled
-                      ? "#22c55e"
-                      : "#52525b",
-              }}
+                      ? "text-success"
+                      : "text-muted-foreground"
+              }
             >
               {d.pool.pooled
                 ? d.pool.inflight > 0
@@ -610,24 +665,29 @@ export function DeviceCard({
       </div>
       {jumpLabel(d) && (
         <div
-          className="jump-route"
+          className="border-warning/30 bg-warning/8 mt-2.5 mb-0.5 flex items-center gap-1.5 overflow-hidden rounded-[10px] border px-2.5 py-[7px] text-[10px]"
           title={`Reached over SSH through the bastion ${jumpLabel(d)} (ProxyJump) — no port exposed on ${d.name}.`}
         >
-          <span className="jump-route__hop jump-route__hop--bastion">
-            🛡️ {jumpLabel(d)}
-            {d.jumpVia ? <i className="jump-route__tag">jump</i> : null}
+          <span className="border-warning/60 text-warning bg-background inline-flex items-center gap-1.5 rounded-[7px] border px-2 py-[3px] whitespace-nowrap">
+            <ShieldCheck className="size-3" /> {jumpLabel(d)}
+            {d.jumpVia ? (
+              <i className="bg-warning text-background rounded-[4px] px-1 py-px text-[7px] tracking-[0.08em] uppercase not-italic">
+                jump
+              </i>
+            ) : null}
           </span>
+          {/* Gradient + keyframe driven — `.jump-route__wire` lives in viz.css. */}
           <span className="jump-route__wire jump-route__wire--enc">
             <span className="jump-route__lock" aria-hidden>
               🔒
             </span>
           </span>
           <span
-            className="jump-route__hop jump-route__hop--dest"
+            className="bg-background text-foreground inline-flex items-center gap-1.5 rounded-[7px] border px-2 py-[3px] whitespace-nowrap"
             style={{ borderColor: col }}
             title={d.name}
           >
-            📡 {d.name}
+            <RadioTower className="size-3" /> {d.name}
           </span>
         </div>
       )}

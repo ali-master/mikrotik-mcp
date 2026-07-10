@@ -1,0 +1,231 @@
+/*
+ * SVG + motion rules for the connectivity graph, retained from the deleted
+ * `styles.css` because Tailwind utilities cannot express them:
+ *
+ *   - `@keyframes` (sonar sweep, dashed-line flow, hub rotation, node halo),
+ *   - `drop-shadow()` filters on SVG geometry,
+ *   - `transform-box: fill-box`, which SVG transforms need to orbit their own
+ *     bounding box rather than the user-space origin,
+ *   - `background-image` gradients animated via `background-position`.
+ *
+ * Everything here is driven by the shadcn tokens, so it follows the light/dark
+ * theme. Ordinary layout in `connectivity.tsx` is plain utilities; only these
+ * live on as classes. `prefers-reduced-motion` stops every animation.
+ */
+
+/* ── connectivity graph ───────────────────────────────────────────────────── */
+.conn {
+  display: block;
+  overflow: visible;
+}
+
+.conn-grid {
+  fill: none;
+  stroke: var(--border);
+  stroke-opacity: 0.7;
+  stroke-dasharray: 2 7;
+}
+
+.conn-sonar {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 1.5;
+  opacity: 0;
+  animation: conn-sonar 3.3s ease-out infinite;
+}
+
+.conn-hub-glow {
+  fill: var(--brand);
+  opacity: 0.22;
+  filter: blur(11px);
+}
+
+.conn-hub-ring {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 9;
+  opacity: 0.7;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: conn-rot 15s linear infinite;
+}
+
+.conn-node text {
+  pointer-events: none;
+}
+
+.conn-node-halo {
+  fill: none;
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: conn-halo 2.4s ease-in-out infinite;
+}
+
+.conn-link {
+  fill: none;
+  stroke-width: 1.6;
+  opacity: 0.38;
+}
+
+.conn-flow {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 13;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 4px currentColor);
+  animation: conn-flow 1.05s linear infinite;
+}
+
+.conn-packet {
+  filter: drop-shadow(0 0 6px var(--chart-2));
+}
+
+.conn-chevron {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+
+/* ── encrypted jump-host tunnel (warning-toned) ───────────────────────────── */
+.conn-tunnel-halo {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.1;
+}
+
+.conn-tunnel {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 6 6;
+  animation: conn-tunnel-flow 0.9s linear infinite;
+}
+
+.conn-tunnel-lock {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--warning) 80%, transparent));
+}
+
+.conn-tunnel-sat {
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--warning) 53%, transparent));
+}
+
+.conn-tunnel-badge {
+  fill: color-mix(in srgb, var(--warning) 16%, var(--background));
+  stroke: color-mix(in srgb, var(--warning) 60%, var(--border));
+  stroke-width: 1;
+}
+
+.conn-tunnel-badge-tx {
+  fill: var(--warning);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ── jump-host route strip (HTML, but gradient/keyframe driven) ───────────── */
+.jump-route__wire {
+  flex: 1;
+  height: 2px;
+  min-width: 18px;
+  border-radius: 2px;
+  background-image: linear-gradient(90deg, var(--border) 0 50%, transparent 50% 100%);
+  background-size: 8px 2px;
+  animation: jump-wire 0.7s linear infinite;
+}
+
+.jump-route__wire--enc {
+  position: relative;
+  height: 3px;
+  min-width: 34px;
+  background-image: linear-gradient(90deg, var(--warning) 0 55%, transparent 55% 100%);
+  background-size: 10px 3px;
+  box-shadow: 0 0 8px -1px color-mix(in srgb, var(--warning) 53%, transparent);
+}
+
+.jump-route__lock {
+  position: absolute;
+  top: 50%;
+  font-size: 11px;
+  filter: drop-shadow(0 0 3px var(--warning));
+  animation: jump-lock 2.2s linear infinite;
+}
+
+@keyframes conn-sonar {
+  0% {
+    r: 30px;
+    opacity: 0.5;
+  }
+  100% {
+    r: 150px;
+    opacity: 0;
+  }
+}
+@keyframes conn-flow {
+  to {
+    stroke-dashoffset: -60;
+  }
+}
+@keyframes conn-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes conn-halo {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+@keyframes conn-tunnel-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+@keyframes jump-wire {
+  to {
+    background-position: 8px 0;
+  }
+}
+@keyframes jump-lock {
+  0% {
+    left: -4px;
+    transform: translateY(-50%) scale(0.9);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.1);
+  }
+  100% {
+    left: calc(100% - 8px);
+    transform: translateY(-50%) scale(0.9);
+  }
+}
+
+/* The original hid the sonar sweep and froze the packet/lock motion here. */
+@media (prefers-reduced-motion: reduce) {
+  .conn-sonar {
+    display: none;
+  }
+  .conn-flow,
+  .conn-hub-ring,
+  .conn-node-halo,
+  .conn-tunnel,
+  .jump-route__wire,
+  .jump-route__lock {
+    animation: none;
+  }
+  .conn-packet animateMotion,
+  .conn-tunnel-lock animateMotion {
+    display: none;
+  }
+}

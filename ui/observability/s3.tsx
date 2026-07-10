@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { Check, Cloud, Download, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
+import { Button } from "./geist";
 
 // ── S3 backup management view ────────────────────────────────────────────────
 interface S3Object {
@@ -54,13 +64,13 @@ export function S3Manage(): ReactNode {
     }
   };
 
-  if (!data) return <div className="muted">loading S3 objects…</div>;
+  if (!data) return <div className="text-muted-foreground text-[11px]">loading S3 objects…</div>;
   if (!data.configured) {
     return (
-      <div className="feed-empty">
-        <div className="feed-empty__icon">☁️</div>
-        <p className="feed-empty__title">S3 is not configured</p>
-        <p className="feed-empty__sub">
+      <div className="grid justify-items-center gap-2 rounded-lg border border-dashed border-border px-4 py-[54px] text-center">
+        <Cloud className="size-7 text-muted-foreground opacity-80" />
+        <p className="m-0 font-semibold text-foreground">S3 is not configured</p>
+        <p className="m-0 max-w-[460px] text-muted-foreground text-xs">
           Add an <code>s3</code> block (bucket + credentials) to your config to manage backup
           objects here.
         </p>
@@ -69,76 +79,77 @@ export function S3Manage(): ReactNode {
   }
 
   return (
-    <section className="view">
+    <section className="grid content-start gap-[18px]">
       <Panel
         title="S3 backups"
         className="reveal"
         extra={
-          <>
-            <span className="muted">
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground text-[11px]">
               {data.target} · {data.objects.length} object{data.objects.length === 1 ? "" : "s"}
               {data.truncated ? " (truncated)" : ""}
             </span>
-            <button className="btn" onClick={load} style={{ marginLeft: 10 }}>
-              ↻ Refresh
-            </button>
-          </>
+            <Button size="sm" ghost icon={<RefreshCw />} onClick={load}>
+              Refresh
+            </Button>
+          </div>
         }
       >
-        {msg && <div className="cfg-msg">{msg}</div>}
+        {msg && <div className="font-mono text-xs text-muted-foreground">{msg}</div>}
         {data.objects.length === 0 ? (
-          <div className="muted" style={{ padding: 12 }}>
+          <div className="p-3 text-muted-foreground text-[11px]">
             No objects in the bucket. Upload one with the <code>upload_backup_to_s3</code> tool.
           </div>
         ) : (
-          <div className="feedwrap">
-            <table className="feed">
-              <thead>
-                <tr>
-                  <th>key</th>
-                  <th className="num">size</th>
-                  <th>modified</th>
-                  <th style={{ width: 200 }}>actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.objects.map((o) => (
-                  <tr key={o.key}>
-                    <td>{o.key}</td>
-                    <td className="num">{bytes(o.size)}</td>
-                    <td>
-                      {o.lastModified
-                        ? new Date(o.lastModified).toLocaleString(undefined, { hour12: false })
-                        : "—"}
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <button className="btn" onClick={() => download(o.key)}>
-                        ⤓ Download
-                      </button>{" "}
-                      {confirm === o.key ? (
-                        <>
-                          <button
-                            className="btn btn-danger"
-                            disabled={busy === o.key}
-                            onClick={() => void del(o.key)}
-                          >
-                            ✓ Confirm
-                          </button>{" "}
-                          <button className="btn" onClick={() => setConfirm(null)}>
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button className="btn" onClick={() => setConfirm(o.key)}>
-                          🗑 Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table className="font-mono">
+            <TableHeader>
+              <TableRow>
+                <TableHead>key</TableHead>
+                <TableHead className="text-right tabular-nums">size</TableHead>
+                <TableHead>modified</TableHead>
+                <TableHead className="w-[200px]">actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.objects.map((o) => (
+                <TableRow key={o.key}>
+                  <TableCell>{o.key}</TableCell>
+                  <TableCell className="text-right tabular-nums">{bytes(o.size)}</TableCell>
+                  <TableCell>
+                    {o.lastModified
+                      ? new Date(o.lastModified).toLocaleString(undefined, { hour12: false })
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" ghost icon={<Download />} onClick={() => download(o.key)}>
+                      Download
+                    </Button>
+                    {confirm === o.key ? (
+                      <>
+                        <Button
+                          size="sm"
+                          type="error"
+                          ghost
+                          icon={<Check />}
+                          disabled={busy === o.key}
+                          onClick={() => void del(o.key)}
+                        >
+                          Confirm
+                        </Button>
+                        <Button size="sm" ghost onClick={() => setConfirm(null)}>
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button size="sm" ghost icon={<Trash2 />} onClick={() => setConfirm(o.key)}>
+                        Delete
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </Panel>
     </section>
