@@ -1,9 +1,37 @@
 /** IP addresses — `/ip address`. */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
+import { cidrContains } from "../core/firewall-audit";
 import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+
+/** Two IPv4/IPv6 CIDRs overlap when either network contains the other. */
+function cidrsOverlap(a: string, b: string): boolean {
+  return cidrContains(a, b) || cidrContains(b, a);
+}
+
+/**
+ * Fetch existing `/ip address` entries whose subnet overlaps `address`.
+ * Returns a human-readable line per conflict (empty when none), so the caller
+ * can refuse to create a duplicate/overlapping assignment.
+ */
+async function findAddressConflicts(
+  address: string,
+  ctx: Parameters<typeof executeMikrotikCommand>[1],
+): Promise<string[]> {
+  const existing = await executeMikrotikCommand("/ip address print terse", ctx);
+  const conflicts: string[] = [];
+  for (const line of existing.split("\n")) {
+    const addr = line.match(/address=([^\s]+)/)?.[1];
+    if (!addr) continue;
+    if (cidrsOverlap(address, addr)) {
+      const iface = line.match(/interface=([^\s]+)/)?.[1] ?? "?";
+      conflicts.push(`${addr} on ${iface}`);
+    }
+  }
+  return conflicts;
+}
 
 export const ipAddressTools: ToolModule = [
   defineTool({
@@ -14,7 +42,11 @@ export const ipAddressTools: ToolModule = [
       "Assigns an IPv4 address to an interface (`/ip address add`). Use this to add a CIDR" +
       " address (e.g. '192.168.1.1/24') as the router's own address on a network segment —" +
       " sets the interface's local address, optional network, and broadcast. For IPv6 use" +
-      " add_ipv6_address. Returns the full detail of the new address entry including its `.id`.",
+      " add_ipv6_address. Before creating, this checks the existing `/ip address` list and" +
+      " REFUSES to add an address that duplicates or overlaps an already-assigned subnet," +
+      " returning the conflicting entries so you can pick a non-overlapping address. To" +
+      " intentionally add an overlapping/secondary address, set `allow_overlap: true`." +
+      " Returns the full detail of the new address entry including its `.id`.",
     inputSchema: {
       address: z.string().describe("Address with CIDR, e.g. '192.168.1.1/24'"),
       interface: z.string(),
@@ -22,9 +54,25 @@ export const ipAddressTools: ToolModule = [
       broadcast: z.string().optional(),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
+      allow_overlap: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Bypass the duplicate/overlap guard to add a secondary address in an existing subnet",
+        ),
     },
     async handler(a, ctx) {
       ctx.info(`Adding IP address: address=${a.address}, interface=${a.interface}`);
+      if (!a.allow_overlap) {
+        const conflicts = await findAddressConflicts(a.address, ctx);
+        if (conflicts.length > 0) {
+          return (
+            `Refused: ${a.address} duplicates or overlaps ${conflicts.length} existing` +
+            ` address(es): ${conflicts.join(", ")}. Choose a non-overlapping address, or` +
+            ` re-run with allow_overlap=true to add it intentionally.`
+          );
+        }
+      }
       const cmd = new Cmd("/ip address add")
         .set("address", a.address)
         .set("interface", a.interface)
