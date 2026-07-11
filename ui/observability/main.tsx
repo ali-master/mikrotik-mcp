@@ -1144,7 +1144,7 @@ function App(): ReactNode {
                     </span>
                   }
                 >
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,1fr))] gap-3">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-3">
                     {shownDevices.map((d) => (
                       <DeviceHealthCard key={d.name} d={d} />
                     ))}
