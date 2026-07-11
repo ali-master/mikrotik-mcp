@@ -298,6 +298,7 @@ function DeviceSheet({
   onClose: () => void;
 }): ReactNode {
   const [newName, setNewName] = useState(name);
+  const [nameErr, setNameErr] = useState<string | null>(null);
   const devices = asObj(cfg.devices);
   const dev = asObj(devices[name]);
 
@@ -308,22 +309,39 @@ function DeviceSheet({
     onChange({ ...cfg, devices: { ...devices, [name]: nd } });
   };
 
-  const commitName = (): void => {
+  // Rename the device key from `name` to the typed value. Returns false (and
+  // sets an error) on an empty or already-taken name so the caller keeps the
+  // sheet open instead of silently discarding the edit.
+  const commitName = (): boolean => {
     const nn = newName.trim();
-    if (!nn || nn === name || devices[nn]) return;
+    if (nn === name) return true; // unchanged — nothing to rename
+    if (!nn) {
+      setNameErr("Name cannot be empty.");
+      return false;
+    }
+    if (devices[nn]) {
+      setNameErr(`A device named "${nn}" already exists.`);
+      return false;
+    }
     const nextDevices = { ...devices, [nn]: dev };
     delete nextDevices[name];
     onChange({ ...cfg, devices: nextDevices });
-    onClose();
+    return true;
+  };
+
+  // Done applies the typed name (creating the device under its real key for a
+  // new entry) before closing.
+  const done = (): void => {
+    if (commitName()) onClose();
   };
 
   return (
     <Sheet
       title={isNew ? "Add device" : `Device · ${name}`}
       subtitle={isNew ? "New MikroTik router" : undefined}
-      onClose={onClose}
+      onClose={done}
       footer={
-        <Button type="success" size="sm" onClick={onClose}>
+        <Button type="success" size="sm" onClick={done}>
           Done
         </Button>
       }
@@ -336,15 +354,19 @@ function DeviceSheet({
           <Input
             id="dev_name"
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={(e) => {
+              setNewName(e.target.value);
+              setNameErr(null);
+            }}
             placeholder="core-router"
           />
           {!isNew && newName.trim() !== name && (
-            <Button size="sm" ghost onClick={commitName}>
+            <Button size="sm" ghost onClick={() => commitName()}>
               Rename
             </Button>
           )}
         </div>
+        {nameErr && <span className="text-destructive text-[11px]">{nameErr}</span>}
       </div>
       <FieldForm fields={DEVICE_FIELDS} value={dev} onField={setDev} />
     </Sheet>

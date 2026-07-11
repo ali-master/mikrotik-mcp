@@ -70,7 +70,11 @@ export function ConfigEditor({
 
   const testDevices = async (): Promise<void> => {
     const devices = asObj(cfg.devices);
-    if (Object.keys(devices).length === 0) return;
+    if (Object.keys(devices).length === 0) {
+      setMsg("No devices configured to test — add one first.");
+      return;
+    }
+    setTests({});
     setMsg("Testing devices…");
     const out: Record<string, { ok: boolean; label: string }> = {};
     type TestResp = { ok: boolean; status?: DeviceStatus; errors?: ConfigIssue[] };
@@ -218,12 +222,6 @@ export function ConfigEditor({
         </div>
       )}
 
-      {mode === "form" ? (
-        <ConfigForm cfg={cfg} onChange={setCfg} />
-      ) : (
-        <JsonEditor value={cfg} onChange={(o) => setCfg(asObj(o))} onJsonError={setJsonErr} />
-      )}
-
       {Object.keys(tests).length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {Object.entries(tests).map(([name, r]) => (
@@ -238,6 +236,12 @@ export function ConfigEditor({
             </span>
           ))}
         </div>
+      )}
+
+      {mode === "form" ? (
+        <ConfigForm cfg={cfg} onChange={setCfg} />
+      ) : (
+        <JsonEditor value={cfg} onChange={(o) => setCfg(asObj(o))} onJsonError={setJsonErr} />
       )}
 
       {(jsonErr || errors.length > 0) && (
