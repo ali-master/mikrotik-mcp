@@ -4,6 +4,7 @@ import { executeMikrotikCommand } from "../core/connector";
 import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { whereClause, looksLikeError, isEmpty, Cmd } from "../core/routeros";
+import { findAddressConflicts } from "../utils/ip-overlap";
 
 export const ipv6AddressTools: ToolModule = [
   defineTool({
@@ -14,6 +15,10 @@ export const ipv6AddressTools: ToolModule = [
       "Assigns an IPv6 address to an interface (`/ipv6 address add`) — use this to give an interface a static or pool-derived IPv6 address and optionally advertise the prefix via Router Advertisements (ND). " +
       "For IPv4 address assignment use add_ip_address. For IPv6 routing entries (next-hop/gateway records) use add_ipv6_route. " +
       "Returns the created entry's full detail including its `.id`.\n\n" +
+      "Before creating, this checks the existing `/ipv6 address` list and REFUSES to add an" +
+      " address that duplicates or overlaps an already-assigned prefix, returning the" +
+      " conflicting entries so you can pick a non-overlapping address. To intentionally add" +
+      " an overlapping/secondary address set `allow_overlap: true`.\n\n" +
       "Notes:\n" +
       "    address: IPv6 with prefix length, e.g. '2001:db8::1/64'. When from_pool\n" +
       "        is set the host part may be omitted and is taken from the pool.\n" +
@@ -31,9 +36,27 @@ export const ipv6AddressTools: ToolModule = [
       no_dad: z.boolean().optional().describe("Skip Duplicate Address Detection for this address"),
       comment: z.string().optional(),
       disabled: z.boolean().default(false),
+      allow_overlap: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Bypass the duplicate/overlap guard to add a secondary address in an existing prefix",
+        ),
     },
     async handler(a, ctx) {
       ctx.info(`Adding IPv6 address: address=${a.address}, interface=${a.interface}`);
+      // eui-64/from-pool derive the host part later, so an overlap check on the
+      // bare prefix would be meaningless — only guard fully-specified addresses.
+      if (!a.allow_overlap && !a.eui_64 && !a.from_pool) {
+        const conflicts = await findAddressConflicts("/ipv6 address", a.address, ctx);
+        if (conflicts.length > 0) {
+          return (
+            `Refused: ${a.address} duplicates or overlaps ${conflicts.length} existing` +
+            ` address(es): ${conflicts.join(", ")}. Choose a non-overlapping address, or` +
+            ` re-run with allow_overlap=true to add it intentionally.`
+          );
+        }
+      }
       const cmd = new Cmd("/ipv6 address add")
         .set("address", a.address)
         .set("interface", a.interface)
