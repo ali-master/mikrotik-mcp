@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "4.6.0",
+  "version": "4.7.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 794,
   "tools": [
@@ -2518,7 +2518,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Assigns an IPv4 address to an interface (`/ip address add`). Use this to add a CIDR address (e.g. '192.168.1.1/24') as the router's own address on a network segment — sets the interface's local address, optional network, and broadcast. For IPv6 use add_ipv6_address. Returns the full detail of the new address entry including its `.id`.",
+      "description": "Assigns an IPv4 address to an interface (`/ip address add`). Use this to add a CIDR address (e.g. '192.168.1.1/24') as the router's own address on a network segment — sets the interface's local address, optional network, and broadcast. For IPv6 use add_ipv6_address. Before creating, this checks the existing `/ip address` list and REFUSES to add an address that duplicates or overlaps an already-assigned subnet, returning the conflicting entries so you can pick a non-overlapping address. To intentionally add an overlapping/secondary address, set `allow_overlap: true`. Returns the full detail of the new address entry including its `.id`.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -2542,9 +2542,14 @@
           "disabled": {
             "default": false,
             "type": "boolean"
+          },
+          "allow_overlap": {
+            "default": false,
+            "description": "Bypass the duplicate/overlap guard to add a secondary address in an existing subnet",
+            "type": "boolean"
           }
         },
-        "required": ["address", "interface", "disabled"],
+        "required": ["address", "interface", "disabled", "allow_overlap"],
         "additionalProperties": false
       }
     },
@@ -4599,7 +4604,7 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Assigns an IPv6 address to an interface (`/ipv6 address add`) — use this to give an interface a static or pool-derived IPv6 address and optionally advertise the prefix via Router Advertisements (ND). For IPv4 address assignment use add_ip_address. For IPv6 routing entries (next-hop/gateway records) use add_ipv6_route. Returns the created entry's full detail including its `.id`.\n\nNotes:\n    address: IPv6 with prefix length, e.g. '2001:db8::1/64'. When from_pool\n        is set the host part may be omitted and is taken from the pool.\n    eui_64: derive the host part from the interface MAC (modified EUI-64).\n    advertise: include this prefix in Router Advertisements (ND).",
+      "description": "Assigns an IPv6 address to an interface (`/ipv6 address add`) — use this to give an interface a static or pool-derived IPv6 address and optionally advertise the prefix via Router Advertisements (ND). For IPv4 address assignment use add_ip_address. For IPv6 routing entries (next-hop/gateway records) use add_ipv6_route. Returns the created entry's full detail including its `.id`.\n\nBefore creating, this checks the existing `/ipv6 address` list and REFUSES to add an address that duplicates or overlaps an already-assigned prefix, returning the conflicting entries so you can pick a non-overlapping address. To intentionally add an overlapping/secondary address set `allow_overlap: true`.\n\nNotes:\n    address: IPv6 with prefix length, e.g. '2001:db8::1/64'. When from_pool\n        is set the host part may be omitted and is taken from the pool.\n    eui_64: derive the host part from the interface MAC (modified EUI-64).\n    advertise: include this prefix in Router Advertisements (ND).",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -4633,9 +4638,14 @@
           "disabled": {
             "default": false,
             "type": "boolean"
+          },
+          "allow_overlap": {
+            "default": false,
+            "description": "Bypass the duplicate/overlap guard to add a secondary address in an existing prefix",
+            "type": "boolean"
           }
         },
-        "required": ["address", "interface", "disabled"],
+        "required": ["address", "interface", "disabled", "allow_overlap"],
         "additionalProperties": false
       }
     },

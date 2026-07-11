@@ -32,12 +32,13 @@
     "disabled": {
       "default": false,
       "type": "boolean"
+    },
+    "allow_overlap": {
+      "default": false,
+      "description": "Bypass the duplicate/overlap guard to add a secondary address in an existing prefix",
+      "type": "boolean"
     }
   },
-  "required": [
-    "address",
-    "interface",
-    "disabled"
-  ],
+  "required": ["address", "interface", "disabled", "allow_overlap"],
   "additionalProperties": false
 }
