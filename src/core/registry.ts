@@ -109,14 +109,17 @@ function deviceSelectorDescription(
     return (
       "Which configured MikroTik device to run this on. Pass the EXACT config key (or its label) " +
       "that matches the user's wording — these are different physical routers, so never substitute " +
-      'one for another (e.g. "Ali Home" is NOT "home"). Configured devices:\n' +
+      'one for another (e.g. "Ali Home" is NOT "home"). Devices known at startup:\n' +
       `${rows}\n` +
+      "This list is a startup snapshot — devices can be added at runtime (e.g. from the dashboard), " +
+      "so call list_mikrotik_devices for the authoritative current set if a name isn't listed here. " +
       "Omit only when the user did not name a device (uses the default)."
     );
   }
   return (
-    `Which configured MikroTik device to run this on. One of: ${selectorNames.join(", ")} ` +
-    "(a config key or its label). Omit to use the default device."
+    `Which configured MikroTik device to run this on. Known at startup: ${selectorNames.join(", ")} ` +
+    "(a config key or its label). The set can change at runtime — use list_mikrotik_devices for the " +
+    "current authoritative list. Omit to use the default device."
   );
 }
 
@@ -228,17 +231,25 @@ export function defineTool<Shape extends ZodRawShape>(def: ToolDef<Shape>): Regi
       const { ui, auto } = appViews === false ? { ui: undefined, auto: false } : effectiveUi(def);
 
       // When more than one device is configured, every tool gains an optional
-      // `device` selector (a validated enum) so the AI can target a specific
-      // router per call. The enum accepts both config keys AND friendly labels
-      // (descriptions); both resolve to a key in resolveDeviceName/getDevice.
-      // Single-device setups are untouched.
+      // `device` selector so the AI can target a specific router per call. It
+      // accepts both config keys AND friendly labels (descriptions); both resolve
+      // to a key in resolveDeviceName/getDevice. Single-device setups are untouched.
+      //
+      // It is a `string`, NOT an enum, ON PURPOSE: the device set is MUTABLE at
+      // runtime (a device added from the dashboard calls setConfig live), but tool
+      // schemas are registered once at startup. A frozen enum would reject a newly
+      // added device with a schema error before the handler runs — and MCP clients
+      // cache schemas, so even a reload wouldn't refresh it. A string defers
+      // validation to call time, where getDevice() checks the LIVE config and
+      // throws a clear "Unknown device" for a genuinely unknown name. The known
+      // devices are still listed in the description as a hint.
       const selectorNames =
         multiDevice && deviceNames ? [...new Set([...deviceNames, ...(deviceAliases ?? [])])] : [];
       let inputSchema: ZodRawShape | undefined = multiDevice
         ? {
             ...def.inputSchema,
             device: z
-              .enum(selectorNames as [string, ...string[]])
+              .string()
               .optional()
               .describe(deviceSelectorDescription(selectorNames, deviceDirectory)),
           }

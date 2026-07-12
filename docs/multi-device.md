@@ -122,7 +122,8 @@ via env/flags — `MIKROTIK_JUMP_HOST` / `--jump-host` (plus `…_JUMP_PORT`,
 ## How the AI targets a device
 
 When **more than one** device is configured, every tool automatically gains an
-optional **`device`** parameter — a validated enum of your device names:
+optional **`device`** parameter — a config key or friendly label, validated at
+call time against the live configuration:
 
 ```jsonc
 // tool: create_wireguard_interface
@@ -131,6 +132,17 @@ optional **`device`** parameter — a validated enum of your device names:
 
 Omit `device` to use the default. With a single device the parameter isn't added
 at all, so single-device usage is unchanged.
+
+The parameter is a free-form **string** (not a fixed enum) on purpose: devices can
+be added at runtime — e.g. from the **Observability dashboard** — and take effect
+**immediately, without restarting the server or refreshing tool schemas**. The
+name is checked against the current config when the tool runs (an unknown name
+returns a clear `Unknown device 'x'. Configured devices: …` error), so a freshly
+added device is usable right away. Use `list_mikrotik_devices` for the authoritative
+current set. (Caveat: if the server _started_ with a single device, tools have no
+`device` parameter yet — adding a second device at runtime is picked up by
+`list_mikrotik_devices`, but targeting it per-call requires a restart so the
+selector is injected.)
 
 The AI discovers the names with the **`list_mikrotik_devices`** tool (or you can
 run `mikrotik-mcp devices`):
