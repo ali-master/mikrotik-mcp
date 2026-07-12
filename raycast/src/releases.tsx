@@ -3,7 +3,16 @@
  * and upgrade / downgrade / reinstall the server to a specific version
  * (`bun i -g @usex/mikrotik-mcp@<v>`), which then self-restarts onto it.
  */
-import { Action, ActionPanel, Color, Icon, List, Toast, showToast, Keyboard } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Color,
+  Icon,
+  List,
+  Toast,
+  showToast,
+  Keyboard,
+} from "@raycast/api";
 import { postJson } from "./lib/api";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { useApi } from "./lib/hooks";
@@ -49,17 +58,24 @@ function fmtDate(iso: string): string {
 }
 
 function verb(rel: Relation): string {
-  return rel === "current" ? "Reinstall" : rel === "newer" ? "Upgrade" : "Downgrade";
+  return rel === "current"
+    ? "Reinstall"
+    : rel === "newer"
+      ? "Upgrade"
+      : "Downgrade";
 }
 
 function relIcon(rel: Relation): { source: Icon; tintColor: Color } {
-  if (rel === "current") return { source: Icon.CheckCircle, tintColor: Color.Green };
-  if (rel === "newer") return { source: Icon.ArrowUpCircle, tintColor: Color.Blue };
+  if (rel === "current")
+    return { source: Icon.CheckCircle, tintColor: Color.Green };
+  if (rel === "newer")
+    return { source: Icon.ArrowUpCircle, tintColor: Color.Blue };
   return { source: Icon.ArrowDownCircle, tintColor: Color.SecondaryText };
 }
 
 export default function Command() {
-  const { data, isLoading, revalidate } = useApi<ReleasesPayload>("/api/releases");
+  const { data, isLoading, revalidate } =
+    useApi<ReleasesPayload>("/api/releases");
   const releases = data?.releases ?? [];
 
   async function install(version: string, relation: Relation): Promise<void> {
@@ -101,12 +117,18 @@ export default function Command() {
   }
 
   return (
-    <List isLoading={isLoading} isShowingDetail searchBarPlaceholder="Search versions…">
+    <List
+      isLoading={isLoading}
+      isShowingDetail
+      searchBarPlaceholder="Search versions…"
+    >
       {data && (
         <List.Section
           title={`Running v${data.currentVersion}`}
           subtitle={
-            data.updateAvailable ? `Update available → v${data.latestVersion}` : "Up to date"
+            data.updateAvailable
+              ? `Update available → v${data.latestVersion}`
+              : "Up to date"
           }
         >
           {releases.map((r) => {
@@ -124,7 +146,11 @@ export default function Command() {
                 title={`v${r.version}`}
                 subtitle={fmtDate(r.publishedAt)}
                 accessories={tags}
-                detail={<List.Item.Detail markdown={r.body?.trim() || "_No release notes._"} />}
+                detail={
+                  <List.Item.Detail
+                    markdown={r.body?.trim() || "_No release notes._"}
+                  />
+                }
                 actions={
                   <ActionPanel>
                     <Action
@@ -136,7 +162,9 @@ export default function Command() {
                       <Action
                         title={`Upgrade to Latest (v${data.latestVersion})`}
                         icon={Icon.Rocket}
-                        onAction={() => void install(data.latestVersion as string, "newer")}
+                        onAction={() =>
+                          void install(data.latestVersion as string, "newer")
+                        }
                       />
                     )}
                     <Action.OpenInBrowser url={r.url} title="Open on GitHub" />
