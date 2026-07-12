@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "4.13.0",
+  "version": "4.14.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 821,
   "tools": [
@@ -11808,14 +11808,14 @@
         "destructiveHint": false,
         "openWorldHint": false
       },
-      "description": "Creates an IPv4 firewall FILTER rule (`/ip firewall filter`) — the accept/drop/reject decision table for traffic TO the router (chain=input), THROUGH it (forward) or FROM it (output). Use this to allow or block traffic. For address translation use the NAT tools, for packet marking use mangle, for pre-connection-tracking drops use raw, and for IPv6 use create_ipv6_filter_rule. Rule order matters (first match wins) — use place_before or move_filter_rule to position it. Returns the created rule's detail including its `.id`. connection_state: comma-separated e.g. \"established,related,new,invalid\". limit: RouterOS rate/burst string e.g. \"10,5:packet\" or \"10/1s:packet\". tcp_flags: RouterOS flag expression e.g. \"syn,!ack\". place_before: rule number or ID (*N) to insert before e.g. \"0\" or \"*3\".",
+      "description": "Creates an IPv4 firewall FILTER rule (`/ip firewall filter`) — the accept/drop/reject decision table for traffic TO the router (chain=input), THROUGH it (forward) or FROM it (output). Use this to allow or block traffic. For address translation use the NAT tools, for packet marking use mangle, for pre-connection-tracking drops use raw, and for IPv6 use create_ipv6_filter_rule. `chain` also accepts a CUSTOM sub-chain name (e.g. detect-portscan) reached by an action=jump rule, and `action` supports add-src-to-address-list / add-dst-to-address-list (with `address_list` + `address_list_timeout`) for tagging/detection rules. Rule order matters (first match wins) — use place_before or move_filter_rule to position it. Returns the created rule's detail including its `.id`. connection_state: comma-separated e.g. \"established,related,new,invalid\". limit: RouterOS rate/burst string e.g. \"10,5:packet\" or \"10/1s:packet\". tcp_flags: RouterOS flag expression e.g. \"syn,!ack\". place_before: rule number or ID (*N) to insert before e.g. \"0\" or \"*3\".",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
           "chain": {
             "type": "string",
-            "enum": ["input", "forward", "output"]
+            "description": "The built-in `input`, `forward`, or `output` chain — OR a custom sub-chain name (e.g. `detect-portscan`). A custom chain runs only when a rule with action=jump and jump-target=<that chain> sends traffic into it; use this to build tagging/detection sub-chains."
           },
           "action": {
             "type": "string",
@@ -11828,7 +11828,9 @@
               "passthrough",
               "return",
               "tarpit",
-              "fasttrack-connection"
+              "fasttrack-connection",
+              "add-src-to-address-list",
+              "add-dst-to-address-list"
             ]
           },
           "src_address": {
@@ -14950,7 +14952,7 @@
         "destructiveHint": true,
         "openWorldHint": false
       },
-      "description": "Installs the user-selected port-scan detection signatures into a dedicated `detect-portscan` sub-chain, gated by a single input jump that EXCLUDES a trusted address-list (so trusted sources are never tagged). These rules only add the source to an address list — they NEVER drop or block. NEVER call this with a guessed or default set of rule_types: it must only be called with signature IDs the user explicitly chose after seeing list_port_scan_detection_signatures — there is no select-all. Requires `trusted_list_name` (must already exist and be non-empty on the device) and the human acknowledgement `confirmed_trusted_list_includes_my_ip=true`. Captures a config snapshot and applies every write inside Safe Mode (auto-revert on session drop). Idempotent — a second identical run adds nothing. Enforcement/blocking of the tagged list is intentionally out of scope.",
+      "description": "Installs the user-selected port-scan detection signatures into a dedicated `detect-portscan` sub-chain, gated by a single input jump that EXCLUDES a trusted address-list (so trusted sources are never tagged). These rules only add the source to an address list — they NEVER drop or block. NEVER call this with a guessed or default set of rule_types: it must only be called with signature IDs the user explicitly chose after seeing list_port_scan_detection_signatures — there is no select-all. Requires `trusted_list_name` (must already exist and be non-empty on the device) and the human acknowledgement `confirmed_trusted_list_includes_my_ip=true`. Captures a config snapshot, then applies every write inside Safe Mode (auto-revert on session drop) — or, if Safe Mode is unavailable or goes silent on the device (a known flaky case on some RouterOS SSH builds), applies the writes DIRECTLY instead of aborting, since these rules only tag and cannot lock you out (the snapshot is the rollback point). Idempotent — a second identical run adds nothing. Enforcement/blocking of the tagged list is intentionally out of scope.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
