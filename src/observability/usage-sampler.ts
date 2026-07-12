@@ -1,8 +1,8 @@
 /**
  * Usage sampler — the background job that fills {@link UsageStore}.
  *
- * On a slow interval (default 10 min) it walks every SSH-reachable configured
- * device and, per device:
+ * On an interval (default 1 min) it walks every SSH-reachable configured device
+ * and, per device:
  *   • snapshots each `/queue simple` cumulative counter (per-client download/
  *     upload) into `usage_samples`, and
  *   • ingests `/user-manager session` accounting records (de-duped by accounting
@@ -75,11 +75,26 @@ async function sampleClients(store: UsageStore, device: string, ts: number): Pro
   store.recordClientSamples(device, ts, samples);
 }
 
+/**
+ * Devices known to lack the `user-manager` package. Once `/user-manager …` comes
+ * back as an unsupported command, we stop probing that device so the background
+ * sampler doesn't re-issue a failing command every interval — which RouterOS logs
+ * as `bad command name user-manager` on the device each time. Re-probed on
+ * restart (rare: installing User Manager is a deliberate, infrequent act).
+ */
+const noUserManager = new Set<string>();
+
 /** Ingest User Manager accounting sessions for one device (deduped by acct id). */
 async function ingestSessions(store: UsageStore, device: string): Promise<void> {
+  if (noUserManager.has(device)) return; // no user-manager package here — don't spam its log
   const ctx = createContext(undefined, device);
   const out = await executeMikrotikCommand("/user-manager session print detail", ctx);
-  if (isEmpty(out) || looksLikeError(out) || commandUnsupported(out)) return;
+  // Package not installed → remember and never probe this device again this run.
+  if (commandUnsupported(out)) {
+    noUserManager.add(device);
+    return;
+  }
+  if (isEmpty(out) || looksLikeError(out)) return;
   const sessions: VpnSession[] = [];
   for (const row of parseRecords(out).rows) {
     const user = row.user ?? "";
