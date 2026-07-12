@@ -95,6 +95,12 @@ imported lazily — `bun:sqlite` is only loaded when the dashboard is enabled.
   the active transport (`live · ws` / `live · sse`).
 - **Detail drawer** — click any row for full metadata plus the redacted input
   and complete output, with copy buttons.
+- **Releases & Updates** — a version timeline of every published release with its
+  rendered notes. It detects when a newer version is available and lets you
+  **upgrade to the latest, or install any specific version** to upgrade or
+  downgrade — running `bun i -g @usex/mikrotik-mcp@<version>` on the server, which
+  then self-restarts onto that version. The version you're running and the latest
+  are marked on the timeline. (Also available as the Raycast **Releases** command.)
 - **Reload Server** — a sidebar button that reloads the MCP server. A normal click
   does a **live config reload** (re-reads the config from disk and applies it with
   zero downtime), so a device added here — or edited in the config file — takes
@@ -118,6 +124,8 @@ The dashboard is backed by a small JSON API on the same port (handy for scripts)
 | `GET /api/devices`                                                   | Configured devices + SSH connectivity status + activity.            |
 | `GET /api/config`                                                    | Effective runtime config, secrets redacted.                         |
 | `POST /api/reload`                                                   | `{}` reloads config live; `{hard:true}` restarts the process.       |
+| `GET /api/releases`                                                  | Every published release + relation to the running version.          |
+| `POST /api/upgrade`                                                  | `{version}` installs that version globally, then self-restarts.     |
 | `GET /api/stream`                                                    | **WebSocket** — pushes `{type:"event", event}` for every new call.  |
 | `GET /api/sse`                                                       | **Server-Sent Events** — same event stream as a fallback transport. |
 | `GET /health`                                                        | Liveness probe (`OK`).                                              |

@@ -70,6 +70,7 @@ import { useLiveStream, useReveals } from "./hooks";
 import { DriftView } from "./drift";
 import { MemoryView } from "./memory";
 import { ModulesView } from "./modules";
+import { ReleasesView } from "./releases";
 import { PacketCapture } from "./packet-capture";
 import { S3Manage } from "./s3";
 import { SnapshotsView } from "./snapshots";
@@ -119,6 +120,7 @@ type ViewId =
   | "modules"
   | "config"
   | "memory"
+  | "releases"
   | "feed";
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
@@ -135,6 +137,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "modules", label: "Modules", sub: "Enable/disable tool modules — curate the surface" },
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
   { id: "memory", label: "Memory", sub: "Knowledge graph — entities, relations & observations" },
+  { id: "releases", label: "Releases", sub: "Update, downgrade & read every version's notes" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
 /** Valid view ids — used to validate a hash/stored route before trusting it. */
@@ -195,6 +198,7 @@ const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   modules: MONO_ACCENT,
   config: MONO_ACCENT,
   memory: MONO_ACCENT,
+  releases: MONO_ACCENT,
   feed: MONO_ACCENT,
 };
 
@@ -316,6 +320,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "Entities are created by the AI via MCP tools — you can browse and delete them here.",
       "The graph visualization shows entities as circles and relations as directed edges; click a node to inspect it.",
       "Change the database path to switch between different knowledge bases.",
+    ],
+  },
+  releases: {
+    what: "Every published version of the server on a timeline, with its release notes. Upgrade to the latest, or install any specific version to upgrade or downgrade.",
+    tips: [
+      "The green dot marks the version you're running now; the brand dot marks the latest.",
+      "Install runs `bun i -g @usex/mikrotik-mcp@<version>` on the server, then it self-restarts onto that version (the connection drops briefly).",
+      "Click a version to expand its release notes; the latest is expanded by default.",
     ],
   },
   feed: {
@@ -582,6 +594,13 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <circle cx="18" cy="14" r="2" />
         <circle cx="12" cy="20" r="2" />
         <path d="M12 8v-0.5M12 8 7.2 12.5M12 8 16.8 12.5M6 16 10.5 18.5M18 16 13.5 18.5" />
+      </>
+    ),
+    releases: (
+      <>
+        <path d="M12 3v12" />
+        <path d="M8 11l4 4 4-4" />
+        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
       </>
     ),
     feed: <path d="M4 6h16M4 12h16M4 18h10" />,
@@ -1486,6 +1505,9 @@ function App(): ReactNode {
 
         {/* ── Memory ── */}
         {view === "memory" && <MemoryView />}
+
+        {/* ── Releases & Updates ── */}
+        {view === "releases" && <ReleasesView />}
 
         {/* ── Live Feed ── */}
         {view === "feed" && (

@@ -12,6 +12,8 @@
  *   • `*   /api/capture/*`    live packet capture: status, packets, pcap, start/stop
  *   • `GET /api/meta`         facets (tools/devices) + counts for filters
  *   • `POST /api/reload`      reload config live (`{}`) or restart the process (`{hard:true}`)
+ *   • `GET /api/releases`     every published release + relation to running version
+ *   • `POST /api/upgrade`     install a version (`{version}`) globally + self-restart
  *   • `GET /api/stream`       WebSocket: live push of every new event
  *   • `GET /health`           liveness probe
  *
@@ -82,7 +84,7 @@ import { normalizeExport } from "../snapshots/format";
 import { openSnapshotStore } from "../snapshots/store";
 import type { SnapshotStore } from "../snapshots/store";
 import { getConfig, resolveDeviceName, setConfig } from "../core/runtime";
-import { fetchLatestRelease } from "../core/update-check";
+import { fetchAllReleases, fetchLatestRelease } from "../core/update-check";
 import { logger } from "../logger";
 import { UI_DIST_DIR } from "../paths";
 import { createConfigAdmin, validateConfig } from "./config-admin";
@@ -174,6 +176,37 @@ function restartProcess(): boolean {
   // delay) can bind the same ports.
   setTimeout(() => process.exit(0), 500);
   return ok;
+}
+
+/**
+ * Install a package spec globally with Bun (`bun i -g <spec>`) and return the
+ * combined output. Spawned with an args array (no shell), so the caller-validated
+ * version can't inject anything. Bounded at 180s. Process management, not device
+ * I/O — the SSH-only rule doesn't apply.
+ */
+function runUpgrade(spec: string): Promise<{ ok: boolean; log: string }> {
+  return new Promise((resolve) => {
+    let out = "";
+    const child = spawn(process.execPath, ["i", "-g", spec], {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const timer = setTimeout(() => {
+      child.kill();
+      resolve({ ok: false, log: `${out}\n(timed out after 180s)` });
+    }, 180_000);
+    child.stdout?.on("data", (d: Buffer) => (out += d.toString()));
+    child.stderr?.on("data", (d: Buffer) => (out += d.toString()));
+    child.on("error", (e) => {
+      clearTimeout(timer);
+      resolve({ ok: false, log: `${out}\nspawn error: ${String(e)}` });
+    });
+    child.on("exit", (code) => {
+      clearTimeout(timer);
+      resolve({ ok: code === 0, log: out.trim() || `(exit ${code})` });
+    });
+  });
 }
 
 /** The built dashboard HTML, or a helpful placeholder if it isn't built yet. */
@@ -1491,6 +1524,45 @@ export async function runDashboard(
       } catch (e) {
         return json({ error: e instanceof Error ? e.message : "fetch failed" }, 502);
       }
+    }
+
+    // Every published release (newest first) + relation to the running version.
+    if (url.pathname === "/api/releases" && req.method === "GET") {
+      try {
+        return json(await fetchAllReleases());
+      } catch (e) {
+        return json({ error: e instanceof Error ? e.message : "fetch failed" }, 502);
+      }
+    }
+
+    // Install a specific version globally (`bun i -g @usex/mikrotik-mcp@<v>`),
+    // then self-restart so the new binary loads. `version` is "latest" or a
+    // strict x.y.z (validated to prevent injecting anything into the package arg).
+    if (url.pathname === "/api/upgrade" && req.method === "POST") {
+      const body = (await readJson(req)) as { version?: unknown; restart?: unknown };
+      const version = String(body?.version ?? "latest");
+      if (version !== "latest" && !/^\d+\.\d+\.\d+$/.test(version)) {
+        return json(
+          { ok: false, error: `Invalid version "${version}" (use "latest" or x.y.z).` },
+          400,
+        );
+      }
+      const spec = `@usex/mikrotik-mcp@${version}`;
+      logger.warn(`Dashboard requested upgrade: bun i -g ${spec}`);
+      const { ok, log } = await runUpgrade(spec);
+      if (!ok) return json({ ok: false, version, log }, 500);
+      // Success → relaunch on the newly-installed version unless told not to.
+      const willRestart = body?.restart !== false;
+      const relaunched = willRestart ? restartProcess() : false;
+      return json({
+        ok: true,
+        version,
+        log,
+        restarting: relaunched,
+        note: relaunched
+          ? "Installed. Restarting on the new version now — reconnect shortly."
+          : "Installed. Restart the server (or use the restart button) for it to take effect.",
+      });
     }
 
     if (url.pathname === "/api/meta") {

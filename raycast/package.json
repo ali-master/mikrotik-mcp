@@ -156,6 +156,13 @@
       "mode": "view"
     },
     {
+      "name": "releases",
+      "title": "Releases",
+      "description": "Browse versions with release notes; upgrade, downgrade or reinstall the server",
+      "icon": "extension-icon.png",
+      "mode": "view"
+    },
+    {
       "name": "memory",
       "title": "Memory",
       "description": "Knowledge graph — entities, relations, observations and activity",

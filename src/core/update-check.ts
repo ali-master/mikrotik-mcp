@@ -219,3 +219,86 @@ export function updateSummaryLine(release: ReleasePayload): string | null {
     `or upgrade directly: bun i -g @usex/mikrotik-mcp@latest`
   );
 }
+
+// ── All releases (for the dashboard's Releases page) ─────────────────────────
+
+/** One release in the full list, with its relation to the running version. */
+export interface ReleaseListItem {
+  version: string;
+  name: string;
+  body: string;
+  publishedAt: string;
+  url: string;
+  prerelease: boolean;
+  /** How this release compares to the running version. */
+  relation: "current" | "newer" | "older";
+}
+
+export interface ReleasesPayload {
+  currentVersion: string;
+  /** Newest non-prerelease version, or null if none. */
+  latestVersion: string | null;
+  updateAvailable: boolean;
+  /** Newest-first list of published releases. */
+  releases: ReleaseListItem[];
+  fetchedAt: number;
+}
+
+const RELEASES_API = "https://api.github.com/repos/mikrotik-mcp/mikrotik-mcp/releases?per_page=100";
+let releasesCache: { data: ReleasesPayload; fetchedAt: number } | null = null;
+
+/**
+ * Fetch ALL published GitHub releases (newest first), each tagged with its
+ * relation to the running version. Memory-cached for {@link MEMORY_CACHE_TTL}.
+ */
+export async function fetchAllReleases(): Promise<ReleasesPayload> {
+  if (releasesCache && Date.now() - releasesCache.fetchedAt < MEMORY_CACHE_TTL) {
+    return releasesCache.data;
+  }
+
+  const res = await fetch(RELEASES_API, {
+    headers: {
+      accept: "application/vnd.github+json",
+      "user-agent": `mikrotik-mcp/${VERSION}`,
+    },
+  });
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+
+  const raw = (await res.json()) as {
+    tag_name: string;
+    name: string;
+    body: string;
+    published_at: string;
+    html_url: string;
+    prerelease: boolean;
+    draft: boolean;
+  }[];
+
+  const releases: ReleaseListItem[] = raw
+    .filter((r) => !r.draft)
+    .map((r) => {
+      const version = r.tag_name.replace(/^v/, "");
+      const cmp = compareVersions(version, VERSION);
+      return {
+        version,
+        name: r.name || `v${version}`,
+        body: r.body || "",
+        publishedAt: r.published_at,
+        url: r.html_url,
+        prerelease: r.prerelease,
+        relation: cmp === 0 ? "current" : cmp > 0 ? "newer" : "older",
+      } satisfies ReleaseListItem;
+    })
+    .sort((a, b) => compareVersions(b.version, a.version));
+
+  const latest = releases.find((r) => !r.prerelease) ?? releases[0] ?? null;
+  const data: ReleasesPayload = {
+    currentVersion: VERSION,
+    latestVersion: latest ? latest.version : null,
+    updateAvailable: latest ? compareVersions(latest.version, VERSION) > 0 : false,
+    releases,
+    fetchedAt: Date.now(),
+  };
+  releasesCache = { data, fetchedAt: Date.now() };
+  return data;
+}

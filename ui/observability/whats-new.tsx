@@ -66,7 +66,7 @@ function checkVersionChanged(version: string): boolean {
 // ── Rendered-markdown styling ────────────────────────────────────────────────
 // The release body is injected HTML (see `./markdown`), so its descendant tags
 // are styled via arbitrary variants on the container rather than a stylesheet.
-const MARKDOWN =
+export const MARKDOWN =
   "text-[13px] leading-[1.7] text-muted-foreground " +
   "[&_h2]:mt-[18px] [&_h2]:mb-1.5 [&_h2]:text-[17px] [&_h2]:font-bold [&_h2]:text-foreground " +
   "[&_h3]:mt-[18px] [&_h3]:mb-1.5 [&_h3]:text-[15px] [&_h3]:font-bold [&_h3]:text-foreground " +
