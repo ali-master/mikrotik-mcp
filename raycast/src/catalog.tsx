@@ -46,7 +46,11 @@ interface Catalog {
 const RISK_META: Record<Risk, { color: Color; label: string; icon: Icon }> = {
   READ: { color: Color.Green, label: "read", icon: Icon.Eye },
   WRITE: { color: Color.Orange, label: "write", icon: Icon.Pencil },
-  WRITE_IDEMPOTENT: { color: Color.Yellow, label: "write (idempotent)", icon: Icon.Repeat },
+  WRITE_IDEMPOTENT: {
+    color: Color.Yellow,
+    label: "write (idempotent)",
+    icon: Icon.Repeat,
+  },
   DESTRUCTIVE: { color: Color.Red, label: "destructive", icon: Icon.Trash },
   DANGEROUS: { color: Color.Magenta, label: "dangerous", icon: Icon.Warning },
 };

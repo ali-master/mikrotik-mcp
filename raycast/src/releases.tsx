@@ -3,7 +3,7 @@
  * and upgrade / downgrade / reinstall the server to a specific version
  * (`bun i -g @usex/mikrotik-mcp@<v>`), which then self-restarts onto it.
  */
-import { Action, ActionPanel, Color, Icon, List, Toast, showToast } from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, List, Toast, showToast, Keyboard } from "@raycast/api";
 import { postJson } from "./lib/api";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { useApi } from "./lib/hooks";
@@ -94,7 +94,9 @@ export default function Command() {
         toast.message = r?.error ?? "See the dashboard install log.";
       }
     } catch (e) {
-      await showFailureToast(e, { title: "Install failed (server unreachable)" });
+      await showFailureToast(e, {
+        title: "Install failed (server unreachable)",
+      });
     }
   }
 
@@ -141,7 +143,7 @@ export default function Command() {
                     <Action
                       title="Refresh"
                       icon={Icon.ArrowClockwise}
-                      shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      shortcut={Keyboard.Shortcut.Common.Refresh}
                       onAction={revalidate}
                     />
                   </ActionPanel>
