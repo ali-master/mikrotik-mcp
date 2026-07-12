@@ -54,7 +54,9 @@ export default function Command() {
         toast.message = r?.error ?? "Unknown error";
       }
     } catch (e) {
-      await showFailureToast(e, { title: "Reload failed (server unreachable)" });
+      await showFailureToast(e, {
+        title: "Reload failed (server unreachable)",
+      });
     }
   }
 
