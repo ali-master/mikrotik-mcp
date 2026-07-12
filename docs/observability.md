@@ -99,9 +99,11 @@ imported lazily — `bun:sqlite` is only loaded when the dashboard is enabled.
   does a **live config reload** (re-reads the config from disk and applies it with
   zero downtime), so a device added here — or edited in the config file — takes
   effect immediately without restarting. A small **restart process** link does a
-  full **hard restart** (exits the process for a supervisor to respawn; drops the
-  connection, so it's confirmed first). Both are also available from the Raycast
-  **Reload Server** command.
+  full **hard restart** — the server **relaunches itself** (no external supervisor
+  needed) and rebinds the same port(s) in ~1.5 s, dropping the connection briefly,
+  so it's confirmed first. Both are also available from the Raycast **Reload
+  Server** command. (Under an MCP host that owns the server's stdio, a true restart
+  is ultimately up to the host; the self-relaunch targets HTTP/standalone runs.)
 
 ## API
 
