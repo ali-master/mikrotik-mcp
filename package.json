@@ -85,7 +85,7 @@
     "@modelcontextprotocol/ext-apps": "^1.7.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@tikoci/centrs": "^0.1.0",
-    "figlet": "^1.11.0",
+    "figlet": "^1.11.1",
     "gradient-string": "^3.0.0",
     "ipaddr.js": "^2.4.0",
     "ssh2": "^1.17.0",
