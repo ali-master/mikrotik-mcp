@@ -95,6 +95,13 @@ imported lazily — `bun:sqlite` is only loaded when the dashboard is enabled.
   the active transport (`live · ws` / `live · sse`).
 - **Detail drawer** — click any row for full metadata plus the redacted input
   and complete output, with copy buttons.
+- **Reload Server** — a sidebar button that reloads the MCP server. A normal click
+  does a **live config reload** (re-reads the config from disk and applies it with
+  zero downtime), so a device added here — or edited in the config file — takes
+  effect immediately without restarting. A small **restart process** link does a
+  full **hard restart** (exits the process for a supervisor to respawn; drops the
+  connection, so it's confirmed first). Both are also available from the Raycast
+  **Reload Server** command.
 
 ## API
 
@@ -108,6 +115,7 @@ The dashboard is backed by a small JSON API on the same port (handy for scripts)
 | `GET /api/meta`                                                      | Filter facets (tools/devices), totals, live-client count.           |
 | `GET /api/devices`                                                   | Configured devices + SSH connectivity status + activity.            |
 | `GET /api/config`                                                    | Effective runtime config, secrets redacted.                         |
+| `POST /api/reload`                                                   | `{}` reloads config live; `{hard:true}` restarts the process.       |
 | `GET /api/stream`                                                    | **WebSocket** — pushes `{type:"event", event}` for every new call.  |
 | `GET /api/sse`                                                       | **Server-Sent Events** — same event stream as a fallback transport. |
 | `GET /health`                                                        | Liveness probe (`OK`).                                              |

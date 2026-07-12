@@ -149,6 +149,13 @@
       "mode": "view"
     },
     {
+      "name": "reload-server",
+      "title": "Reload Server",
+      "description": "Reload the MCP server config live, or restart the process",
+      "icon": "extension-icon.png",
+      "mode": "view"
+    },
+    {
       "name": "memory",
       "title": "Memory",
       "description": "Knowledge graph — entities, relations, observations and activity",

@@ -366,6 +366,106 @@ function HelpPanel({ view }: { view: ViewId }): ReactNode {
   );
 }
 
+/**
+ * Sidebar control to reload the MCP server. A normal click does a **soft reload**
+ * (`POST /api/reload`) — the server re-reads its config from disk and applies it
+ * live with zero downtime, so a device added here (or edited in the file) takes
+ * effect immediately. The small "restart" link does a **hard restart** (exits the
+ * process for a supervisor to respawn) — confirmed first, since it drops the
+ * connection.
+ */
+function ReloadServerButton(): ReactNode {
+  const [status, setStatus] = useState<"idle" | "working" | "ok" | "err">("idle");
+  const [msg, setMsg] = useState("");
+  // Two-click arming for the hard restart (it drops the connection) — a plain
+  // confirm() dialog isn't allowed, so the link asks to be clicked twice.
+  const [armed, setArmed] = useState(false);
+
+  async function reload(hard: boolean): Promise<void> {
+    setStatus("working");
+    setMsg(hard ? "Restarting…" : "Reloading…");
+    try {
+      const r = await postJson<{
+        ok?: boolean;
+        mode?: string;
+        count?: number;
+        note?: string;
+        error?: string;
+      }>("/api/reload", { hard });
+      if (r?.ok) {
+        setStatus("ok");
+        setMsg(
+          hard
+            ? "Restarting — reconnect shortly"
+            : `Reloaded · ${r.count ?? "?"} device${r.count === 1 ? "" : "s"}`,
+        );
+      } else {
+        setStatus("err");
+        setMsg(r?.error ?? "Reload failed");
+      }
+    } catch {
+      setStatus("err");
+      setMsg("Reload failed (server unreachable)");
+    }
+    setArmed(false);
+    setTimeout(() => setStatus("idle"), 5000);
+  }
+
+  function onRestartClick(): void {
+    if (!armed) {
+      setArmed(true);
+      setTimeout(() => setArmed(false), 4000); // auto-disarm
+      return;
+    }
+    void reload(true);
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={() => void reload(false)}
+        disabled={status === "working"}
+        title="Re-read the config from disk and apply it live (no downtime)"
+        className={cn(
+          "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-[12px] font-medium transition-colors",
+          "text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:opacity-60",
+        )}
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-3.5">
+          <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </g>
+        </svg>
+        <span>{status === "working" ? "Reloading…" : "Reload Server"}</span>
+      </button>
+      {status !== "idle" && (
+        <small
+          className={cn(
+            "text-[11px]",
+            status === "err" ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {msg}
+        </small>
+      )}
+      <button
+        type="button"
+        onClick={onRestartClick}
+        disabled={status === "working"}
+        title="Fully restart the server process (needs a supervisor to respawn; drops the connection)"
+        className={cn(
+          "self-start text-[10px] underline decoration-dotted underline-offset-2 disabled:opacity-60",
+          armed ? "text-destructive font-medium" : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        {armed ? "click again to confirm restart" : "restart process…"}
+      </button>
+    </div>
+  );
+}
+
 /** Inline stroke icons for the sidebar — no icon-font dependency. */
 function NavIcon({ name }: { name: ViewId }): ReactNode {
   const paths: Record<ViewId, ReactNode> = {
@@ -910,6 +1010,7 @@ function App(): ReactNode {
           ))}
         </nav>
         <div className="flex flex-col gap-1.5 border-t pt-3">
+          <ReloadServerButton />
           <span
             className="inline-flex items-center gap-2 text-[11px]"
             title="Live transport: WebSocket (preferred) or SSE fallback"

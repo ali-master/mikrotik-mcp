@@ -11,6 +11,7 @@
  *   • `GET /api/topology`     live Layer-2 map (devices + discovered neighbours)
  *   • `*   /api/capture/*`    live packet capture: status, packets, pcap, start/stop
  *   • `GET /api/meta`         facets (tools/devices) + counts for filters
+ *   • `POST /api/reload`      reload config live (`{}`) or restart the process (`{hard:true}`)
  *   • `GET /api/stream`       WebSocket: live push of every new event
  *   • `GET /health`           liveness probe
  *
@@ -30,6 +31,7 @@ import {
   MikrotikConfigSchema,
   ToolFilterSchema,
   getConfigSource,
+  loadConfig,
 } from "../config";
 import type { DashboardConfig, MikrotikConfig } from "../config";
 import { moduleCatalog } from "../tools";
@@ -492,6 +494,38 @@ async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise
     const body = (await readJson(req)) as { pendingId?: string };
     const rolledBack = admin.rollback(String(body?.pendingId ?? ""));
     return json({ rolledBack, config: redact(getConfig()) });
+  }
+
+  // Reload the server. `hard:false` (default) re-reads the config from its source
+  // (file/env) and applies it live — zero downtime, picks up externally-edited or
+  // freshly-added devices immediately. `hard:true` exits the process so a
+  // supervisor (systemd/docker/pm2/the MCP host) respawns it — a full restart that
+  // also re-registers tools and reloads code.
+  if (p === "/api/reload" && req.method === "POST") {
+    const body = (await readJson(req)) as { hard?: unknown };
+    if (body?.hard === true) {
+      logger.warn("Dashboard requested a HARD restart — exiting for supervisor respawn");
+      // Respond first, then exit shortly after so the HTTP response is flushed.
+      setTimeout(() => process.exit(0), 300);
+      return json({
+        ok: true,
+        mode: "restart",
+        note: "Process is exiting now; it only comes back if a supervisor (systemd/docker/pm2/MCP host) respawns it.",
+      });
+    }
+    try {
+      const cfg = loadConfig();
+      setConfig(cfg);
+      const devices = Object.keys(cfg.devices);
+      logger.info(
+        `Config reloaded from source — ${devices.length} device(s): ${devices.join(", ")}`,
+      );
+      return json({ ok: true, mode: "config", count: devices.length, devices });
+    } catch (e) {
+      const error = e instanceof Error ? e.message : String(e);
+      logger.error(`Config reload failed: ${error}`);
+      return json({ ok: false, error }, 500);
+    }
   }
 
   // ── Config version history (point-in-time snapshots) ───────────────────────
