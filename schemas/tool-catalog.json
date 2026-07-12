@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": "4.9.0",
+  "version": "4.10.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
   "toolCount": 819,
   "tools": [
@@ -24900,7 +24900,7 @@
         "idempotentHint": true,
         "openWorldHint": false
       },
-      "description": "Runs a bandwidth and latency speed test from the router to a target RouterOS device (`/tool speed-test`) — measures TCP throughput and round-trip latency between two MikroTik/RouterOS nodes. The target `address` must be a reachable RouterOS device running the bandwidth-test server; this is NOT a general ICMP ping/traceroute (for that use the ping or traceroute tools). The test runs for `duration` seconds then terminates rather than streaming. `direction` controls traffic flow: 'receive' (router pulls data from the target), 'transmit' (router pushes data to the target), or 'both' (default). `tcp_connection_count` sets the number of parallel TCP streams. Optional `user`/`password` authenticate to the remote bandwidth-test server. Returns measured throughput (tx/rx Mbps) and latency figures.",
+      "description": "Runs a bandwidth and latency speed test from the router to a target RouterOS device (`/tool speed-test`) — measures ping, jitter, and TCP/UDP throughput between two MikroTik/RouterOS nodes. The target `address` must be a reachable RouterOS device; this is NOT a general ICMP ping/traceroute (for that use the ping or traceroute tools). The tool automatically runs both directions (receive and transmit) — there is no direction selector on `/tool speed-test`. Each sub-test runs for `duration` seconds (the tool runs ping + TCP recv/send + UDP recv/send, so total wall time is a few times this). `connection_count` sets the number of parallel streams (default 20, or the core count if higher). Optional `user`/`password` authenticate to the remote device. Returns measured throughput and latency figures.",
       "inputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -24911,18 +24911,13 @@
           },
           "duration": {
             "default": 10,
-            "description": "Test duration in seconds (bounds the run)",
+            "description": "Per-test duration in seconds (maps to RouterOS `test-duration`)",
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
           },
-          "direction": {
-            "default": "both",
-            "type": "string",
-            "enum": ["receive", "transmit", "both"]
-          },
-          "tcp_connection_count": {
-            "description": "Parallel TCP connections to use",
+          "connection_count": {
+            "description": "Parallel connections to use (RouterOS `connection-count`, default 20)",
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
@@ -24936,7 +24931,7 @@
             "type": "string"
           }
         },
-        "required": ["address", "duration", "direction"],
+        "required": ["address", "duration"],
         "additionalProperties": false
       }
     },
