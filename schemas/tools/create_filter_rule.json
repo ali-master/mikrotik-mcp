@@ -5,7 +5,7 @@
   "properties": {
     "chain": {
       "type": "string",
-      "enum": ["input", "forward", "output"]
+      "description": "The built-in `input`, `forward`, or `output` chain — OR a custom sub-chain name (e.g. `detect-portscan`). A custom chain runs only when a rule with action=jump and jump-target=<that chain> sends traffic into it; use this to build tagging/detection sub-chains."
     },
     "action": {
       "type": "string",
@@ -18,7 +18,9 @@
         "passthrough",
         "return",
         "tarpit",
-        "fasttrack-connection"
+        "fasttrack-connection",
+        "add-src-to-address-list",
+        "add-dst-to-address-list"
       ]
     },
     "src_address": {

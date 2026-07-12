@@ -205,14 +205,23 @@ export const firewallFilterTools: ToolModule = [
       "decision table for traffic TO the router (chain=input), THROUGH it (forward) or FROM it " +
       "(output). Use this to allow or block traffic. For address translation use the NAT tools, " +
       "for packet marking use mangle, for pre-connection-tracking drops use raw, and for IPv6 use " +
-      "create_ipv6_filter_rule. Rule order matters (first match wins) — use place_before or " +
+      "create_ipv6_filter_rule. `chain` also accepts a CUSTOM sub-chain name (e.g. detect-portscan) " +
+      "reached by an action=jump rule, and `action` supports add-src-to-address-list / " +
+      "add-dst-to-address-list (with `address_list` + `address_list_timeout`) for tagging/detection " +
+      "rules. Rule order matters (first match wins) — use place_before or " +
       "move_filter_rule to position it. Returns the created rule's detail including its `.id`. " +
       'connection_state: comma-separated e.g. "established,related,new,invalid". ' +
       'limit: RouterOS rate/burst string e.g. "10,5:packet" or "10/1s:packet". ' +
       'tcp_flags: RouterOS flag expression e.g. "syn,!ack". ' +
       'place_before: rule number or ID (*N) to insert before e.g. "0" or "*3".',
     inputSchema: {
-      chain: z.enum(["input", "forward", "output"]),
+      chain: z
+        .string()
+        .describe(
+          "The built-in `input`, `forward`, or `output` chain — OR a custom sub-chain name " +
+            "(e.g. `detect-portscan`). A custom chain runs only when a rule with action=jump and " +
+            "jump-target=<that chain> sends traffic into it; use this to build tagging/detection sub-chains.",
+        ),
       action: z.enum([
         "accept",
         "drop",
@@ -223,6 +232,8 @@ export const firewallFilterTools: ToolModule = [
         "return",
         "tarpit",
         "fasttrack-connection",
+        "add-src-to-address-list",
+        "add-dst-to-address-list",
       ]),
       src_address: z.string().optional(),
       dst_address: z.string().optional(),
