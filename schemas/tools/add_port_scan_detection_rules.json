@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "add_port_scan_detection_rules",
+  "type": "object",
+  "properties": {
+    "rule_types": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "psd_generic",
+          "nmap_fin_stealth",
+          "syn_fin_scan",
+          "syn_rst_scan",
+          "fin_psh_urg_scan",
+          "nmap_null_scan"
+        ]
+      },
+      "description": "REQUIRED, non-empty. The specific signature IDs the user explicitly chose after seeing the catalog. No default, no select-all — unknown values are rejected."
+    },
+    "trusted_list_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED. The management/trusted address-list on THIS device (no default). Must already exist and contain at least one entry, or the call is refused."
+    },
+    "address_list_name": {
+      "default": "port scanners",
+      "description": "Address list detected scanners are tagged into (default \"port scanners\").",
+      "type": "string"
+    },
+    "address_list_timeout": {
+      "default": "2w",
+      "description": "How long a detected source stays tagged (default \"2w\").",
+      "type": "string"
+    },
+    "confirm": {
+      "type": "boolean",
+      "const": true,
+      "description": "Must be true to write."
+    },
+    "confirmed_trusted_list_includes_my_ip": {
+      "type": "boolean",
+      "const": true,
+      "description": "Human acknowledgement that the address you currently manage this device from is present in trusted_list_name. The tool cannot infer this — it must be explicitly true."
+    }
+  },
+  "required": [
+    "rule_types",
+    "trusted_list_name",
+    "address_list_name",
+    "address_list_timeout",
+    "confirm",
+    "confirmed_trusted_list_includes_my_ip"
+  ],
+  "additionalProperties": false
+}

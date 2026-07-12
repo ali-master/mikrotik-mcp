@@ -349,6 +349,10 @@ On top of the per-scope tools, the server ships higher-level workflows:
   CRL, segmentation, DNS) plus an orchestrator. Every audit is read-only; every
   fix defaults to dry-run and snapshots + Safe-Modes before writing, remediating
   by explicit `finding_id`.
+- **[Port-Scan Detection](docs/port-scan-detection.md)** — detect (never block) six
+  port-scan signatures (psd, Nmap FIN/NULL/Xmas, SYN/FIN, SYN/RST) by tagging the
+  source, inside a trust-excluding `detect-portscan` jump-gate; explicit signature
+  selection, trust-list pre-flight, snapshot + Safe-Mode apply.
 - **[Packet Capture Studio](docs/packet-capture.md)** — stream mirrored packets to
   the host as TZSP, decode them live in the dashboard, and export `.pcap`.
 - **[Discovery](docs/discovery.md)** — `bun run discover` lists MikroTik devices on
@@ -380,6 +384,7 @@ source** (`bun run gen:schemas`) so they can never drift:
 | **[Config Snapshots](docs/config-snapshots.md)**              | `/export` snapshots + time-travel diff                                |
 | **[Firewall Audit](docs/firewall-audit.md)**                  | Shadowed/broad/dead rules, risk-scored                                |
 | **[Security Hardening](docs/security-hardening.md)**          | Per-category audit+remediate, fix by finding_id, snapshot + Safe-Mode |
+| **[Port-Scan Detection](docs/port-scan-detection.md)**        | Detect+tag six scan signatures behind a trust-excluding jump-gate     |
 | **[Packet Capture Studio](docs/packet-capture.md)**           | Live TZSP capture + pcap export                                       |
 | **[Discovery](docs/discovery.md)**                            | `bun run discover`, MNDP neighbours, topology map                     |
 | **[Config Studio](docs/config-studio.md)**                    | Edit config in the dashboard with autocomplete                        |

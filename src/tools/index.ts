@@ -33,6 +33,7 @@ import { dot1xClientTools } from "./dot1x-client";
 import { firewallAuditTools } from "./firewall-audit";
 import { securityShieldTools } from "./security-shield";
 import { securityHardeningTools } from "./security-hardening";
+import { portScanDetectionTools } from "./port-scan-detection";
 import { portKnockTools } from "./port-knock";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
@@ -614,6 +615,17 @@ export const moduleCatalog: ModuleInfo[] = [
       "plus an orchestrator (`run_security_hardening_audit` / `apply_security_hardening_fixes`) — every " +
       "audit is read-only, every fix defaults to dry-run and snapshots + Safe-Modes before writing.",
     tools: securityHardeningTools,
+  },
+  {
+    label: "Port-Scan Detection",
+    slug: "port-scan-detection",
+    group: "Security",
+    description:
+      "Detect (never block) six port-scan signatures (psd, Nmap FIN/NULL/Xmas, SYN/FIN, SYN/RST) by " +
+      "tagging the source into an address list, inside a trust-excluding `detect-portscan` jump-gate — " +
+      "with a mandatory explicit signature selection, pre-flight trust-list validation, snapshot and " +
+      "Safe-Mode apply (`list_port_scan_detection_signatures`, `add_port_scan_detection_rules`).",
+    tools: portScanDetectionTools,
   },
   {
     label: "Port Knock",

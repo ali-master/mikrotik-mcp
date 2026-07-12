@@ -81,10 +81,7 @@ import {
 } from "../core/security-hardening";
 import type { DeviceSecurityState, Finding, HardeningCategory } from "../core/security-hardening";
 import { getSafeModeManager } from "../ssh/safe-mode";
-import { DEFAULT_SNAPSHOT_DB } from "../config";
-import { contentSha, countLines, normalizeExport, parseExportMeta } from "../snapshots/format";
-import { openSnapshotStore } from "../snapshots/store";
-import type { Snapshot, SnapshotStore } from "../snapshots/store";
+import { captureSnapshot } from "../snapshots/capture";
 import { fetchKv as kv, fetchRows as rows, safe } from "../utils/safe-exec";
 
 // ── State fetch ─────────────────────────────────────────────────────────────
@@ -213,39 +210,7 @@ export async function fetchSecurityState(ctx: ToolContext): Promise<DeviceSecuri
   };
 }
 
-// ── Snapshot + apply plumbing ───────────────────────────────────────────────
-
-let storePromise: Promise<SnapshotStore> | null = null;
-function snapshots(): Promise<SnapshotStore> {
-  if (!storePromise) storePromise = openSnapshotStore(DEFAULT_SNAPSHOT_DB);
-  return storePromise;
-}
-
-/**
- * Capture a pre-change configuration snapshot to the local snapshot store (the
- * canonical rollback point in this codebase, same store `capture_config_snapshot`
- * uses) and return its id. Reads the device only (`/export`).
- */
-async function captureSnapshot(ctx: ToolContext, label: string): Promise<string> {
-  const device = resolveDeviceName(ctx.device);
-  const body = await executeMikrotikCommand("/export terse", ctx);
-  const meta = parseExportMeta(body);
-  const sha = contentSha(normalizeExport(body));
-  const ts = Date.now();
-  const snap: Snapshot = {
-    id: `snap_${ts}_${sha.slice(0, 8)}`,
-    device,
-    ts,
-    label,
-    rosVersion: meta.rosVersion,
-    body,
-    bytes: Buffer.byteLength(body, "utf8"),
-    lines: countLines(body),
-    sha,
-  };
-  (await snapshots()).insert(snap);
-  return snap.id;
-}
+// ── Apply plumbing ──────────────────────────────────────────────────────────
 
 export interface ApplyResult {
   finding_id: string;
