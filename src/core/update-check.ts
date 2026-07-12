@@ -109,7 +109,7 @@ function saveFileCache(data: ReleasePayload): void {
 export async function fetchLatestRelease(): Promise<ReleasePayload> {
   // Tier 1: in-memory cache
   if (memoryCache && Date.now() - memoryCache.fetchedAt < MEMORY_CACHE_TTL) {
-    return memoryCache.data;
+    return withCurrentRelation(memoryCache.data);
   }
 
   // Tier 2: file-based cache (only when memory is cold)
@@ -117,7 +117,7 @@ export async function fetchLatestRelease(): Promise<ReleasePayload> {
   if (fileCached) {
     // Warm the memory cache from disk so subsequent calls are instant.
     memoryCache = { data: fileCached, fetchedAt: Date.now() };
-    return fileCached;
+    return withCurrentRelation(fileCached);
   }
 
   // Tier 3: network
@@ -152,7 +152,20 @@ export async function fetchLatestRelease(): Promise<ReleasePayload> {
   // Populate both caches
   memoryCache = { data, fetchedAt: Date.now() };
   saveFileCache(data);
-  return data;
+  return withCurrentRelation(data);
+}
+
+/**
+ * Re-derive the fields that are relative to the RUNNING version — `currentVersion`,
+ * `isNewer`, `isAhead` — from `VERSION` at read time. A cached payload (memory or
+ * the 6-hour file cache) bakes these in against whatever version wrote it, so after
+ * the server is upgraded a stale cache would otherwise report the wrong "you're on
+ * vX" and falsely flag an older release as newer. Only the raw release facts
+ * (version/name/body/date/url) are trusted from cache.
+ */
+export function withCurrentRelation(r: ReleasePayload): ReleasePayload {
+  const cmp = compareVersions(r.version, VERSION);
+  return { ...r, currentVersion: VERSION, isNewer: cmp > 0, isAhead: cmp < 0 };
 }
 
 // ── Non-throwing wrapper (for background use) ────────────────────────────────
@@ -166,10 +179,11 @@ export async function checkForUpdate(): Promise<UpdateCheckResult> {
     const release = await fetchLatestRelease();
     return { release, checkedAt: Date.now(), fromCache: false };
   } catch (e) {
-    // If network failed but we have a stale file cache, return it.
+    // If network failed but we have a stale file cache, return it — with the
+    // relation re-derived against the running version (the cache may predate an upgrade).
     const stale = loadFileCache(Infinity);
     if (stale) {
-      return { release: stale, checkedAt: Date.now(), fromCache: true };
+      return { release: withCurrentRelation(stale), checkedAt: Date.now(), fromCache: true };
     }
     return {
       release: null,
