@@ -119,9 +119,12 @@ export const portScanDetectionTools: ToolModule = [
       "called with signature IDs the user explicitly chose after seeing " +
       "list_port_scan_detection_signatures — there is no select-all. Requires `trusted_list_name` " +
       "(must already exist and be non-empty on the device) and the human acknowledgement " +
-      "`confirmed_trusted_list_includes_my_ip=true`. Captures a config snapshot and applies every " +
-      "write inside Safe Mode (auto-revert on session drop). Idempotent — a second identical run adds " +
-      "nothing. Enforcement/blocking of the tagged list is intentionally out of scope.",
+      "`confirmed_trusted_list_includes_my_ip=true`. Captures a config snapshot, then applies every " +
+      "write inside Safe Mode (auto-revert on session drop) — or, if Safe Mode is unavailable or goes " +
+      "silent on the device (a known flaky case on some RouterOS SSH builds), applies the writes " +
+      "DIRECTLY instead of aborting, since these rules only tag and cannot lock you out (the snapshot " +
+      "is the rollback point). Idempotent — a second identical run adds nothing. Enforcement/blocking " +
+      "of the tagged list is intentionally out of scope.",
     inputSchema: {
       rule_types: z
         .array(z.enum(PORT_SCAN_SIGNATURE_IDS))
@@ -208,54 +211,118 @@ export const portScanDetectionTools: ToolModule = [
 
 interface WriteOutcome {
   applied: number;
+  total: number;
   safeMode: string;
   committed: boolean;
   error?: string;
+  /** True when the writes were applied directly because Safe Mode wasn't usable. */
+  fellBack: boolean;
 }
 
-/** Apply the ordered write commands inside one Safe-Mode session (SSH devices). */
+/** Apply commands directly (no Safe Mode); stop on the first device error. */
+async function directApply(
+  ctx: ToolContext,
+  commands: string[],
+): Promise<{ applied: number; error?: string }> {
+  let applied = 0;
+  for (const cmd of commands) {
+    const out = await executeMikrotikCommand(cmd, ctx).catch((e: unknown) => `error: ${String(e)}`);
+    if (looksLikeError(out) || out.startsWith("error:")) {
+      return { applied, error: out.trim().split("\n")[0] };
+    }
+    applied++;
+  }
+  return { applied };
+}
+
+/**
+ * Apply the ordered writes, preferring a Safe-Mode session on SSH devices — but
+ * NEVER letting Safe Mode be a hard blocker. These rules only tag
+ * (`add-src-to-address-list`) and ride a trust-excluding jump, so they cannot
+ * lock out management access, and a pre-change snapshot was already captured. So
+ * when Safe Mode is unavailable (MAC-Telnet), fails to enable, or goes SILENT /
+ * wedges mid-apply — a known flaky case on some RouterOS SSH builds — we fall
+ * back to applying DIRECTLY rather than aborting the whole operation. (A commit
+ * failure is left ambiguous, not auto-re-applied: the tool is idempotent, so the
+ * operator just re-runs it.)
+ */
 async function applyWrites(
   ctx: ToolContext,
   deviceName: string,
   commands: string[],
 ): Promise<WriteOutcome> {
-  if (commands.length === 0)
-    return { applied: 0, safeMode: "not used (nothing to write)", committed: true };
+  const total = commands.length;
+  if (total === 0)
+    return {
+      applied: 0,
+      total,
+      safeMode: "not used (nothing to write)",
+      committed: true,
+      fellBack: false,
+    };
 
-  const useSafe = !getDevice(deviceName).mac;
-  const mgr = getSafeModeManager(deviceName);
-  if (useSafe) {
-    const en = await mgr.enable();
-    if (en.startsWith("Error"))
-      return { applied: 0, safeMode: `failed to enable: ${en}`, committed: false };
+  // MAC-Telnet has no Safe Mode — apply directly.
+  if (getDevice(deviceName).mac) {
+    const r = await directApply(ctx, commands);
+    return {
+      applied: r.applied,
+      total,
+      safeMode: "not used (MAC-Telnet device — no Safe Mode)",
+      committed: !r.error,
+      error: r.error,
+      fellBack: false,
+    };
   }
 
+  const mgr = getSafeModeManager(deviceName);
+  const en = await mgr.enable();
+  if (en.startsWith("Error")) {
+    // Safe Mode couldn't be entered → apply directly (snapshot is the rollback point).
+    const r = await directApply(ctx, commands);
+    return {
+      applied: r.applied,
+      total,
+      safeMode: `unavailable (${en.replace(/^Error:?\s*/, "")}) — applied directly; these rules can't lock you out and a snapshot was taken`,
+      committed: !r.error,
+      error: r.error,
+      fellBack: true,
+    };
+  }
+
+  // Safe Mode active — run through it; if it wedges/errors, roll back and re-apply directly.
   let applied = 0;
+  let wedged: string | undefined;
   for (const cmd of commands) {
-    const out = useSafe
-      ? await mgr.execute(cmd).catch((e: unknown) => `error: ${String(e)}`)
-      : await executeMikrotikCommand(cmd, ctx);
+    const out = await mgr.execute(cmd).catch((e: unknown) => `error: ${String(e)}`);
     if (looksLikeError(out) || out.startsWith("error:")) {
-      if (useSafe) await mgr.rollback();
-      return {
-        applied,
-        safeMode: useSafe ? "rolled back (a write failed — no changes kept)" : "not used",
-        committed: false,
-        error: out.trim().split("\n")[0],
-      };
+      wedged = out.trim().split("\n")[0];
+      break;
     }
     applied++;
   }
-
-  if (useSafe) {
-    const c = await mgr.commit();
+  if (wedged !== undefined) {
+    await mgr.rollback().catch(() => undefined);
+    const r = await directApply(ctx, commands);
     return {
-      applied,
-      safeMode: c.ok ? "committed" : `commit FAILED — changes revert: ${c.message}`,
-      committed: c.ok,
+      applied: r.applied,
+      total,
+      safeMode: `Safe Mode wedged (${wedged}) — rolled back and re-applied directly (a snapshot was taken)`,
+      committed: !r.error,
+      error: r.error,
+      fellBack: true,
     };
   }
-  return { applied, safeMode: "not used (MAC-Telnet device — no Safe Mode)", committed: true };
+
+  const c = await mgr.commit();
+  return {
+    applied,
+    total,
+    safeMode: c.ok
+      ? "committed"
+      : `commit unclear (${c.message}) — re-run the tool to reconcile (it is idempotent)`,
+    committed: c.ok,
+    fellBack: false,
+  };
 }
 
 /** Build the human-facing report. */
@@ -269,9 +336,21 @@ async function renderResult(
   const lines: string[] = [];
   lines.push(`PORT-SCAN DETECTION — snapshot=${snapshotId}  safe-mode=${outcome.safeMode}`);
   if (outcome.error) {
-    lines.push(`FAILED after ${outcome.applied} write(s): ${outcome.error}`);
-    lines.push("No partial state kept if Safe Mode rolled back — re-run after fixing the cause.");
+    lines.push(`FAILED after ${outcome.applied}/${outcome.total} write(s): ${outcome.error}`);
+    lines.push(
+      outcome.fellBack || outcome.applied > 0
+        ? `Partial state may be applied. The rules are idempotent — fix the cause and RE-RUN to finish, ` +
+            `or roll back with: diff_config_snapshots from=${snapshotId} to=live (then restore the snapshot).`
+        : "No changes were kept — fix the cause and re-run.",
+    );
     return lines.join("\n");
+  }
+  if (outcome.fellBack) {
+    lines.push(
+      "NOTE: Safe Mode was not usable on this device, so the writes were applied directly. These " +
+        "rules cannot lock you out (they only tag; the jump excludes the trusted list), and the " +
+        `snapshot above is your rollback point (diff_config_snapshots from=${snapshotId} to=live).`,
+    );
   }
 
   const created = plan.signatures.filter((s) => s.status === "create");

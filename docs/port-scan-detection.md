@@ -83,9 +83,18 @@ ordinal.
   required — the tool cannot know which IP you connect from, so it cannot infer
   that your management address is actually in the trust list. This is a human
   decision, not a list read.
-- **Snapshot + Safe Mode.** Every successful run captures a config snapshot first
-  (returned as `snapshot_id`) and applies all writes inside Safe Mode, so a dropped
-  session auto-reverts. A rejected request performs no snapshot and no writes.
+- **Snapshot + Safe Mode (with a direct fallback).** Every successful run captures a
+  config snapshot first (returned as `snapshot_id`) and prefers to apply all writes
+  inside Safe Mode, so a dropped session auto-reverts. But Safe Mode over SSH is flaky
+  on some RouterOS builds (the interactive session can go silent). Because these rules
+  only tag and ride a trust-excluding jump — they **cannot** lock out management access
+  — the tool does **not** hard-fail when Safe Mode is unavailable or wedges: it falls
+  back to applying the writes **directly**, with the pre-change snapshot as the rollback
+  point, and says so in its output. A rejected request performs no snapshot and no writes.
+- **Building the rules by hand.** `create_filter_rule` accepts a custom `chain` name
+  (e.g. `detect-portscan`) and the `add-src-to-address-list` / `add-dst-to-address-list`
+  actions, so the detection/jump rules can be built with the dedicated tool rather than
+  a raw command if you ever need to do it manually.
 - **Idempotent.** Each rule is keyed on chain + comment (+ its `psd`/`tcp-flags`
   value); a second identical run adds nothing and reports items as already present.
 - **Verify from a fresh connection.** The result text always instructs the operator
