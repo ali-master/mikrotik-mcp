@@ -8,6 +8,7 @@ import { Star, X } from "lucide-react";
 import { api, postJson } from "./api";
 import { Button, Input } from "./geist";
 import { JsonDiffView } from "./highlight";
+import { toast } from "./toast-action";
 import { cn } from "@/lib/utils";
 
 // ── Config: version history (point-in-time) ─────────────────────────────────
@@ -70,7 +71,12 @@ export function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): 
     setLabelDraft(null);
     const r = await post("/api/config/history/checkpoint", { label: label || undefined });
     setMsg(r.ok ? `Checkpoint saved${label ? ` · “${label}”` : ""}` : `Failed: ${r.error}`);
-    if (r.ok) load();
+    if (r.ok) {
+      toast.success("Checkpoint saved");
+      load();
+    } else {
+      toast.error(r.error ?? "Checkpoint failed");
+    }
   };
   const showDiff = async (id: string): Promise<void> => {
     if (diffFor === id) {
@@ -96,14 +102,22 @@ export function ConfigHistoryPanel({ onRestored }: { onRestored: () => void }): 
         : `Restore failed: ${r.error}`,
     );
     if (r.ok) {
+      toast.success("Version restored");
       load();
       onRestored();
+    } else {
+      toast.error(r.error ?? "Restore failed");
     }
   };
   const del = async (id: string): Promise<void> => {
     const r = await post("/api/config/history/delete", { id });
     setMsg(r.ok ? "Version deleted" : `Failed: ${r.error}`);
-    if (r.ok) load();
+    if (r.ok) {
+      toast.success("Version deleted");
+      load();
+    } else {
+      toast.error(r.error ?? "Delete failed");
+    }
   };
 
   if (!data) return <div className="text-muted-foreground text-[11px]">loading history…</div>;

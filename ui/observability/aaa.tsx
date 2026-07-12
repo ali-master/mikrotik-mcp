@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { Badge, Button, Input, Note, Select } from "./geist";
+import { toast } from "./toast-action";
 import type { DevicesPayload } from "./types";
 import { Heatmap, UsageHistoryChart } from "./usage-charts";
 
@@ -115,14 +116,29 @@ function EntityManager({ config, device }: { config: EntityConfig; device: strin
           slug: config.slug,
           ...payload,
         });
+        const label =
+          path === "add"
+            ? "Entry added"
+            : path === "update"
+              ? "Entry saved"
+              : path === "remove"
+                ? "Entry removed"
+                : path === "toggle"
+                  ? payload.enable
+                    ? "Entry enabled"
+                    : "Entry disabled"
+                  : "Done";
         if (!r.ok) {
           setError(r.message);
+          toast.error(r.message || `${label} failed`);
           return false;
         }
         await load();
+        toast.success(label);
         return true;
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
+        toast.error(e instanceof Error ? e.message : "Action failed");
         return false;
       } finally {
         setBusy(false);
@@ -461,7 +477,14 @@ function SingletonForm({
     try {
       const r = await postJson<OpResult>(setPath, { device, fields: form });
       setMsg(r.message);
-      if (r.ok) await load();
+      if (r.ok) {
+        await load();
+        toast.success("Settings saved");
+      } else {
+        toast.error(r.message || "Save failed");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
       setBusy(false);
     }
@@ -823,6 +846,7 @@ function SamplerSettings(): ReactNode {
     const mins = Number(minutes);
     if (!Number.isFinite(mins) || mins <= 0) {
       setMsg("Enter a positive number of minutes.");
+      toast.error("Enter a positive number of minutes");
       return;
     }
     setBusy(true);
@@ -834,8 +858,10 @@ function SamplerSettings(): ReactNode {
       setCurrent(r.intervalMs);
       setMinutes("");
       setMsg(`Now sampling every ${fmtInterval(r.intervalMs)}.`);
+      toast.success(`Now sampling every ${fmtInterval(r.intervalMs)}`);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
+      toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
       setBusy(false);
     }
@@ -975,7 +1001,11 @@ export function AaaView(): ReactNode {
                   <Button
                     size="sm"
                     ghost
-                    onClick={() => void postJson("/api/aaa/radius-reset-counters", { device })}
+                    onClick={() =>
+                      void postJson("/api/aaa/radius-reset-counters", { device })
+                        .then(() => toast.success("Counters reset"))
+                        .catch(() => toast.error("Reset counters failed"))
+                    }
                   >
                     Reset RADIUS counters
                   </Button>

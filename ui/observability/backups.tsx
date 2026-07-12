@@ -5,6 +5,7 @@ import { api, postJson, withToken } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
 import { Button, Input, Select } from "./geist";
+import { toast } from "./toast-action";
 import {
   Table,
   TableBody,
@@ -82,20 +83,29 @@ export function BackupsView(): ReactNode {
     }));
     setBusy(false);
     setMsg(r.ok ? `Created ${r.name} (${r.bytes} bytes)` : `Create failed: ${r.error}`);
-    if (r.ok) load();
+    if (r.ok) {
+      toast.success("Backup created");
+      load();
+    } else toast.error(`Create failed: ${r.error}`);
   };
   const toggle = (k: keyof typeof opts): void => setOpts((o) => ({ ...o, [k]: !o[k] }));
   const upload = async (file: File): Promise<void> => {
     const content = await file.text();
     const r = await post("/api/backups/upload", { name: file.name, content });
     setMsg(r.ok ? `Uploaded ${r.name}` : `Upload failed: ${r.error}`);
-    if (r.ok) load();
+    if (r.ok) {
+      toast.success("Backup uploaded");
+      load();
+    } else toast.error(`Upload failed: ${r.error}`);
   };
   const del = async (name: string): Promise<void> => {
     setConfirmDel(null);
     const r = await post("/api/backups/delete", { name });
     setMsg(r.ok ? `Deleted ${name}` : `Delete failed: ${r.error}`);
-    if (r.ok) load();
+    if (r.ok) {
+      toast.success("Backup deleted");
+      load();
+    } else toast.error(`Delete failed: ${r.error}`);
   };
   const rename = async (): Promise<void> => {
     if (!renaming) return;
@@ -104,7 +114,10 @@ export function BackupsView(): ReactNode {
     if (!value || value === name) return;
     const r = await post("/api/backups/rename", { name, new_name: value });
     setMsg(r.ok ? `Renamed to ${r.name}` : `Rename failed: ${r.error}`);
-    if (r.ok) load();
+    if (r.ok) {
+      toast.success("Backup renamed");
+      load();
+    } else toast.error(`Rename failed: ${r.error}`);
   };
   const restore = async (confirm: boolean): Promise<void> => {
     if (!restoreName) return;
@@ -129,6 +142,8 @@ export function BackupsView(): ReactNode {
           : `Dry-run OK (${r.applied} cmds, rolled back). Click “Restore (commit)” to apply for real.`
         : `Restore failed: ${r.message}`,
     );
+    if (r.ok) toast.success(r.committed ? "Backup restored" : "Dry-run restore OK");
+    else toast.error(`Restore failed: ${r.message}`);
     if (r.ok && confirm) setRestoreName(null);
   };
   const viewBody = (name: string): void => {
@@ -156,11 +171,15 @@ export function BackupsView(): ReactNode {
     );
     setBusy(false);
     setDirEdit(null);
-    if (r.ok)
+    if (r.ok) {
       setMsg(
         r.persisted ? `Backup path saved → ${r.dir}` : (r.warning ?? `Path applied → ${r.dir}`),
       );
-    else setMsg(`Path change failed: ${r.error}`);
+      toast.success("Backup directory updated");
+    } else {
+      setMsg(`Path change failed: ${r.error}`);
+      toast.error(`Path change failed: ${r.error}`);
+    }
     if (r.ok) load();
   };
 

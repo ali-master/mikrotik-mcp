@@ -4,6 +4,7 @@ import { Download, Square } from "lucide-react";
 import { api, postJson, withToken } from "./api";
 import { bytes, clock, num } from "./format";
 import { Button, Dot } from "./geist";
+import { toast } from "./toast-action";
 import type { CapturePayload } from "./types";
 
 // ── Packet Capture Studio ────────────────────────────────────────────────────
@@ -38,8 +39,12 @@ export function PacketCapture(): ReactNode {
   const packets = data?.packets ?? [];
   const stop = async (): Promise<void> => {
     setBusy(true);
-    await postJson("/api/capture/stop", {}).catch(() => {});
+    const r = await postJson<{ ok?: boolean; error?: string }>("/api/capture/stop", {}).catch(
+      () => null,
+    );
     setBusy(false);
+    if (r === null || r.ok === false || r.error) toast.error(r?.error ?? "Capture stop failed");
+    else toast.success("Capture stopped");
   };
 
   if (!stats || (!stats.running && stats.packets === 0)) {

@@ -15,6 +15,7 @@ import type {
   DriftReport,
   DriftSection,
 } from "./types";
+import { toast } from "./toast-action";
 import {
   Table,
   TableBody,
@@ -93,9 +94,12 @@ function SetBaselineForm({ device, onDone }: { device: string; onDone: () => voi
     });
     setLoading(false);
     if (res.ok) {
+      toast.success("Baseline set");
       onDone();
     } else {
-      setMsg(res.error ?? "Failed");
+      const err = res.error ?? "Failed";
+      setMsg(err);
+      toast.error(err);
     }
   };
 
@@ -280,11 +284,17 @@ function DeviceDetail({
       snapshotId: report?.baselineId,
       label: "promoted",
     });
-    if (!res.error) onChanged();
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Drift promoted");
+      onChanged();
+    }
   };
 
   const remove = async () => {
     await deleteJson<{ ok?: boolean }>(`/api/drift/baseline/${encodeURIComponent(device)}`, {});
+    toast.success("Baseline removed");
     onChanged();
   };
 
@@ -541,7 +551,10 @@ export function DriftView(): ReactNode {
                           void deleteJson(
                             `/api/drift/baseline/${encodeURIComponent(b.device)}`,
                             {},
-                          ).then(() => void load());
+                          ).then(() => {
+                            toast.success("Baseline removed");
+                            void load();
+                          });
                         }}
                       >
                         Remove

@@ -9,6 +9,7 @@ import { api, deleteJson, postJson } from "./api";
 import { Panel, StatCard } from "./atoms";
 import { clock } from "./format";
 import { Button, Dot, Input } from "./geist";
+import { toast } from "./toast-action";
 import {
   Table,
   TableBody,
@@ -462,12 +463,16 @@ function ConfigPanel({
       });
       if (res.ok) {
         setMsg("Saved");
+        toast.success("Config saved");
         onSaved();
       } else {
-        setMsg(res.error ?? "Failed");
+        const err = res.error ?? "Failed";
+        setMsg(err);
+        toast.error(err);
       }
     } catch (e) {
       setMsg(String(e));
+      toast.error(String(e));
     } finally {
       setSaving(false);
     }
@@ -553,7 +558,12 @@ export function MemoryView(): ReactNode {
 
   const handleDelete = useCallback(
     async (name: string) => {
-      await deleteJson("/api/memory/entities", { names: [name] });
+      try {
+        await deleteJson("/api/memory/entities", { names: [name] });
+        toast.success("Entity deleted");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Entity deletion failed");
+      }
       setSelectedEntity(null);
       void load();
     },

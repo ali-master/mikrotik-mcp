@@ -6,6 +6,7 @@ import { Panel } from "./atoms";
 import type { DiffSummary } from "./config-studio";
 import { bytes, clock } from "./format";
 import { Button, Select } from "./geist";
+import { toast } from "./toast-action";
 import {
   Table,
   TableBody,
@@ -52,7 +53,7 @@ export function SnapshotsView(): ReactNode {
     if (!from || !to) return;
     void postJson<{ summary: DiffSummary; unified: string }>("/api/snapshots/diff", { from, to })
       .then(setDiff)
-      .catch(() => {});
+      .catch(() => toast.error("Diff failed"));
   };
 
   if (!snaps) return <div className="text-muted-foreground text-[11px]">loading snapshots…</div>;

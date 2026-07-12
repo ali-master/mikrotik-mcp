@@ -13,6 +13,7 @@ import { ConfigForm } from "./config-form";
 import { JsonEditor, ROLLBACK_OPTS } from "./config-studio";
 import type { ConfigIssue, DiffSummary, SaveResp } from "./config-studio";
 import { Button, Select } from "./geist";
+import { toast } from "./toast-action";
 import type { DeviceStatus } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,7 @@ export function ConfigEditor({
     const devices = asObj(cfg.devices);
     if (Object.keys(devices).length === 0) {
       setMsg("No devices configured to test — add one first.");
+      toast.error("No devices to test");
       return;
     }
     setTests({});
@@ -92,6 +94,8 @@ export function ConfigEditor({
       setTests({ ...out });
     }
     setMsg(null);
+    if (Object.values(out).every((r) => r.ok)) toast.success("Devices reachable");
+    else toast.error("Some devices unreachable");
   };
 
   const doPreview = async (): Promise<void> => {
@@ -100,30 +104,47 @@ export function ConfigEditor({
 
   const doSave = async (): Promise<void> => {
     setMsg("Saving…");
-    const r = await postJson<SaveResp>("/api/config", { config: cfg, rollbackMs });
-    setMsg(null);
-    setPreview(null);
-    if (!r.ok) {
-      setErrors(r.errors ?? [{ path: "(root)", message: "save rejected" }]);
-      return;
+    try {
+      const r = await postJson<SaveResp>("/api/config", { config: cfg, rollbackMs });
+      setMsg(null);
+      setPreview(null);
+      if (!r.ok) {
+        setErrors(r.errors ?? [{ path: "(root)", message: "save rejected" }]);
+        toast.error(r.errors?.[0]?.message ?? "Config save rejected");
+        return;
+      }
+      setPending(r);
+      setCountdown(Math.round((r.rollbackMs ?? 0) / 1000));
+      toast.success("Config applied");
+    } catch (e) {
+      setMsg(null);
+      toast.error(e instanceof Error ? e.message : "Save failed");
     }
-    setPending(r);
-    setCountdown(Math.round((r.rollbackMs ?? 0) / 1000));
   };
 
   const doKeep = async (): Promise<void> => {
     if (!pending?.pendingId) return;
-    await postJson("/api/config/keep", { pendingId: pending.pendingId });
-    setPending(null);
-    setMsg("Changes kept.");
-    onReload();
+    try {
+      await postJson("/api/config/keep", { pendingId: pending.pendingId });
+      setPending(null);
+      setMsg("Changes kept.");
+      onReload();
+      toast.success("Change kept");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Keep failed");
+    }
   };
   const doRollback = async (): Promise<void> => {
     if (!pending?.pendingId) return;
-    await postJson("/api/config/rollback", { pendingId: pending.pendingId });
-    setPending(null);
-    setMsg("Reverted to the previous config.");
-    onReload();
+    try {
+      await postJson("/api/config/rollback", { pendingId: pending.pendingId });
+      setPending(null);
+      setMsg("Reverted to the previous config.");
+      onReload();
+      toast.success("Change rolled back");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Rollback failed");
+    }
   };
 
   return (

@@ -13,6 +13,7 @@ import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
 import { Button } from "./geist";
+import { toast } from "./toast-action";
 
 // ── S3 backup management view ────────────────────────────────────────────────
 interface S3Object {
@@ -45,9 +46,15 @@ export function S3Manage(): ReactNode {
     void api<{ url?: string }>(`/api/s3/presign?key=${encodeURIComponent(key)}`)
       .then((r) => {
         if (r.url) window.open(r.url, "_blank", "noopener");
-        else setMsg("could not generate download link");
+        else {
+          setMsg("could not generate download link");
+          toast.error("Could not generate download link");
+        }
       })
-      .catch(() => setMsg("could not generate download link"));
+      .catch(() => {
+        setMsg("could not generate download link");
+        toast.error("Could not generate download link");
+      });
   };
   const del = async (key: string): Promise<void> => {
     setBusy(key);
@@ -58,9 +65,11 @@ export function S3Manage(): ReactNode {
     setConfirm(null);
     if (r.ok) {
       setMsg(`Deleted ${key}`);
+      toast.success("S3 object deleted");
       load();
     } else {
       setMsg(r.error ?? "delete failed");
+      toast.error(r.error ?? "S3 object delete failed");
     }
   };
 

@@ -629,8 +629,8 @@ function App(): ReactNode {
       // rollbackMs: 0 → apply + persist immediately, no rollback countdown; the
       // server merges back any redacted secrets. Refetch so the JSON view, the
       // editor and the feed table all pick up the new value.
-      await postJson("/api/config", { config: { ...config, dashboard }, rollbackMs: 0 }).catch(
-        () => {},
+      await postJson("/api/config", { config: { ...config, dashboard }, rollbackMs: 0 }).catch(() =>
+        toast.error("Could not save the feed limit"),
       );
       await api<Record<string, unknown>>("/api/config")
         .then(setConfig)
@@ -797,9 +797,12 @@ function App(): ReactNode {
 
   // Toggle a device enabled/disabled and refresh the device list.
   const toggleDevice = useCallback((name: string, disabled: boolean): void => {
-    void postJson<DevicesPayload>("/api/devices/toggle", { device: name, disabled }).then((r) => {
-      setDevices(r);
-    });
+    void postJson<DevicesPayload>("/api/devices/toggle", { device: name, disabled })
+      .then((r) => {
+        setDevices(r);
+        toast.success(`Device ${name} ${disabled ? "disabled" : "enabled"}`);
+      })
+      .catch(() => toast.error(`Could not ${disabled ? "disable" : "enable"} ${name}`));
   }, []);
 
   // Esc closes the drawer (the What's New modal handles its own Escape key).
@@ -891,8 +894,10 @@ function App(): ReactNode {
       const removed = new Set(ids);
       setFeed((f) => f.filter((e) => !removed.has(e.id)));
       setSelectedIds(new Set());
+      toast.success(`Deleted ${ids.length} event${ids.length === 1 ? "" : "s"}`);
     } catch {
-      /* network/permission error — leave selection intact for a retry */
+      // network/permission error — leave selection intact for a retry
+      toast.error("Could not delete the selected events");
     } finally {
       setConfirmingDelete(false);
     }

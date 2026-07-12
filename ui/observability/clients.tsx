@@ -27,6 +27,7 @@ import { api, postJson, withToken } from "./api";
 import { Panel } from "./atoms";
 import { bytes } from "./format";
 import { Badge, Button, Input, Note, Select } from "./geist";
+import { toast } from "./toast-action";
 import type { DevicesPayload } from "./types";
 import { UsageHistoryChart } from "./usage-charts";
 
@@ -212,9 +213,13 @@ function LimitsEditor({
         if (r.ok) {
           setDirty(false);
           onSaved();
+          toast.success(download || upload ? "Rate limits applied" : "Rate limits removed");
+        } else {
+          toast.error(r.message || "Rate limits failed");
         }
       } catch (e) {
         setMsg(e instanceof Error ? e.message : String(e));
+        toast.error(e instanceof Error ? e.message : "Rate limits failed");
       } finally {
         setBusy(false);
       }
@@ -553,9 +558,27 @@ export function ClientsView(): ReactNode {
         });
         if (r.view) setView(r.view);
         else await load();
-        if (!r.ok) setError(r.message);
+        const label =
+          path === "block"
+            ? "Client blocked"
+            : path === "allow"
+              ? "Client allowed"
+              : path === "pin"
+                ? "IP pinned"
+                : path === "set-ip"
+                  ? "IP set"
+                  : path === "label"
+                    ? "Client labeled"
+                    : "Done";
+        if (!r.ok) {
+          setError(r.message);
+          toast.error(r.message || `${label} failed`);
+        } else {
+          toast.success(label);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
+        toast.error(e instanceof Error ? e.message : "Action failed");
       } finally {
         setBusy(null);
       }

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { api, postJson } from "./api";
 import { Panel } from "./atoms";
 import { Button, Input } from "./geist";
+import { toast } from "./toast-action";
 
 // ── Tool Modules view ────────────────────────────────────────────────────────
 // Every catalog module with a live on/off toggle. Flipping one writes the
@@ -124,6 +125,7 @@ export function ModulesView(): ReactNode {
       });
       if (r.error || r.ok === false) {
         setMsg(r.error ?? "toggle failed");
+        toast.error(r.error ?? "Toggle failed");
         load(); // resync from the server (undo the optimistic flip)
         return;
       }
@@ -134,6 +136,7 @@ export function ModulesView(): ReactNode {
         `${slug} ${enabled ? "enabled" : "disabled"} — ${where}. Reconnect the MCP client ` +
           `(or restart the server) for the tool list to update.${warn}`,
       );
+      toast.success(`Module ${enabled ? "enabled" : "disabled"}`);
     },
     [load],
   );
@@ -161,6 +164,7 @@ export function ModulesView(): ReactNode {
     setAppViewsBusy(false);
     if ("error" in r && r.error) {
       setMsg(r.error);
+      toast.error(r.error);
       setAppViews(!enabled);
       return;
     }
@@ -171,6 +175,7 @@ export function ModulesView(): ReactNode {
       `App views ${enabled ? "enabled" : "disabled"} — ${where}. ` +
         `Restart the server for the change to take effect.${warn}`,
     );
+    toast.success(`App Views ${enabled ? "enabled" : "disabled"}`);
   }, []);
 
   const groups = useMemo(() => {

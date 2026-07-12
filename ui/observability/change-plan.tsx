@@ -4,6 +4,7 @@ import { Play, TriangleAlert } from "lucide-react";
 import { postJson } from "./api";
 import { Panel } from "./atoms";
 import { Button } from "./geist";
+import { toast } from "./toast-action";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -60,9 +61,11 @@ export function ChangePlanView(): ReactNode {
     if (r.error || !r.plan) {
       setErr(r.error ?? "no plan produced");
       setRes(null);
+      toast.error(r.error ?? "no plan produced");
       return;
     }
     setRes({ plan: r.plan, text: r.text ?? "" });
+    toast.success("Plan ready");
   };
 
   const grade = res?.plan.grade ?? "";
