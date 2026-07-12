@@ -12,6 +12,7 @@
  *   • `*   /api/capture/*`    live packet capture: status, packets, pcap, start/stop
  *   • `GET /api/meta`         facets (tools/devices) + counts for filters
  *   • `POST /api/reload`      reload config live (`{}`) or restart the process (`{hard:true}`)
+ *   • `GET /api/catalog`      every module (+ tools + risk) and prompt (+ args)
  *   • `GET /api/releases`     every published release + relation to running version
  *   • `POST /api/upgrade`     install a version (`{version}`) globally + self-restart
  *   • `GET /api/stream`       WebSocket: live push of every new event
@@ -98,8 +99,9 @@ import {
   readVersion,
   recordVersion,
 } from "./config-history";
-import { redact } from "./event";
+import { redact, riskOf } from "./event";
 import type { Risk, ToolEvent } from "./event";
+import { listPrompts } from "../prompts";
 import {
   getDeviceHistory,
   getDeviceNeighbors,
@@ -1524,6 +1526,38 @@ export async function runDashboard(
       } catch (e) {
         return json({ error: e instanceof Error ? e.message : "fetch failed" }, 502);
       }
+    }
+
+    // Full read-only catalog: every module (with its tools + risk) and every
+    // prompt (with its arguments + body) — for the dashboard/Raycast browser.
+    if (url.pathname === "/api/catalog" && req.method === "GET") {
+      const modules = moduleCatalog.map((m) => ({
+        label: m.label,
+        slug: m.slug,
+        group: m.group,
+        description: m.description,
+        toolCount: m.tools.length,
+        tools: m.tools.map((t) => ({
+          name: t.name,
+          title: t.title,
+          description: t.description,
+          risk: riskOf(t.annotations),
+        })),
+      }));
+      const prompts = listPrompts();
+      const groups = [...new Set(modules.map((m) => m.group))].sort();
+      return json({
+        modules,
+        prompts,
+        groups,
+        counts: {
+          modules: modules.length,
+          tools: modules.reduce((n, m) => n + m.toolCount, 0),
+          prompts: prompts.length,
+          groups: groups.length,
+        },
+        version: VERSION,
+      });
     }
 
     // Every published release (newest first) + relation to the running version.

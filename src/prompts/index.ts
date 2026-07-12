@@ -27,7 +27,7 @@ import type { DeviceDirectoryEntry } from "../core/runtime";
 import { logger } from "../logger";
 import { PROMPTS_DIR } from "../paths";
 
-interface PromptArg {
+export interface PromptArg {
   name: string;
   description?: string;
   required?: boolean;
@@ -122,6 +122,47 @@ function deviceArgDescription(directory?: DeviceDirectoryEntry[]): string {
     );
   }
   return "Which configured MikroTik device to run this workflow on. Omit to use the default device.";
+}
+
+/** One prompt's metadata + body, for listing/browsing (no device injection). */
+export interface PromptInfo {
+  name: string;
+  title: string;
+  description: string;
+  arguments: PromptArg[];
+  /** The workflow body (markdown), for preview. */
+  body: string;
+}
+
+/**
+ * Parse every prompt in `prompts/` into its metadata + body — the read-only
+ * catalog the dashboard/Raycast browse. Never throws; a bad file is skipped.
+ */
+export function listPrompts(): PromptInfo[] {
+  let files: string[];
+  try {
+    files = readdirSync(PROMPTS_DIR).filter((f) => f.endsWith(".md"));
+  } catch {
+    return [];
+  }
+  const out: PromptInfo[] = [];
+  for (const file of files) {
+    try {
+      const parsed = parseFrontmatter(readFileSync(join(PROMPTS_DIR, file), "utf8"));
+      if (parsed) {
+        out.push({
+          name: parsed.name,
+          title: parsed.title,
+          description: parsed.description,
+          arguments: parsed.arguments,
+          body: parsed.body,
+        });
+      }
+    } catch {
+      /* skip unreadable/invalid prompt files */
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Register every prompt found in `prompts/`. Returns the number registered. */
