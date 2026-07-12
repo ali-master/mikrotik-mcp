@@ -28,9 +28,11 @@
       "type": "string"
     },
     "in_interface": {
+      "description": "Inbound interface NAME (e.g. ether1) — not a chain; use in_interface_list for a list.",
       "type": "string"
     },
     "out_interface": {
+      "description": "Outbound interface NAME (e.g. ether1) — not a chain; use out_interface_list for a list.",
       "type": "string"
     },
     "connection_state": {
@@ -157,8 +159,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "rule_id"
-  ],
+  "required": ["rule_id"],
   "additionalProperties": false
 }

@@ -28,6 +28,33 @@ const isDigits = (s: string): boolean => /^\d+$/.test(s);
 /** Resolve a filter rule identifier (`*1F` or positional row index) to its `.id`. */
 const resolveFilterRuleId = ruleResolver("/ip firewall filter");
 
+/** Firewall chain names — a common wrong value for the interface fields. */
+const CHAIN_NAMES = new Set(["input", "forward", "output"]);
+
+/**
+ * Guard against the frequent mix-up of passing a CHAIN name (`input`/`forward`/
+ * `output`) into an interface match field. RouterOS would otherwise reject it
+ * with the cryptic "input does not match any value of interface". Returns an
+ * actionable error string when the mistake is detected, else `undefined`.
+ *
+ * Note: `in-interface` takes an interface NAME (e.g. `ether1`); an interface
+ * LIST (e.g. `WAN`) goes in the `*_interface_list` fields instead.
+ */
+function interfaceFieldMisuse(
+  fields: { name: string; value: string | undefined }[],
+): string | undefined {
+  for (const { name, value } of fields) {
+    if (value !== undefined && CHAIN_NAMES.has(value)) {
+      return (
+        `'${name}' was set to '${value}', which is a firewall CHAIN, not an interface. ` +
+        `Set '${name}' to an interface NAME (e.g. ether1, pppoe-out1), or use ` +
+        `'${name}_list' for an interface list. The chain is the separate 'chain' parameter.`
+      );
+    }
+  }
+  return undefined;
+}
+
 /** Shared update routine — used by update/enable/disable. */
 async function updateFilterRule(
   a: {
@@ -86,6 +113,12 @@ async function updateFilterRule(
   ctx: ToolContext,
 ): Promise<string> {
   ctx.info(`Updating firewall filter rule: rule_id=${a.rule_id}`);
+
+  const misuse = interfaceFieldMisuse([
+    { name: "in_interface", value: a.in_interface },
+    { name: "out_interface", value: a.out_interface },
+  ]);
+  if (misuse) return `Failed to update firewall filter rule: ${misuse}`;
 
   const updates: string[] = [];
   // Clearable string fields: undefined -> skip, "" -> `!field`, else `field=value`.
@@ -196,8 +229,20 @@ export const firewallFilterTools: ToolModule = [
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
       protocol: z.string().optional(),
-      in_interface: z.string().optional(),
-      out_interface: z.string().optional(),
+      in_interface: z
+        .string()
+        .optional()
+        .describe(
+          "Match by inbound interface NAME (e.g. ether1, pppoe-out1) — NOT a chain and NOT an " +
+            "interface list. For an interface list use in_interface_list.",
+        ),
+      out_interface: z
+        .string()
+        .optional()
+        .describe(
+          "Match by outbound interface NAME (e.g. ether1, pppoe-out1) — NOT a chain and NOT an " +
+            "interface list. For an interface list use out_interface_list.",
+        ),
       connection_state: z
         .string()
         .optional()
@@ -277,6 +322,12 @@ export const firewallFilterTools: ToolModule = [
     },
     async handler(a, ctx) {
       ctx.info(`Creating firewall filter rule: chain=${a.chain}, action=${a.action}`);
+
+      const misuse = interfaceFieldMisuse([
+        { name: "in_interface", value: a.in_interface },
+        { name: "out_interface", value: a.out_interface },
+      ]);
+      if (misuse) return `Failed to create firewall filter rule: ${misuse}`;
 
       const cmd = new Cmd("/ip firewall filter add")
         .set("chain", a.chain)
@@ -480,8 +531,18 @@ export const firewallFilterTools: ToolModule = [
       src_port: z.string().optional(),
       dst_port: z.string().optional(),
       protocol: z.string().optional(),
-      in_interface: z.string().optional(),
-      out_interface: z.string().optional(),
+      in_interface: z
+        .string()
+        .optional()
+        .describe(
+          "Inbound interface NAME (e.g. ether1) — not a chain; use in_interface_list for a list.",
+        ),
+      out_interface: z
+        .string()
+        .optional()
+        .describe(
+          "Outbound interface NAME (e.g. ether1) — not a chain; use out_interface_list for a list.",
+        ),
       connection_state: z.string().optional(),
       connection_nat_state: z.string().optional(),
       src_address_list: z.string().optional(),
