@@ -183,6 +183,15 @@ async function main(): Promise<void> {
   }
 
   // serve
+  // When re-exec'd by a hard restart (dashboard "restart process"), wait for the
+  // old process to release its ports before this fresh one binds them.
+  const restartDelayMs = Number.parseInt(process.env.MIKROTIK_RESTART_DELAY_MS ?? "", 10);
+  if (Number.isFinite(restartDelayMs) && restartDelayMs > 0) {
+    logger.info(
+      `Restart: waiting ${restartDelayMs}ms for the previous process to release its ports…`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, restartDelayMs));
+  }
   const cfg = loadConfig();
   setConfig(cfg);
   await printBanner();

@@ -28,7 +28,7 @@ export default function Command() {
       !(await confirmDestructive({
         title: "Restart the MCP server process?",
         message:
-          "The process exits and only comes back if a supervisor (systemd/docker/pm2/the MCP host) respawns it. This drops the current connection.",
+          "The server relaunches itself and rebinds the same port(s) in ~1.5s. The current connection drops briefly — reconnect after.",
         actionTitle: "Restart",
         icon: Icon.Power,
       }))
@@ -66,8 +66,8 @@ export default function Command() {
     "device so it's picked up right away.",
     "",
     "**Restart process (hard)** — fully restarts the server process (re-registers",
-    "tools, reloads code). It only comes back if a process supervisor respawns it,",
-    "and it drops the current connection — so it asks for confirmation first.",
+    "tools, reloads code). It **relaunches itself** (no external supervisor needed)",
+    "and rebinds in ~1.5s, dropping the connection briefly — so it confirms first.",
     "",
     "_Set the dashboard URL and token in this extension's preferences._",
   ].join("\n");

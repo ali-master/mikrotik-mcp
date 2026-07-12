@@ -19,6 +19,7 @@
  * the recorder for the live WebSocket feed. An optional bearer token gates every
  * route (page, API and WebSocket via `?token=`).
  */
+import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { homedir, networkInterfaces } from "node:os";
 import { dirname, join } from "node:path";
@@ -140,6 +141,39 @@ const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
+
+/**
+ * Restart the whole server WITHOUT needing an external supervisor: spawn a
+ * DETACHED copy of the exact command that started us — with a startup delay so
+ * the fresh process binds our ports only after we've exited — then exit. Returns
+ * whether the relaunch spawned. (This is process management, not device I/O, so
+ * the "device I/O is SSH-only" rule doesn't apply.) Caveat: under an MCP host that
+ * owns our stdio, a true restart is up to the host; this targets HTTP/manual runs.
+ */
+function restartProcess(): boolean {
+  let ok = false;
+  try {
+    const child = spawn(process.execPath, process.argv.slice(1), {
+      cwd: process.cwd(),
+      env: { ...process.env, MIKROTIK_RESTART_DELAY_MS: "1500" },
+      detached: true,
+      stdio: "inherit",
+    });
+    child.unref();
+    ok = true;
+    logger.warn(
+      "Dashboard requested a restart — relaunched a fresh server process; this one is exiting.",
+    );
+  } catch (e) {
+    logger.error(
+      `Restart relaunch failed: ${e instanceof Error ? e.message : String(e)}. Exiting anyway.`,
+    );
+  }
+  // Flush the HTTP response first, then exit so the child (after its startup
+  // delay) can bind the same ports.
+  setTimeout(() => process.exit(0), 500);
+  return ok;
 }
 
 /** The built dashboard HTML, or a helpful placeholder if it isn't built yet. */
@@ -504,13 +538,13 @@ async function configRoutes(req: Request, url: URL, admin: ConfigAdmin): Promise
   if (p === "/api/reload" && req.method === "POST") {
     const body = (await readJson(req)) as { hard?: unknown };
     if (body?.hard === true) {
-      logger.warn("Dashboard requested a HARD restart — exiting for supervisor respawn");
-      // Respond first, then exit shortly after so the HTTP response is flushed.
-      setTimeout(() => process.exit(0), 300);
+      const relaunched = restartProcess();
       return json({
         ok: true,
         mode: "restart",
-        note: "Process is exiting now; it only comes back if a supervisor (systemd/docker/pm2/MCP host) respawns it.",
+        note: relaunched
+          ? "Restarting now — a fresh server process was launched and will bind the same port(s) in ~1.5s. Reconnect shortly."
+          : "Could not self-relaunch; the process is exiting. It only comes back if a supervisor respawns it.",
       });
     }
     try {

@@ -454,7 +454,7 @@ function ReloadServerButton(): ReactNode {
         type="button"
         onClick={onRestartClick}
         disabled={status === "working"}
-        title="Fully restart the server process (needs a supervisor to respawn; drops the connection)"
+        title="Fully restart the server process — it relaunches itself and rebinds in ~1.5s (drops the connection briefly)"
         className={cn(
           "self-start text-[10px] underline decoration-dotted underline-offset-2 disabled:opacity-60",
           armed ? "text-destructive font-medium" : "text-muted-foreground hover:text-foreground",
