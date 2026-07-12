@@ -32,6 +32,7 @@ import { dot1xServerTools } from "./dot1x-server";
 import { dot1xClientTools } from "./dot1x-client";
 import { firewallAuditTools } from "./firewall-audit";
 import { securityShieldTools } from "./security-shield";
+import { securityHardeningTools } from "./security-hardening";
 import { portKnockTools } from "./port-knock";
 import { firewallFilterTools } from "./firewall-filter";
 import { firewallNatTools } from "./firewall-nat";
@@ -601,6 +602,18 @@ export const moduleCatalog: ModuleInfo[] = [
       "Harden the firewall against DDoS, SSH/Winbox brute-force, port scans, floods and spoofing " +
       "from a chosen preset/toggles, with anti-lockout, Safe-Mode apply and preview-before-apply.",
     tools: securityShieldTools,
+  },
+  {
+    label: "Security Hardening",
+    slug: "security-hardening",
+    group: "Security",
+    description:
+      "Granular audit+remediate pairs per risk category (firewall default-deny, address-list " +
+      "enforcement, kernel IP hardening, IPv6 baseline, SSH, IP service exposure, connection-tracking " +
+      "helpers, management-plane, account hygiene, certificate CRL, network segmentation, DNS resolver) " +
+      "plus an orchestrator (`run_security_hardening_audit` / `apply_security_hardening_fixes`) — every " +
+      "audit is read-only, every fix defaults to dry-run and snapshots + Safe-Modes before writing.",
+    tools: securityHardeningTools,
   },
   {
     label: "Port Knock",

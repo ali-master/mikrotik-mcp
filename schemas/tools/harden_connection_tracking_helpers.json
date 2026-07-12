@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "harden_connection_tracking_helpers",
+  "type": "object",
+  "properties": {
+    "finding_ids": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Specific finding_id(s) from a prior audit_connection_tracking_helpers run to remediate."
+    },
+    "confirm": {
+      "default": false,
+      "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+      "type": "boolean"
+    }
+  },
+  "required": ["finding_ids", "confirm"],
+  "additionalProperties": false
+}

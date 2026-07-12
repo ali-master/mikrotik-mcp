@@ -1,20 +1,20 @@
 <div align="center">
   <img src="assets/logo.svg" alt="@usex/mikrotik-mcp" width="440" />
-  <p><strong>A Bun-native MCP server that turns one or more MikroTik routers into 706 tools your AI can drive.</strong><br/>
+  <p><strong>A Bun-native MCP server that turns one or more MikroTik routers into 819 tools your AI can drive.</strong><br/>
   Firewall · routing · DHCP/DNS · wireless · QoS · and a complete VPN suite — over SSH, with transactional Safe Mode.</p>
 
   <p>
     <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-7C3AED.svg"></a>
     <img alt="Runtime: Bun" src="https://img.shields.io/badge/runtime-Bun%20%E2%89%A5%201.3-06B6D4.svg">
     <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-6366F1.svg">
-    <img alt="MCP" src="https://img.shields.io/badge/MCP-706%20tools-1F2937.svg">
+    <img alt="MCP" src="https://img.shields.io/badge/MCP-819%20tools-1F2937.svg">
     <a href="docs/"><img alt="Docs" src="https://img.shields.io/badge/docs-reference-7C3AED.svg"></a>
   </p>
 </div>
 
 ---
 
-`@usex/mikrotik-mcp` exposes **MikroTik RouterOS** as **706 [Model Context Protocol](https://modelcontextprotocol.io)
+`@usex/mikrotik-mcp` exposes **MikroTik RouterOS** as **819 [Model Context Protocol](https://modelcontextprotocol.io)
 tools across 111 modules**, so an AI client (Claude Desktop, Claude Code, any MCP
 client) can read and configure your router in plain language. It speaks to the
 device over **SSH** — no agent, no API package to install on RouterOS — runs on
@@ -46,7 +46,7 @@ in memory and auto-reverts if your session drops, so you can't lock yourself out
 
 ## Why it's different
 
-- 🧰 **Breadth** — 706 tools covering the whole device: L2 (bridge, VLAN, wireless,
+- 🧰 **Breadth** — 819 tools covering the whole device: L2 (bridge, VLAN, wireless,
   PoE), L3 (addressing, routing, DHCP, DNS), security (firewall, NAT, address-lists,
   certificates), QoS (queues), and system ops (users, logs, backups, scheduler).
 - 🔐 **A complete VPN suite** — WireGuard, IPsec (IKEv1/IKEv2), L2TP, PPTP, SSTP,
@@ -93,7 +93,7 @@ mikrotik-mcp serve
 against the server (from source):
 
 ```bash
-bun run inspect        # opens the Inspector UI to browse/run all 706 tools
+bun run inspect        # opens the Inspector UI to browse/run all 819 tools
 ```
 
 **Prefer SSH keys over a password?** Point the server at a key file instead — and
@@ -149,7 +149,7 @@ manifest) before packing. Pass `--no-smoke` to skip that last check.
 
 ## The tool catalog
 
-**706 tools across 111 modules.** Full, always-current reference (parameters +
+**819 tools across 111 modules.** Full, always-current reference (parameters +
 risk per tool) is generated from source: **[docs/tools-reference.md](docs/tools-reference.md)**.
 
 | Group                    | Tools | Modules                                                                                                    |
@@ -343,6 +343,12 @@ On top of the per-scope tools, the server ships higher-level workflows:
 - **[Firewall Audit](docs/firewall-audit.md)** — `firewall_audit` finds shadowed,
   overly-broad, missing-default-drop, duplicate and dead rules, risk-scored, with
   one-click fixes in MCP App hosts.
+- **[Security Hardening](docs/security-hardening.md)** — granular audit+remediate
+  pairs per risk category (firewall default-deny, address-list enforcement, kernel
+  IP, IPv6 baseline, SSH, service exposure, helpers, management plane, accounts,
+  CRL, segmentation, DNS) plus an orchestrator. Every audit is read-only; every
+  fix defaults to dry-run and snapshots + Safe-Modes before writing, remediating
+  by explicit `finding_id`.
 - **[Packet Capture Studio](docs/packet-capture.md)** — stream mirrored packets to
   the host as TZSP, decode them live in the dashboard, and export `.pcap`.
 - **[Discovery](docs/discovery.md)** — `bun run discover` lists MikroTik devices on
@@ -361,28 +367,29 @@ source** (`bun run gen:schemas`) so they can never drift:
 
 ## Documentation
 
-| Doc                                                           |                                                             |
-| ------------------------------------------------------------- | ----------------------------------------------------------- |
-| [Getting started](docs/getting-started.md)                    | Install, verify, first run                                  |
-| [Configuration](docs/configuration.md)                        | Every env var & flag                                        |
-| [Multiple devices](docs/multi-device.md)                      | Manage several routers; per-call targeting                  |
-| [Connecting clients](docs/connecting-clients.md)              | Claude Desktop, stdio, HTTP                                 |
-| [Transports](docs/transports.md)                              | stdio / HTTP / SSE, DNS-rebinding                           |
-| **[Observability](docs/observability.md)**                    | Real-time dashboard: live feed + analytics, SQLite          |
-| [Safe Mode](docs/safe-mode.md)                                | Transactional changes                                       |
-| **[Change Plan & Dry-Run](docs/change-plan.md)**              | Preview commands, apply with the exact diff + auto-rollback |
-| **[Config Snapshots](docs/config-snapshots.md)**              | `/export` snapshots + time-travel diff                      |
-| **[Firewall Audit](docs/firewall-audit.md)**                  | Shadowed/broad/dead rules, risk-scored                      |
-| **[Packet Capture Studio](docs/packet-capture.md)**           | Live TZSP capture + pcap export                             |
-| **[Discovery](docs/discovery.md)**                            | `bun run discover`, MNDP neighbours, topology map           |
-| **[Config Studio](docs/config-studio.md)**                    | Edit config in the dashboard with autocomplete              |
-| **[VPN guide](docs/vpn-guide.md)**                            | Every tunnel type + how to build it                         |
-| [Prompts](docs/prompts.md)                                    | The 9 guided workflows                                      |
-| [Architecture](docs/architecture.md)                          | How it's built                                              |
-| [Security](docs/security.md)                                  | Credentials, risk gating                                    |
-| [Tool reference](docs/tools-reference.md)                     | The full generated catalog                                  |
-| [MCP Inspector](docs/inspector.md)                            | Test tools/prompts in the UI or CLI                         |
-| [Development](docs/development.md) · [Docker](docs/docker.md) | Build, test, deploy                                         |
+| Doc                                                           |                                                                       |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [Getting started](docs/getting-started.md)                    | Install, verify, first run                                            |
+| [Configuration](docs/configuration.md)                        | Every env var & flag                                                  |
+| [Multiple devices](docs/multi-device.md)                      | Manage several routers; per-call targeting                            |
+| [Connecting clients](docs/connecting-clients.md)              | Claude Desktop, stdio, HTTP                                           |
+| [Transports](docs/transports.md)                              | stdio / HTTP / SSE, DNS-rebinding                                     |
+| **[Observability](docs/observability.md)**                    | Real-time dashboard: live feed + analytics, SQLite                    |
+| [Safe Mode](docs/safe-mode.md)                                | Transactional changes                                                 |
+| **[Change Plan & Dry-Run](docs/change-plan.md)**              | Preview commands, apply with the exact diff + auto-rollback           |
+| **[Config Snapshots](docs/config-snapshots.md)**              | `/export` snapshots + time-travel diff                                |
+| **[Firewall Audit](docs/firewall-audit.md)**                  | Shadowed/broad/dead rules, risk-scored                                |
+| **[Security Hardening](docs/security-hardening.md)**          | Per-category audit+remediate, fix by finding_id, snapshot + Safe-Mode |
+| **[Packet Capture Studio](docs/packet-capture.md)**           | Live TZSP capture + pcap export                                       |
+| **[Discovery](docs/discovery.md)**                            | `bun run discover`, MNDP neighbours, topology map                     |
+| **[Config Studio](docs/config-studio.md)**                    | Edit config in the dashboard with autocomplete                        |
+| **[VPN guide](docs/vpn-guide.md)**                            | Every tunnel type + how to build it                                   |
+| [Prompts](docs/prompts.md)                                    | The 9 guided workflows                                                |
+| [Architecture](docs/architecture.md)                          | How it's built                                                        |
+| [Security](docs/security.md)                                  | Credentials, risk gating                                              |
+| [Tool reference](docs/tools-reference.md)                     | The full generated catalog                                            |
+| [MCP Inspector](docs/inspector.md)                            | Test tools/prompts in the UI or CLI                                   |
+| [Development](docs/development.md) · [Docker](docs/docker.md) | Build, test, deploy                                                   |
 
 ## Development
 

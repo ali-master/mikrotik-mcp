@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_security_hardening_audit",
+  "type": "object",
+  "properties": {
+    "categories": {
+      "description": "Narrow to specific categories. Available: firewall_default_deny, address_list_enforcement, kernel_ip_hardening, ipv6_firewall_baseline, ssh_hardening, ip_service_exposure, connection_tracking_helpers, management_plane_exposure, account_hygiene, certificate_hygiene, network_segmentation, dns_resolver_exposure. Omit for all.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "firewall_default_deny",
+          "address_list_enforcement",
+          "kernel_ip_hardening",
+          "ipv6_firewall_baseline",
+          "ssh_hardening",
+          "ip_service_exposure",
+          "connection_tracking_helpers",
+          "management_plane_exposure",
+          "account_hygiene",
+          "certificate_hygiene",
+          "network_segmentation",
+          "dns_resolver_exposure"
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

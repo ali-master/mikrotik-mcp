@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "apply_security_hardening_fixes",
+  "type": "object",
+  "properties": {
+    "finding_ids": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Explicit finding_id(s) from a prior run_security_hardening_audit. No blanket apply."
+    },
+    "confirm": {
+      "default": false,
+      "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+      "type": "boolean"
+    }
+  },
+  "required": ["finding_ids", "confirm"],
+  "additionalProperties": false
+}

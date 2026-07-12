@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "audit_address_list_enforcement",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}

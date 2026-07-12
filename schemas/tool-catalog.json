@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "4.7.0",
   "generated": "by scripts/gen-schemas.ts — do not edit by hand",
-  "toolCount": 794,
+  "toolCount": 819,
   "tools": [
     {
       "name": "find_tools",
@@ -14298,6 +14298,626 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_firewall_default_deny",
+      "title": "Audit Firewall Default-Deny",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Walks `/ip firewall filter` input and forward chains and reports whether each chain ends in an ENFORCED default-deny (a final unconditional drop/reject). Separately flags the field trap where an accept is followed by a matching drop that is disabled=yes — the chain looks protected but everything falls through (severity critical, its own finding_id). Remediate with add_firewall_default_deny.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_address_list_enforcement",
+      "title": "Audit Address-List Enforcement",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Cross-references every address-list that is WRITTEN by an add-src/dst-to-address-list rule against every list READ by a drop/reject (or escalation) rule, across `/ip firewall filter` and `/ip firewall raw`. Flags lists that are populated but never blocked (the classic 'we detect scanners/DDoS but never drop them' gap). Correctly does NOT flag staged escalation ladders (stage1→stage2→stage3→blacklist) whose final list is enforced. Folds in a low-severity note when detection lives entirely in filter with nothing in raw. Remediate with enforce_address_list_blocking.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_kernel_ip_hardening",
+      "title": "Audit Kernel IP Hardening",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Checks `/ip settings` (and `/ipv6 settings`) for tcp-syncookies, rp-filter (recommends strict on single-WAN, loose on multi-WAN — detected by counting default routes), accept-source-route, and accept-redirects. Remediate with harden_kernel_ip_settings.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_ipv6_firewall_baseline",
+      "title": "Audit IPv6 Firewall Baseline",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. When IPv6 is enabled and/or forwarding with no default-deny in `/ipv6 firewall filter`, surfaces the exposure as TWO mutually-exclusive remediation options (distinct finding_ids): Option A bootstrap a minimal safe IPv6 filter (accept established/related, keep RFC 4890 ICMPv6, default-deny); Option B disable IPv6 forwarding when no IPv6 address is in use. Marks needs_live_verification when zero IPv6 addresses are assigned (latent exposure). Apply exactly one option via bootstrap_ipv6_firewall_baseline.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_ssh_hardening",
+      "title": "Audit SSH Hardening",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Checks `/ip ssh`: strong-crypto (auto-fixable), RSA host-key below 2048 bits and host-key-type (report-only recommendation to migrate to ed25519 — regeneration invalidates known_hosts, so never auto-applied), and always-allow-password-login. Remediate the auto-fixable parts with harden_ssh_service.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_ip_service_exposure",
+      "title": "Audit IP Service Exposure",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. For every enabled `/ip service` with address=\"\" (unrestricted), checks whether an input firewall rule already scopes its port to trusted sources — if so it is NOT flagged (avoids the Winbox false positive). Always flags telnet if enabled (cleartext). Flags a 7.15+ reverse-proxy enabled with address=\"\" and warns about multi-WAN reachability. Remediate with harden_ip_service_exposure.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_connection_tracking_helpers",
+      "title": "Audit Connection-Tracking Helpers",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Flags enabled `/ip firewall service-port` helpers (h323, sip, pptp, irc, rtsp, udplite, dccp, sctp, tftp) with no corresponding active service (e.g. pptp helper on with no pptp-server/client). Most are needs_manual_review (static config can't fully prove non-use); pptp with no server/client is auto-fixable. Remediate with harden_connection_tracking_helpers.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_management_plane_exposure",
+      "title": "Audit Management-Plane Exposure",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Bundles the smaller management-plane checks: mac-server / mac-winbox allowed-interface-list=all, bandwidth-server unrestricted, romon enabled, neighbor discovery scope, and default-named SNMP communities with open addresses. Most are report-only (the correct LAN interface-list is site-specific); bandwidth-server disable is auto-fixable. Remediate the auto-fixable parts with harden_management_plane_exposure.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_account_hygiene",
+      "title": "Audit Account Hygiene",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only, audit-only by design. Checks `/user settings` password policy (minimum-password-length, minimum-categories), flags enabled accounts with obviously-temporary names (test/demo/temp/guest/admin) across /user, /ppp secret and /user-manager, and flags read-tier groups granted broad protocol access. Account deletion and group policy are manual decisions (needs_manual_review). The password-policy settings can be applied with the narrow fix_password_policy tool.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_certificate_hygiene",
+      "title": "Audit Certificate Hygiene (CRL)",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Adds the CRL-policy check that cert_expiry_audit does not cover: flags `/certificate settings` crl-use=no / crl-download=no when certificate-based services (OpenVPN with client/server cert verification, SSTP with a certificate) are in active use. Remediate with fix_certificate_crl_policy.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_network_segmentation",
+      "title": "Audit Network Segmentation",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only, report-only (no fix — this is architecture, not a bug). Flags a single PHYSICAL interface carrying multiple non-overlapping subnets where one is a DHCP client pool and another hosts server-like (NAT-target) addresses — a proxy for 'servers and clients share one L2 domain with no VLAN isolation'. Reports the topology fact as proven and the isolation-absence claim as needs_live_verification, and includes a concrete suggested VLAN plan. Never auto-applied.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "audit_dns_resolver_exposure",
+      "title": "Audit DNS Resolver Exposure",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Read-only. Flags `/ip dns allow-remote-requests=yes` when port 53 is not restricted to trusted sources on BOTH TCP and UDP by an input firewall rule (catches the field trap where a rule covers only one transport). Remediate with harden_dns_resolver_exposure.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "add_firewall_default_deny",
+      "title": "Add Firewall Default-Deny",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Applies default-deny remediations by finding_id from a prior audit_firewall_default_deny run: inserts the canonical safe tail (accept established/related/untracked → drop invalid → final unconditional drop), and/or re-enables a specific disabled catch-all drop (a separate finding_id, since re-enabling a deliberately-disabled rule is a different risk than inserting a new tail). DRY RUN unless confirm=true. Snapshots first and runs inside Safe Mode (auto-revert on lockout). Idempotent: a re-run finds nothing to add.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_firewall_default_deny run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "enforce_address_list_blocking",
+      "title": "Enforce Address-List Blocking",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "For each unenforced-list finding_id from a prior audit_address_list_enforcement run, inserts a drop rule matching that list (src- or dst- as appropriate) positioned before the chain's default-deny tail. DRY RUN unless confirm=true. Snapshots first and runs inside Safe Mode.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_address_list_enforcement run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_kernel_ip_settings",
+      "title": "Harden Kernel IP Settings",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Applies `/ip settings set` (and `/ipv6 settings set`) corrections for the kernel-hardening finding_ids from a prior audit_kernel_ip_hardening run. DRY RUN unless confirm=true. Snapshots first.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_kernel_ip_hardening run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "bootstrap_ipv6_firewall_baseline",
+      "title": "Bootstrap IPv6 Firewall Baseline",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Applies ONE of the two mutually-exclusive IPv6 baseline finding_ids from a prior audit_ipv6_firewall_baseline run (bootstrap filter, or disable forwarding). Pass exactly one option's finding_id. DRY RUN unless confirm=true. Snapshots first and runs inside Safe Mode.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_ipv6_firewall_baseline run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_ssh_service",
+      "title": "Harden SSH Service",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Applies the auto-fixable SSH finding_ids from a prior audit_ssh_hardening run (currently strong-crypto=yes). Host-key regeneration is NEVER auto-applied (report-only). DRY RUN unless confirm=true. Snapshots first and runs inside Safe Mode.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_ssh_hardening run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_ip_service_exposure",
+      "title": "Harden IP Service Exposure",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "For the service-exposure finding_ids from a prior audit_ip_service_exposure run, restricts the service address or disables it (telnet/reverse-proxy default to disable). DRY RUN unless confirm=true. Snapshots first and runs inside Safe Mode.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_ip_service_exposure run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_connection_tracking_helpers",
+      "title": "Harden Connection-Tracking Helpers",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Disables the auto-fixable helper finding_ids from a prior audit_connection_tracking_helpers run, one at a time. DRY RUN unless confirm=true. Snapshots first.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_connection_tracking_helpers run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_management_plane_exposure",
+      "title": "Harden Management-Plane Exposure",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Applies the auto-fixable management-plane finding_ids from a prior audit run (e.g. disabling an unused bandwidth-server). Site-specific restrictions remain report-only. DRY RUN unless confirm=true. Snapshots first.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_management_plane_exposure run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fix_password_policy",
+      "title": "Fix Password Policy",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Narrow companion to audit_account_hygiene: applies ONLY the `/user settings` password-policy finding_ids (minimum-password-length, minimum-categories). Touches nothing else — account deletion and group policy are never automated. DRY RUN unless confirm=true. Snapshots first.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_account_hygiene run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "fix_certificate_crl_policy",
+      "title": "Fix Certificate CRL Policy",
+      "risk": "write-idempotent",
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Sets crl-use=yes / crl-download=yes for the certificate finding_id from a prior audit_certificate_hygiene run. Note: CRL download needs outbound reachability to the CRL distribution point (may need a firewall allowance). DRY RUN unless confirm=true. Snapshots first.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_certificate_hygiene run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "harden_dns_resolver_exposure",
+      "title": "Harden DNS Resolver Exposure",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "For the DNS finding_id from a prior audit_dns_resolver_exposure run, either restricts input port 53 (TCP+UDP) or disables allow-remote-requests (when the resolver only serves the router's own DHCP clients). DRY RUN unless confirm=true. Snapshots first and runs inside Safe Mode.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific finding_id(s) from a prior audit_dns_resolver_exposure run to remediate."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "run_security_hardening_audit",
+      "title": "Run Full Security Hardening Audit",
+      "risk": "read",
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Runs EVERY security-hardening category against the device in one pass (firewall default-deny, address-list enforcement, kernel IP hardening, IPv6 baseline, SSH, IP service exposure, connection-tracking helpers, management-plane exposure, account hygiene, certificate CRL policy, network segmentation, DNS resolver exposure) and returns a single severity-ranked report. Every finding carries a stable finding_id, category, severity, confidence (proven vs needs_live_verification) and — where safe — an automated fix. Pure read, no confirm needed. Feed the finding_ids you choose into apply_security_hardening_fixes. Narrow to one category with the audit_* tools; for the broader firewall analysis use firewall_audit, and for the scored compliance grade use run_compliance_audit.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "categories": {
+            "description": "Narrow to specific categories. Available: firewall_default_deny, address_list_enforcement, kernel_ip_hardening, ipv6_firewall_baseline, ssh_hardening, ip_service_exposure, connection_tracking_helpers, management_plane_exposure, account_hygiene, certificate_hygiene, network_segmentation, dns_resolver_exposure. Omit for all.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "firewall_default_deny",
+                "address_list_enforcement",
+                "kernel_ip_hardening",
+                "ipv6_firewall_baseline",
+                "ssh_hardening",
+                "ip_service_exposure",
+                "connection_tracking_helpers",
+                "management_plane_exposure",
+                "account_hygiene",
+                "certificate_hygiene",
+                "network_segmentation",
+                "dns_resolver_exposure"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "apply_security_hardening_fixes",
+      "title": "Apply Security Hardening Fixes",
+      "risk": "dangerous",
+      "annotations": {
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "description": "Applies specific finding_ids from a prior run_security_hardening_audit, dispatching each to its category's remediation in a SAFE ORDER (firewall default-deny and address-list enforcement before service-exposure before helper/hygiene), all wrapped in ONE Safe-Mode session with ONE pre-change snapshot. Returns a per-finding success/failure result plus the snapshot id (roll back with diff_config_snapshots). DRY RUN unless confirm=true. NEVER accepts a blanket 'fix everything' flag — you must pass explicit finding_ids sourced from an audit.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "finding_ids": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Explicit finding_id(s) from a prior run_security_hardening_audit. No blanket apply."
+          },
+          "confirm": {
+            "default": false,
+            "description": "Must be true to write. false (default) returns a dry-run preview and changes nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": ["finding_ids", "confirm"],
         "additionalProperties": false
       }
     },

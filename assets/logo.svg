@@ -44,6 +44,6 @@
   <!-- wordmark -->
   <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
     <text x="178" y="80" font-size="48" font-weight="800" fill="#1C1A17" letter-spacing="-1.5">MikroTik <tspan fill="#C75F38">MCP</tspan></text>
-    <text x="180" y="118" font-size="20" font-weight="600" fill="#8A7D74" letter-spacing="0.3">The complete RouterOS MCP server &#183; 790+ tools</text>
+    <text x="180" y="118" font-size="20" font-weight="600" fill="#8A7D74" letter-spacing="0.3">The complete RouterOS MCP server &#183; 800+ tools</text>
   </g>
 </svg>
