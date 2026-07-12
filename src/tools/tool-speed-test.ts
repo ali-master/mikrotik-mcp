@@ -12,15 +12,15 @@ export const speedTestTools: ToolModule = [
     annotations: READ,
     description:
       "Runs a bandwidth and latency speed test from the router to a target RouterOS device " +
-      "(`/tool speed-test`) — measures TCP throughput and round-trip latency between two " +
-      "MikroTik/RouterOS nodes. The target `address` must be a reachable RouterOS device " +
-      "running the bandwidth-test server; this is NOT a general ICMP ping/traceroute (for " +
-      "that use the ping or traceroute tools). The test runs for `duration` seconds then " +
-      "terminates rather than streaming. `direction` controls traffic flow: 'receive' (router " +
-      "pulls data from the target), 'transmit' (router pushes data to the target), or 'both' " +
-      "(default). `tcp_connection_count` sets the number of parallel TCP streams. Optional " +
-      "`user`/`password` authenticate to the remote bandwidth-test server. Returns measured " +
-      "throughput (tx/rx Mbps) and latency figures.",
+      "(`/tool speed-test`) — measures ping, jitter, and TCP/UDP throughput between two " +
+      "MikroTik/RouterOS nodes. The target `address` must be a reachable RouterOS device; " +
+      "this is NOT a general ICMP ping/traceroute (for that use the ping or traceroute tools). " +
+      "The tool automatically runs both directions (receive and transmit) — there is no " +
+      "direction selector on `/tool speed-test`. Each sub-test runs for `duration` seconds " +
+      "(the tool runs ping + TCP recv/send + UDP recv/send, so total wall time is a few times " +
+      "this). `connection_count` sets the number of parallel streams (default 20, or the core " +
+      "count if higher). Optional `user`/`password` authenticate to the remote device. Returns " +
+      "measured throughput and latency figures.",
     inputSchema: {
       address: z.string().describe("Target RouterOS device address"),
       duration: z
@@ -28,23 +28,24 @@ export const speedTestTools: ToolModule = [
         .int()
         .min(1)
         .default(10)
-        .describe("Test duration in seconds (bounds the run)"),
-      direction: z.enum(["receive", "transmit", "both"]).default("both"),
-      tcp_connection_count: z
+        .describe("Per-test duration in seconds (maps to RouterOS `test-duration`)"),
+      connection_count: z
         .number()
         .int()
         .min(1)
         .optional()
-        .describe("Parallel TCP connections to use"),
+        .describe("Parallel connections to use (RouterOS `connection-count`, default 20)"),
       user: z.string().optional().describe("Username for the target device"),
       password: z.string().optional().describe("Password for the target device"),
     },
     async handler(a, ctx) {
-      ctx.info(`Speed test to ${a.address} (duration=${a.duration}s, direction=${a.direction})`);
+      ctx.info(`Speed test to ${a.address} (test-duration=${a.duration}s)`);
+      // `/tool speed-test` params are: address, test-duration, connection-count,
+      // user, password. It has NO `direction` (it always tests both ways) and the
+      // duration param is `test-duration`, not `duration`.
       const cmd = new Cmd(`/tool speed-test address=${a.address}`)
-        .set("duration", `${a.duration}s`)
-        .set("direction", a.direction)
-        .opt("tcp-connection-count", a.tcp_connection_count)
+        .set("test-duration", `${a.duration}s`)
+        .opt("connection-count", a.connection_count)
         .opt("user", a.user)
         .opt("password", a.password)
         .build();

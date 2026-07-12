@@ -9,22 +9,13 @@
     },
     "duration": {
       "default": 10,
-      "description": "Test duration in seconds (bounds the run)",
+      "description": "Per-test duration in seconds (maps to RouterOS `test-duration`)",
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
     },
-    "direction": {
-      "default": "both",
-      "type": "string",
-      "enum": [
-        "receive",
-        "transmit",
-        "both"
-      ]
-    },
-    "tcp_connection_count": {
-      "description": "Parallel TCP connections to use",
+    "connection_count": {
+      "description": "Parallel connections to use (RouterOS `connection-count`, default 20)",
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
@@ -38,10 +29,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "address",
-    "duration",
-    "direction"
-  ],
+  "required": ["address", "duration"],
   "additionalProperties": false
 }
