@@ -26,8 +26,21 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button as UiButton, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Toaster, toast } from "@/components/ui/sonner";
 import {
   Table,
   TableBody,
@@ -366,102 +379,107 @@ function HelpPanel({ view }: { view: ViewId }): ReactNode {
   );
 }
 
+interface ReloadResponse {
+  ok?: boolean;
+  mode?: string;
+  count?: number;
+  note?: string;
+  error?: string;
+}
+
+/** Circular-arrow refresh glyph. */
+function RefreshIcon(): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-3.5">
+      <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+        <path d="M21 3v6h-6" />
+      </g>
+    </svg>
+  );
+}
+
 /**
- * Sidebar control to reload the MCP server. A normal click does a **soft reload**
- * (`POST /api/reload`) — the server re-reads its config from disk and applies it
- * live with zero downtime, so a device added here (or edited in the file) takes
- * effect immediately. The small "restart" link does a **hard restart** (exits the
- * process for a supervisor to respawn) — confirmed first, since it drops the
- * connection.
+ * Sidebar control to reload the MCP server, as a two-button group:
+ *   • **Reload Server** — soft reload (`POST /api/reload {}`): the server re-reads
+ *     its config from disk and applies it live with zero downtime, so a device
+ *     added here (or edited in the file) takes effect immediately.
+ *   • **Restart** — hard restart (`{hard:true}`): the process self-relaunches and
+ *     rebinds in ~1.5s, dropping the connection — so it is confirmed in an
+ *     AlertDialog first.
+ * Outcomes surface as Sonner toasts.
  */
 function ReloadServerButton(): ReactNode {
-  const [status, setStatus] = useState<"idle" | "working" | "ok" | "err">("idle");
-  const [msg, setMsg] = useState("");
-  // Two-click arming for the hard restart (it drops the connection) — a plain
-  // confirm() dialog isn't allowed, so the link asks to be clicked twice.
-  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  async function reload(hard: boolean): Promise<void> {
-    setStatus("working");
-    setMsg(hard ? "Restarting…" : "Reloading…");
+  async function run(hard: boolean): Promise<void> {
+    setBusy(true);
+    const id = toast.loading(hard ? "Restarting server…" : "Reloading config…");
     try {
-      const r = await postJson<{
-        ok?: boolean;
-        mode?: string;
-        count?: number;
-        note?: string;
-        error?: string;
-      }>("/api/reload", { hard });
+      const r = await postJson<ReloadResponse>("/api/reload", { hard });
       if (r?.ok) {
-        setStatus("ok");
-        setMsg(
-          hard
-            ? "Restarting — reconnect shortly"
-            : `Reloaded · ${r.count ?? "?"} device${r.count === 1 ? "" : "s"}`,
-        );
+        if (hard) {
+          toast.success("Restarting — reconnect shortly", { id, description: r.note });
+        } else {
+          toast.success(`Config reloaded · ${r.count ?? "?"} device${r.count === 1 ? "" : "s"}`, {
+            id,
+          });
+        }
       } else {
-        setStatus("err");
-        setMsg(r?.error ?? "Reload failed");
+        toast.error(r?.error ?? (hard ? "Restart failed" : "Reload failed"), { id });
       }
     } catch {
-      setStatus("err");
-      setMsg("Reload failed (server unreachable)");
+      toast.error(`${hard ? "Restart" : "Reload"} failed (server unreachable)`, { id });
+    } finally {
+      setBusy(false);
     }
-    setArmed(false);
-    setTimeout(() => setStatus("idle"), 5000);
-  }
-
-  function onRestartClick(): void {
-    if (!armed) {
-      setArmed(true);
-      setTimeout(() => setArmed(false), 4000); // auto-disarm
-      return;
-    }
-    void reload(true);
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <button
-        type="button"
-        onClick={() => void reload(false)}
-        disabled={status === "working"}
+    <div className="inline-flex w-fit -space-x-px" role="group" aria-label="Reload server">
+      <UiButton
+        variant="outline"
+        size="sm"
+        disabled={busy}
+        onClick={() => void run(false)}
         title="Re-read the config from disk and apply it live (no downtime)"
-        className={cn(
-          "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-[12px] font-medium transition-colors",
-          "text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:opacity-60",
-        )}
+        className="rounded-r-none focus-visible:z-10"
       >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-3.5">
-          <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-            <path d="M21 3v6h-6" />
-          </g>
-        </svg>
-        <span>{status === "working" ? "Reloading…" : "Reload Server"}</span>
-      </button>
-      {status !== "idle" && (
-        <small
-          className={cn(
-            "text-[11px]",
-            status === "err" ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {msg}
-        </small>
-      )}
-      <button
-        type="button"
-        onClick={onRestartClick}
-        disabled={status === "working"}
-        title="Fully restart the server process — it relaunches itself and rebinds in ~1.5s (drops the connection briefly)"
-        className={cn(
-          "self-start text-[10px] underline decoration-dotted underline-offset-2 disabled:opacity-60",
-          armed ? "text-destructive font-medium" : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        {armed ? "click again to confirm restart" : "restart process…"}
-      </button>
+        <RefreshIcon />
+        Reload Server
+      </UiButton>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <UiButton
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            title="Fully restart the server process (relaunches itself, drops the connection briefly)"
+            className="rounded-l-none px-2 focus-visible:z-10"
+          >
+            Restart
+          </UiButton>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restart the MCP server?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The server relaunches itself and rebinds the same port(s) in ~1.5s — no external
+              supervisor needed. The current connection drops briefly; reconnect after. To pick up a
+              newly added device without downtime, use <b>Reload Server</b> instead.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => void run(true)}
+            >
+              Restart
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1667,6 +1685,7 @@ function App(): ReactNode {
         <WhatsNewModal release={whatsNew.release} onDismiss={whatsNew.dismissRelease} />
       )}
       {selected && <DetailDrawer event={selected} onClose={() => setSelected(null)} />}
+      <Toaster />
     </div>
   );
 }
