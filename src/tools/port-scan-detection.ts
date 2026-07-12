@@ -6,13 +6,14 @@
  * source into an address list, inside a dedicated `detect-portscan` sub-chain
  * gated by a single trust-excluding jump from `input`. See
  * `docs/port-scan-detection.md` for the architecture rationale. The pure catalog
- * + planner live in `src/core/port-scan-detection.ts`; this layer only fetches
- * device state and wraps writes in a snapshot + Safe Mode.
+ * + planner live in `src/core/port-scan-detection.ts`; the reusable device I/O
+ * (chain reads in `utils/firewall-query`, Safe-Mode-or-direct apply in
+ * `utils/safe-mode-apply`) lives in `src/utils/`. This layer only wires them
+ * together and renders the port-scan-specific report.
  */
 import { z } from "zod";
 import { executeMikrotikCommand } from "../core/connector";
 import type { ToolContext } from "../core/context";
-import { rulesFromRows } from "../core/firewall-audit";
 import {
   DETECT_CHAIN,
   PORT_SCAN_SIGNATURES,
@@ -25,41 +26,15 @@ import {
 import type { DeviceScanState } from "../core/port-scan-detection";
 import { READ, DANGEROUS, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
-import { getDevice, resolveDeviceName } from "../core/runtime";
-import { isEmpty, looksLikeError } from "../core/routeros";
+import { resolveDeviceName } from "../core/runtime";
 import { captureSnapshot } from "../snapshots/capture";
-import { getSafeModeManager } from "../ssh/safe-mode";
-import { fetchRows } from "../utils/safe-exec";
-
-/** Parse a `chain=<chain>` filter ruleset into normalised rules. */
-async function fetchChainRules(chain: string, ctx: ToolContext) {
-  const rows = await fetchRows(`/ip firewall filter print detail where chain=${chain}`, ctx);
-  return rulesFromRows(rows);
-}
-
-/** Count entries currently in an address list. */
-async function addressListCount(list: string, ctx: ToolContext): Promise<number> {
-  const raw = await executeMikrotikCommand(
-    `/ip firewall address-list print count-only where list=${JSON.stringify(list)}`,
-    ctx,
-  );
-  const n = Number.parseInt(raw.trim(), 10);
-  return Number.isFinite(n) ? n : 0;
-}
-
-/** Ordered internal `.id`s of the input chain (same order as a chain-filtered print). */
-async function inputChainIds(ctx: ToolContext): Promise<string[]> {
-  const raw = await executeMikrotikCommand(
-    ":foreach i in=[/ip firewall filter find chain=input] do={:put $i}",
-    ctx,
-  );
-  if (isEmpty(raw)) return [];
-  return raw
-    .trim()
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => /^\*[0-9A-Fa-f]+$/.test(l));
-}
+import {
+  addressListCount,
+  fetchFilterChainRules,
+  filterChainRuleIds,
+} from "../utils/firewall-query";
+import { applyWritesSafely } from "../utils/safe-mode-apply";
+import type { WriteOutcome } from "../utils/safe-mode-apply";
 
 export const portScanDetectionTools: ToolModule = [
   defineTool({
@@ -82,7 +57,7 @@ export const portScanDetectionTools: ToolModule = [
     async handler(_a, ctx) {
       let present: Set<string> | null = null;
       if (ctx.device !== undefined) {
-        const detect = await fetchChainRules(DETECT_CHAIN, ctx);
+        const detect = await fetchFilterChainRules(DETECT_CHAIN, ctx);
         present = new Set(
           PORT_SCAN_SIGNATURES.filter((s) => signaturePresent(detect, s)).map((s) => s.id),
         );
@@ -162,8 +137,8 @@ export const portScanDetectionTools: ToolModule = [
 
       // Fetch device state (read-only) before any decision.
       const [inputRules, detectChainRules, trustListCount] = await Promise.all([
-        fetchChainRules("input", ctx),
-        fetchChainRules(DETECT_CHAIN, ctx),
+        fetchFilterChainRules("input", ctx),
+        fetchFilterChainRules(DETECT_CHAIN, ctx),
         addressListCount(a.trusted_list_name, ctx),
       ]);
 
@@ -197,133 +172,19 @@ export const portScanDetectionTools: ToolModule = [
       if (!plan.jump.present) {
         let placeBeforeId: string | undefined;
         if (plan.jump.placeBeforeIndex !== null) {
-          const ids = await inputChainIds(ctx);
+          const ids = await filterChainRuleIds("input", ctx);
           placeBeforeId = ids[plan.jump.placeBeforeIndex];
         }
         writeCommands.push(buildJumpCommand(a.trusted_list_name, placeBeforeId));
       }
 
-      const result = await applyWrites(ctx, device, writeCommands);
+      const result = await applyWritesSafely(ctx, device, writeCommands, {
+        allowDirectFallback: true,
+      });
       return renderResult(a, plan, snapshotId, result, ctx);
     },
   }),
 ];
-
-interface WriteOutcome {
-  applied: number;
-  total: number;
-  safeMode: string;
-  committed: boolean;
-  error?: string;
-  /** True when the writes were applied directly because Safe Mode wasn't usable. */
-  fellBack: boolean;
-}
-
-/** Apply commands directly (no Safe Mode); stop on the first device error. */
-async function directApply(
-  ctx: ToolContext,
-  commands: string[],
-): Promise<{ applied: number; error?: string }> {
-  let applied = 0;
-  for (const cmd of commands) {
-    const out = await executeMikrotikCommand(cmd, ctx).catch((e: unknown) => `error: ${String(e)}`);
-    if (looksLikeError(out) || out.startsWith("error:")) {
-      return { applied, error: out.trim().split("\n")[0] };
-    }
-    applied++;
-  }
-  return { applied };
-}
-
-/**
- * Apply the ordered writes, preferring a Safe-Mode session on SSH devices — but
- * NEVER letting Safe Mode be a hard blocker. These rules only tag
- * (`add-src-to-address-list`) and ride a trust-excluding jump, so they cannot
- * lock out management access, and a pre-change snapshot was already captured. So
- * when Safe Mode is unavailable (MAC-Telnet), fails to enable, or goes SILENT /
- * wedges mid-apply — a known flaky case on some RouterOS SSH builds — we fall
- * back to applying DIRECTLY rather than aborting the whole operation. (A commit
- * failure is left ambiguous, not auto-re-applied: the tool is idempotent, so the
- * operator just re-runs it.)
- */
-async function applyWrites(
-  ctx: ToolContext,
-  deviceName: string,
-  commands: string[],
-): Promise<WriteOutcome> {
-  const total = commands.length;
-  if (total === 0)
-    return {
-      applied: 0,
-      total,
-      safeMode: "not used (nothing to write)",
-      committed: true,
-      fellBack: false,
-    };
-
-  // MAC-Telnet has no Safe Mode — apply directly.
-  if (getDevice(deviceName).mac) {
-    const r = await directApply(ctx, commands);
-    return {
-      applied: r.applied,
-      total,
-      safeMode: "not used (MAC-Telnet device — no Safe Mode)",
-      committed: !r.error,
-      error: r.error,
-      fellBack: false,
-    };
-  }
-
-  const mgr = getSafeModeManager(deviceName);
-  const en = await mgr.enable();
-  if (en.startsWith("Error")) {
-    // Safe Mode couldn't be entered → apply directly (snapshot is the rollback point).
-    const r = await directApply(ctx, commands);
-    return {
-      applied: r.applied,
-      total,
-      safeMode: `unavailable (${en.replace(/^Error:?\s*/, "")}) — applied directly; these rules can't lock you out and a snapshot was taken`,
-      committed: !r.error,
-      error: r.error,
-      fellBack: true,
-    };
-  }
-
-  // Safe Mode active — run through it; if it wedges/errors, roll back and re-apply directly.
-  let applied = 0;
-  let wedged: string | undefined;
-  for (const cmd of commands) {
-    const out = await mgr.execute(cmd).catch((e: unknown) => `error: ${String(e)}`);
-    if (looksLikeError(out) || out.startsWith("error:")) {
-      wedged = out.trim().split("\n")[0];
-      break;
-    }
-    applied++;
-  }
-  if (wedged !== undefined) {
-    await mgr.rollback().catch(() => undefined);
-    const r = await directApply(ctx, commands);
-    return {
-      applied: r.applied,
-      total,
-      safeMode: `Safe Mode wedged (${wedged}) — rolled back and re-applied directly (a snapshot was taken)`,
-      committed: !r.error,
-      error: r.error,
-      fellBack: true,
-    };
-  }
-
-  const c = await mgr.commit();
-  return {
-    applied,
-    total,
-    safeMode: c.ok
-      ? "committed"
-      : `commit unclear (${c.message}) — re-run the tool to reconcile (it is idempotent)`,
-    committed: c.ok,
-    fellBack: false,
-  };
-}
 
 /** Build the human-facing report. */
 async function renderResult(
