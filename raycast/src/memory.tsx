@@ -57,18 +57,9 @@ function StatsView({
       metadata={
         stats ? (
           <Detail.Metadata>
-            <Detail.Metadata.Label
-              title="Entities"
-              text={num(stats.entities)}
-            />
-            <Detail.Metadata.Label
-              title="Relations"
-              text={num(stats.relations)}
-            />
-            <Detail.Metadata.Label
-              title="Observations"
-              text={num(stats.observations)}
-            />
+            <Detail.Metadata.Label title="Entities" text={num(stats.entities)} />
+            <Detail.Metadata.Label title="Relations" text={num(stats.relations)} />
+            <Detail.Metadata.Label title="Observations" text={num(stats.observations)} />
             <Detail.Metadata.Separator />
             <Detail.Metadata.TagList title="Entity types">
               {stats.entityTypes.map((t) => (
@@ -81,10 +72,7 @@ function StatsView({
             </Detail.Metadata.TagList>
             <Detail.Metadata.TagList title="Relation types">
               {stats.relationTypes.map((t) => (
-                <Detail.Metadata.TagList.Item
-                  key={t.type}
-                  text={`${t.type} ${t.count}`}
-                />
+                <Detail.Metadata.TagList.Item key={t.type} text={`${t.type} ${t.count}`} />
               ))}
             </Detail.Metadata.TagList>
           </Detail.Metadata>
@@ -96,10 +84,7 @@ function StatsView({
 
 function ActivityView({ activity }: { activity: MemoryActivityEntry[] }) {
   return (
-    <List
-      searchBarPlaceholder="Filter activity…"
-      navigationTitle="Memory · Activity"
-    >
+    <List searchBarPlaceholder="Filter activity…" navigationTitle="Memory · Activity">
       {activity.map((a) => (
         <List.Item
           key={a.id}
@@ -129,9 +114,7 @@ function EntityDetail({
     ``,
     `## Observations`,
     ``,
-    entity.observations.length
-      ? entity.observations.map((o) => `- ${o}`).join("\n")
-      : "_None._",
+    entity.observations.length ? entity.observations.map((o) => `- ${o}`).join("\n") : "_None._",
   ].join("\n");
   return (
     <Detail
@@ -147,10 +130,7 @@ function EntityDetail({
               tintColor: typeColor(entity.entityType),
             }}
           />
-          <Detail.Metadata.Label
-            title="Observations"
-            text={num(entity.observations.length)}
-          />
+          <Detail.Metadata.Label title="Observations" text={num(entity.observations.length)} />
           <Detail.Metadata.Label
             title="Created"
             text={new Date(entity.createdAt).toLocaleString()}
@@ -201,28 +181,20 @@ export default function Command() {
   const graphQ = useApi<MemoryGraph>("/api/memory/graph");
   const statsQ = useApi<MemoryStats>("/api/memory/stats");
   const configQ = useApi<MemoryConfig>("/api/memory/config");
-  const activityQ = useApi<MemoryActivityEntry[]>(
-    "/api/memory/activity?limit=50",
-  );
+  const activityQ = useApi<MemoryActivityEntry[]>("/api/memory/activity?limit=50");
   const graph = graphQ.data ?? { entities: [], relations: [] };
   const refresh = useCallback(() => {
     graphQ.revalidate();
     statsQ.revalidate();
     configQ.revalidate();
     activityQ.revalidate();
-  }, [
-    graphQ.revalidate,
-    statsQ.revalidate,
-    configQ.revalidate,
-    activityQ.revalidate,
-  ]);
+  }, [graphQ.revalidate, statsQ.revalidate, configQ.revalidate, activityQ.revalidate]);
   usePolling(refresh, 8000);
 
   async function del(name: string) {
     const ok = await confirmDestructive({
       title: `Delete entity “${name}”?`,
-      message:
-        "This removes the entity and its observations from the knowledge graph.",
+      message: "This removes the entity and its observations from the knowledge graph.",
       actionTitle: "Delete",
     });
     if (!ok) return;
@@ -231,11 +203,11 @@ export default function Command() {
       title: `Deleting ${name}…`,
     });
     try {
-      const res = await deleteJson<{ removed?: number; error?: string }>(
-        "/api/memory/entities",
-        { names: [name] },
-      );
+      const res = await deleteJson<{ removed?: number; error?: string }>("/api/memory/entities", {
+        names: [name],
+      });
       if (res.error) throw new Error(res.error);
+      if (res.removed === 0) throw new Error("Entity was not removed");
       toast.style = Toast.Style.Success;
       toast.title = `Deleted ${name}`;
       graphQ.revalidate();
@@ -282,16 +254,12 @@ export default function Command() {
                 <Action.Push
                   title="View Entity"
                   icon={Icon.Eye}
-                  target={
-                    <EntityDetail entity={e} graph={graph} onDelete={del} />
-                  }
+                  target={<EntityDetail entity={e} graph={graph} onDelete={del} />}
                 />
                 <Action.Push
                   title="Stats"
                   icon={Icon.BarChart}
-                  target={
-                    <StatsView stats={statsQ.data} config={configQ.data} />
-                  }
+                  target={<StatsView stats={statsQ.data} config={configQ.data} />}
                 />
                 <Action.Push
                   title="Activity"

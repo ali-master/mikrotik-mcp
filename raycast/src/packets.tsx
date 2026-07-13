@@ -36,9 +36,7 @@ function StatsView({ stats }: { stats: CaptureStats }) {
   const protoChart = protos.length
     ? chartImage(
         barChart(
-          protos
-            .slice(0, 10)
-            .map(([p, n]) => ({ label: p, value: n, color: protoColor(p) })),
+          protos.slice(0, 10).map(([p, n]) => ({ label: p, value: n, color: protoColor(p) })),
           { labelWidth: 120 },
         ),
         "protocols",
@@ -72,17 +70,11 @@ function StatsView({ stats }: { stats: CaptureStats }) {
       navigationTitle="Capture Stats"
       metadata={
         <Detail.Metadata>
-          <Detail.Metadata.Label
-            title="State"
-            text={stats.running ? "capturing" : "stopped"}
-          />
+          <Detail.Metadata.Label title="State" text={stats.running ? "capturing" : "stopped"} />
           <Detail.Metadata.Label title="UDP port" text={String(stats.port)} />
           <Detail.Metadata.Label title="Packets" text={num(stats.packets)} />
           <Detail.Metadata.Label title="Bytes" text={bytes(stats.bytes)} />
-          <Detail.Metadata.Label
-            title="pcap frames"
-            text={num(stats.pcapFrames)}
-          />
+          <Detail.Metadata.Label title="pcap frames" text={num(stats.pcapFrames)} />
         </Detail.Metadata>
       }
     />
@@ -90,9 +82,7 @@ function StatsView({ stats }: { stats: CaptureStats }) {
 }
 
 export default function Command() {
-  const { data, isLoading, revalidate } = useApi<CapturePayload>(
-    "/api/capture/packets?limit=150",
-  );
+  const { data, isLoading, revalidate } = useApi<CapturePayload>("/api/capture/packets?limit=150");
   usePolling(revalidate, 1500);
 
   const stats = data?.stats;
@@ -104,11 +94,13 @@ export default function Command() {
       title: `${action === "start" ? "Starting" : "Stopping"} capture…`,
     });
     try {
-      const res = await postJson<{ error?: string }>(
-        `/api/capture/${action}`,
-        {},
-      );
-      if (res.error) throw new Error(res.error);
+      const res = await postJson<{
+        ok?: boolean;
+        error?: string;
+        message?: string;
+      }>(`/api/capture/${action}`, {});
+      if (res.error || res.ok === false)
+        throw new Error(res.error ?? res.message ?? "Request failed");
       toast.style = Toast.Style.Success;
       toast.title = action === "start" ? "Capture started" : "Capture stopped";
       revalidate();
@@ -128,11 +120,7 @@ export default function Command() {
           onAction={() => control("stop")}
         />
       ) : (
-        <Action
-          title="Start Capture"
-          icon={Icon.Play}
-          onAction={() => control("start")}
-        />
+        <Action title="Start Capture" icon={Icon.Play} onAction={() => control("start")} />
       )}
       {stats ? (
         <Action.Push
