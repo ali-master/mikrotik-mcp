@@ -10,16 +10,45 @@ import { z } from "zod";
 import type { ToolContext } from "../core/context";
 import {
   DEFAULT_WEAK_DBM,
+  buildLoadBalanceCommands,
+  buildSteerCommands,
+  loadBalancePlan,
   proposeChannelPlan,
   reportWeakClients,
   runCapsmanAudit,
   renderCapsmanReport,
+  steerAlreadyPresent,
 } from "../core/capsman";
-import type { CapsmanCategory } from "../core/capsman";
-import { READ, defineTool } from "../core/registry";
+import type { CapsmanCategory, CapsmanState } from "../core/capsman";
+import { DANGEROUS, READ, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
 import { resolveDeviceName } from "../core/runtime";
+import { captureSnapshot } from "../snapshots/capture";
+import { applyWritesSafely } from "../utils/safe-mode-apply";
 import { fetchCapsmanState } from "../utils/wifi-query";
+
+/** Shared apply path: snapshot → Safe-Mode-only (no direct fallback — Wi-Fi can lock out). */
+async function applyCapsman(
+  ctx: ToolContext,
+  device: string,
+  commands: string[],
+  label: string,
+): Promise<string> {
+  if (commands.length === 0)
+    return "Nothing to apply — already in the desired state (idempotent no-op).";
+  const snapshotId = await captureSnapshot(ctx, label);
+  const outcome = await applyWritesSafely(ctx, device, commands, { allowDirectFallback: false });
+  const lines = [
+    `CAPsMAN APPLY — snapshot=${snapshotId}  safe-mode=${outcome.safeMode}`,
+    `Applied ${outcome.applied}/${outcome.total} command(s).`,
+    ...(outcome.error ? [`FAILED: ${outcome.error}`] : []),
+    "",
+    ...commands.map((c) => `  ${c}`),
+    "",
+    `Roll back with: diff_config_snapshots from=${snapshotId} to=live`,
+  ];
+  return lines.join("\n");
+}
 
 const weakDbm = z
   .number()
@@ -165,6 +194,87 @@ export const capsmanTools: ToolModule = [
       "whole building's Wi-Fi drops if it reboots). Setting up HA is a later, confirm-gated tool.",
     async handler(_a, ctx) {
       return auditOne(ctx, "ha");
+    },
+  }),
+
+  defineTool({
+    name: "steer_client",
+    title: "Steer a Weak-Signal Client",
+    annotations: DANGEROUS,
+    description:
+      "Steers ONE weak client toward a better AP. `mode=hard` installs an access-list signal-range " +
+      "REJECT on the client's current radio so it re-associates on a neighbor it hears stronger (can " +
+      "briefly disconnect it). `mode=soft` is 802.11k/v-only and installs no rule (advisory — enable " +
+      "steering via enable_capsman_ft). ADVISORY: RouterOS has no force-move, so the client ultimately " +
+      "decides. DRY RUN unless confirm=true. Snapshots first and applies inside Safe Mode (auto-revert " +
+      "on lockout). Idempotent — a re-run for the same MAC adds nothing.",
+    inputSchema: {
+      mac: z.string().min(1).describe("Client MAC address to steer."),
+      mode: z
+        .enum(["soft", "hard"])
+        .default("hard")
+        .describe("hard = signal-range reject; soft = k/v only (no write)."),
+      reject_above_dbm: z
+        .number()
+        .int()
+        .max(-1)
+        .optional()
+        .describe(`dBm ceiling of the reject band for hard mode (default ${DEFAULT_WEAK_DBM}).`),
+      confirm: z
+        .literal(true)
+        .optional()
+        .describe("Must be true to write; omit for a dry-run preview."),
+    },
+    async handler(a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      const state: CapsmanState = await fetchCapsmanState(ctx);
+      const client = state.clients.find((c) => c.mac.toLowerCase() === a.mac.toLowerCase());
+      if (!client) return `Client ${a.mac} is not currently associated to any managed radio.`;
+      if (steerAlreadyPresent(state, a.mac)) {
+        return `A steer rule for ${a.mac} already exists (idempotent no-op). Remove it manually to change.`;
+      }
+      const commands = buildSteerCommands(state, a.mac, client.radioId, a.mode, a.reject_above_dbm);
+      if (a.mode === "soft") {
+        return `Soft steer is advisory-only (802.11k/v hints) — no access-list rule written. Ensure 802.11k/v is enabled with enable_capsman_ft, then the client roams on its own. Current signal ${client.signal} dBm on ${client.radioId}.`;
+      }
+      if (!a.confirm) {
+        return `DRY RUN — steer ${a.mac} (${a.mode}); set confirm=true to apply:\n\n${commands.map((c) => `  ${c}`).join("\n")}`;
+      }
+      return applyCapsman(ctx, device, commands, `pre-steer_client-${a.mac}`);
+    },
+  }),
+
+  defineTool({
+    name: "apply_capsman_load_balance",
+    title: "Apply CAPsMAN Load Balance",
+    annotations: DANGEROUS,
+    description:
+      "Applies a resource-aware rebalance: for each overloaded / CPU-constrained radio that has an " +
+      "adjacent radio with spare capacity, installs a connect-priority nudge so NEW clients prefer the " +
+      "idle neighbor (gentle — does not disconnect existing clients). ADVISORY. DRY RUN unless " +
+      "confirm=true. Snapshots first, applies inside Safe Mode. Idempotent. Preview the plan with " +
+      "audit_capsman_load first.",
+    inputSchema: {
+      confirm: z
+        .literal(true)
+        .optional()
+        .describe("Must be true to write; omit for a dry-run preview."),
+    },
+    async handler(a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      const state = await fetchCapsmanState(ctx);
+      const plan = loadBalancePlan(state);
+      if (plan.length === 0)
+        return "No rebalance needed — no overloaded radio has an idle adjacent neighbor.";
+      const commands = buildLoadBalanceCommands(state, plan);
+      if (commands.length === 0) return "Load-balance rules already present (idempotent no-op).";
+      const preview = plan
+        .map((p) => `  ${p.cap}/${p.radioId} → offload toward ${p.targetCap}/${p.targetRadioId}`)
+        .join("\n");
+      if (!a.confirm) {
+        return `DRY RUN — load-balance plan (set confirm=true to apply):\n${preview}\n\nCommands:\n${commands.map((c) => `  ${c}`).join("\n")}`;
+      }
+      return applyCapsman(ctx, device, commands, "pre-apply_capsman_load_balance");
     },
   }),
 ];

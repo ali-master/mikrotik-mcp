@@ -53,21 +53,29 @@ export async function fetchCapsmanState(ctx: ToolContext): Promise<CapsmanState>
   if (!path) return normalizeCapsmanState(null);
 
   const isCapsman = path === "/caps-man";
-  const [manager, remoteCaps, radios, registrations, securityConfigs] = await Promise.all([
-    fetchKv(isCapsman ? "/caps-man manager print" : `${path} capsman print`, ctx),
-    fetchRows(
-      isCapsman ? "/caps-man remote-cap print detail" : `${path} capsman remote-cap print detail`,
-      ctx,
-    ),
-    fetchRows(isCapsman ? "/caps-man radio print detail" : `${path} radio print detail`, ctx),
-    fetchRows(
-      isCapsman
-        ? "/caps-man registration-table print detail"
-        : `${path} registration-table print detail`,
-      ctx,
-    ),
-    fetchRows(isCapsman ? "/caps-man security print detail" : `${path} security print detail`, ctx),
-  ]);
+  const [manager, remoteCaps, radios, registrations, securityConfigs, accessList] =
+    await Promise.all([
+      fetchKv(isCapsman ? "/caps-man manager print" : `${path} capsman print`, ctx),
+      fetchRows(
+        isCapsman ? "/caps-man remote-cap print detail" : `${path} capsman remote-cap print detail`,
+        ctx,
+      ),
+      fetchRows(isCapsman ? "/caps-man radio print detail" : `${path} radio print detail`, ctx),
+      fetchRows(
+        isCapsman
+          ? "/caps-man registration-table print detail"
+          : `${path} registration-table print detail`,
+        ctx,
+      ),
+      fetchRows(
+        isCapsman ? "/caps-man security print detail" : `${path} security print detail`,
+        ctx,
+      ),
+      fetchRows(
+        isCapsman ? "/caps-man access-list print detail" : `${path} access-list print detail`,
+        ctx,
+      ),
+    ]);
 
   const raw: CapsmanRaw = {
     path,
@@ -76,6 +84,7 @@ export async function fetchCapsmanState(ctx: ToolContext): Promise<CapsmanState>
     radios,
     registrations,
     securityConfigs,
+    accessList,
     resources: {},
   };
   return normalizeCapsmanState(raw);

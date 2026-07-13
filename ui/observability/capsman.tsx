@@ -8,11 +8,24 @@
  */
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, RefreshCw, Radio as RadioIcon, Wifi } from "lucide-react";
-import { api } from "./api";
+import { AlertTriangle, RefreshCw, Radio as RadioIcon, Scale, Wifi } from "lucide-react";
+import { api, postJson } from "./api";
 import { Panel, StatCard } from "./atoms";
-import { Badge, Note, Spinner } from "./geist";
+import { Badge, Button, Note, Spinner } from "./geist";
 import { num } from "./format";
+import { toast } from "./toast-action";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -86,6 +99,88 @@ function bandBadge(b: Band): ReactNode {
   const label = b === "2ghz" ? "2.4G" : b === "5ghz" ? "5G" : "?";
   return (
     <Badge type={b === "5ghz" ? "success" : b === "2ghz" ? "warning" : "secondary"}>{label}</Badge>
+  );
+}
+
+interface ApplyResult {
+  ok?: boolean;
+  error?: string;
+  snapshotId?: string;
+  applied?: number;
+  message?: string;
+}
+
+/** Confirm + POST a CAPsMAN write, toasting the outcome. */
+async function runApply(
+  path: string,
+  body: unknown,
+  label: string,
+  onDone: () => void,
+): Promise<void> {
+  const id = toast.loading(`${label}…`);
+  try {
+    const r = await postJson<ApplyResult>(path, { ...(body as object), confirm: true });
+    if (r?.ok) {
+      toast.success(`${label} applied`, {
+        id,
+        description: r.snapshotId ? `snapshot ${r.snapshotId}` : r.message,
+      });
+      onDone();
+    } else {
+      toast.error(r?.error ?? `${label} failed`, { id });
+    }
+  } catch {
+    toast.error(`${label} failed (server unreachable)`, { id });
+  }
+}
+
+/** "Steer" action for one weak client — confirmed in an AlertDialog. */
+function SteerButton({
+  mac,
+  cap,
+  onDone,
+}: {
+  mac: string;
+  cap: string;
+  onDone: () => void;
+}): ReactNode {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button className="h-6 px-2 text-[11px]">
+          <Wifi className="size-3" /> Steer
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Steer {mac} toward {cap}?
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Installs a hard signal-range reject on the client&rsquo;s current radio so it
+            re-associates on the stronger neighbor. This may briefly disconnect the client, and
+            RouterOS ultimately lets the client decide (advisory). A config snapshot is taken first
+            and the change runs in Safe Mode.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className={buttonVariants({ variant: "destructive" })}
+            onClick={() =>
+              void runApply(
+                "/api/capsman/apply/steer",
+                { mac, mode: "hard" },
+                `Steer ${mac}`,
+                onDone,
+              )
+            }
+          >
+            Steer (hard)
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -198,13 +293,47 @@ export function CapsmanView(): ReactNode {
       <Panel
         title="Coverage & load by floor"
         extra={
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
-          >
-            <RefreshCw className="size-3.5" /> refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="h-6 px-2 text-[11px]">
+                  <Scale className="size-3" /> Auto-balance
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Apply resource-aware load balance?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    For each overloaded or CPU-constrained radio that has an idle adjacent neighbor,
+                    installs a connect-priority nudge so NEW clients prefer the neighbor. Existing
+                    clients are not disconnected. Snapshot + Safe Mode; idempotent.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() =>
+                      void runApply(
+                        "/api/capsman/apply/load-balance",
+                        {},
+                        "Load balance",
+                        () => void load(),
+                      )
+                    }
+                  >
+                    Apply
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
+            >
+              <RefreshCw className="size-3.5" /> refresh
+            </button>
+          </div>
         }
       >
         {floors.length === 0 ? (
@@ -310,6 +439,7 @@ export function CapsmanView(): ReactNode {
                   <TableHead>Band</TableHead>
                   <TableHead>Current AP</TableHead>
                   <TableHead>Recommended</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -335,6 +465,11 @@ export function CapsmanView(): ReactNode {
                         <span className="text-muted-foreground">coverage gap</span>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {w.recommendCap && (
+                        <SteerButton mac={w.mac} cap={w.recommendCap} onDone={() => void load()} />
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -344,8 +479,9 @@ export function CapsmanView(): ReactNode {
       </Panel>
 
       <p className="text-muted-foreground text-[11px]">
-        Read-only. Steering, channel-plan apply, FT enable and HA setup arrive in later phases (see
-        the CAPsMAN tools: run_capsman_audit, report_weak_signal_clients, …).
+        Steering &amp; load-balance apply are live (snapshot + Safe Mode, confirmed). Channel-plan
+        apply, FT enable and HA setup arrive in later phases. All steering is advisory — RouterOS
+        lets the client decide.
       </p>
     </div>
   );

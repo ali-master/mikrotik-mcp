@@ -120,6 +120,24 @@ export interface CapsmanState {
   radios: CapRadio[];
   clients: WifiClient[];
   securityConfigs: WifiSecurityConfig[];
+  /** Existing access-list entries — for idempotency of steer/load-balance writes. */
+  accessList: WifiAccessListEntry[];
+  /** The resolved wifi command family for this device (write-command prefix). */
+  path: WifiPathLike;
+}
+
+/** The command-path family (kept as a string union so tests need no util import). */
+export type WifiPathLike =
+  | "/interface wifi"
+  | "/interface wifiwave2"
+  | "/interface wireless"
+  | "/caps-man";
+
+/** One existing access-list row (subset we care about for idempotency). */
+export interface WifiAccessListEntry {
+  macAddress?: string;
+  interface?: string;
+  comment?: string;
 }
 
 /** An empty state — every slice absent. Handy for tests and partial audits. */
@@ -132,6 +150,8 @@ export function emptyCapsmanState(): CapsmanState {
     radios: [],
     clients: [],
     securityConfigs: [],
+    accessList: [],
+    path: "/interface wifi",
   };
 }
 
@@ -506,6 +526,125 @@ export function runCapsmanAudit(state: CapsmanState, opts: AuditOptions = {}): C
   const summary: Record<Severity, number> = { critical: 0, high: 0, medium: 0, low: 0 };
   for (const f of findings) summary[f.severity]++;
   return { findings, summary, total: findings.length };
+}
+
+// ── Phase 2: steering + load-balance write plans (advisory mechanisms) ───────
+//
+// RouterOS has no force-move. "Hard" steering = an access-list entry that REJECTS
+// a client on its current (weak) radio when its signal is in a low band, so it
+// re-associates on a neighbor it hears stronger. "Soft" = 802.11k/v hints only
+// (enabled per-config in the FT phase), so a soft steer here is a no-op write set
+// plus guidance. Every rule is comment-tagged for idempotency + later removal.
+
+/** Comment prefix on every steer access-list rule. */
+export const STEER_TAG = "capsman-steer";
+/** Comment prefix on every load-balance access-list rule. */
+export const LB_TAG = "capsman-lb";
+
+export type SteerMode = "soft" | "hard";
+
+/** The access-list menu for a device's wifi family. */
+export function accessListMenu(path: WifiPathLike): string {
+  return path === "/caps-man" ? "/caps-man access-list" : `${path} access-list`;
+}
+
+/** True when a steer rule for this MAC already exists (idempotency). */
+export function steerAlreadyPresent(state: CapsmanState, mac: string): boolean {
+  const tag = `${STEER_TAG}: ${mac.toLowerCase()}`;
+  return state.accessList.some(
+    (e) =>
+      (e.comment ?? "").toLowerCase().includes(tag) ||
+      ((e.macAddress ?? "").toLowerCase() === mac.toLowerCase() &&
+        (e.comment ?? "").toLowerCase().includes(STEER_TAG)),
+  );
+}
+
+/**
+ * Build the write commands to steer one client. `hard` adds a signal-range reject
+ * on the current radio; `soft` returns no writes (the k/v nudge is a config-level
+ * setting handled by the FT tools) — the tool reports it as advisory-only.
+ * `rejectAbove` is the dBm ceiling of the reject band (default the weak threshold).
+ */
+export function buildSteerCommands(
+  state: CapsmanState,
+  mac: string,
+  currentRadio: string,
+  mode: SteerMode,
+  rejectAbove = DEFAULT_WEAK_DBM,
+): string[] {
+  if (mode === "soft") return [];
+  const menu = accessListMenu(state.path);
+  // Reject the client on the weak radio for signals from noise floor up to the
+  // threshold, forcing it to try a neighbor. `place-before=0` so it wins.
+  return [
+    `${menu} add mac-address=${mac} interface=${currentRadio} ` +
+      `signal-range=-120..${rejectAbove} action=reject ` +
+      `comment="${STEER_TAG}: ${mac}" place-before=0`,
+  ];
+}
+
+export interface LoadBalancePlanItem {
+  radioId: string;
+  cap: string;
+  targetRadioId: string;
+  targetCap: string;
+}
+
+/**
+ * A resource-aware rebalance plan: for each overloaded/constrained radio that has
+ * an adjacent radio with spare capacity, propose offloading toward it. Pure.
+ */
+export function loadBalancePlan(state: CapsmanState): LoadBalancePlanItem[] {
+  const adj = buildAdjacency(state.clients);
+  const byId = radioIndex(state.radios);
+  const out: LoadBalancePlanItem[] = [];
+  for (const r of state.radios) {
+    const overloaded = r.clientCount > OVERLOAD_CLIENTS || (r.cpuLoad ?? 0) > CPU_CONSTRAINED_PCT;
+    if (!overloaded) continue;
+    let target: CapRadio | undefined;
+    for (const nId of adj.get(r.radioId) ?? []) {
+      const n = byId.get(nId);
+      if (!n) continue;
+      if (n.clientCount < OVERLOAD_CLIENTS && (n.cpuLoad ?? 0) < CPU_CONSTRAINED_PCT) {
+        if (!target || n.clientCount < target.clientCount) target = n;
+      }
+    }
+    if (target)
+      out.push({
+        radioId: r.radioId,
+        cap: r.cap,
+        targetRadioId: target.radioId,
+        targetCap: target.cap,
+      });
+  }
+  return out;
+}
+
+/** True when a load-balance rule for this radio already exists (idempotency). */
+export function loadBalanceAlreadyPresent(state: CapsmanState, radioId: string): boolean {
+  const tag = `${LB_TAG}: ${radioId}`;
+  return state.accessList.some((e) => (e.comment ?? "").includes(tag));
+}
+
+/**
+ * Build the write commands for a load-balance plan. For each overloaded radio, add
+ * a connect-priority penalty on that radio so NEW clients prefer the idle neighbor
+ * (a gentle, non-disconnecting nudge). Comment-tagged, idempotent, place-before=0.
+ */
+export function buildLoadBalanceCommands(
+  state: CapsmanState,
+  plan: LoadBalancePlanItem[],
+): string[] {
+  const menu = accessListMenu(state.path);
+  const cmds: string[] = [];
+  for (const item of plan) {
+    if (loadBalanceAlreadyPresent(state, item.radioId)) continue;
+    cmds.push(
+      `${menu} add interface=${item.radioId} action=accept connect-priority=0 ` +
+        `comment="${LB_TAG}: ${item.radioId} → ${item.targetRadioId}" place-before=0`,
+    );
+  }
+  return cmds;
 }
 
 // ── Dashboard payload (structured, for the CAPsMAN page) ─────────────────────

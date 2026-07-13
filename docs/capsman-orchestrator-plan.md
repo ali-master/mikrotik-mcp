@@ -286,18 +286,21 @@ Claude trailers, conventional-commit message.
 - **Exit gate:** ✅ global gate green (615 pass, only the pre-existing mcpb-manifest
   failure) + `bun run build:ui` succeeds. **PHASE 1 COMPLETE.**
 
-### [ ] Phase 2 — Steering + load-balance apply
+### [x] Phase 2 — Steering + load-balance apply
 
-- [ ] `steer_client` (DANGEROUS) — soft (802.11k/v) + hard (signal-range) modes,
-      configurable threshold; dry-run default, confirm, snapshot + `applyWritesSafely`
-      (fallback OFF), idempotent, returns snapshot id.
-- [ ] `apply_capsman_load_balance` (DANGEROUS) — band-steering + per-radio
-      thresholds/connect-priority from the plan; preview-first.
-- [ ] Dashboard: wire the §5.2 "→ steer" one-click + §5.4 auto-balance apply
-      (AlertDialog confirm → `POST /api/capsman/apply` → sonner toasts).
-- [ ] `POST /api/capsman/apply` + `POST /api/capsman/floor` (tag write-back) routes.
-- [ ] Tests: pure select/plan helpers + confirm-gate / Safe-Mode-envelope contract.
-- **Exit gate:** global gate green; build:ui succeeds.
+- [x] `steer_client` (DANGEROUS) — soft (k/v advisory, no write) + hard
+      (signal-range reject on the current radio); dry-run default, confirm, snapshot + `applyWritesSafely` (fallback OFF), idempotent (`steerAlreadyPresent`).
+- [x] `apply_capsman_load_balance` (DANGEROUS) — `loadBalancePlan` + connect-priority
+      nudge per overloaded radio; preview-first, idempotent.
+- [x] Dashboard: §5.2 per-client **Steer** button + §5.4 **Auto-balance** button
+      (AlertDialog confirm → `POST /api/capsman/apply/steer|load-balance` → sonner).
+- [x] `POST /api/capsman/apply/steer` + `/load-balance` routes (snapshot + Safe Mode).
+      _(Floor-tag write-back deferred — floors are read from tags + signal adjacency;
+      the write-back endpoint is a nice-to-have, tracked in Blockers.)_
+- [x] Tests: 8 new cases — steer builders (hard/soft/legacy path), idempotency,
+      load-balance plan + builder + idempotent skip + empty plan.
+- **Exit gate:** ✅ global gate green (623 pass, only pre-existing mcpb failure) +
+  `build:ui` succeeds. **PHASE 2 COMPLETE.**
 
 ### [ ] Phase 3 — Channel-plan apply
 
@@ -339,3 +342,8 @@ Claude trailers, conventional-commit message.
   6 read tools + 28 tests). Iter 2: view-only dashboard page + 3 `/api/capsman/*`
   routes + `main.tsx` wiring + `docs/capsman.md` + README/observability rows;
   `build:ui` green. Next: Phase 2 (steering + load-balance apply).
+- **Phase 2 DONE** (iteration 3). `steer_client` + `apply_capsman_load_balance`
+  tools, access-list slice added to state/normaliser/wifi-query, dashboard Steer +
+  Auto-balance buttons + `POST /api/capsman/apply/steer|load-balance` routes, 8 new
+  tests. Deferred (nice-to-have): `POST /api/capsman/floor` tag write-back so the
+  admin can correct an AP's floor from the UI. Next: Phase 3 (channel-plan apply).

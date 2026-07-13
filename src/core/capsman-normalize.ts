@@ -7,8 +7,14 @@
  * Tolerant of both the v7 `/interface wifi` and legacy `/caps-man` field names,
  * and of missing fields (everything degrades to a sane default).
  */
-import { parseFloorTag } from "./capsman";
-import type { Band, CapsmanState, WifiClient, WifiSecurityConfig } from "./capsman";
+import { emptyCapsmanState, parseFloorTag } from "./capsman";
+import type {
+  Band,
+  CapsmanState,
+  WifiAccessListEntry,
+  WifiClient,
+  WifiSecurityConfig,
+} from "./capsman";
 
 export type WifiPath =
   | "/interface wifi"
@@ -24,6 +30,7 @@ export interface CapsmanRaw {
   radios: Record<string, string>[];
   registrations: Record<string, string>[];
   securityConfigs: Record<string, string>[];
+  accessList: Record<string, string>[];
   /** Per-CAP resources keyed by CAP identity/name (percent). */
   resources: Record<string, { cpuLoad?: number; memUsedPct?: number }>;
 }
@@ -61,17 +68,7 @@ function channelOf(row: Record<string, string>): number | undefined {
  * yields an empty controller state.
  */
 export function normalizeCapsmanState(raw: CapsmanRaw | null): CapsmanState {
-  if (!raw) {
-    return {
-      managerEnabled: false,
-      managerCount: 0,
-      capsHaveBackupManager: false,
-      requirePeerCertificate: false,
-      radios: [],
-      clients: [],
-      securityConfigs: [],
-    };
-  }
+  if (!raw) return emptyCapsmanState();
 
   // Radios: one per remote-cap radio; carry floor/zone from CAP identity/comment.
   const clientsByRadio = new Map<string, number>();
@@ -126,6 +123,12 @@ export function normalizeCapsmanState(raw: CapsmanRaw | null): CapsmanState {
     wnm: yes(c.wnm ?? c["steering.wnm"]),
   }));
 
+  const accessList: WifiAccessListEntry[] = (raw.accessList ?? []).map((e) => ({
+    macAddress: e["mac-address"] ?? e.mac,
+    interface: e.interface,
+    comment: e.comment,
+  }));
+
   const managerEnabled = yes(raw.manager.enabled);
   // "backup manager" heuristic: more than one caps-man-address configured, or an
   // explicit backup flag/second manager row.
@@ -143,5 +146,7 @@ export function normalizeCapsmanState(raw: CapsmanRaw | null): CapsmanState {
     radios,
     clients,
     securityConfigs,
+    accessList,
+    path: raw.path,
   };
 }

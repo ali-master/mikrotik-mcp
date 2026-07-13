@@ -10,11 +10,15 @@ import { describe, expect, test } from "vite-plus/test";
 import {
   bandOf,
   buildAdjacency,
+  buildLoadBalanceCommands,
+  buildSteerCommands,
   emptyCapsmanState,
+  loadBalancePlan,
   parseFloorTag,
   proposeChannelPlan,
   reportWeakClients,
   runCapsmanAudit,
+  steerAlreadyPresent,
 } from "../../src/core/capsman";
 import type { CapRadio, CapsmanState, WifiClient } from "../../src/core/capsman";
 import { normalizeCapsmanState } from "../../src/core/capsman-normalize";
@@ -328,6 +332,7 @@ describe("normalizeCapsmanState", () => {
         { "mac-address": "cc:dd", interface: "cap1", signal: "-71" },
       ],
       securityConfigs: [{ name: "corp", ssid: "Corp", ft: "no" }],
+      accessList: [],
       resources: { "AP-F2-A": { cpuLoad: 25 } },
     });
     expect(s.managerEnabled).toBe(true);
@@ -352,9 +357,83 @@ describe("normalizeCapsmanState", () => {
       radios: [{ name: "cap1", identity: "office-ap", band: "5ghz-ac", channel: "5180" }],
       registrations: [],
       securityConfigs: [],
+      accessList: [],
       resources: {},
     });
     expect(s.radios[0].floor).toBeUndefined();
     expect(s.radios[0].band).toBe("5ghz");
+  });
+});
+
+// ── Phase 2: steering + load-balance write builders ──────────────────────────
+
+describe("buildSteerCommands", () => {
+  test("hard mode builds a signal-range reject on the client's current radio", () => {
+    const s = state({ path: "/interface wifi" });
+    const cmds = buildSteerCommands(s, "AA:BB:CC", "cap1", "hard", -72);
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0]).toContain("/interface wifi access-list add");
+    expect(cmds[0]).toContain("mac-address=AA:BB:CC");
+    expect(cmds[0]).toContain("interface=cap1");
+    expect(cmds[0]).toContain("signal-range=-120..-72");
+    expect(cmds[0]).toContain("action=reject");
+    expect(cmds[0]).toContain('comment="capsman-steer: AA:BB:CC"');
+  });
+
+  test("soft mode writes nothing (802.11k/v is advisory-only)", () => {
+    expect(buildSteerCommands(state({}), "AA:BB:CC", "cap1", "soft")).toHaveLength(0);
+  });
+
+  test("uses the legacy /caps-man access-list menu on a caps-man device", () => {
+    const cmds = buildSteerCommands(state({ path: "/caps-man" }), "AA", "cap1", "hard");
+    expect(cmds[0]).toContain("/caps-man access-list add");
+  });
+});
+
+describe("steerAlreadyPresent (idempotency)", () => {
+  test("true when a steer rule for the MAC already exists", () => {
+    const s = state({ accessList: [{ macAddress: "aa:bb", comment: "capsman-steer: aa:bb" }] });
+    expect(steerAlreadyPresent(s, "AA:BB")).toBe(true);
+  });
+  test("false when no steer rule exists for the MAC", () => {
+    expect(steerAlreadyPresent(state({ accessList: [] }), "AA:BB")).toBe(false);
+  });
+});
+
+describe("loadBalancePlan + buildLoadBalanceCommands", () => {
+  test("plans an offload from an overloaded radio toward an idle adjacent neighbor", () => {
+    const s = state({
+      path: "/interface wifi",
+      radios: [
+        radio({ cap: "AP-A", radioId: "r1", clientCount: 40, cpuLoad: 90 }),
+        radio({ cap: "AP-B", radioId: "r2", clientCount: 3, cpuLoad: 20 }),
+      ],
+      clients: [client({ mac: "aa", radioId: "r1", signal: -55, seenOn: { r2: -66 } })],
+    });
+    const plan = loadBalancePlan(s);
+    expect(plan).toEqual([{ radioId: "r1", cap: "AP-A", targetRadioId: "r2", targetCap: "AP-B" }]);
+    const cmds = buildLoadBalanceCommands(s, plan);
+    expect(cmds[0]).toContain("interface=r1");
+    expect(cmds[0]).toContain('comment="capsman-lb: r1 → r2"');
+  });
+
+  test("skips a radio whose load-balance rule already exists (idempotent)", () => {
+    const s = state({
+      path: "/interface wifi",
+      accessList: [{ comment: "capsman-lb: r1 → r2" }],
+      radios: [
+        radio({ cap: "AP-A", radioId: "r1", clientCount: 40, cpuLoad: 90 }),
+        radio({ cap: "AP-B", radioId: "r2", clientCount: 3 }),
+      ],
+      clients: [client({ mac: "aa", radioId: "r1", signal: -55, seenOn: { r2: -66 } })],
+    });
+    expect(buildLoadBalanceCommands(s, loadBalancePlan(s))).toHaveLength(0);
+  });
+
+  test("empty plan when no overloaded radio has an idle neighbor", () => {
+    const s = state({
+      radios: [radio({ cap: "AP-A", radioId: "r1", clientCount: 40, cpuLoad: 90 })],
+    });
+    expect(loadBalancePlan(s)).toHaveLength(0);
   });
 });

@@ -102,7 +102,17 @@ import {
 import { redact, riskOf } from "./event";
 import type { Risk, ToolEvent } from "./event";
 import { listPrompts } from "../prompts";
-import { capsmanOverview, reportWeakClients, runCapsmanAudit } from "../core/capsman";
+import {
+  buildLoadBalanceCommands,
+  buildSteerCommands,
+  capsmanOverview,
+  loadBalancePlan,
+  reportWeakClients,
+  runCapsmanAudit,
+  steerAlreadyPresent,
+} from "../core/capsman";
+import { captureSnapshot } from "../snapshots/capture";
+import { applyWritesSafely } from "../utils/safe-mode-apply";
 import { fetchCapsmanState } from "../utils/wifi-query";
 import {
   getDeviceHistory,
@@ -855,24 +865,82 @@ async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
 async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith("/api/capsman")) return null;
-  if (req.method !== "GET") return null;
-  const ctx = createContext(undefined, url.searchParams.get("device") ?? undefined);
 
-  if (p === "/api/capsman/overview") {
-    const state = await fetchCapsmanState(ctx);
-    return json(capsmanOverview(state));
+  if (req.method === "GET") {
+    const ctx = createContext(undefined, url.searchParams.get("device") ?? undefined);
+    if (p === "/api/capsman/overview") {
+      return json(capsmanOverview(await fetchCapsmanState(ctx)));
+    }
+    if (p === "/api/capsman/clients") {
+      const state = await fetchCapsmanState(ctx);
+      const weakDbm = Number.parseInt(url.searchParams.get("weak_dbm") ?? "", 10);
+      const weak = reportWeakClients(state, Number.isFinite(weakDbm) ? weakDbm : undefined);
+      return json({ clients: state.clients, weak });
+    }
+    if (p === "/api/capsman/audit") {
+      return json(runCapsmanAudit(await fetchCapsmanState(ctx)));
+    }
+    return null;
   }
-  if (p === "/api/capsman/clients") {
+
+  // Writes: same snapshot + Safe-Mode envelope as the tools (fallback OFF).
+  if (req.method === "POST") {
+    const body = (await readJson(req)) as {
+      device?: string;
+      action?: string;
+      mac?: string;
+      mode?: string;
+      confirm?: boolean;
+    };
+    const ctx = createContext(undefined, body?.device);
     const state = await fetchCapsmanState(ctx);
-    const weakDbm = Number.parseInt(url.searchParams.get("weak_dbm") ?? "", 10);
-    const weak = reportWeakClients(state, Number.isFinite(weakDbm) ? weakDbm : undefined);
-    return json({ clients: state.clients, weak });
-  }
-  if (p === "/api/capsman/audit") {
-    const state = await fetchCapsmanState(ctx);
-    return json(runCapsmanAudit(state));
+
+    if (p === "/api/capsman/apply/steer") {
+      const client = state.clients.find(
+        (c) => c.mac.toLowerCase() === (body.mac ?? "").toLowerCase(),
+      );
+      if (!client) return json({ ok: false, error: "client not associated" }, 400);
+      if (steerAlreadyPresent(state, body.mac ?? "")) {
+        return json({ ok: true, message: "already steered (no-op)" });
+      }
+      const mode = body.mode === "soft" ? "soft" : "hard";
+      const commands = buildSteerCommands(state, body.mac ?? "", client.radioId, mode);
+      if (!body.confirm) return json({ ok: true, preview: commands });
+      return json(await applyCapsmanWrites(ctx, commands, `pre-steer-${body.mac}`));
+    }
+    if (p === "/api/capsman/apply/load-balance") {
+      const plan = loadBalancePlan(state);
+      const commands = buildLoadBalanceCommands(state, plan);
+      if (!body.confirm) return json({ ok: true, preview: commands, plan });
+      return json(await applyCapsmanWrites(ctx, commands, "pre-load-balance"));
+    }
   }
   return null;
+}
+
+/** Snapshot + Safe-Mode apply for the dashboard CAPsMAN write routes. */
+async function applyCapsmanWrites(
+  ctx: ReturnType<typeof createContext>,
+  commands: string[],
+  label: string,
+): Promise<{
+  ok: boolean;
+  snapshotId?: string;
+  safeMode?: string;
+  applied?: number;
+  error?: string;
+}> {
+  if (commands.length === 0) return { ok: true, applied: 0 };
+  const snapshotId = await captureSnapshot(ctx, label);
+  const device = resolveDeviceName(ctx.device);
+  const outcome = await applyWritesSafely(ctx, device, commands, { allowDirectFallback: false });
+  return {
+    ok: outcome.committed && !outcome.error,
+    snapshotId,
+    safeMode: outcome.safeMode,
+    applied: outcome.applied,
+    error: outcome.error,
+  };
 }
 
 async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
