@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "apply_capsman_channel_plan",
+  "type": "object",
+  "properties": {
+    "radio_ids": {
+      "description": "Only re-channel these radio ids. Omit to apply the whole plan.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confirm": {
+      "description": "Must be true to write; omit for a dry-run preview.",
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "additionalProperties": false
+}

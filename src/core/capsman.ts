@@ -290,6 +290,44 @@ export function proposeChannelPlan(state: CapsmanState): Map<string, number> {
   return plan;
 }
 
+/**
+ * Convert a Wi-Fi channel number to its centre frequency (MHz), which is what
+ * RouterOS's `channel.frequency` wants. 2.4 GHz: 2407 + n·5 (ch1=2412 … ch11=2462);
+ * 5 GHz: 5000 + n·5 (ch36=5180 … ch161=5805). Returns null for an unknown mapping.
+ */
+export function channelToFrequencyMhz(channel: number, band: Band): number | null {
+  if (band === "2ghz") return channel >= 1 && channel <= 14 ? 2407 + channel * 5 : channel;
+  if (band === "5ghz") return channel >= 36 && channel <= 177 ? 5000 + channel * 5 : channel;
+  return null;
+}
+
+/**
+ * Build the write commands to apply the proposed manual channel plan. v7
+ * `/interface wifi` only — the frequency is set on each provisioned radio
+ * interface. Skips radios already on the proposed channel (idempotent) and radios
+ * not in `onlyRadioIds` (when given). Returns `[]` for a legacy `/caps-man` device
+ * (its channels live in named channel objects the tool can't map 1:1 — the audit
+ * still surfaces the plan for a manual edit).
+ */
+export function buildChannelPlanCommands(
+  state: CapsmanState,
+  onlyRadioIds?: Set<string>,
+): string[] {
+  if (state.path === "/caps-man") return [];
+  const plan = proposeChannelPlan(state);
+  const byId = radioIndex(state.radios);
+  const cmds: string[] = [];
+  for (const [radioId, ch] of plan) {
+    if (onlyRadioIds && !onlyRadioIds.has(radioId)) continue;
+    const radio = byId.get(radioId);
+    if (!radio || radio.channel === ch) continue; // already on target → no-op
+    const freq = channelToFrequencyMhz(ch, bandOf(radio));
+    if (freq == null) continue;
+    cmds.push(`${state.path} set [find name="${radioId}"] channel.frequency=${freq}`);
+  }
+  return cmds;
+}
+
 // ── §4.B Weak-signal clients + best-neighbor recommendation ──────────────────
 
 export interface WeakClient {

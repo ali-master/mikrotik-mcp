@@ -10,6 +10,8 @@ import { describe, expect, test } from "vite-plus/test";
 import {
   bandOf,
   buildAdjacency,
+  buildChannelPlanCommands,
+  channelToFrequencyMhz,
   buildLoadBalanceCommands,
   buildSteerCommands,
   emptyCapsmanState,
@@ -435,5 +437,70 @@ describe("loadBalancePlan + buildLoadBalanceCommands", () => {
       radios: [radio({ cap: "AP-A", radioId: "r1", clientCount: 40, cpuLoad: 90 })],
     });
     expect(loadBalancePlan(s)).toHaveLength(0);
+  });
+});
+
+// ── Phase 3: channel-plan apply ──────────────────────────────────────────────
+
+describe("channelToFrequencyMhz", () => {
+  test("maps 2.4 GHz channels 1/6/11 to 2412/2437/2462 MHz", () => {
+    expect(channelToFrequencyMhz(1, "2ghz")).toBe(2412);
+    expect(channelToFrequencyMhz(6, "2ghz")).toBe(2437);
+    expect(channelToFrequencyMhz(11, "2ghz")).toBe(2462);
+  });
+  test("maps 5 GHz channel 36 to 5180 MHz", () => {
+    expect(channelToFrequencyMhz(36, "5ghz")).toBe(5180);
+  });
+});
+
+describe("buildChannelPlanCommands", () => {
+  test("emits a frequency set for a radio not on its proposed channel", () => {
+    const s = state({
+      path: "/interface wifi",
+      radios: [
+        radio({ cap: "AP-A", radioId: "r1", band: "2ghz", channel: 6, clientCount: 20 }),
+        radio({ cap: "AP-B", radioId: "r2", band: "2ghz", channel: 6, clientCount: 5 }),
+      ],
+      clients: [client({ mac: "aa", radioId: "r1", signal: -55, seenOn: { r2: -70 } })],
+    });
+    const cmds = buildChannelPlanCommands(s);
+    // Both start on 6; the plan gives adjacent radios different channels, so at
+    // least one radio is re-channeled to a clean 2.4 GHz frequency.
+    expect(cmds.length).toBeGreaterThanOrEqual(1);
+    expect(cmds.every((c) => c.includes("channel.frequency="))).toBe(true);
+  });
+
+  test("is a no-op (idempotent) when every radio is already on its proposed channel", () => {
+    const s = state({
+      path: "/interface wifi",
+      radios: [
+        radio({ cap: "AP-A", radioId: "r1", band: "2ghz", channel: 1 }),
+        radio({ cap: "AP-B", radioId: "r2", band: "2ghz", channel: 6 }),
+      ],
+      clients: [client({ mac: "aa", radioId: "r1", signal: -55, seenOn: { r2: -70 } })],
+    });
+    // r1→1, r2→6 already satisfies the plan (adjacent, different) → no changes.
+    expect(buildChannelPlanCommands(s)).toHaveLength(0);
+  });
+
+  test("scopes to radio_ids when provided", () => {
+    const s = state({
+      path: "/interface wifi",
+      radios: [
+        radio({ cap: "AP-A", radioId: "r1", band: "2ghz", channel: 6, clientCount: 20 }),
+        radio({ cap: "AP-B", radioId: "r2", band: "2ghz", channel: 6, clientCount: 5 }),
+      ],
+      clients: [client({ mac: "aa", radioId: "r1", signal: -55, seenOn: { r2: -70 } })],
+    });
+    const cmds = buildChannelPlanCommands(s, new Set(["r1"]));
+    expect(cmds.every((c) => !c.includes('name="r2"'))).toBe(true);
+  });
+
+  test("returns no commands on a legacy /caps-man device (manual channel objects)", () => {
+    const s = state({
+      path: "/caps-man",
+      radios: [radio({ cap: "AP-A", radioId: "r1", band: "2ghz", channel: 6, clientCount: 20 })],
+    });
+    expect(buildChannelPlanCommands(s)).toHaveLength(0);
   });
 });

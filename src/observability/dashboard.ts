@@ -103,6 +103,7 @@ import { redact, riskOf } from "./event";
 import type { Risk, ToolEvent } from "./event";
 import { listPrompts } from "../prompts";
 import {
+  buildChannelPlanCommands,
   buildLoadBalanceCommands,
   buildSteerCommands,
   capsmanOverview,
@@ -913,6 +914,14 @@ async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
       const commands = buildLoadBalanceCommands(state, plan);
       if (!body.confirm) return json({ ok: true, preview: commands, plan });
       return json(await applyCapsmanWrites(ctx, commands, "pre-load-balance"));
+    }
+    if (p === "/api/capsman/apply/channel-plan") {
+      if (state.path === "/caps-man") {
+        return json({ ok: false, error: "channel-plan apply is v7 /interface wifi only" }, 400);
+      }
+      const commands = buildChannelPlanCommands(state);
+      if (!body.confirm) return json({ ok: true, preview: commands });
+      return json(await applyCapsmanWrites(ctx, commands, "pre-channel-plan"));
     }
   }
   return null;

@@ -294,6 +294,41 @@ export function CapsmanView(): ReactNode {
         title="Coverage & load by floor"
         extra={
           <div className="flex items-center gap-2">
+            {overview.cochannel.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="h-6 px-2 text-[11px]">
+                    <RadioIcon className="size-3" /> Apply channel plan
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Apply the proposed channel plan?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Re-channels radios to the non-overlapping plan (2.4 GHz 1/6/11, 5 GHz
+                      DFS-aware) to clear the {overview.cochannel.length} co-channel conflict(s).
+                      Clients on a re-channeled radio briefly re-associate. Snapshot + Safe Mode;
+                      idempotent. (v7 /interface wifi only.)
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        void runApply(
+                          "/api/capsman/apply/channel-plan",
+                          {},
+                          "Channel plan",
+                          () => void load(),
+                        )
+                      }
+                    >
+                      Apply
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button className="h-6 px-2 text-[11px]">

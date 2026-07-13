@@ -302,13 +302,17 @@ Claude trailers, conventional-commit message.
 - **Exit gate:** ✅ global gate green (623 pass, only pre-existing mcpb failure) +
   `build:ui` succeeds. **PHASE 2 COMPLETE.**
 
-### [ ] Phase 3 — Channel-plan apply
+### [x] Phase 3 — Channel-plan apply
 
-- [ ] `apply_capsman_channel_plan` (DANGEROUS) — apply proposed manual channels to
-      selected CAPs; snapshot + Safe Mode; idempotent.
-- [ ] Dashboard: §5.1 heatmap "apply proposed plan" action.
-- [ ] Tests: plan builder + idempotency (re-run = no-op).
-- **Exit gate:** global gate green.
+- [x] `apply_capsman_channel_plan` (DANGEROUS) — sets each radio's frequency to the
+      proposed non-overlapping plan (`buildChannelPlanCommands` + `channelToFrequencyMhz`);
+      dry-run default, confirm, snapshot + Safe Mode; idempotent (skips radios already
+      on target); v7 `/interface wifi` only.
+- [x] Dashboard: §5.1 heatmap **Apply channel plan** button (shown when co-channel
+      conflicts exist) → `POST /api/capsman/apply/channel-plan`.
+- [x] Tests: 6 new cases — channel→freq mapping, builder emits/skips, radio scope,
+      caps-man returns none.
+- **Exit gate:** ✅ green (629 pass, only pre-existing mcpb) + build:ui. **PHASE 3 COMPLETE.**
 
 ### [ ] Phase 4 — FT enable
 
@@ -347,3 +351,6 @@ Claude trailers, conventional-commit message.
   Auto-balance buttons + `POST /api/capsman/apply/steer|load-balance` routes, 8 new
   tests. Deferred (nice-to-have): `POST /api/capsman/floor` tag write-back so the
   admin can correct an AP's floor from the UI. Next: Phase 3 (channel-plan apply).
+- **Phase 3 DONE** (iteration 4). `apply_capsman_channel_plan` + channel→freq builder,
+  dashboard Apply-channel-plan button + `POST /api/capsman/apply/channel-plan`, 6 tests.
+  Next: Phase 4 (FT enable).

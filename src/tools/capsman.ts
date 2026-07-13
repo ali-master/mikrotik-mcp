@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { ToolContext } from "../core/context";
 import {
   DEFAULT_WEAK_DBM,
+  buildChannelPlanCommands,
   buildLoadBalanceCommands,
   buildSteerCommands,
   loadBalancePlan,
@@ -275,6 +276,44 @@ export const capsmanTools: ToolModule = [
         return `DRY RUN — load-balance plan (set confirm=true to apply):\n${preview}\n\nCommands:\n${commands.map((c) => `  ${c}`).join("\n")}`;
       }
       return applyCapsman(ctx, device, commands, "pre-apply_capsman_load_balance");
+    },
+  }),
+
+  defineTool({
+    name: "apply_capsman_channel_plan",
+    title: "Apply CAPsMAN Channel Plan",
+    annotations: DANGEROUS,
+    description:
+      "Applies the proposed non-overlapping manual channel plan (from audit_capsman_coverage) to the " +
+      "managed radios by setting each radio's frequency — resolving co-channel conflicts. Optionally " +
+      "scope to specific radios with `radio_ids`. DRY RUN unless confirm=true. Snapshots first, applies " +
+      "inside Safe Mode; idempotent (radios already on the target channel are skipped). v7 " +
+      "`/interface wifi` only — on legacy `/caps-man` the channel lives in named channel objects, so " +
+      "edit those manually (the audit still shows the plan).",
+    inputSchema: {
+      radio_ids: z
+        .array(z.string())
+        .optional()
+        .describe("Only re-channel these radio ids. Omit to apply the whole plan."),
+      confirm: z
+        .literal(true)
+        .optional()
+        .describe("Must be true to write; omit for a dry-run preview."),
+    },
+    async handler(a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      const state = await fetchCapsmanState(ctx);
+      if (state.path === "/caps-man") {
+        return "Channel-plan apply targets v7 /interface wifi. This device uses legacy /caps-man — edit the /caps-man channel objects manually; audit_capsman_coverage shows the proposed plan.";
+      }
+      const only = a.radio_ids ? new Set<string>(a.radio_ids as string[]) : undefined;
+      const commands = buildChannelPlanCommands(state, only);
+      if (commands.length === 0)
+        return "No channel changes needed — every radio is already on its proposed channel (idempotent no-op).";
+      if (!a.confirm) {
+        return `DRY RUN — channel plan (set confirm=true to apply):\n\n${commands.map((c) => `  ${c}`).join("\n")}`;
+      }
+      return applyCapsman(ctx, device, commands, "pre-apply_capsman_channel_plan");
     },
   }),
 ];
