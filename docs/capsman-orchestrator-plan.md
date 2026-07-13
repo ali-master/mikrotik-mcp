@@ -373,3 +373,12 @@ Claude trailers, conventional-commit message.
   enable/no-op/legacy-menu, buildFixPlan ordering + weak→steer mapping + no-op). Gate green
   (only the pre-existing mcpb-manifest version test + pre-existing unrelated `raycast/src`
   lint debt remain red — neither introduced here). Next: Phase 6 (trends + Raycast mirror).
+- **Phase 6 IN PROGRESS** — iter A (this iteration): backend only. `capsman-store.ts`
+  (`capsman_samples` bun:sqlite table, dynamic import like usage-store; pure
+  `summariseRadioSamples` grouping helper) + `capsman-sampler.ts` (slow 5-min sampler
+  reusing `fetchCapsmanState`/`capsmanOverview`, skips MAC-Telnet, memoises no-wireless
+  devices in `noCapsman` exactly like usage-sampler's `noUserManager`) + `GET
+/api/capsman/trends` route + open/start/close wiring in the dashboard. 4 store tests.
+  Gate green (no new tools -> no `gen`; no UI change -> build:ui deferred). Still TODO
+  (iter B): §5.6 trend graphs in `capsman.tsx` + Raycast `capsman` browse/audit commands
+  - Raycast `tsc --noEmit`, then tick the Phase 6 boxes.

@@ -130,6 +130,9 @@ import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./
 import { subscribeTraffic } from "./traffic-hub";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
+import { openCapsmanStore } from "./capsman-store";
+import type { CapsmanStore } from "./capsman-store";
+import { startCapsmanSampler, stopCapsmanSampler } from "./capsman-sampler";
 import { openUsageStore } from "./usage-store";
 import type { UsageStore } from "./usage-store";
 import {
@@ -866,6 +869,9 @@ async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
  * CAPsMAN read-only routes for the dashboard page. Each builds a device context
  * from `?device=` and runs the pure engine over the fetched CAPsMAN state.
  */
+/** CAPsMAN trend store, opened in runDashboard and filled by the slow sampler. */
+let capsmanStore: CapsmanStore | null = null;
+
 async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith("/api/capsman")) return null;
@@ -883,6 +889,13 @@ async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
     }
     if (p === "/api/capsman/audit") {
       return json(runCapsmanAudit(await fetchCapsmanState(ctx)));
+    }
+    if (p === "/api/capsman/trends") {
+      if (!capsmanStore) return json({ error: "capsman store not active" }, 503);
+      const device = resolveDeviceName(url.searchParams.get("device") ?? undefined);
+      const days = daysParam(url, 7, 30);
+      const series = capsmanStore.radioSeries(device, Date.now() - days * 86_400_000);
+      return json({ series, days });
     }
     return null;
   }
@@ -1444,6 +1457,15 @@ export async function runDashboard(
     logger.warn(`[${SERVER_TAG}] usage history disabled: ${String(e)}`);
   }
 
+  // CAPsMAN trends: a SQLite DB beside the events DB, filled by a slow (5-min)
+  // background sampler that snapshots each radio's client load for the graphs.
+  try {
+    capsmanStore = await openCapsmanStore(join(dirname(cfg.dbPath), "capsman.db"));
+    startCapsmanSampler(capsmanStore);
+  } catch (e) {
+    logger.warn(`[${SERVER_TAG}] capsman trends disabled: ${String(e)}`);
+  }
+
   // Seed an initial config baseline so the version timeline always has at least
   // one restore point (the state the dashboard started with).
   try {
@@ -1837,10 +1859,13 @@ export async function runDashboard(
     stop() {
       stopHealthChecks();
       stopUsageSampler();
+      stopCapsmanSampler();
       void server.stop(true);
       store.close();
       usageStore?.close();
       usageStore = null;
+      capsmanStore?.close();
+      capsmanStore = null;
       closeMemoryStore();
     },
   };
