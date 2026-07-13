@@ -336,12 +336,12 @@ Claude trailers, conventional-commit message.
 - [x] Tests: HA command builder for both topologies; apply ordering.
 - **Exit gate:** global gate green.
 
-### [ ] Phase 6 — Trends + Raycast mirror
+### [x] Phase 6 — Trends + Raycast mirror
 
-- [ ] `capsman_samples` (bun:sqlite) + a slow sampler reusing the usage-sampler's
+- [x] `capsman_samples` (bun:sqlite) + a slow sampler reusing the usage-sampler's
       unsupported-command memoization; `capsman` trend API + §5.6 graphs.
-- [ ] Raycast: `capsman` browse + audit command(s) (+ package.json + CHANGELOG).
-- [ ] Tests: sampler store; Raycast `tsc --noEmit` clean.
+- [x] Raycast: `capsman` browse + audit command(s) (+ package.json + CHANGELOG).
+- [x] Tests: sampler store; Raycast `tsc --noEmit` clean.
 - **Exit gate:** global gate green; build:ui + raycast tsc green.
 
 ### Blockers / notes (loop appends here)
@@ -382,3 +382,13 @@ Claude trailers, conventional-commit message.
   Gate green (no new tools -> no `gen`; no UI change -> build:ui deferred). Still TODO
   (iter B): §5.6 trend graphs in `capsman.tsx` + Raycast `capsman` browse/audit commands
   - Raycast `tsc --noEmit`, then tick the Phase 6 boxes.
+- **Phase 6 DONE** — iter B (this iteration): §5.6 graphs — a "Radio load trends" panel in
+  `capsman.tsx` reusing the shared `MetricArea` sparkline (per-radio client load, band-tinted
+  via theme tokens — no hardcoded hex, per the dashboard-colour test), fed by
+  `GET /api/capsman/trends`. Raycast `capsman` command (`raycast/src/capsman.tsx`): a
+  device-scoped List mirroring the page — radios (band/channel/load/co-channel), weak-signal
+  clients with recommended neighbour AP, and audit findings — registered in `package.json`
+  (20th command) + CHANGELOG. Gate green (build:ui green; `raycast bun run test:types` clean;
+  only the pre-existing mcpb-manifest version test + pre-existing unrelated `raycast/src` lint
+  debt remain red). All Phase 6 boxes ticked; every §10 phase box is now checked — the build is
+  complete.

@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, RefreshCw, Radio as RadioIcon, Scale, Wifi } from "lucide-react";
 import { api, postJson } from "./api";
 import { Panel, StatCard } from "./atoms";
+import { MetricArea } from "./charts";
 import { Badge, Button, Note, Spinner } from "./geist";
 import { num } from "./format";
 import { toast } from "./toast-action";
@@ -86,6 +87,18 @@ interface AuditPayload {
   findings: Finding[];
   summary: Record<Severity, number>;
   total: number;
+}
+interface RadioSeries {
+  radioId: string;
+  cap: string;
+  band: Band;
+  points: { ts: number; clients: number; channel: number | null }[];
+  peak: number;
+  avg: number;
+}
+interface TrendsPayload {
+  series: RadioSeries[];
+  days: number;
 }
 
 const SEV_COLOR: Record<Severity, string> = {
@@ -201,6 +214,7 @@ export function CapsmanView(): ReactNode {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [weak, setWeak] = useState<WeakClient[]>([]);
   const [audit, setAudit] = useState<AuditPayload | null>(null);
+  const [trends, setTrends] = useState<RadioSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -220,6 +234,13 @@ export function CapsmanView(): ReactNode {
       setError(e instanceof Error ? e.message : "Could not load CAPsMAN data");
     } finally {
       setLoading(false);
+    }
+    // Trends are optional (the sampler DB may be off/empty) — never fail the view.
+    try {
+      const t = await api<TrendsPayload>("/api/capsman/trends");
+      setTrends(t.series ?? []);
+    } catch {
+      setTrends([]);
     }
   }
 
@@ -580,10 +601,51 @@ export function CapsmanView(): ReactNode {
         )}
       </Panel>
 
+      {trends.length > 0 && (
+        <Panel
+          title="Radio load trends"
+          extra={
+            <span className="text-muted-foreground text-[11px]">
+              associated clients per radio · sampled every 5 min
+            </span>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 p-1 sm:grid-cols-2 xl:grid-cols-3">
+            {trends.map((s) => {
+              const color =
+                s.band === "5ghz"
+                  ? "var(--success)"
+                  : s.band === "2ghz"
+                    ? "var(--warning)"
+                    : "var(--muted-foreground)";
+              return (
+                <div key={s.radioId} className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      {bandBadge(s.band)}
+                      <span className="truncate">{s.cap}</span>
+                      <span className="text-muted-foreground">/{s.radioId}</span>
+                    </span>
+                    <span className="text-muted-foreground tabular-nums">
+                      peak {s.peak} · avg {s.avg}
+                    </span>
+                  </div>
+                  <MetricArea
+                    values={s.points.map((p) => p.clients)}
+                    color={color}
+                    id={`capsman-${s.radioId}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+      )}
+
       <p className="text-muted-foreground text-[11px]">
-        Steering &amp; load-balance apply are live (snapshot + Safe Mode, confirmed). Channel-plan
-        apply, FT enable and HA setup arrive in later phases. All steering is advisory — RouterOS
-        lets the client decide.
+        Steering, load-balance, channel-plan, FT and HA apply are all live (snapshot + Safe Mode,
+        confirmed). All steering is advisory — RouterOS lets the client decide. Load trends fill in
+        as the background sampler runs.
       </p>
     </div>
   );
