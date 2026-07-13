@@ -11,7 +11,9 @@ import {
   bandOf,
   buildAdjacency,
   buildChannelPlanCommands,
+  buildFtCommands,
   channelToFrequencyMhz,
+  resolveMobilityDomain,
   buildLoadBalanceCommands,
   buildSteerCommands,
   emptyCapsmanState,
@@ -502,5 +504,69 @@ describe("buildChannelPlanCommands", () => {
       radios: [radio({ cap: "AP-A", radioId: "r1", band: "2ghz", channel: 6, clientCount: 20 })],
     });
     expect(buildChannelPlanCommands(s)).toHaveLength(0);
+  });
+});
+
+// ── Phase 4: enable FT (802.11r) ─────────────────────────────────────────────
+
+describe("buildFtCommands + resolveMobilityDomain", () => {
+  test("enables ft + a shared mobility domain on a config that has FT off", () => {
+    const s = state({
+      path: "/interface wifi",
+      securityConfigs: [{ name: "corp", ssid: "Corp", ft: false }],
+    });
+    const cmds = buildFtCommands(s);
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0]).toContain('/interface wifi security set [find name="corp"]');
+    expect(cmds[0]).toContain("ft=yes");
+    expect(cmds[0]).toContain("ft-over-ds=yes");
+    expect(cmds[0]).toContain("ft-mobility-domain=0001");
+  });
+
+  test("converges mismatched mobility domains onto one (the first existing value)", () => {
+    const s = state({
+      path: "/interface wifi",
+      securityConfigs: [
+        { name: "a", ft: true, ftMobilityDomain: "aa11" },
+        { name: "b", ft: true, ftMobilityDomain: "bb22" },
+      ],
+    });
+    expect(resolveMobilityDomain(s)).toBe("aa11");
+    const cmds = buildFtCommands(s);
+    // config "a" already at aa11 → skipped; config "b" re-pointed to aa11.
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0]).toContain('name="b"');
+    expect(cmds[0]).toContain("ft-mobility-domain=aa11");
+  });
+
+  test("honours an explicit mobility_domain override", () => {
+    const s = state({ path: "/interface wifi", securityConfigs: [{ name: "corp", ft: false }] });
+    expect(buildFtCommands(s, { mobilityDomain: "dead" })[0]).toContain("ft-mobility-domain=dead");
+  });
+
+  test("is a no-op when every config already has ft + the target domain (idempotent)", () => {
+    const s = state({
+      path: "/interface wifi",
+      securityConfigs: [{ name: "corp", ft: true, ftMobilityDomain: "0001" }],
+    });
+    expect(buildFtCommands(s)).toHaveLength(0);
+  });
+
+  test("scopes to config_names when provided", () => {
+    const s = state({
+      path: "/interface wifi",
+      securityConfigs: [
+        { name: "corp", ft: false },
+        { name: "guest", ft: false },
+      ],
+    });
+    const cmds = buildFtCommands(s, { configNames: ["corp"] });
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0]).toContain('name="corp"');
+  });
+
+  test("uses the legacy /caps-man security menu on a caps-man device", () => {
+    const s = state({ path: "/caps-man", securityConfigs: [{ name: "corp", ft: false }] });
+    expect(buildFtCommands(s)[0]).toContain("/caps-man security set");
   });
 });

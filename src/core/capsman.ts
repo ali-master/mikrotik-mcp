@@ -685,6 +685,49 @@ export function buildLoadBalanceCommands(
   return cmds;
 }
 
+// ── Phase 4: enable 802.11r FT with a shared mobility domain ─────────────────
+
+/** The security menu for a device's wifi family (FT lives here). */
+export function securityMenu(path: WifiPathLike): string {
+  return path === "/caps-man" ? "/caps-man security" : `${path} security`;
+}
+
+/**
+ * Choose the mobility domain to converge on: an explicit override, else the first
+ * existing non-empty `ft-mobility-domain` across configs (so we adopt the admin's
+ * value), else a stable default. All FT-enabled configs must share ONE domain for
+ * seamless roaming.
+ */
+export function resolveMobilityDomain(state: CapsmanState, override?: string): string {
+  if (override) return override;
+  const existing = state.securityConfigs.find((c) => c.ftMobilityDomain)?.ftMobilityDomain;
+  return existing ?? "0001";
+}
+
+/**
+ * Build the write commands to enable 802.11r fast-transition on the selected
+ * security configs (all, or only `configNames`), converging every one on a single
+ * `ft-mobility-domain`. Skips a config already at `ft=yes` with that domain
+ * (idempotent). Fixes the `ft-off` and `ft-domain-mismatch` audit findings.
+ */
+export function buildFtCommands(
+  state: CapsmanState,
+  opts: { configNames?: string[]; mobilityDomain?: string } = {},
+): string[] {
+  const menu = securityMenu(state.path);
+  const domain = resolveMobilityDomain(state, opts.mobilityDomain);
+  const want = opts.configNames ? new Set(opts.configNames) : null;
+  const cmds: string[] = [];
+  for (const c of state.securityConfigs) {
+    if (want && !want.has(c.name)) continue;
+    if (c.ft && c.ftMobilityDomain === domain) continue; // already correct → no-op
+    cmds.push(
+      `${menu} set [find name="${c.name}"] ft=yes ft-over-ds=yes ft-mobility-domain=${domain}`,
+    );
+  }
+  return cmds;
+}
+
 // ── Dashboard payload (structured, for the CAPsMAN page) ─────────────────────
 
 export interface CapsmanOverview {

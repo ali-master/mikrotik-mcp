@@ -314,13 +314,17 @@ Claude trailers, conventional-commit message.
       caps-man returns none.
 - **Exit gate:** ✅ green (629 pass, only pre-existing mcpb) + build:ui. **PHASE 3 COMPLETE.**
 
-### [ ] Phase 4 — FT enable
+### [x] Phase 4 — FT enable
 
-- [ ] `enable_capsman_ft` (DANGEROUS) — FT + 802.11k/v with a shared mobility domain
-      across selected configuration(s).
-- [ ] Dashboard: §5.5 FT finding → one-click enable.
-- [ ] Tests: FT command builder + mobility-domain consistency.
-- **Exit gate:** global gate green.
+- [x] `enable_capsman_ft` (DANGEROUS) — sets ft=yes + ft-over-ds + a SINGLE shared
+      ft-mobility-domain across the security configs (`buildFtCommands` +
+      `resolveMobilityDomain`); dry-run, confirm, snapshot + Safe Mode; idempotent.
+      (802.11k/v steering is a separate config object — noted in the tool.)
+- [x] Dashboard: §5.5 **Enable FT** button in the roaming/HA strip (shown when an FT
+      finding exists) → `POST /api/capsman/apply/ft`.
+- [x] Tests: 6 new cases — enable on ft-off, converge mismatched domains, override,
+      idempotent skip, config scope, legacy caps-man menu.
+- **Exit gate:** ✅ green (635 pass, only pre-existing mcpb) + build:ui. **PHASE 4 COMPLETE.**
 
 ### [ ] Phase 5 — HA setup (highest blast radius — last)
 
@@ -354,3 +358,6 @@ Claude trailers, conventional-commit message.
 - **Phase 3 DONE** (iteration 4). `apply_capsman_channel_plan` + channel→freq builder,
   dashboard Apply-channel-plan button + `POST /api/capsman/apply/channel-plan`, 6 tests.
   Next: Phase 4 (FT enable).
+- **Phase 4 DONE** (iteration 5). `enable_capsman_ft` + FT builder/mobility-domain
+  resolver, dashboard Enable-FT button + `POST /api/capsman/apply/ft`, 6 tests.
+  Next: Phase 5 (HA setup — highest blast radius).

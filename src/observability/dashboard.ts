@@ -104,6 +104,7 @@ import type { Risk, ToolEvent } from "./event";
 import { listPrompts } from "../prompts";
 import {
   buildChannelPlanCommands,
+  buildFtCommands,
   buildLoadBalanceCommands,
   buildSteerCommands,
   capsmanOverview,
@@ -922,6 +923,11 @@ async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
       const commands = buildChannelPlanCommands(state);
       if (!body.confirm) return json({ ok: true, preview: commands });
       return json(await applyCapsmanWrites(ctx, commands, "pre-channel-plan"));
+    }
+    if (p === "/api/capsman/apply/ft") {
+      const commands = buildFtCommands(state);
+      if (!body.confirm) return json({ ok: true, preview: commands });
+      return json(await applyCapsmanWrites(ctx, commands, "pre-ft"));
     }
   }
   return null;

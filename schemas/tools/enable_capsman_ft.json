@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "enable_capsman_ft",
+  "type": "object",
+  "properties": {
+    "config_names": {
+      "description": "Only enable FT on these security configs. Omit for all.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mobility_domain": {
+      "description": "Shared ft-mobility-domain to converge on. Omit to adopt the existing one (or 0001).",
+      "type": "string"
+    },
+    "confirm": {
+      "description": "Must be true to write; omit for a dry-run preview.",
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "additionalProperties": false
+}

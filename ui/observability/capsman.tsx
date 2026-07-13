@@ -427,7 +427,40 @@ export function CapsmanView(): ReactNode {
       </Panel>
 
       {/* §5.5 Roaming & HA audit strip */}
-      <Panel title="Roaming (FT) & HA audit">
+      <Panel
+        title="Roaming (FT) & HA audit"
+        extra={
+          audit && audit.findings.some((f) => f.category === "ft") ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="h-6 px-2 text-[11px]">
+                  <Wifi className="size-3" /> Enable FT
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Enable 802.11r fast-roaming?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Turns on FT across the CAPsMAN security configs and converges them on ONE shared
+                    mobility domain, so clients roam between floors without a full re-auth. This
+                    briefly re-keys associated clients. Snapshot + Safe Mode; idempotent.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() =>
+                      void runApply("/api/capsman/apply/ft", {}, "Enable FT", () => void load())
+                    }
+                  >
+                    Enable FT
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : undefined
+        }
+      >
         {!audit || audit.total === 0 ? (
           <p className="text-emerald-500 text-sm">
             No findings — roaming &amp; redundancy look healthy. ✓

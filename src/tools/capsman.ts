@@ -11,11 +11,13 @@ import type { ToolContext } from "../core/context";
 import {
   DEFAULT_WEAK_DBM,
   buildChannelPlanCommands,
+  buildFtCommands,
   buildLoadBalanceCommands,
   buildSteerCommands,
   loadBalancePlan,
   proposeChannelPlan,
   reportWeakClients,
+  resolveMobilityDomain,
   runCapsmanAudit,
   renderCapsmanReport,
   steerAlreadyPresent,
@@ -314,6 +316,53 @@ export const capsmanTools: ToolModule = [
         return `DRY RUN — channel plan (set confirm=true to apply):\n\n${commands.map((c) => `  ${c}`).join("\n")}`;
       }
       return applyCapsman(ctx, device, commands, "pre-apply_capsman_channel_plan");
+    },
+  }),
+
+  defineTool({
+    name: "enable_capsman_ft",
+    title: "Enable CAPsMAN Fast-Roaming (802.11r)",
+    annotations: DANGEROUS,
+    description:
+      "Enables 802.11r fast-transition on the CAPsMAN security configs, converging every one on a " +
+      "SINGLE shared `ft-mobility-domain` (so roaming between floors is seamless and consistent) — " +
+      "fixing the ft-off and ft-domain-mismatch findings. Scope with `config_names`; set the domain " +
+      "with `mobility_domain` (default: the existing domain, else 0001). Note: enabling FT changes the " +
+      "SSID's roaming behaviour and briefly re-keys clients. DRY RUN unless confirm=true. Snapshots " +
+      "first, applies inside Safe Mode; idempotent. 802.11k/v steering is configured separately.",
+    inputSchema: {
+      config_names: z
+        .array(z.string())
+        .optional()
+        .describe("Only enable FT on these security configs. Omit for all."),
+      mobility_domain: z
+        .string()
+        .optional()
+        .describe(
+          "Shared ft-mobility-domain to converge on. Omit to adopt the existing one (or 0001).",
+        ),
+      confirm: z
+        .literal(true)
+        .optional()
+        .describe("Must be true to write; omit for a dry-run preview."),
+    },
+    async handler(a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      const state = await fetchCapsmanState(ctx);
+      if (state.securityConfigs.length === 0) {
+        return "No CAPsMAN security configs found — nothing to enable FT on.";
+      }
+      const commands = buildFtCommands(state, {
+        configNames: a.config_names,
+        mobilityDomain: a.mobility_domain,
+      });
+      if (commands.length === 0) {
+        return `FT already enabled and consistent (mobility-domain=${resolveMobilityDomain(state, a.mobility_domain)}). Idempotent no-op.`;
+      }
+      if (!a.confirm) {
+        return `DRY RUN — enable FT (set confirm=true to apply):\n\n${commands.map((c) => `  ${c}`).join("\n")}`;
+      }
+      return applyCapsman(ctx, device, commands, "pre-enable_capsman_ft");
     },
   }),
 ];
