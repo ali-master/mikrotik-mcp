@@ -1,0 +1,539 @@
+/**
+ * CAPsMAN Orchestrator engine — pure analysis, zero device I/O.
+ *
+ * Consumes an already-fetched {@link CapsmanState} (the tool layer in
+ * `src/tools/capsman.ts` does the fetching via `src/utils/wifi-query.ts`) and
+ * produces:
+ *   • a floor/zone model (explicit tags + signal-inferred adjacency — plan §3),
+ *   • coverage / co-channel findings + a proposed manual channel plan (§4.A),
+ *   • weak-signal client findings with a best-neighbor recommendation (§4.B),
+ *   • a resource-aware load model + rebalance plan (§4.C),
+ *   • FT (802.11r) and HA roam/redundancy audits (§4.D),
+ *   • one merged, severity-ranked report ({@link runCapsmanAudit}).
+ *
+ * Kept import-free of `connector.ts` so it's unit-tested without a live device,
+ * mirroring `security-hardening.ts` / `port-scan-detection.ts`. Every finding
+ * carries `finding_id`/`severity`/`confidence`; steering/balance actions are
+ * ADVISORY (RouterOS has no force-move primitive — plan §1), so anything that
+ * depends on client behaviour is `needs_live_verification`, never `proven`.
+ */
+
+// ── Result types ────────────────────────────────────────────────────────────
+
+export type Confidence = "proven" | "needs_live_verification";
+export type Severity = "critical" | "high" | "medium" | "low";
+export type CapsmanCategory = "coverage" | "weak_signal" | "load" | "ft" | "ha";
+
+export const SEVERITY_ORDER: Record<Severity, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+export interface CapsmanFinding {
+  finding_id: string;
+  category: CapsmanCategory;
+  severity: Severity;
+  confidence: Confidence;
+  title: string;
+  /** The radio / CAP / client / config the finding is about. */
+  target: string;
+  detail: string;
+  /** Proposed action (advisory). */
+  recommendation: string;
+}
+
+export interface CapsmanReport {
+  findings: CapsmanFinding[];
+  summary: Record<Severity, number>;
+  total: number;
+}
+
+// ── Device state (populated by the tool layer) ──────────────────────────────
+
+export type Band = "2ghz" | "5ghz" | "unknown";
+
+/** One radio on a managed CAP, as seen from the manager. */
+export interface CapRadio {
+  /** CAP identity/name (e.g. "AP-F3-E"). */
+  cap: string;
+  /** Radio/interface name on the manager (e.g. "cap-2ghz-1"). Unique key. */
+  radioId: string;
+  band: Band;
+  /** Channel/frequency (number: MHz like 2412/5180, or a small channel index). */
+  channel?: number;
+  width?: string;
+  txPower?: number;
+  clientCount: number;
+  /** Parsed floor/zone from the CAP identity or a comment tag (may be absent). */
+  floor?: string;
+  zone?: string;
+  /** Owning CAP resources (percent 0–100), when the tool could read them. */
+  cpuLoad?: number;
+  memUsedPct?: number;
+}
+
+/** One associated client, merged from every CAP's registration-table. */
+export interface WifiClient {
+  mac: string;
+  /** Radio it is currently associated to (a `CapRadio.radioId`). */
+  radioId: string;
+  /** Signal on the current radio, dBm (negative; higher = stronger). */
+  signal: number;
+  band: Band;
+  txRate?: string;
+  rxRate?: string;
+  uptime?: string;
+  /**
+   * Signal (dBm) this client's MAC is ALSO seen at on other radios — the raw
+   * material for adjacency + the best-neighbor recommendation. Keyed by radioId.
+   * Absent/empty when the client is only visible on its current radio.
+   */
+  seenOn?: Record<string, number>;
+}
+
+/** One SSID/security configuration relevant to the FT audit. */
+export interface WifiSecurityConfig {
+  name: string;
+  ssid?: string;
+  /** 802.11r fast-transition enabled. */
+  ft?: boolean;
+  ftOverDs?: boolean;
+  /** Mobility domain id (must match across all CAPs for seamless FT). */
+  ftMobilityDomain?: string;
+  /** 802.11k neighbor reports. */
+  rrm?: boolean;
+  /** 802.11v BSS transition. */
+  wnm?: boolean;
+}
+
+export interface CapsmanState {
+  /** True when a CAPsMAN manager is enabled on this device. */
+  managerEnabled: boolean;
+  /** Count of configured managers reachable by the CAPs (1 = no HA). */
+  managerCount: number;
+  /** True when CAPs are configured to fail over to a backup manager. */
+  capsHaveBackupManager: boolean;
+  /** True when the manager requires peer certificates (HA hardening). */
+  requirePeerCertificate: boolean;
+  radios: CapRadio[];
+  clients: WifiClient[];
+  securityConfigs: WifiSecurityConfig[];
+}
+
+/** An empty state — every slice absent. Handy for tests and partial audits. */
+export function emptyCapsmanState(): CapsmanState {
+  return {
+    managerEnabled: false,
+    managerCount: 0,
+    capsHaveBackupManager: false,
+    requirePeerCertificate: false,
+    radios: [],
+    clients: [],
+    securityConfigs: [],
+  };
+}
+
+// ── Tunables ────────────────────────────────────────────────────────────────
+
+/** Default weak-signal threshold (dBm). A client below this should be steered. */
+export const DEFAULT_WEAK_DBM = -70;
+/** A neighbor radio must beat the current one by at least this (dB) to recommend it. */
+export const MIN_STEER_GAIN_DB = 8;
+/** Per-radio client count above which a radio is "overloaded". */
+export const OVERLOAD_CLIENTS = 25;
+/** CPU load (%) above which a CAP is resource-constrained. */
+export const CPU_CONSTRAINED_PCT = 80;
+
+// ── Floor / zone model (plan §3: A explicit tag + C signal adjacency) ────────
+
+/**
+ * Parse a floor/zone from a CAP identity or comment tag. Supports:
+ *   • identity convention `AP-F3-E` / `ap_f3_east` → floor "3", zone "E"/"east"
+ *   • an explicit `floor=3 zone=east` key run (from a comment).
+ * Returns `{}` when nothing parses — the engine then leans on signal adjacency.
+ */
+export function parseFloorTag(text: string | undefined): { floor?: string; zone?: string } {
+  if (!text) return {};
+  const kvFloor = text.match(/floor\s*[=:]\s*([\w-]+)/i)?.[1];
+  const kvZone = text.match(/zone\s*[=:]\s*([\w-]+)/i)?.[1];
+  if (kvFloor || kvZone) return { floor: kvFloor, zone: kvZone };
+  // Identity convention: an `F<digit>` (floor) and an optional trailing zone token.
+  const f = text.match(/\bF(\d{1,2})\b/i) ?? text.match(/floor[-_]?(\d{1,2})/i);
+  const z = text.match(/\b(?:F\d{1,2}|floor[-_]?\d{1,2})[-_]([A-Za-z]+)\b/i);
+  const out: { floor?: string; zone?: string } = {};
+  if (f) out.floor = f[1];
+  if (z) out.zone = z[1];
+  return out;
+}
+
+/**
+ * Physical-adjacency graph between radios, inferred from clients that are visible
+ * on more than one radio: if many clients on radio A are also seen (at a decent
+ * signal) on radio B, A and B are physically adjacent. Returns, per radio, the
+ * set of adjacent radioIds. Symmetric.
+ */
+export function buildAdjacency(clients: WifiClient[]): Map<string, Set<string>> {
+  const adj = new Map<string, Set<string>>();
+  const link = (a: string, b: string): void => {
+    if (a === b) return;
+    (adj.get(a) ?? adj.set(a, new Set()).get(a)!).add(b);
+    (adj.get(b) ?? adj.set(b, new Set()).get(b)!).add(a);
+  };
+  for (const c of clients) {
+    if (!c.seenOn) continue;
+    for (const [other, sig] of Object.entries(c.seenOn)) {
+      // Only count a neighbor the client can actually hear (not noise floor).
+      if (other !== c.radioId && sig > -85) link(c.radioId, other);
+    }
+  }
+  return adj;
+}
+
+/** Index radios by their radioId for O(1) lookup. */
+function radioIndex(radios: CapRadio[]): Map<string, CapRadio> {
+  return new Map(radios.map((r) => [r.radioId, r]));
+}
+
+/** Map a RouterOS frequency/channel to a band when the band field is unknown. */
+export function bandOf(radio: CapRadio): Band {
+  if (radio.band !== "unknown") return radio.band;
+  const ch = radio.channel ?? 0;
+  if (ch >= 5000 || (ch >= 36 && ch <= 177)) return "5ghz";
+  if ((ch >= 2400 && ch <= 2500) || (ch >= 1 && ch <= 14)) return "2ghz";
+  return "unknown";
+}
+
+// ── §4.A Coverage / co-channel ───────────────────────────────────────────────
+
+/** Non-overlapping 2.4 GHz channels (the only three that don't overlap). */
+export const CLEAN_24_CHANNELS = [1, 6, 11];
+
+function auditCoverage(state: CapsmanState): CapsmanFinding[] {
+  const findings: CapsmanFinding[] = [];
+  const adj = buildAdjacency(state.clients);
+  const byId = radioIndex(state.radios);
+
+  // Co-channel: two ADJACENT radios on the same band + same channel interfere.
+  const seenPairs = new Set<string>();
+  for (const r of state.radios) {
+    const neighbors = adj.get(r.radioId);
+    if (!neighbors) continue;
+    for (const nId of neighbors) {
+      const n = byId.get(nId);
+      if (!n) continue;
+      if (bandOf(r) !== bandOf(n) || r.channel == null || r.channel !== n.channel) continue;
+      const key = [r.radioId, nId].sort().join("|");
+      if (seenPairs.has(key)) continue;
+      seenPairs.add(key);
+      findings.push({
+        finding_id: `cochannel:${key}`,
+        category: "coverage",
+        severity: "high",
+        confidence: "proven",
+        title: `Co-channel overlap on ${bandOf(r)} channel ${r.channel}`,
+        target: `${r.cap}/${r.radioId} ↔ ${n.cap}/${n.radioId}`,
+        detail:
+          `Adjacent radios ${r.cap} and ${n.cap} both use ${bandOf(r)} channel ${r.channel}; ` +
+          "clients in the overlap contend for the same airtime, cutting throughput.",
+        recommendation:
+          bandOf(r) === "2ghz"
+            ? `Move one radio to a non-overlapping 2.4 GHz channel (${CLEAN_24_CHANNELS.join("/")}).`
+            : "Assign the two radios different 5 GHz channels (DFS-aware).",
+      });
+    }
+  }
+  return findings;
+}
+
+/**
+ * Propose a non-overlapping manual channel plan: greedily assign each adjacent
+ * 2.4 GHz radio a clean channel (1/6/11) different from its already-assigned
+ * neighbors. Returns `radioId → channel`. (5 GHz has many non-overlapping
+ * channels; a simple round-robin over adjacency avoids collisions there.)
+ */
+export function proposeChannelPlan(state: CapsmanState): Map<string, number> {
+  const adj = buildAdjacency(state.clients);
+  const plan = new Map<string, number>();
+  const order = [...state.radios].sort((a, b) => b.clientCount - a.clientCount);
+  for (const r of order) {
+    const band = bandOf(r);
+    const palette = band === "2ghz" ? CLEAN_24_CHANNELS : [36, 40, 44, 48, 149, 153, 157, 161];
+    const used = new Set<number>();
+    for (const nId of adj.get(r.radioId) ?? []) {
+      const nc = plan.get(nId);
+      if (nc != null) used.add(nc);
+    }
+    plan.set(r.radioId, palette.find((c) => !used.has(c)) ?? palette[0]);
+  }
+  return plan;
+}
+
+// ── §4.B Weak-signal clients + best-neighbor recommendation ──────────────────
+
+export interface WeakClient {
+  mac: string;
+  currentRadio: string;
+  currentCap: string;
+  signal: number;
+  band: Band;
+  /** Best neighbor radio to steer toward, or null when none is meaningfully better. */
+  recommendRadioId?: string;
+  recommendCap?: string;
+  gainDb?: number;
+}
+
+/** Compute weak clients and their best-neighbor steer target. Pure. */
+export function reportWeakClients(state: CapsmanState, weakDbm = DEFAULT_WEAK_DBM): WeakClient[] {
+  const byId = radioIndex(state.radios);
+  const out: WeakClient[] = [];
+  for (const c of state.clients) {
+    if (c.signal >= weakDbm) continue;
+    const cur = byId.get(c.radioId);
+    let bestId: string | undefined;
+    let bestSig = c.signal;
+    for (const [rid, sig] of Object.entries(c.seenOn ?? {})) {
+      if (rid === c.radioId) continue;
+      if (sig > bestSig) {
+        bestSig = sig;
+        bestId = rid;
+      }
+    }
+    const gain = bestId ? bestSig - c.signal : 0;
+    const rec = bestId && gain >= MIN_STEER_GAIN_DB ? byId.get(bestId) : undefined;
+    out.push({
+      mac: c.mac,
+      currentRadio: c.radioId,
+      currentCap: cur?.cap ?? "?",
+      signal: c.signal,
+      band: c.band,
+      recommendRadioId: rec ? rec.radioId : undefined,
+      recommendCap: rec ? rec.cap : undefined,
+      gainDb: rec ? gain : undefined,
+    });
+  }
+  return out.sort((a, b) => a.signal - b.signal);
+}
+
+function auditWeakSignal(state: CapsmanState, weakDbm = DEFAULT_WEAK_DBM): CapsmanFinding[] {
+  return reportWeakClients(state, weakDbm).map((w) => ({
+    finding_id: `weak:${w.mac}`,
+    category: "weak_signal",
+    severity: w.signal < weakDbm - 15 ? "high" : "medium",
+    // Steering depends on the client obeying the hint → never "proven".
+    confidence: "needs_live_verification",
+    title: `Weak client ${w.mac} at ${w.signal} dBm on ${w.currentCap}`,
+    target: `${w.mac} @ ${w.currentCap}/${w.currentRadio}`,
+    detail: `Client signal ${w.signal} dBm is below the ${weakDbm} dBm threshold${
+      w.recommendCap
+        ? `; it sees ${w.recommendCap} ~${w.gainDb} dB stronger.`
+        : "; no neighbor radio hears it meaningfully better (coverage gap here)."
+    }`,
+    recommendation: w.recommendCap
+      ? `Steer ${w.mac} toward ${w.recommendCap} (soft 802.11k/v, or hard signal-range).`
+      : "Coverage hole — add/relocate an AP or raise tx-power; steering won't help.",
+  }));
+}
+
+// ── §4.C Resource-aware load ─────────────────────────────────────────────────
+
+interface RadioLoad {
+  radio: CapRadio;
+  overloaded: boolean;
+  cpuConstrained: boolean;
+}
+
+function loadModel(state: CapsmanState): RadioLoad[] {
+  return state.radios.map((radio) => ({
+    radio,
+    overloaded: radio.clientCount > OVERLOAD_CLIENTS,
+    cpuConstrained: (radio.cpuLoad ?? 0) > CPU_CONSTRAINED_PCT,
+  }));
+}
+
+function auditLoad(state: CapsmanState): CapsmanFinding[] {
+  const findings: CapsmanFinding[] = [];
+  const adj = buildAdjacency(state.clients);
+  const byId = radioIndex(state.radios);
+  const loads = loadModel(state);
+
+  for (const l of loads) {
+    if (!l.overloaded && !l.cpuConstrained) continue;
+    // Find an adjacent radio with spare capacity to offload toward.
+    let target: CapRadio | undefined;
+    for (const nId of adj.get(l.radio.radioId) ?? []) {
+      const n = byId.get(nId);
+      if (!n) continue;
+      if (n.clientCount < OVERLOAD_CLIENTS && (n.cpuLoad ?? 0) < CPU_CONSTRAINED_PCT) {
+        if (!target || n.clientCount < target.clientCount) target = n;
+      }
+    }
+    const why = l.cpuConstrained
+      ? `CAP CPU at ${l.radio.cpuLoad}% (>${CPU_CONSTRAINED_PCT}%)`
+      : `${l.radio.clientCount} clients (>${OVERLOAD_CLIENTS})`;
+    findings.push({
+      finding_id: `load:${l.radio.radioId}`,
+      category: "load",
+      severity: l.cpuConstrained ? "high" : "medium",
+      confidence: "needs_live_verification",
+      title: `Overloaded radio ${l.radio.cap}/${l.radio.radioId}`,
+      target: `${l.radio.cap}/${l.radio.radioId}`,
+      detail: `${why}.${target ? ` Neighbor ${target.cap} has spare capacity.` : ""}`,
+      recommendation: target
+        ? `Rebalance some clients toward ${target.cap}; steer dual-band clients to 5 GHz.`
+        : "No adjacent radio has spare capacity — the whole zone is saturated; add an AP.",
+    });
+  }
+  return findings;
+}
+
+// ── §4.D FT (802.11r) + HA ───────────────────────────────────────────────────
+
+function auditFt(state: CapsmanState): CapsmanFinding[] {
+  const findings: CapsmanFinding[] = [];
+  if (state.securityConfigs.length === 0) return findings;
+
+  for (const c of state.securityConfigs) {
+    if (!c.ft) {
+      findings.push({
+        finding_id: `ft-off:${c.name}`,
+        category: "ft",
+        severity: "medium",
+        confidence: "proven",
+        title: `802.11r fast-transition off on "${c.ssid ?? c.name}"`,
+        target: c.name,
+        detail:
+          "Without FT, roaming re-does the full auth handshake — a visible stall for VoIP/video as people move between floors.",
+        recommendation:
+          "Enable ft + a shared ft-mobility-domain across all CAPs, and 802.11k/v steering.",
+      });
+    }
+    if (c.ft && (!c.rrm || !c.wnm)) {
+      findings.push({
+        finding_id: `ft-nosteer:${c.name}`,
+        category: "ft",
+        severity: "low",
+        confidence: "proven",
+        title: `FT on but 802.11k/v steering incomplete on "${c.ssid ?? c.name}"`,
+        target: c.name,
+        detail: `rrm(k)=${c.rrm ? "on" : "off"}, wnm(v)=${c.wnm ? "on" : "off"} — clients get no neighbor hints to roam early.`,
+        recommendation:
+          "Enable both rrm (802.11k) and wnm (802.11v) so clients roam before the signal collapses.",
+      });
+    }
+  }
+
+  // Mobility-domain consistency: every FT-enabled config should share ONE domain.
+  const domains = new Set(
+    state.securityConfigs.filter((c) => c.ft && c.ftMobilityDomain).map((c) => c.ftMobilityDomain),
+  );
+  if (domains.size > 1) {
+    findings.push({
+      finding_id: "ft-domain-mismatch",
+      category: "ft",
+      severity: "high",
+      confidence: "proven",
+      title: "Inconsistent FT mobility domains across CAPs",
+      target: [...domains].join(", "),
+      detail: `Found ${domains.size} distinct ft-mobility-domain values — fast roaming only works WITHIN a domain, so clients still do a full handshake crossing the boundary.`,
+      recommendation: "Set the SAME ft-mobility-domain on every CAP that shares an SSID.",
+    });
+  }
+  return findings;
+}
+
+function auditHa(state: CapsmanState): CapsmanFinding[] {
+  const findings: CapsmanFinding[] = [];
+  if (!state.managerEnabled) return findings; // not a controller → HA N/A
+
+  if (state.managerCount < 2 || !state.capsHaveBackupManager) {
+    findings.push({
+      finding_id: "ha-single-manager",
+      category: "ha",
+      severity: "high",
+      confidence: "proven",
+      title: "CAPsMAN has no backup manager (single point of failure)",
+      target: "capsman manager",
+      detail:
+        "Only one manager is configured / the CAPs aren't pointed at a backup. If it reboots or the link drops, every AP in the building goes dark.",
+      recommendation:
+        "Stand up a second manager and point the CAPs at both (caps-man-addresses / discovery), cert-based.",
+    });
+  }
+  if ((state.managerCount >= 2 || state.capsHaveBackupManager) && !state.requirePeerCertificate) {
+    findings.push({
+      finding_id: "ha-no-cert",
+      category: "ha",
+      severity: "medium",
+      confidence: "proven",
+      title: "CAPsMAN HA without peer-certificate enforcement",
+      target: "capsman manager",
+      detail:
+        "A backup manager exists but require-peer-certificate is off — a rogue manager could adopt your CAPs.",
+      recommendation: "Enable require-peer-certificate and provision CA/manager certificates.",
+    });
+  }
+  return findings;
+}
+
+// ── Orchestrator ─────────────────────────────────────────────────────────────
+
+export interface AuditOptions {
+  categories?: CapsmanCategory[];
+  weakDbm?: number;
+}
+
+/** Run the requested category audits (default: all) into one ranked report. */
+export function runCapsmanAudit(state: CapsmanState, opts: AuditOptions = {}): CapsmanReport {
+  const want = new Set(
+    opts.categories ?? (["coverage", "weak_signal", "load", "ft", "ha"] as const),
+  );
+  const findings: CapsmanFinding[] = [];
+  if (want.has("coverage")) findings.push(...auditCoverage(state));
+  if (want.has("weak_signal"))
+    findings.push(...auditWeakSignal(state, opts.weakDbm ?? DEFAULT_WEAK_DBM));
+  if (want.has("load")) findings.push(...auditLoad(state));
+  if (want.has("ft")) findings.push(...auditFt(state));
+  if (want.has("ha")) findings.push(...auditHa(state));
+
+  findings.sort(
+    (a, b) =>
+      SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] ||
+      a.category.localeCompare(b.category) ||
+      a.finding_id.localeCompare(b.finding_id),
+  );
+  const summary: Record<Severity, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+  for (const f of findings) summary[f.severity]++;
+  return { findings, summary, total: findings.length };
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+
+const SEV_TAG: Record<Severity, string> = {
+  critical: "CRIT",
+  high: "HIGH",
+  medium: "MED ",
+  low: "LOW ",
+};
+
+/** Plain-text report for text-only hosts. */
+export function renderCapsmanReport(report: CapsmanReport, device: string): string {
+  const head =
+    `CAPsMAN AUDIT — ${device}\n` +
+    `${report.total} finding(s): ${report.summary.critical} critical, ${report.summary.high} high, ` +
+    `${report.summary.medium} medium, ${report.summary.low} low`;
+  if (report.total === 0) return `${head}\n\nNo findings — Wi-Fi fabric looks healthy. ✓`;
+  const body = report.findings
+    .map((f, i) => {
+      return (
+        `${i + 1}. [${SEV_TAG[f.severity]}] ${f.title}\n` +
+        `   id=${f.finding_id}  category=${f.category}  confidence=${f.confidence}\n` +
+        `   target : ${f.target}\n` +
+        `   detail : ${f.detail}\n` +
+        `   suggest: ${f.recommendation}`
+      );
+    })
+    .join("\n\n");
+  return `${head}\n\n${body}`;
+}
