@@ -260,7 +260,7 @@ Plus, when a phase adds/changes tools: register in `src/tools/index.ts`, run
 formatter drift — see the gen-drift memory). Commit under the user's git identity, no
 Claude trailers, conventional-commit message.
 
-### [ ] Phase 1 — Read-only foundation
+### [x] Phase 1 — Read-only foundation
 
 - [x] `src/utils/wifi-query.ts` — wifi-path resolver (v7 `wifi` → `wifiwave2` →
       legacy `/caps-man`), fetch every slice → `fetchCapsmanState`. (Pure wire→model
@@ -278,13 +278,13 @@ Claude trailers, conventional-commit message.
 - [x] `tests/core/capsman.spec.ts` — 28 cases: co-channel, resource-starved CAP,
       FT-misconfig (mobility-domain mismatch), no-HA, floor-tag-missing fallback,
       already-optimal → zero findings, + the wire normaliser.
-- [ ] Dashboard: `GET /api/capsman/overview`, `/clients`, `/audit` routes +
-      `ui/observability/capsman.tsx` VIEW-ONLY (§5.1–§5.5 read-only), wired into
-      `main.tsx` (ViewId + nav + icon + help), themed.
-- [ ] Docs: `docs/capsman.md` + README/observability rows.
-- **Exit gate:** global gate green; dashboard `bun run build:ui` succeeds.
-  _(Backend gate is GREEN now — 615 pass, the pre-existing mcpb-manifest failure is
-  the only red. Box stays unchecked until the dashboard page + docs land.)_
+- [x] Dashboard: `GET /api/capsman/overview|clients|audit` routes +
+      `ui/observability/capsman.tsx` VIEW-ONLY (floor coverage/load grid, weak-signal
+      table, FT/HA audit strip), wired into `main.tsx` (ViewId + nav + icon + help),
+      themed. Structured payload via `capsmanOverview` in the engine.
+- [x] Docs: `docs/capsman.md` + README + observability.md rows.
+- **Exit gate:** ✅ global gate green (615 pass, only the pre-existing mcpb-manifest
+  failure) + `bun run build:ui` succeeds. **PHASE 1 COMPLETE.**
 
 ### [ ] Phase 2 — Steering + load-balance apply
 
@@ -335,9 +335,7 @@ Claude trailers, conventional-commit message.
 
 ### Blockers / notes (loop appends here)
 
-- **Phase 1 split into two increments (not blocked).** Iteration 1 landed the
-  gate-green backend (utils + engine + normaliser + 6 read tools + registration +
-  28 tests). Remaining for the Phase-1 box: the VIEW-ONLY dashboard page
-  (`ui/observability/capsman.tsx` + `GET /api/capsman/overview|clients|audit` +
-  `main.tsx` wiring) and `docs/capsman.md` + README/observability rows, then
-  `bun run build:ui` in the exit gate. Next iteration finishes these and ticks the box.
+- **Phase 1 DONE** (2 iterations). Iter 1: backend (utils + engine + normaliser +
+  6 read tools + 28 tests). Iter 2: view-only dashboard page + 3 `/api/capsman/*`
+  routes + `main.tsx` wiring + `docs/capsman.md` + README/observability rows;
+  `build:ui` green. Next: Phase 2 (steering + load-balance apply).

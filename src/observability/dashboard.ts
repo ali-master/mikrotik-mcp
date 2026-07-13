@@ -102,6 +102,8 @@ import {
 import { redact, riskOf } from "./event";
 import type { Risk, ToolEvent } from "./event";
 import { listPrompts } from "../prompts";
+import { capsmanOverview, reportWeakClients, runCapsmanAudit } from "../core/capsman";
+import { fetchCapsmanState } from "../utils/wifi-query";
 import {
   getDeviceHistory,
   getDeviceNeighbors,
@@ -846,6 +848,33 @@ async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
  * RouterOS commands. Mutations return the operation result plus a refreshed
  * device `view` so the page can adopt the new state without a second request.
  */
+/**
+ * CAPsMAN read-only routes for the dashboard page. Each builds a device context
+ * from `?device=` and runs the pure engine over the fetched CAPsMAN state.
+ */
+async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+  if (!p.startsWith("/api/capsman")) return null;
+  if (req.method !== "GET") return null;
+  const ctx = createContext(undefined, url.searchParams.get("device") ?? undefined);
+
+  if (p === "/api/capsman/overview") {
+    const state = await fetchCapsmanState(ctx);
+    return json(capsmanOverview(state));
+  }
+  if (p === "/api/capsman/clients") {
+    const state = await fetchCapsmanState(ctx);
+    const weakDbm = Number.parseInt(url.searchParams.get("weak_dbm") ?? "", 10);
+    const weak = reportWeakClients(state, Number.isFinite(weakDbm) ? weakDbm : undefined);
+    return json({ clients: state.clients, weak });
+  }
+  if (p === "/api/capsman/audit") {
+    const state = await fetchCapsmanState(ctx);
+    return json(runCapsmanAudit(state));
+  }
+  return null;
+}
+
 async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith("/api/clients")) return null;
@@ -1397,6 +1426,9 @@ export async function runDashboard(
 
     const captureResp = await captureRoutes(req, url);
     if (captureResp) return captureResp;
+
+    const capsmanResp = await capsmanRoutes(req, url);
+    if (capsmanResp) return capsmanResp;
 
     const clientsResp = await clientsRoutes(req, url);
     if (clientsResp) return clientsResp;

@@ -508,6 +508,60 @@ export function runCapsmanAudit(state: CapsmanState, opts: AuditOptions = {}): C
   return { findings, summary, total: findings.length };
 }
 
+// ── Dashboard payload (structured, for the CAPsMAN page) ─────────────────────
+
+export interface CapsmanOverview {
+  managerEnabled: boolean;
+  managerCount: number;
+  capsHaveBackupManager: boolean;
+  requirePeerCertificate: boolean;
+  radios: (CapRadio & { adjacent: string[]; conflicts: string[] })[];
+  /** Co-channel radio pairs (radioId ↔ radioId) for the heatmap's red edges. */
+  cochannel: [string, string][];
+  proposedChannels: Record<string, number>;
+  bandSplit: { "2ghz": number; "5ghz": number; unknown: number };
+  totals: { radios: number; clients: number; caps: number };
+}
+
+/** Structured overview for the dashboard heatmap/load board. Pure. */
+export function capsmanOverview(state: CapsmanState): CapsmanOverview {
+  const adj = buildAdjacency(state.clients);
+  const byId = radioIndex(state.radios);
+  const cochannel: [string, string][] = [];
+  const seen = new Set<string>();
+  const radios = state.radios.map((r) => {
+    const neighbors = [...(adj.get(r.radioId) ?? [])];
+    const conflicts: string[] = [];
+    for (const nId of neighbors) {
+      const n = byId.get(nId);
+      if (!n) continue;
+      if (bandOf(r) === bandOf(n) && r.channel != null && r.channel === n.channel) {
+        conflicts.push(nId);
+        const key = [r.radioId, nId].sort().join("|");
+        if (!seen.has(key)) {
+          seen.add(key);
+          cochannel.push([r.radioId, nId]);
+        }
+      }
+    }
+    return { ...r, adjacent: neighbors, conflicts };
+  });
+  const bandSplit = { "2ghz": 0, "5ghz": 0, unknown: 0 } as Record<Band, number>;
+  for (const c of state.clients) bandSplit[c.band] += 1;
+  const caps = new Set(state.radios.map((r) => r.cap)).size;
+  return {
+    managerEnabled: state.managerEnabled,
+    managerCount: state.managerCount,
+    capsHaveBackupManager: state.capsHaveBackupManager,
+    requirePeerCertificate: state.requirePeerCertificate,
+    radios,
+    cochannel,
+    proposedChannels: Object.fromEntries(proposeChannelPlan(state)),
+    bandSplit,
+    totals: { radios: state.radios.length, clients: state.clients.length, caps },
+  };
+}
+
 // ── Rendering ────────────────────────────────────────────────────────────────
 
 const SEV_TAG: Record<Severity, string> = {
