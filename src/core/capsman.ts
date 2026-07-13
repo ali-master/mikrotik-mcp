@@ -728,6 +728,102 @@ export function buildFtCommands(
   return cmds;
 }
 
+// ── Phase 5: HA setup + the fix-dispatch orchestrator ────────────────────────
+
+/** The manager menu for a device's wifi family. */
+export function managerMenu(path: WifiPathLike): string {
+  return path === "/caps-man" ? "/caps-man manager" : `${path} capsman`;
+}
+
+/**
+ * Build the manager-side HA commands this device can safely apply: enable
+ * `require-peer-certificate` so a rogue manager can't adopt the CAPs. Standing up
+ * the SECOND manager and pointing every CAP at both is inherently multi-device
+ * (the backup manager + each CAP), so those steps are returned as guidance by
+ * {@link haGuidance}, not auto-applied here. Idempotent.
+ */
+export function buildHaCommands(
+  state: CapsmanState,
+  opts: { requireCert?: boolean } = {},
+): string[] {
+  const cmds: string[] = [];
+  if ((opts.requireCert ?? true) && !state.requirePeerCertificate) {
+    cmds.push(`${managerMenu(state.path)} set require-peer-certificate=yes`);
+  }
+  return cmds;
+}
+
+/** The manual, multi-device HA steps this single-device tool can't perform. */
+export function haGuidance(state: CapsmanState, backupAddress?: string): string[] {
+  const g = [
+    "Stand up a SECOND manager (a spare RouterOS box or a CHR) with the same CA/manager certificate.",
+    backupAddress
+      ? `On EVERY CAP, point it at both managers: /interface wifi cap set caps-man-addresses=<primary>,${backupAddress}`
+      : "On EVERY CAP, add the backup manager to its caps-man-addresses (or discovery-interfaces) so it fails over.",
+    "Provision the backup with an identical configuration/provisioning set so a failover is seamless.",
+  ];
+  if (!state.requirePeerCertificate) {
+    g.unshift(
+      "(This tool can enable require-peer-certificate on THIS manager — see the applied commands.)",
+    );
+  }
+  return g;
+}
+
+/** Safe apply order across categories (coverage/channel first, HA last). */
+const FIX_ORDER: CapsmanCategory[] = ["coverage", "load", "weak_signal", "ft", "ha"];
+
+/**
+ * Map one audit `finding_id` to the commands that remediate it, using the pure
+ * builders. Returns `[]` for a finding with no automated fix (or already fixed).
+ * The `finding_id` prefix identifies the category:
+ *   cochannel:* → channel plan   load:* → load balance   weak:* → steer
+ *   ft-*        → enable FT       ha-*  → HA require-cert
+ */
+export function fixCommandsForFinding(state: CapsmanState, findingId: string): string[] {
+  if (findingId.startsWith("cochannel:")) return buildChannelPlanCommands(state);
+  if (findingId.startsWith("load:")) return buildLoadBalanceCommands(state, loadBalancePlan(state));
+  if (findingId.startsWith("weak:")) {
+    const mac = findingId.slice("weak:".length);
+    const client = state.clients.find((c) => c.mac === mac);
+    return client ? buildSteerCommands(state, mac, client.radioId, "hard") : [];
+  }
+  if (findingId.startsWith("ft-")) return buildFtCommands(state);
+  if (findingId.startsWith("ha-")) return buildHaCommands(state);
+  return [];
+}
+
+/** Category of a finding_id, for safe-ordering the fixes. */
+function categoryOfFinding(findingId: string): CapsmanCategory {
+  if (findingId.startsWith("cochannel:")) return "coverage";
+  if (findingId.startsWith("load:")) return "load";
+  if (findingId.startsWith("weak:")) return "weak_signal";
+  if (findingId.startsWith("ft-")) return "ft";
+  return "ha";
+}
+
+/**
+ * Build the ordered, de-duplicated command list to apply a set of finding_ids in
+ * a SAFE order (coverage/channel → load → steer → FT → HA). Pure — the tool wraps
+ * the result in one snapshot + one Safe-Mode session.
+ */
+export function buildFixPlan(state: CapsmanState, findingIds: string[]): string[] {
+  const ordered = [...findingIds].sort(
+    (a, b) => FIX_ORDER.indexOf(categoryOfFinding(a)) - FIX_ORDER.indexOf(categoryOfFinding(b)),
+  );
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of ordered) {
+    for (const cmd of fixCommandsForFinding(state, id)) {
+      if (!seen.has(cmd)) {
+        seen.add(cmd);
+        out.push(cmd);
+      }
+    }
+  }
+  return out;
+}
+
 // ── Dashboard payload (structured, for the CAPsMAN page) ─────────────────────
 
 export interface CapsmanOverview {

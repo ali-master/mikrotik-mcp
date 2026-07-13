@@ -12,6 +12,8 @@ import {
   buildAdjacency,
   buildChannelPlanCommands,
   buildFtCommands,
+  buildHaCommands,
+  buildFixPlan,
   channelToFrequencyMhz,
   resolveMobilityDomain,
   buildLoadBalanceCommands,
@@ -568,5 +570,66 @@ describe("buildFtCommands + resolveMobilityDomain", () => {
   test("uses the legacy /caps-man security menu on a caps-man device", () => {
     const s = state({ path: "/caps-man", securityConfigs: [{ name: "corp", ft: false }] });
     expect(buildFtCommands(s)[0]).toContain("/caps-man security set");
+  });
+});
+
+// ── Phase 5: HA setup + fix-dispatch orchestrator ────────────────────────────
+
+describe("buildHaCommands", () => {
+  test("enables require-peer-certificate when it is off", () => {
+    const s = state({
+      path: "/interface wifi",
+      managerEnabled: true,
+      requirePeerCertificate: false,
+    });
+    const cmds = buildHaCommands(s);
+    expect(cmds).toHaveLength(1);
+    expect(cmds[0]).toBe("/interface wifi capsman set require-peer-certificate=yes");
+  });
+  test("is a no-op when require-peer-certificate is already on (idempotent)", () => {
+    const s = state({ managerEnabled: true, requirePeerCertificate: true });
+    expect(buildHaCommands(s)).toHaveLength(0);
+  });
+  test("uses the legacy /caps-man manager menu on a caps-man device", () => {
+    const s = state({ path: "/caps-man", managerEnabled: true, requirePeerCertificate: false });
+    expect(buildHaCommands(s)[0]).toBe("/caps-man manager set require-peer-certificate=yes");
+  });
+});
+
+describe("buildFixPlan (orchestrator, safe ordering)", () => {
+  test("orders channel-plan before FT before HA and de-dupes", () => {
+    const s = state({
+      path: "/interface wifi",
+      managerEnabled: true,
+      requirePeerCertificate: false,
+      radios: [
+        radio({ cap: "a", radioId: "r1", band: "2ghz", channel: 6, clientCount: 20 }),
+        radio({ cap: "b", radioId: "r2", band: "2ghz", channel: 6, clientCount: 5 }),
+      ],
+      clients: [client({ mac: "aa", radioId: "r1", signal: -55, seenOn: { r2: -70 } })],
+      securityConfigs: [{ name: "corp", ft: false }],
+    });
+    // Deliberately pass HA first, FT middle, cochannel last → plan must re-order.
+    const plan = buildFixPlan(s, ["ha-no-cert", "ft-off:corp", "cochannel:r1|r2"]);
+    const chIdx = plan.findIndex((c) => c.includes("channel.frequency"));
+    const ftIdx = plan.findIndex((c) => c.includes("ft=yes"));
+    const haIdx = plan.findIndex((c) => c.includes("require-peer-certificate"));
+    expect(chIdx).toBeGreaterThanOrEqual(0);
+    expect(chIdx).toBeLessThan(ftIdx);
+    expect(ftIdx).toBeLessThan(haIdx);
+  });
+
+  test("maps a weak: finding to a steer command for that client", () => {
+    const s = state({
+      path: "/interface wifi",
+      clients: [client({ mac: "AA:BB", radioId: "r1", signal: -80 })],
+    });
+    const plan = buildFixPlan(s, ["weak:AA:BB"]);
+    expect(plan[0]).toContain("mac-address=AA:BB");
+    expect(plan[0]).toContain("action=reject");
+  });
+
+  test("returns no commands for a finding with no automated fix", () => {
+    expect(buildFixPlan(state({}), ["weak:NOPE"])).toHaveLength(0);
   });
 });

@@ -11,9 +11,12 @@ import type { ToolContext } from "../core/context";
 import {
   DEFAULT_WEAK_DBM,
   buildChannelPlanCommands,
+  buildFixPlan,
   buildFtCommands,
+  buildHaCommands,
   buildLoadBalanceCommands,
   buildSteerCommands,
+  haGuidance,
   loadBalancePlan,
   proposeChannelPlan,
   reportWeakClients,
@@ -363,6 +366,79 @@ export const capsmanTools: ToolModule = [
         return `DRY RUN — enable FT (set confirm=true to apply):\n\n${commands.map((c) => `  ${c}`).join("\n")}`;
       }
       return applyCapsman(ctx, device, commands, "pre-enable_capsman_ft");
+    },
+  }),
+
+  defineTool({
+    name: "setup_capsman_ha",
+    title: "Set Up CAPsMAN High-Availability",
+    annotations: DANGEROUS,
+    description:
+      "Hardens CAPsMAN redundancy. Applies what THIS manager can safely do — enable " +
+      "require-peer-certificate (so a rogue manager can't adopt your CAPs) — and returns the exact " +
+      "manual, multi-device steps to finish HA (stand up a second manager with the same certificate, " +
+      "point every CAP at both managers). Standing up the backup + editing each CAP is inherently " +
+      "multi-device, so it is NOT auto-applied. HIGHEST blast radius — DRY RUN unless confirm=true; " +
+      "snapshots first, applies inside Safe Mode. Requires a `reason`.",
+    inputSchema: {
+      backup_manager_address: z
+        .string()
+        .optional()
+        .describe("Address of the (planned) backup manager, woven into the guidance."),
+      confirm: z
+        .literal(true)
+        .optional()
+        .describe("Must be true to write; omit for a dry-run preview."),
+    },
+    async handler(a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      const state = await fetchCapsmanState(ctx);
+      if (!state.managerEnabled)
+        return "This device is not a CAPsMAN manager — HA setup does not apply.";
+      const commands = buildHaCommands(state);
+      const guidance = haGuidance(state, a.backup_manager_address);
+      const guide = `\n\nMANUAL STEPS TO COMPLETE HA (multi-device — not auto-applied):\n${guidance.map((g) => `  • ${g}`).join("\n")}`;
+      if (commands.length === 0) {
+        return `require-peer-certificate is already enabled on this manager.${guide}`;
+      }
+      if (!a.confirm) {
+        return `DRY RUN — HA hardening on this manager (set confirm=true to apply):\n\n${commands.map((c) => `  ${c}`).join("\n")}${guide}`;
+      }
+      return (await applyCapsman(ctx, device, commands, "pre-setup_capsman_ha")) + guide;
+    },
+  }),
+
+  defineTool({
+    name: "apply_capsman_fixes",
+    title: "Apply CAPsMAN Fixes",
+    annotations: DANGEROUS,
+    description:
+      "Applies specific finding_ids from a prior run_capsman_audit, dispatching each to its remediation " +
+      "in a SAFE order (coverage/channel-plan → load-balance → steer → FT → HA), all wrapped in ONE " +
+      "snapshot + ONE Safe-Mode session. Returns the applied commands + snapshot id. DRY RUN unless " +
+      "confirm=true. NEVER a blanket 'fix everything' — pass explicit finding_ids from an audit. " +
+      "Steering/balancing remain advisory; HA require-cert is applied but the multi-device HA steps are not.",
+    inputSchema: {
+      finding_ids: z
+        .array(z.string())
+        .min(1)
+        .describe("Explicit finding_id(s) from a prior run_capsman_audit. No blanket apply."),
+      confirm: z
+        .literal(true)
+        .optional()
+        .describe("Must be true to write; omit for a dry-run preview."),
+    },
+    async handler(a, ctx) {
+      const device = resolveDeviceName(ctx.device);
+      const state = await fetchCapsmanState(ctx);
+      const commands = buildFixPlan(state, a.finding_ids);
+      if (commands.length === 0) {
+        return "No applicable automated fix for those finding_ids (already fixed, or manual-only like the HA multi-device steps).";
+      }
+      if (!a.confirm) {
+        return `DRY RUN — ${commands.length} command(s) in safe order (set confirm=true to apply):\n\n${commands.map((c) => `  ${c}`).join("\n")}`;
+      }
+      return applyCapsman(ctx, device, commands, "pre-apply_capsman_fixes");
     },
   }),
 ];

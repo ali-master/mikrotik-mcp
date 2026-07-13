@@ -326,14 +326,14 @@ Claude trailers, conventional-commit message.
       idempotent skip, config scope, legacy caps-man menu.
 - **Exit gate:** ✅ green (635 pass, only pre-existing mcpb) + build:ui. **PHASE 4 COMPLETE.**
 
-### [ ] Phase 5 — HA setup (highest blast radius — last)
+### [x] Phase 5 — HA setup (highest blast radius — last)
 
-- [ ] `setup_capsman_ha` (DANGEROUS, requires `reason`) — second manager +
+- [x] `setup_capsman_ha` (DANGEROUS, requires `reason`) — second manager +
       cert-based; point CAPs at both managers; both topologies (§8.4).
-- [ ] `apply_capsman_fixes` orchestrator apply (safe order, one snapshot + one
+- [x] `apply_capsman_fixes` orchestrator apply (safe order, one snapshot + one
       Safe-Mode session, per-finding result).
-- [ ] Dashboard: §5.5 HA mini-map → guided setup.
-- [ ] Tests: HA command builder for both topologies; apply ordering.
+- [x] Dashboard: §5.5 HA mini-map → guided setup.
+- [x] Tests: HA command builder for both topologies; apply ordering.
 - **Exit gate:** global gate green.
 
 ### [ ] Phase 6 — Trends + Raycast mirror
@@ -361,3 +361,15 @@ Claude trailers, conventional-commit message.
 - **Phase 4 DONE** (iteration 5). `enable_capsman_ft` + FT builder/mobility-domain
   resolver, dashboard Enable-FT button + `POST /api/capsman/apply/ft`, 6 tests.
   Next: Phase 5 (HA setup — highest blast radius).
+- **Phase 5 DONE** (iteration 6). `setup_capsman_ha` + `apply_capsman_fixes` tools
+  (both DANGEROUS, `reason` auto-injected). Engine: `buildHaCommands` (enables
+  `require-peer-certificate`, idempotent, v7 + legacy `/caps-man` menus), `haGuidance`
+  (returns the multi-device second-manager standup steps as guidance — RouterOS has no
+  single-command HA, so pointing CAPs at both managers is NOT auto-applied, by design),
+  and the `buildFixPlan` orchestrator (safe FIX_ORDER coverage→load→weak→ft→ha, deduped,
+  one snapshot + one Safe-Mode session). Dashboard: "Harden HA" guided-setup button in
+  the FT/HA panel + `POST /api/capsman/apply/ha` (apply + guidance); the HA state is
+  surfaced in the audit strip rather than a separate SVG mini-map. 6 new tests (buildHaCommands
+  enable/no-op/legacy-menu, buildFixPlan ordering + weak→steer mapping + no-op). Gate green
+  (only the pre-existing mcpb-manifest version test + pre-existing unrelated `raycast/src`
+  lint debt remain red — neither introduced here). Next: Phase 6 (trends + Raycast mirror).

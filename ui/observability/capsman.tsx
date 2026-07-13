@@ -430,35 +430,69 @@ export function CapsmanView(): ReactNode {
       <Panel
         title="Roaming (FT) & HA audit"
         extra={
-          audit && audit.findings.some((f) => f.category === "ft") ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="h-6 px-2 text-[11px]">
-                  <Wifi className="size-3" /> Enable FT
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Enable 802.11r fast-roaming?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Turns on FT across the CAPsMAN security configs and converges them on ONE shared
-                    mobility domain, so clients roam between floors without a full re-auth. This
-                    briefly re-keys associated clients. Snapshot + Safe Mode; idempotent.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() =>
-                      void runApply("/api/capsman/apply/ft", {}, "Enable FT", () => void load())
-                    }
-                  >
-                    Enable FT
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : undefined
+          <div className="flex items-center gap-2">
+            {audit && audit.findings.some((f) => f.category === "ft") && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="h-6 px-2 text-[11px]">
+                    <Wifi className="size-3" /> Enable FT
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Enable 802.11r fast-roaming?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Turns on FT across the CAPsMAN security configs and converges them on ONE
+                      shared mobility domain, so clients roam between floors without a full re-auth.
+                      This briefly re-keys associated clients. Snapshot + Safe Mode; idempotent.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        void runApply("/api/capsman/apply/ft", {}, "Enable FT", () => void load())
+                      }
+                    >
+                      Enable FT
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {audit && audit.findings.some((f) => f.category === "ha") && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="h-6 px-2 text-[11px]">
+                    <AlertTriangle className="size-3" /> Harden HA
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Harden CAPsMAN HA (require peer certificate)?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Enables require-peer-certificate on this manager so a rogue manager
+                      can&rsquo;t adopt your CAPs. Standing up a second manager and pointing every
+                      CAP at both is multi-device and NOT auto-applied — the tool returns those
+                      manual steps. Snapshot + Safe Mode; idempotent.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        void runApply("/api/capsman/apply/ha", {}, "Harden HA", () => void load())
+                      }
+                    >
+                      Harden HA
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         }
       >
         {!audit || audit.total === 0 ? (

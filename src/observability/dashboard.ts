@@ -105,9 +105,11 @@ import { listPrompts } from "../prompts";
 import {
   buildChannelPlanCommands,
   buildFtCommands,
+  buildHaCommands,
   buildLoadBalanceCommands,
   buildSteerCommands,
   capsmanOverview,
+  haGuidance,
   loadBalancePlan,
   reportWeakClients,
   runCapsmanAudit,
@@ -928,6 +930,13 @@ async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
       const commands = buildFtCommands(state);
       if (!body.confirm) return json({ ok: true, preview: commands });
       return json(await applyCapsmanWrites(ctx, commands, "pre-ft"));
+    }
+    if (p === "/api/capsman/apply/ha") {
+      const commands = buildHaCommands(state);
+      const guidance = haGuidance(state);
+      if (!body.confirm) return json({ ok: true, preview: commands, guidance });
+      const res = await applyCapsmanWrites(ctx, commands, "pre-ha");
+      return json({ ...res, guidance });
     }
   }
   return null;
