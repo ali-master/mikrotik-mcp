@@ -27,6 +27,9 @@
       "type": "boolean"
     }
   },
-  "required": ["prefix", "disabled"],
+  "required": [
+    "prefix",
+    "disabled"
+  ],
   "additionalProperties": false
 }

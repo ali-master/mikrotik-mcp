@@ -28,6 +28,11 @@
       "type": "boolean"
     }
   },
-  "required": ["show_sensitive", "verbose", "compact", "terse"],
+  "required": [
+    "show_sensitive",
+    "verbose",
+    "compact",
+    "terse"
+  ],
   "additionalProperties": false
 }

@@ -26,6 +26,9 @@
       "type": "boolean"
     }
   },
-  "required": ["gateway", "disabled"],
+  "required": [
+    "gateway",
+    "disabled"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "RouterOS .id (e.g. '*1') or the interface name"
     }
   },
-  "required": ["nd_id"],
+  "required": [
+    "nd_id"
+  ],
   "additionalProperties": false
 }

@@ -12,6 +12,8 @@
       "type": "string"
     }
   },
-  "required": ["mac"],
+  "required": [
+    "mac"
+  ],
   "additionalProperties": false
 }

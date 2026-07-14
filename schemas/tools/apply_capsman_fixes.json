@@ -17,6 +17,8 @@
       "const": true
     }
   },
-  "required": ["finding_ids"],
+  "required": [
+    "finding_ids"
+  ],
   "additionalProperties": false
 }

@@ -19,6 +19,9 @@
       "type": "boolean"
     }
   },
-  "required": ["address", "disabled"],
+  "required": [
+    "address",
+    "disabled"
+  ],
   "additionalProperties": false
 }

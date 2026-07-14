@@ -19,7 +19,10 @@
       "default": "ping",
       "description": "Gateway health-check method",
       "type": "string",
-      "enum": ["ping", "arp"]
+      "enum": [
+        "ping",
+        "arp"
+      ]
     },
     "comment_prefix": {
       "default": "wan-failover",
@@ -31,6 +34,12 @@
       "type": "boolean"
     }
   },
-  "required": ["primary_gateway", "backup_gateways", "check", "comment_prefix", "apply"],
+  "required": [
+    "primary_gateway",
+    "backup_gateways",
+    "check",
+    "comment_prefix",
+    "apply"
+  ],
   "additionalProperties": false
 }

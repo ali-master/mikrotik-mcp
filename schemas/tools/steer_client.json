@@ -12,7 +12,10 @@
       "default": "hard",
       "description": "hard = signal-range reject; soft = k/v only (no write).",
       "type": "string",
-      "enum": ["soft", "hard"]
+      "enum": [
+        "soft",
+        "hard"
+      ]
     },
     "reject_above_dbm": {
       "description": "dBm ceiling of the reject band for hard mode (default -70).",
@@ -26,6 +29,9 @@
       "const": true
     }
   },
-  "required": ["mac", "mode"],
+  "required": [
+    "mac",
+    "mode"
+  ],
   "additionalProperties": false
 }

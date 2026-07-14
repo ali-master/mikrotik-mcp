@@ -24,7 +24,10 @@
     },
     "tls_version": {
       "type": "string",
-      "enum": ["any", "only-1.2"]
+      "enum": [
+        "any",
+        "only-1.2"
+      ]
     },
     "verify_client_certificate": {
       "type": "boolean"

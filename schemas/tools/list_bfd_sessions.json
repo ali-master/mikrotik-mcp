@@ -9,6 +9,8 @@
       "type": "boolean"
     }
   },
-  "required": ["up_only"],
+  "required": [
+    "up_only"
+  ],
   "additionalProperties": false
 }

@@ -210,6 +210,11 @@
       "type": "string"
     }
   },
-  "required": ["chain", "action", "disabled", "log"],
+  "required": [
+    "chain",
+    "action",
+    "disabled",
+    "log"
+  ],
   "additionalProperties": false
 }

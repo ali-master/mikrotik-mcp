@@ -12,6 +12,9 @@
       "description": "true to enable, false to disable"
     }
   },
-  "required": ["name", "enabled"],
+  "required": [
+    "name",
+    "enabled"
+  ],
   "additionalProperties": false
 }

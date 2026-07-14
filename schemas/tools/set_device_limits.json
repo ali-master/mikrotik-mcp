@@ -20,6 +20,8 @@
       "type": "string"
     }
   },
-  "required": ["ip"],
+  "required": [
+    "ip"
+  ],
   "additionalProperties": false
 }

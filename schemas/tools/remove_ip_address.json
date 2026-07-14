@@ -7,6 +7,8 @@
       "type": "string"
     }
   },
-  "required": ["address_id"],
+  "required": [
+    "address_id"
+  ],
   "additionalProperties": false
 }

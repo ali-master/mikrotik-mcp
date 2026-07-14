@@ -21,6 +21,11 @@
       "type": "boolean"
     }
   },
-  "required": ["regexp", "address", "ttl", "disabled"],
+  "required": [
+    "regexp",
+    "address",
+    "ttl",
+    "disabled"
+  ],
   "additionalProperties": false
 }

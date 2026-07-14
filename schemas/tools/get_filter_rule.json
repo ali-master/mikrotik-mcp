@@ -8,6 +8,8 @@
       "description": "Rule .id e.g. \"*1F\", or bare position number e.g. \"3\""
     }
   },
-  "required": ["rule_id"],
+  "required": [
+    "rule_id"
+  ],
   "additionalProperties": false
 }

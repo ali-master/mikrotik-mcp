@@ -8,6 +8,8 @@
       "description": "Disk slot to eject, e.g. 'usb1'"
     }
   },
-  "required": ["slot"],
+  "required": [
+    "slot"
+  ],
   "additionalProperties": false
 }

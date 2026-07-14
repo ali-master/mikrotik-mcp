@@ -40,6 +40,10 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "password", "disabled"],
+  "required": [
+    "name",
+    "password",
+    "disabled"
+  ],
   "additionalProperties": false
 }

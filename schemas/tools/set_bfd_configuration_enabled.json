@@ -11,6 +11,9 @@
       "type": "boolean"
     }
   },
-  "required": ["config_id", "enabled"],
+  "required": [
+    "config_id",
+    "enabled"
+  ],
   "additionalProperties": false
 }

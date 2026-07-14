@@ -33,6 +33,11 @@
       "type": "string"
     }
   },
-  "required": ["host", "port", "username", "command"],
+  "required": [
+    "host",
+    "port",
+    "username",
+    "command"
+  ],
   "additionalProperties": false
 }

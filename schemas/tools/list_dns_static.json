@@ -21,6 +21,9 @@
       "type": "boolean"
     }
   },
-  "required": ["disabled_only", "regexp_only"],
+  "required": [
+    "disabled_only",
+    "regexp_only"
+  ],
   "additionalProperties": false
 }

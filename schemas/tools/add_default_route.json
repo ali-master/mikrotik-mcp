@@ -20,6 +20,10 @@
       "type": "string"
     }
   },
-  "required": ["gateway", "distance", "check_gateway"],
+  "required": [
+    "gateway",
+    "distance",
+    "check_gateway"
+  ],
   "additionalProperties": false
 }

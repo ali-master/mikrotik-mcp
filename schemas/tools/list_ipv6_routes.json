@@ -25,6 +25,10 @@
       "type": "boolean"
     }
   },
-  "required": ["active_only", "disabled_only", "dynamic_only"],
+  "required": [
+    "active_only",
+    "disabled_only",
+    "dynamic_only"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "Filename prefix for the exported key file(s), e.g. 'myrouter'."
     }
   },
-  "required": ["key_file_prefix"],
+  "required": [
+    "key_file_prefix"
+  ],
   "additionalProperties": false
 }

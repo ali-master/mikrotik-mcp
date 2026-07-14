@@ -24,6 +24,9 @@
       "maximum": 500
     }
   },
-  "required": ["time_window", "limit"],
+  "required": [
+    "time_window",
+    "limit"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "RIP instance name to remove"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

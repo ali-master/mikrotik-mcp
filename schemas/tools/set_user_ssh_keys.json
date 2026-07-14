@@ -10,6 +10,9 @@
       "type": "string"
     }
   },
-  "required": ["username", "key_file"],
+  "required": [
+    "username",
+    "key_file"
+  ],
   "additionalProperties": false
 }

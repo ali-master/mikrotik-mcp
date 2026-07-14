@@ -17,6 +17,9 @@
       "type": "boolean"
     }
   },
-  "required": ["finding_ids", "confirm"],
+  "required": [
+    "finding_ids",
+    "confirm"
+  ],
   "additionalProperties": false
 }

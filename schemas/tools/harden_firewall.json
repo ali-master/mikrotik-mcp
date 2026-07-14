@@ -7,7 +7,12 @@
       "default": "standard",
       "description": "Bundle to apply; 'custom' uses only the `protections` toggles",
       "type": "string",
-      "enum": ["basic", "standard", "paranoid", "custom"]
+      "enum": [
+        "basic",
+        "standard",
+        "paranoid",
+        "custom"
+      ]
     },
     "protections": {
       "description": "Per-protection on/off, overriding/extending the preset",

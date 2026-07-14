@@ -8,6 +8,8 @@
       "description": "RouterOS .id (e.g. '*1') or the address value"
     }
   },
-  "required": ["address_id"],
+  "required": [
+    "address_id"
+  ],
   "additionalProperties": false
 }

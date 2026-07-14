@@ -8,6 +8,8 @@
       "description": "\"*N\" or \"N\" from list output e.g. \"*2\""
     }
   },
-  "required": ["peer_id"],
+  "required": [
+    "peer_id"
+  ],
   "additionalProperties": false
 }

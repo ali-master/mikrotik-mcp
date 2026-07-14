@@ -15,6 +15,10 @@
       "type": "boolean"
     }
   },
-  "required": ["filename", "run_after_reset", "verbose"],
+  "required": [
+    "filename",
+    "run_after_reset",
+    "verbose"
+  ],
   "additionalProperties": false
 }

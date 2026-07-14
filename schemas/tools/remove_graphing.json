@@ -5,13 +5,20 @@
   "properties": {
     "kind": {
       "type": "string",
-      "enum": ["interface", "queue", "resource"]
+      "enum": [
+        "interface",
+        "queue",
+        "resource"
+      ]
     },
     "entry_id": {
       "type": "string",
       "description": "RouterOS '.id', e.g. '*1'"
     }
   },
-  "required": ["kind", "entry_id"],
+  "required": [
+    "kind",
+    "entry_id"
+  ],
   "additionalProperties": false
 }

@@ -44,7 +44,11 @@
     },
     "vlan_header": {
       "type": "string",
-      "enum": ["any", "not-present", "present"]
+      "enum": [
+        "any",
+        "not-present",
+        "present"
+      ]
     },
     "vlan_id": {
       "type": "string"
@@ -86,6 +90,8 @@
       "type": "boolean"
     }
   },
-  "required": ["rule_id"],
+  "required": [
+    "rule_id"
+  ],
   "additionalProperties": false
 }

@@ -30,6 +30,10 @@
       "type": "boolean"
     }
   },
-  "required": ["interface", "upstream", "disabled"],
+  "required": [
+    "interface",
+    "upstream",
+    "disabled"
+  ],
   "additionalProperties": false
 }

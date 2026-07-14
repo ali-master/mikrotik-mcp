@@ -8,6 +8,8 @@
       "description": "Name of the logging action to remove"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

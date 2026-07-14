@@ -39,6 +39,11 @@
       "type": "boolean"
     }
   },
-  "required": ["active_only", "disabled_only", "dynamic_only", "static_only"],
+  "required": [
+    "active_only",
+    "disabled_only",
+    "dynamic_only",
+    "static_only"
+  ],
   "additionalProperties": false
 }

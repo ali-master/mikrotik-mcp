@@ -15,7 +15,10 @@
       "default": "ping",
       "description": "Gateway health-check method",
       "type": "string",
-      "enum": ["ping", "arp"]
+      "enum": [
+        "ping",
+        "arp"
+      ]
     },
     "comment": {
       "default": "wan-ecmp",
@@ -27,6 +30,11 @@
       "type": "boolean"
     }
   },
-  "required": ["gateways", "check", "comment", "apply"],
+  "required": [
+    "gateways",
+    "check",
+    "comment",
+    "apply"
+  ],
   "additionalProperties": false
 }

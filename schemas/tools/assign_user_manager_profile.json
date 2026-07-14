@@ -12,6 +12,9 @@
       "description": "Profile to assign"
     }
   },
-  "required": ["user", "profile"],
+  "required": [
+    "user",
+    "profile"
+  ],
   "additionalProperties": false
 }

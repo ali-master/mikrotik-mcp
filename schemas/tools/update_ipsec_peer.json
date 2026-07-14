@@ -18,7 +18,11 @@
     },
     "exchange_mode": {
       "type": "string",
-      "enum": ["main", "aggressive", "ike2"]
+      "enum": [
+        "main",
+        "aggressive",
+        "ike2"
+      ]
     },
     "local_address": {
       "type": "string"
@@ -38,6 +42,8 @@
       "type": "boolean"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

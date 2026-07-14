@@ -8,6 +8,8 @@
       "description": "The policy id used when installing"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

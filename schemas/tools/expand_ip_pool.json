@@ -11,6 +11,9 @@
       "description": "Hyphen-separated range(s) e.g. \"192.168.1.101-192.168.1.150\". Multiple ranges comma-separated: \"10.0.0.51-10.0.0.60,10.0.0.70-10.0.0.80\""
     }
   },
-  "required": ["name", "additional_ranges"],
+  "required": [
+    "name",
+    "additional_ranges"
+  ],
   "additionalProperties": false
 }

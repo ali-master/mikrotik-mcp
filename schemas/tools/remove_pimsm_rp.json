@@ -8,6 +8,8 @@
       "description": "RP id, e.g. \"*1\""
     }
   },
-  "required": ["rp_id"],
+  "required": [
+    "rp_id"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "BGP connection name to remove"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

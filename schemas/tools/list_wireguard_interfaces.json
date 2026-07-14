@@ -15,6 +15,9 @@
       "type": "boolean"
     }
   },
-  "required": ["disabled_only", "running_only"],
+  "required": [
+    "disabled_only",
+    "running_only"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "Device MAC address"
     }
   },
-  "required": ["mac"],
+  "required": [
+    "mac"
+  ],
   "additionalProperties": false
 }

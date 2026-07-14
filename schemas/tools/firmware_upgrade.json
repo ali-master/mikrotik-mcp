@@ -26,6 +26,10 @@
       "type": "boolean"
     }
   },
-  "required": ["confirm", "upgrade_routerboard", "capture_health"],
+  "required": [
+    "confirm",
+    "upgrade_routerboard",
+    "capture_health"
+  ],
   "additionalProperties": false
 }

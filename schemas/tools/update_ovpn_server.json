@@ -14,11 +14,17 @@
     },
     "protocol": {
       "type": "string",
-      "enum": ["tcp", "udp"]
+      "enum": [
+        "tcp",
+        "udp"
+      ]
     },
     "mode": {
       "type": "string",
-      "enum": ["ip", "ethernet"]
+      "enum": [
+        "ip",
+        "ethernet"
+      ]
     },
     "netmask": {
       "type": "integer",
@@ -40,7 +46,10 @@
     "tls_version": {
       "description": "Accepted TLS version",
       "type": "string",
-      "enum": ["any", "only-1.2"]
+      "enum": [
+        "any",
+        "only-1.2"
+      ]
     },
     "max_mtu": {
       "type": "integer",
@@ -57,6 +66,8 @@
       "type": "string"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

@@ -8,6 +8,8 @@
       "description": "Name of the file on the device, e.g. 'cert.p12' or 'backup.backup'"
     }
   },
-  "required": ["filename"],
+  "required": [
+    "filename"
+  ],
   "additionalProperties": false
 }

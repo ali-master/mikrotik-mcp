@@ -8,6 +8,8 @@
       "description": "Backup filename, e.g. 'edge_2026-06-25_1430.rsc'."
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

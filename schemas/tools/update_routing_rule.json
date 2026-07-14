@@ -9,7 +9,12 @@
     },
     "action": {
       "type": "string",
-      "enum": ["lookup", "lookup-only-in-table", "drop", "unreachable"]
+      "enum": [
+        "lookup",
+        "lookup-only-in-table",
+        "drop",
+        "unreachable"
+      ]
     },
     "table": {
       "type": "string"
@@ -38,6 +43,8 @@
       "type": "boolean"
     }
   },
-  "required": ["rule_id"],
+  "required": [
+    "rule_id"
+  ],
   "additionalProperties": false
 }

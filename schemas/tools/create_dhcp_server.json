@@ -24,7 +24,11 @@
     "authoritative": {
       "default": "yes",
       "type": "string",
-      "enum": ["yes", "no", "after-2sec-delay"]
+      "enum": [
+        "yes",
+        "no",
+        "after-2sec-delay"
+      ]
     },
     "delay_threshold": {
       "type": "string"
@@ -40,7 +44,11 @@
     "bootp_support": {
       "description": "Which BOOTP requests to answer",
       "type": "string",
-      "enum": ["none", "static", "dynamic"]
+      "enum": [
+        "none",
+        "static",
+        "dynamic"
+      ]
     },
     "conflict_detection": {
       "description": "Ping/ARP-probe an address before offering it to detect conflicts",
@@ -49,7 +57,11 @@
     "use_radius": {
       "description": "Use RADIUS for leases (accounting = RADIUS accounting only)",
       "type": "string",
-      "enum": ["yes", "no", "accounting"]
+      "enum": [
+        "yes",
+        "no",
+        "accounting"
+      ]
     },
     "relay": {
       "description": "DHCP relay address this server services",
@@ -67,6 +79,12 @@
       "type": "string"
     }
   },
-  "required": ["name", "interface", "lease_time", "disabled", "authoritative"],
+  "required": [
+    "name",
+    "interface",
+    "lease_time",
+    "disabled",
+    "authoritative"
+  ],
   "additionalProperties": false
 }

@@ -78,6 +78,11 @@
       "type": "string"
     }
   },
-  "required": ["servers", "allow_remote_requests", "use_doh", "verify_doh_cert"],
+  "required": [
+    "servers",
+    "allow_remote_requests",
+    "use_doh",
+    "verify_doh_cert"
+  ],
   "additionalProperties": false
 }

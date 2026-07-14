@@ -8,6 +8,8 @@
       "description": "Virtual disk slot to remove"
     }
   },
-  "required": ["slot"],
+  "required": [
+    "slot"
+  ],
   "additionalProperties": false
 }

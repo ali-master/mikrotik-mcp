@@ -8,6 +8,8 @@
       "description": "Service name to enable, e.g. 'ssh'"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

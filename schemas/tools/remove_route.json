@@ -8,6 +8,8 @@
       "description": "\"*N\" or \"N\" from list output e.g. \"*3\""
     }
   },
-  "required": ["route_id"],
+  "required": [
+    "route_id"
+  ],
   "additionalProperties": false
 }

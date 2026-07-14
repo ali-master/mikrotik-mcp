@@ -23,6 +23,10 @@
       "type": "string"
     }
   },
-  "required": ["chain", "rule", "disabled"],
+  "required": [
+    "chain",
+    "rule",
+    "disabled"
+  ],
   "additionalProperties": false
 }

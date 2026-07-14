@@ -8,6 +8,8 @@
       "description": "Serial port name, e.g. 'serial0'"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

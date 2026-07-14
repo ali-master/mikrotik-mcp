@@ -29,7 +29,14 @@
     },
     "type": {
       "type": "string",
-      "enum": ["broadcast", "ptp", "ptmp", "ptmp-broadcast", "nbma", "virtual-link"]
+      "enum": [
+        "broadcast",
+        "ptp",
+        "ptmp",
+        "ptmp-broadcast",
+        "nbma",
+        "virtual-link"
+      ]
     },
     "passive": {
       "type": "boolean"
@@ -70,7 +77,14 @@
     },
     "auth": {
       "type": "string",
-      "enum": ["simple", "md5", "sha1", "sha256", "sha384", "sha512"]
+      "enum": [
+        "simple",
+        "md5",
+        "sha1",
+        "sha256",
+        "sha384",
+        "sha512"
+      ]
     },
     "auth_id": {
       "description": "Key id for keyed authentication",
@@ -90,6 +104,9 @@
       "type": "boolean"
     }
   },
-  "required": ["area", "disabled"],
+  "required": [
+    "area",
+    "disabled"
+  ],
   "additionalProperties": false
 }

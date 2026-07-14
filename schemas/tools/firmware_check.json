@@ -6,7 +6,11 @@
     "channel": {
       "description": "Set the update channel before checking (default: keep current).",
       "type": "string",
-      "enum": ["stable", "long-term", "testing"]
+      "enum": [
+        "stable",
+        "long-term",
+        "testing"
+      ]
     },
     "fleet": {
       "default": false,
@@ -21,6 +25,8 @@
       }
     }
   },
-  "required": ["fleet"],
+  "required": [
+    "fleet"
+  ],
   "additionalProperties": false
 }

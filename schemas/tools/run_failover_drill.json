@@ -6,7 +6,10 @@
     "target_type": {
       "default": "interface",
       "type": "string",
-      "enum": ["interface", "route"]
+      "enum": [
+        "interface",
+        "route"
+      ]
     },
     "target": {
       "type": "string",
@@ -28,6 +31,12 @@
       "type": "boolean"
     }
   },
-  "required": ["target_type", "target", "verify_host", "ping_count", "confirm"],
+  "required": [
+    "target_type",
+    "target",
+    "verify_host",
+    "ping_count",
+    "confirm"
+  ],
   "additionalProperties": false
 }

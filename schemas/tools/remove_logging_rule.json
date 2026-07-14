@@ -8,6 +8,8 @@
       "description": "Internal .id of the logging rule, e.g. '*1'"
     }
   },
-  "required": ["rule_id"],
+  "required": [
+    "rule_id"
+  ],
   "additionalProperties": false
 }

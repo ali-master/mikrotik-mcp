@@ -12,6 +12,9 @@
       "description": "true to enable, false to disable"
     }
   },
-  "required": ["rule_id", "enabled"],
+  "required": [
+    "rule_id",
+    "enabled"
+  ],
   "additionalProperties": false
 }

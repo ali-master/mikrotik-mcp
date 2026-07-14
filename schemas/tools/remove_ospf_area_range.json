@@ -8,6 +8,8 @@
       "description": "Range id, e.g. \"*1\""
     }
   },
-  "required": ["range_id"],
+  "required": [
+    "range_id"
+  ],
   "additionalProperties": false
 }

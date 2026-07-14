@@ -30,9 +30,16 @@
     "print_as": {
       "default": "value",
       "type": "string",
-      "enum": ["value", "detail", "terse"]
+      "enum": [
+        "value",
+        "detail",
+        "terse"
+      ]
     }
   },
-  "required": ["follow", "print_as"],
+  "required": [
+    "follow",
+    "print_as"
+  ],
   "additionalProperties": false
 }

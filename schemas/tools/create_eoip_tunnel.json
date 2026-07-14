@@ -28,7 +28,10 @@
     "dont_fragment": {
       "description": "Don't-fragment behavior",
       "type": "string",
-      "enum": ["inherit", "no"]
+      "enum": [
+        "inherit",
+        "no"
+      ]
     },
     "clamp_tcp_mss": {
       "description": "Clamp TCP MSS to the tunnel MTU",
@@ -53,7 +56,13 @@
     "arp": {
       "description": "Address Resolution Protocol mode for the interface",
       "type": "string",
-      "enum": ["disabled", "enabled", "local-proxy-arp", "proxy-arp", "reply-only"]
+      "enum": [
+        "disabled",
+        "enabled",
+        "local-proxy-arp",
+        "proxy-arp",
+        "reply-only"
+      ]
     },
     "arp_timeout": {
       "description": "ARP entry timeout, e.g. '30s' or 'auto'",
@@ -72,6 +81,11 @@
       "type": "boolean"
     }
   },
-  "required": ["name", "remote_address", "tunnel_id", "disabled"],
+  "required": [
+    "name",
+    "remote_address",
+    "tunnel_id",
+    "disabled"
+  ],
   "additionalProperties": false
 }

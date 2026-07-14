@@ -8,6 +8,8 @@
       "description": "Exact ethernet interface name, e.g. 'ether1'"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

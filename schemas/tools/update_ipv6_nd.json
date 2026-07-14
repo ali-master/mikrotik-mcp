@@ -18,7 +18,11 @@
     },
     "ra_preference": {
       "type": "string",
-      "enum": ["low", "medium", "high"]
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
     },
     "hop_limit": {
       "type": "string"
@@ -57,6 +61,8 @@
       "type": "boolean"
     }
   },
-  "required": ["nd_id"],
+  "required": [
+    "nd_id"
+  ],
   "additionalProperties": false
 }

@@ -37,6 +37,9 @@
       "type": "boolean"
     }
   },
-  "required": ["interfaces", "disabled"],
+  "required": [
+    "interfaces",
+    "disabled"
+  ],
   "additionalProperties": false
 }

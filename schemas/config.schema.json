@@ -90,7 +90,11 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": ["host", "port", "username"],
+            "required": [
+              "host",
+              "port",
+              "username"
+            ],
             "additionalProperties": false
           },
           "mac": {
@@ -114,7 +118,13 @@
             "type": "boolean"
           }
         },
-        "required": ["host", "username", "password", "port", "timeoutMs"],
+        "required": [
+          "host",
+          "username",
+          "password",
+          "port",
+          "timeoutMs"
+        ],
         "additionalProperties": false
       }
     },
@@ -138,7 +148,11 @@
         "transport": {
           "default": "stdio",
           "type": "string",
-          "enum": ["stdio", "sse", "streamable-http"]
+          "enum": [
+            "stdio",
+            "sse",
+            "streamable-http"
+          ]
         },
         "host": {
           "default": "0.0.0.0",
@@ -217,7 +231,10 @@
           "maximum": 9007199254740991
         }
       },
-      "required": ["prefix", "presignExpiresIn"],
+      "required": [
+        "prefix",
+        "presignExpiresIn"
+      ],
       "additionalProperties": false
     },
     "dashboard": {
@@ -320,7 +337,11 @@
           "maximum": 9007199254740991
         }
       },
-      "required": ["keepAlive", "keepAliveInterval", "idleTimeout"],
+      "required": [
+        "keepAlive",
+        "keepAliveInterval",
+        "idleTimeout"
+      ],
       "additionalProperties": false
     },
     "readOnly": {
@@ -365,7 +386,12 @@
           }
         }
       },
-      "required": ["enabledModules", "disabledModules", "enabledGroups", "disabledGroups"],
+      "required": [
+        "enabledModules",
+        "disabledModules",
+        "enabledGroups",
+        "disabledGroups"
+      ],
       "additionalProperties": false
     },
     "memory": {
@@ -384,7 +410,10 @@
           "type": "string"
         }
       },
-      "required": ["enabled", "dbPath"],
+      "required": [
+        "enabled",
+        "dbPath"
+      ],
       "additionalProperties": false
     },
     "backupDir": {

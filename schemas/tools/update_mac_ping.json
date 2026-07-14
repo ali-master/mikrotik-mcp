@@ -8,6 +8,8 @@
       "description": "Whether MAC-ping is enabled"
     }
   },
-  "required": ["enabled"],
+  "required": [
+    "enabled"
+  ],
   "additionalProperties": false
 }

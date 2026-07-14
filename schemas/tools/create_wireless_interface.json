@@ -53,7 +53,14 @@
     },
     "channel_width": {
       "type": "string",
-      "enum": ["20mhz", "40mhz", "80mhz", "160mhz", "20/40mhz-eC", "20/40mhz-Ce"]
+      "enum": [
+        "20mhz",
+        "40mhz",
+        "80mhz",
+        "160mhz",
+        "20/40mhz-eC",
+        "20/40mhz-Ce"
+      ]
     },
     "security_profile": {
       "type": "string"
@@ -67,7 +74,13 @@
     "arp": {
       "description": "ARP mode for the interface",
       "type": "string",
-      "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
+      "enum": [
+        "disabled",
+        "enabled",
+        "proxy-arp",
+        "reply-only",
+        "local-proxy-arp"
+      ]
     },
     "hide_ssid": {
       "description": "Legacy: do not broadcast the SSID in beacons (AP modes)",
@@ -84,7 +97,11 @@
     "frequency_mode": {
       "description": "Legacy: regulatory frequency mode",
       "type": "string",
-      "enum": ["manual-txpower", "regulatory-domain", "superchannel"]
+      "enum": [
+        "manual-txpower",
+        "regulatory-domain",
+        "superchannel"
+      ]
     },
     "country": {
       "description": "Legacy: regulatory country setting (e.g. 'united states')",
@@ -99,7 +116,13 @@
     "wds_mode": {
       "description": "Legacy: WDS mode",
       "type": "string",
-      "enum": ["disabled", "dynamic", "dynamic-mesh", "static", "static-mesh"]
+      "enum": [
+        "disabled",
+        "dynamic",
+        "dynamic-mesh",
+        "static",
+        "static-mesh"
+      ]
     },
     "wds_default_bridge": {
       "description": "Legacy: bridge that dynamic WDS interfaces are added to",
@@ -122,7 +145,12 @@
     "tx_power_mode": {
       "description": "Legacy: how tx-power is determined",
       "type": "string",
-      "enum": ["default", "card-rates", "all-rates-fixed", "manual-table"]
+      "enum": [
+        "default",
+        "card-rates",
+        "all-rates-fixed",
+        "manual-table"
+      ]
     },
     "distance": {
       "description": "Legacy: link distance ('dynamic', 'indoors', or a km value)",
@@ -133,6 +161,9 @@
       "type": "string"
     }
   },
-  "required": ["name", "disabled"],
+  "required": [
+    "name",
+    "disabled"
+  ],
   "additionalProperties": false
 }

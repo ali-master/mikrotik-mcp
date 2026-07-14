@@ -12,6 +12,9 @@
       "description": "Queue-type name to apply to the interface"
     }
   },
-  "required": ["interface_id", "queue"],
+  "required": [
+    "interface_id",
+    "queue"
+  ],
   "additionalProperties": false
 }

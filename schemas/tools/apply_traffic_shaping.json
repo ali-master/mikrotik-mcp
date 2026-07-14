@@ -32,7 +32,12 @@
             "type": "string"
           }
         },
-        "required": ["name", "target", "max_limit", "priority"],
+        "required": [
+          "name",
+          "target",
+          "max_limit",
+          "priority"
+        ],
         "additionalProperties": false
       },
       "description": "Shaping classes to create, in priority order"
@@ -43,6 +48,9 @@
       "type": "boolean"
     }
   },
-  "required": ["classes", "apply"],
+  "required": [
+    "classes",
+    "apply"
+  ],
   "additionalProperties": false
 }

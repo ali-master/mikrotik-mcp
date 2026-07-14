@@ -8,6 +8,8 @@
       "description": "OSPF area name to remove"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

@@ -48,26 +48,48 @@
     },
     "use_encryption": {
       "type": "string",
-      "enum": ["default", "yes", "no", "required"]
+      "enum": [
+        "default",
+        "yes",
+        "no",
+        "required"
+      ]
     },
     "use_mpls": {
       "description": "MPLS over the link policy",
       "type": "string",
-      "enum": ["default", "yes", "no", "required"]
+      "enum": [
+        "default",
+        "yes",
+        "no",
+        "required"
+      ]
     },
     "use_compression": {
       "description": "Compression policy",
       "type": "string",
-      "enum": ["default", "yes", "no"]
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
     },
     "change_tcp_mss": {
       "type": "string",
-      "enum": ["default", "yes", "no"]
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
     },
     "only_one": {
       "description": "Allow only one session per user",
       "type": "string",
-      "enum": ["default", "yes", "no"]
+      "enum": [
+        "default",
+        "yes",
+        "no"
+      ]
     },
     "bridge": {
       "type": "string"
@@ -106,6 +128,8 @@
       "type": "string"
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

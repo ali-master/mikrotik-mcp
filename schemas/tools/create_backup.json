@@ -18,6 +18,9 @@
       "type": "string"
     }
   },
-  "required": ["dont_encrypt", "include_password"],
+  "required": [
+    "dont_encrypt",
+    "include_password"
+  ],
   "additionalProperties": false
 }

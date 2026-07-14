@@ -18,6 +18,10 @@
       "type": "boolean"
     }
   },
-  "required": ["interface", "duration", "apply"],
+  "required": [
+    "interface",
+    "duration",
+    "apply"
+  ],
   "additionalProperties": false
 }
