@@ -236,9 +236,21 @@ export function parseFlagLegend(text: string): Record<string, string> {
 /** Tokenise `key=value` / `key="quoted value"` pairs from one chunk of text. */
 function parseKvTokens(chunk: string): Record<string, string> {
   const out: Record<string, string> = {};
-  const re = /([A-Za-z][\w.-]*)=("(?:[^"\\]|\\.)*"|[^\s]*)/g;
+  // A leading dot is allowed: RouterOS `print detail` abbreviates a repeated
+  // dotted prefix, emitting the group head in full (`channel.frequency=5745`)
+  // then continuation keys as bare `.suffix=value` (`.band=5ghz-ax`,
+  // `.width=20mhz`) that inherit the last head's prefix. Re-expand those to the
+  // full `channel.band` / `channel.width` instead of dropping them.
+  const re = /(\.?[A-Za-z][\w.-]*)=("(?:[^"\\]|\\.)*"|[^\s]*)/g;
+  let prefix = "";
   for (const m of chunk.matchAll(re)) {
-    const key = m[1];
+    let key = m[1];
+    if (key.startsWith(".")) {
+      key = prefix + key; // `.band` under `channel.frequency` → `channel.band`
+    } else {
+      const dot = key.indexOf(".");
+      prefix = dot > 0 ? key.slice(0, dot) : "";
+    }
     let value = m[2];
     if (value.startsWith('"') && value.endsWith('"')) {
       value = value.slice(1, -1).replace(/\\(.)/g, "$1");

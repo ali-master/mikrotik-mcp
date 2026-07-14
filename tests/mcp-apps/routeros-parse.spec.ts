@@ -145,6 +145,31 @@ describe("parseRecords — detail (key=value) format", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ name: "home", ttl: "1d", address: "1.2.3.4" });
   });
+
+  it("re-expands RouterOS abbreviated dotted-prefix continuations (`.band` → `channel.band`)", () => {
+    // Real `/interface wifi print detail` output (RouterOS 7.23, wifi-qcom).
+    const text = [
+      "Flags: M - MASTER; D - DYNAMIC, N - NETWORK; B - BOUND;",
+      ' 0 M B  default-name="wifi2" name="wifi 5GHz" mac-address=04:F4:1C:EF:B7:B4',
+      "        radio-mac=04:F4:1C:EF:B7:B4",
+      '        configuration.country=Taiwan .chains=0,1 .ssid="useStrict" .mode=ap',
+      "        security.authentication-types=wpa2-psk,wpa3-psk .ft=no .ft-over-ds=no",
+      "        channel.frequency=5745 .band=5ghz-ax .width=20/40/80mhz",
+    ].join("\n");
+    const { rows } = parseRecords(text);
+    expect(rows[0]).toMatchObject({
+      name: "wifi 5GHz",
+      "radio-mac": "04:F4:1C:EF:B7:B4",
+      "configuration.country": "Taiwan",
+      "configuration.ssid": "useStrict", // abbreviated `.ssid`
+      "configuration.mode": "ap",
+      "security.ft": "no", // abbreviated `.ft`
+      "security.ft-over-ds": "no",
+      "channel.frequency": "5745",
+      "channel.band": "5ghz-ax", // abbreviated `.band`
+      "channel.width": "20/40/80mhz",
+    });
+  });
 });
 
 describe("parseRecords — columnar format", () => {

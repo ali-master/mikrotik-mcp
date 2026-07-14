@@ -28,6 +28,12 @@ export interface CapsmanRaw {
   manager: Record<string, string>;
   remoteCaps: Record<string, string>[];
   radios: Record<string, string>[];
+  /**
+   * The local `/interface wifi` rows (band/channel/ssid/security live here on a
+   * standalone AP, not on the remote-cap radio table). Optional so legacy
+   * `/caps-man` and older fixtures still normalise.
+   */
+  interfaces?: Record<string, string>[];
   registrations: Record<string, string>[];
   securityConfigs: Record<string, string>[];
   accessList: Record<string, string>[];
@@ -47,10 +53,18 @@ function num(v: string | undefined): number | undefined {
 
 /** Map a RouterOS band/frequency string to a band. */
 export function bandFromRow(row: Record<string, string>): Band {
-  const b = (row.band ?? row["configuration.mode"] ?? "").toLowerCase();
+  // v7 `/interface wifi` carries the band as `channel.band` (e.g. `5ghz-ax`) on
+  // the interface and `bands=5ghz-a:…` on the radio; legacy rows use `band`.
+  const b = (
+    row["channel.band"] ??
+    row.band ??
+    row.bands ??
+    row["configuration.band"] ??
+    ""
+  ).toLowerCase();
   if (b.includes("2ghz") || b.includes("2.4")) return "2ghz";
   if (b.includes("5ghz") || b.includes("5.")) return "5ghz";
-  const ch = num(row.channel ?? row.frequency ?? row["channel.frequency"]);
+  const ch = num(row["channel.frequency"] ?? row.channel ?? row.frequency);
   if (ch != null) {
     if (ch >= 5000 || (ch >= 36 && ch <= 177)) return "5ghz";
     if ((ch >= 2400 && ch <= 2500) || (ch >= 1 && ch <= 14)) return "2ghz";
@@ -58,9 +72,9 @@ export function bandFromRow(row: Record<string, string>): Band {
   return "unknown";
 }
 
-/** Extract the numeric channel/frequency from a radio or channel row. */
+/** Extract the numeric channel/frequency from a radio, interface, or channel row. */
 function channelOf(row: Record<string, string>): number | undefined {
-  return num(row.channel ?? row.frequency ?? row["channel.frequency"]);
+  return num(row["channel.frequency"] ?? row.channel ?? row.frequency);
 }
 
 /**
@@ -77,9 +91,23 @@ export function normalizeCapsmanState(raw: CapsmanRaw | null): CapsmanState {
     if (rid) clientsByRadio.set(rid, (clientsByRadio.get(rid) ?? 0) + 1);
   }
 
-  const radios = raw.radios.map((row) => {
-    const cap = row["remote-cap-identity"] ?? row.identity ?? row["cap-name"] ?? row.name ?? "?";
-    const radioId = row.interface ?? row.name ?? row["radio-mac"] ?? cap;
+  // Prefer the local `/interface wifi` rows: on a standalone AP (and on a CAP)
+  // they carry band/channel/ssid, which the remote-cap radio table lacks. Only
+  // when there are no interface rows (a pure manager, or legacy `/caps-man`) do
+  // we fall back to the radio table.
+  const interfaceRows = raw.interfaces ?? [];
+  const useInterfaces = interfaceRows.length > 0;
+  const radioRows = useInterfaces ? interfaceRows : raw.radios;
+
+  const radios = radioRows.map((row) => {
+    const cap = useInterfaces
+      ? (row.name ?? row["radio-mac"] ?? "?")
+      : (row["remote-cap-identity"] ?? row.identity ?? row["cap-name"] ?? row.name ?? "?");
+    // radioId must match the registration-table `interface` for the client join:
+    // on `/interface wifi` that is the interface name (e.g. "wifi 5GHz").
+    const radioId = useInterfaces
+      ? (row.name ?? row["radio-mac"] ?? cap)
+      : (row.interface ?? row.name ?? row["radio-mac"] ?? cap);
     const tag = parseFloorTag(`${cap} ${row.comment ?? ""}`);
     const res = raw.resources[cap] ?? {};
     return {
@@ -87,7 +115,7 @@ export function normalizeCapsmanState(raw: CapsmanRaw | null): CapsmanState {
       radioId,
       band: bandFromRow(row),
       channel: channelOf(row),
-      width: row.width ?? row["channel.width"],
+      width: row["channel.width"] ?? row.width,
       txPower: num(row["tx-power"] ?? row["tx-power-dbm"]),
       clientCount: clientsByRadio.get(radioId) ?? num(row["registered-clients"]) ?? 0,
       floor: tag.floor,

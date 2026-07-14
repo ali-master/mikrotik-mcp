@@ -53,7 +53,7 @@ export async function fetchCapsmanState(ctx: ToolContext): Promise<CapsmanState>
   if (!path) return normalizeCapsmanState(null);
 
   const isCapsman = path === "/caps-man";
-  const [manager, remoteCaps, radios, registrations, securityConfigs, accessList] =
+  const [manager, remoteCaps, radios, interfaces, registrations, securityConfigs, accessList] =
     await Promise.all([
       fetchKv(isCapsman ? "/caps-man manager print" : `${path} capsman print`, ctx),
       fetchRows(
@@ -61,6 +61,11 @@ export async function fetchCapsmanState(ctx: ToolContext): Promise<CapsmanState>
         ctx,
       ),
       fetchRows(isCapsman ? "/caps-man radio print detail" : `${path} radio print detail`, ctx),
+      // The local wifi interfaces — where band/channel/ssid/security live on a
+      // standalone `/interface wifi` AP. Legacy `/caps-man` has no equivalent.
+      isCapsman
+        ? Promise.resolve([] as Record<string, string>[])
+        : fetchRows(`${path} print detail`, ctx),
       fetchRows(
         isCapsman
           ? "/caps-man registration-table print detail"
@@ -82,6 +87,7 @@ export async function fetchCapsmanState(ctx: ToolContext): Promise<CapsmanState>
     manager,
     remoteCaps,
     radios,
+    interfaces,
     registrations,
     securityConfigs,
     accessList,

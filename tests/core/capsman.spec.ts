@@ -355,6 +355,51 @@ describe("normalizeCapsmanState", () => {
     expect(s.clients).toHaveLength(2);
   });
 
+  test("standalone /interface wifi AP: radios come from the interface rows (band/channel/ssid)", () => {
+    // Real hAP ax3 shape (capsman disabled): band/channel live on the interface
+    // as the re-expanded dotted keys, the radio table has no channel scalar, and
+    // the registration `interface` matches the interface name.
+    const s = normalizeCapsmanState({
+      path: "/interface wifi",
+      manager: { enabled: "no" },
+      remoteCaps: [],
+      radios: [{ "radio-mac": "04:F4:1C:EF:B7:B4", interface: "wifi 5GHz" }],
+      interfaces: [
+        {
+          name: "wifi 5GHz",
+          "radio-mac": "04:F4:1C:EF:B7:B4",
+          "channel.frequency": "5745",
+          "channel.band": "5ghz-ax",
+          "configuration.ssid": "useStrict",
+          "security.ft": "no",
+        },
+        {
+          name: "wifi 2GHz",
+          "radio-mac": "04:F4:1C:EF:B7:B5",
+          "channel.frequency": "2462",
+          "channel.band": "2ghz-ax",
+          "configuration.ssid": "useStrict 2G",
+        },
+      ],
+      registrations: [{ "mac-address": "aa:bb", interface: "wifi 5GHz", signal: "-58" }],
+      securityConfigs: [],
+      accessList: [],
+      resources: {},
+    });
+    expect(s.managerEnabled).toBe(false);
+    expect(s.radios).toHaveLength(2);
+    expect(s.radios[0]).toMatchObject({
+      cap: "wifi 5GHz",
+      radioId: "wifi 5GHz",
+      band: "5ghz",
+      channel: 5745,
+      clientCount: 1,
+    });
+    expect(s.radios[1]).toMatchObject({ cap: "wifi 2GHz", band: "2ghz", channel: 2462 });
+    // client joined to its radio, real signal parsed (not the -100 fallback)
+    expect(s.clients[0]).toMatchObject({ mac: "aa:bb", radioId: "wifi 5GHz", signal: -58 });
+  });
+
   test("floor-tag-missing radio still normalises (adjacency will cover it)", () => {
     const s = normalizeCapsmanState({
       path: "/interface wifi",
