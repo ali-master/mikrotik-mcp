@@ -121,8 +121,7 @@ export const CONFIG_SECTIONS: CfgSection[] = [
     title: "Devices",
     icon: "🖧",
     kind: "deviceMap",
-    blurb:
-      "MikroTik routers this server manages. Toggle a device off to hide it from the tools.",
+    blurb: "MikroTik routers this server manages. Toggle a device off to hide it from the tools.",
     fields: DEVICE_FIELDS,
   },
   {
@@ -182,8 +181,7 @@ export const CONFIG_SECTIONS: CfgSection[] = [
     kind: "object",
     path: "dashboard",
     enable: { key: "enabled", label: "Dashboard" },
-    blurb:
-      "This web dashboard — records every tool call and serves the live UI.",
+    blurb: "This web dashboard — records every tool call and serves the live UI.",
     fields: [
       { key: "host", label: "Bind host", type: "text", placeholder: "0.0.0.0" },
       { key: "port", label: "Bind port", type: "number", placeholder: "9090" },

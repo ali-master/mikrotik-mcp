@@ -61,12 +61,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "interface",
-    "address_pool",
-    "lease_time",
-    "disabled"
-  ],
+  "required": ["name", "interface", "address_pool", "lease_time", "disabled"],
   "additionalProperties": false
 }

@@ -29,12 +29,7 @@ import { bytes } from "./lib/format";
 import { useApi } from "./lib/hooks";
 import { CONFIG_SECTIONS, DEVICE_FIELDS } from "./config-spec";
 import type { CfgField, CfgSection } from "./config-spec";
-import type {
-  CfgVersion,
-  ConfigIssue,
-  DeviceStatus,
-  DiffSummary,
-} from "./lib/types";
+import type { CfgVersion, ConfigIssue, DeviceStatus, DiffSummary } from "./lib/types";
 
 interface SaveResp {
   ok?: boolean;
@@ -67,8 +62,7 @@ type Cfg = Record<string, unknown>;
 const REDACTED = "«redacted»";
 const asObj = (v: unknown): Cfg =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Cfg) : {};
-const cfgArr = (v: unknown): string[] =>
-  Array.isArray(v) ? (v as string[]) : [];
+const cfgArr = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
 const uniq = (a: string[]): string[] => [...new Set(a)];
 const str = (v: unknown): string =>
   v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
@@ -107,14 +101,7 @@ const SECTION_ICON: Record<string, Icon> = {
 /** Render one CfgField as the matching Raycast Form control. */
 function fieldControl(f: CfgField, cur: unknown) {
   if (f.type === "bool")
-    return (
-      <Form.Checkbox
-        key={f.key}
-        id={f.key}
-        label={f.label}
-        defaultValue={cur === true}
-      />
-    );
+    return <Form.Checkbox key={f.key} id={f.key} label={f.label} defaultValue={cur === true} />;
   if (f.type === "select")
     return (
       <Form.Dropdown
@@ -134,9 +121,7 @@ function fieldControl(f: CfgField, cur: unknown) {
         key={f.key}
         id={f.key}
         title={f.label}
-        placeholder={
-          cur === REDACTED ? "unchanged — leave blank to keep" : undefined
-        }
+        placeholder={cur === REDACTED ? "unchanged — leave blank to keep" : undefined}
       />
     );
   return (
@@ -162,10 +147,7 @@ function IssuesView({ issues }: { issues: ConfigIssue[] }) {
           subtitle={iss.message}
         />
       ))}
-      <List.EmptyView
-        icon={{ source: Icon.Checkmark, tintColor: Color.Green }}
-        title="No issues"
-      />
+      <List.EmptyView icon={{ source: Icon.Checkmark, tintColor: Color.Green }} title="No issues" />
     </List>
   );
 }
@@ -204,10 +186,9 @@ function PendingView({ resp, onDone }: { resp: SaveResp; onDone: () => void }) {
       title: "Keeping…",
     });
     try {
-      const res = await postJson<{ kept?: boolean; error?: string }>(
-        "/api/config/keep",
-        { pendingId: resp.pendingId },
-      );
+      const res = await postJson<{ kept?: boolean; error?: string }>("/api/config/keep", {
+        pendingId: resp.pendingId,
+      });
       if (!res.kept) throw new Error(res.error ?? "Keep was rejected");
       toast.style = Toast.Style.Success;
       toast.title = "Config kept";
@@ -225,12 +206,10 @@ function PendingView({ resp, onDone }: { resp: SaveResp; onDone: () => void }) {
       title: "Reverting…",
     });
     try {
-      const res = await postJson<{ rolledBack?: boolean; error?: string }>(
-        "/api/config/rollback",
-        { pendingId: resp.pendingId },
-      );
-      if (!res.rolledBack)
-        throw new Error(res.error ?? "Rollback was rejected");
+      const res = await postJson<{ rolledBack?: boolean; error?: string }>("/api/config/rollback", {
+        pendingId: resp.pendingId,
+      });
+      if (!res.rolledBack) throw new Error(res.error ?? "Rollback was rejected");
       toast.style = Toast.Style.Success;
       toast.title = "Reverted";
       onDone();
@@ -264,11 +243,7 @@ function PendingView({ resp, onDone }: { resp: SaveResp; onDone: () => void }) {
       actions={
         <ActionPanel>
           {!reverted ? (
-            <Action
-              title="Keep Changes"
-              icon={Icon.SaveDocument}
-              onAction={keep}
-            />
+            <Action title="Keep Changes" icon={Icon.SaveDocument} onAction={keep} />
           ) : null}
           {!reverted ? (
             <Action
@@ -303,8 +278,7 @@ function CheckpointForm({ onDone }: { onDone: () => void }) {
                   "/api/config/history/checkpoint",
                   { label: v.label || undefined },
                 );
-                if (!res.ok)
-                  throw new Error(res.error ?? "Checkpoint was rejected");
+                if (!res.ok) throw new Error(res.error ?? "Checkpoint was rejected");
                 toast.style = Toast.Style.Success;
                 toast.title = "Checkpoint saved";
                 onDone();
@@ -320,11 +294,7 @@ function CheckpointForm({ onDone }: { onDone: () => void }) {
         </ActionPanel>
       }
     >
-      <Form.TextField
-        id="label"
-        title="Label"
-        placeholder="before-firewall-change"
-      />
+      <Form.TextField id="label" title="Label" placeholder="before-firewall-change" />
     </Form>
   );
 }
@@ -367,10 +337,9 @@ function HistoryView({ onReload }: { onReload: () => void }) {
       title: "Restoring…",
     });
     try {
-      const res = await postJson<{ ok?: boolean; error?: string }>(
-        "/api/config/history/restore",
-        { id: v.id },
-      );
+      const res = await postJson<{ ok?: boolean; error?: string }>("/api/config/history/restore", {
+        id: v.id,
+      });
       if (!res.ok) throw new Error(res.error ?? "Restore was rejected");
       toast.style = Toast.Style.Success;
       toast.title = "Restored";
@@ -415,8 +384,7 @@ function HistoryView({ onReload }: { onReload: () => void }) {
           key={v.id}
           icon={{
             source: v.kind === "checkpoint" ? Icon.Pin : Icon.Dot,
-            tintColor:
-              v.kind === "checkpoint" ? Color.Blue : Color.SecondaryText,
+            tintColor: v.kind === "checkpoint" ? Color.Blue : Color.SecondaryText,
           }}
           title={v.label ?? (i === 0 ? "latest" : v.kind)}
           subtitle={new Date(v.ts).toLocaleString()}
@@ -434,9 +402,7 @@ function HistoryView({ onReload }: { onReload: () => void }) {
               <Action.Push
                 title="Diff Against Current"
                 icon={Icon.Text}
-                target={
-                  <HistoryDiff id={v.id} label={v.label ?? v.id.slice(0, 8)} />
-                }
+                target={<HistoryDiff id={v.id} label={v.label ?? v.id.slice(0, 8)} />}
               />
               <Action
                 title="Restore"
@@ -474,13 +440,9 @@ interface GuideField {
   required: boolean;
 }
 
-function flattenSchema(
-  schema: Record<string, unknown> | undefined,
-  prefix = "",
-): GuideField[] {
+function flattenSchema(schema: Record<string, unknown> | undefined, prefix = ""): GuideField[] {
   const out: GuideField[] = [];
-  const props =
-    (schema?.properties as Record<string, Record<string, unknown>>) ?? {};
+  const props = (schema?.properties as Record<string, Record<string, unknown>>) ?? {};
   const required = (schema?.required as string[]) ?? [];
   for (const [key, val] of Object.entries(props)) {
     const path = prefix ? `${prefix}.${key}` : key;
@@ -496,15 +458,13 @@ function flattenSchema(
       enumv: val.enum as string[] | undefined,
       required: required.includes(key),
     });
-    if (val.type === "object" && val.properties)
-      out.push(...flattenSchema(val, path));
+    if (val.type === "object" && val.properties) out.push(...flattenSchema(val, path));
   }
   return out;
 }
 
 function FieldGuideView() {
-  const { data, isLoading } =
-    useApi<Record<string, unknown>>("/api/config-schema");
+  const { data, isLoading } = useApi<Record<string, unknown>>("/api/config-schema");
   const fields = flattenSchema(data);
   return (
     <List
@@ -520,9 +480,7 @@ function FieldGuideView() {
           subtitle={f.type}
           keywords={[f.desc ?? ""]}
           accessories={
-            f.required
-              ? [{ tag: { value: "required", color: Color.Orange } }]
-              : undefined
+            f.required ? [{ tag: { value: "required", color: Color.Orange } }] : undefined
           }
           detail={
             <List.Item.Detail
@@ -531,26 +489,17 @@ function FieldGuideView() {
                   <List.Item.Detail.Metadata.Label title="Path" text={f.path} />
                   <List.Item.Detail.Metadata.Label title="Type" text={f.type} />
                   {f.def !== undefined ? (
-                    <List.Item.Detail.Metadata.Label
-                      title="Default"
-                      text={JSON.stringify(f.def)}
-                    />
+                    <List.Item.Detail.Metadata.Label title="Default" text={JSON.stringify(f.def)} />
                   ) : null}
                   {f.enumv ? (
                     <List.Item.Detail.Metadata.TagList title="Values">
                       {f.enumv.map((e) => (
-                        <List.Item.Detail.Metadata.TagList.Item
-                          key={e}
-                          text={e}
-                        />
+                        <List.Item.Detail.Metadata.TagList.Item key={e} text={e} />
                       ))}
                     </List.Item.Detail.Metadata.TagList>
                   ) : null}
                   {f.desc ? (
-                    <List.Item.Detail.Metadata.Label
-                      title="Description"
-                      text={f.desc}
-                    />
+                    <List.Item.Detail.Metadata.Label title="Description" text={f.desc} />
                   ) : null}
                 </List.Item.Detail.Metadata>
               }
@@ -598,8 +547,7 @@ function TestDevicesView({ devices }: { devices: Record<string, unknown> }) {
               }
             : {
                 reachable: false,
-                error:
-                  r.status?.error ?? r.errors?.[0]?.message ?? "unreachable",
+                error: r.status?.error ?? r.errors?.[0]?.message ?? "unreachable",
               };
         setResults((prev) => ({ ...prev, [name]: res }));
       }
@@ -691,12 +639,7 @@ function SectionScreen({
                   }
                   next = { ...cfg, [section.path!]: asObj(cfg[section.path!]) };
                 } else {
-                  next = setSecField(
-                    next,
-                    section,
-                    section.enable.key ?? "enabled",
-                    on,
-                  );
+                  next = setSecField(next, section, section.enable.key ?? "enabled", on);
                   if (!on) {
                     onChange(next);
                     pop();
@@ -707,15 +650,9 @@ function SectionScreen({
               for (const f of section.fields) {
                 let v: unknown = values[f.key];
                 if (f.type === "bool") v = v === true;
-                else if (f.type === "number")
-                  v = v === "" || v == null ? undefined : Number(v);
+                else if (f.type === "number") v = v === "" || v == null ? undefined : Number(v);
                 if (f.secret && (v === "" || v == null)) continue;
-                next = setSecField(
-                  next,
-                  section,
-                  f.key,
-                  v === "" ? undefined : v,
-                );
+                next = setSecField(next, section, f.key, v === "" ? undefined : v);
               }
               onChange(next);
               pop();
@@ -778,8 +715,7 @@ function DeviceForm({
                 : { ...dev };
               for (const f of DEVICE_FIELDS) {
                 let v: unknown = values[f.key];
-                if (f.type === "number")
-                  v = v === "" || v == null ? undefined : Number(v);
+                if (f.type === "number") v = v === "" || v == null ? undefined : Number(v);
                 if (f.secret && (v === "" || v == null)) continue;
                 if (v === "" || v == null) delete d[f.key];
                 else d[f.key] = v;
@@ -791,21 +727,13 @@ function DeviceForm({
         </ActionPanel>
       }
     >
-      {isNew && (
-        <Form.TextField id="__name" title="Name" placeholder="core-router" />
-      )}
+      {isNew && <Form.TextField id="__name" title="Name" placeholder="core-router" />}
       {DEVICE_FIELDS.map((f) => fieldControl(f, dev[f.key]))}
     </Form>
   );
 }
 
-function DevicesScreen({
-  cfg,
-  onChange,
-}: {
-  cfg: Cfg;
-  onChange: (c: Cfg) => void;
-}) {
+function DevicesScreen({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }) {
   const devices = asObj(cfg.devices);
   const names = Object.keys(devices);
   const defaultDevice = str(cfg.defaultDevice);
@@ -839,14 +767,7 @@ function DevicesScreen({
           <Action.Push
             title="Add Device"
             icon={Icon.Plus}
-            target={
-              <DeviceForm
-                cfg={cfg}
-                onChange={onChange}
-                name={nextName()}
-                isNew
-              />
-            }
+            target={<DeviceForm cfg={cfg} onChange={onChange} name={nextName()} isNew />}
           />
         </ActionPanel>
       }
@@ -862,15 +783,9 @@ function DevicesScreen({
               tintColor: off ? Color.SecondaryText : Color.Green,
             }}
             title={n}
-            subtitle={
-              d.mac
-                ? str(d.mac)
-                : `${str(d.host) || "?"}:${str(d.port) || "22"}`
-            }
+            subtitle={d.mac ? str(d.mac) : `${str(d.host) || "?"}:${str(d.port) || "22"}`}
             accessories={[
-              ...(defaultDevice === n
-                ? [{ tag: { value: "default", color: Color.Blue } }]
-                : []),
+              ...(defaultDevice === n ? [{ tag: { value: "default", color: Color.Blue } }] : []),
               {
                 tag: {
                   value: off ? "disabled" : "enabled",
@@ -883,14 +798,7 @@ function DevicesScreen({
                 <Action.Push
                   title="Edit"
                   icon={Icon.Pencil}
-                  target={
-                    <DeviceForm
-                      cfg={cfg}
-                      onChange={onChange}
-                      name={n}
-                      isNew={false}
-                    />
-                  }
+                  target={<DeviceForm cfg={cfg} onChange={onChange} name={n} isNew={false} />}
                 />
                 <Action
                   title={off ? "Enable" : "Disable"}
@@ -910,14 +818,7 @@ function DevicesScreen({
                 <Action.Push
                   title="Add Device"
                   icon={Icon.Plus}
-                  target={
-                    <DeviceForm
-                      cfg={cfg}
-                      onChange={onChange}
-                      name={nextName()}
-                      isNew
-                    />
-                  }
+                  target={<DeviceForm cfg={cfg} onChange={onChange} name={nextName()} isNew />}
                 />
                 <Action
                   title="Remove"
@@ -957,13 +858,7 @@ function moduleEnabled(tools: Cfg, m: ModuleItem): boolean {
   return em.includes(m.slug) || eg.includes(m.group);
 }
 
-function ModulesScreen({
-  cfg,
-  onChange,
-}: {
-  cfg: Cfg;
-  onChange: (c: Cfg) => void;
-}) {
+function ModulesScreen({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }) {
   const { data, isLoading } = useApi<{ modules: ModuleItem[] }>("/api/modules");
   const catalog = data?.modules ?? [];
   const tools = asObj(cfg.tools);
@@ -972,10 +867,7 @@ function ModulesScreen({
     const dm = new Set(cfgArr(tools.disabledModules));
     if (enable) {
       dm.delete(m.slug);
-      if (
-        cfgArr(tools.enabledModules).length > 0 ||
-        cfgArr(tools.enabledGroups).length > 0
-      )
+      if (cfgArr(tools.enabledModules).length > 0 || cfgArr(tools.enabledGroups).length > 0)
         em.add(m.slug);
     } else {
       em.delete(m.slug);
@@ -991,8 +883,7 @@ function ModulesScreen({
     });
   };
   const groups = new Map<string, ModuleItem[]>();
-  for (const m of catalog)
-    groups.set(m.group, [...(groups.get(m.group) ?? []), m]);
+  for (const m of catalog) groups.set(m.group, [...(groups.get(m.group) ?? []), m]);
   return (
     <List
       isLoading={isLoading}
@@ -1037,13 +928,7 @@ function ModulesScreen({
   );
 }
 
-function JsonScreen({
-  cfg,
-  onChange,
-}: {
-  cfg: Cfg;
-  onChange: (c: Cfg) => void;
-}) {
+function JsonScreen({ cfg, onChange }: { cfg: Cfg; onChange: (c: Cfg) => void }) {
   const { pop } = useNavigation();
   return (
     <Form
@@ -1069,11 +954,7 @@ function JsonScreen({
       }
     >
       <Form.Description text="Advanced: edit the full config as JSON. Applying updates the form; Save/Apply is still done from the main Config screen." />
-      <Form.TextArea
-        id="json"
-        title="Config JSON"
-        defaultValue={JSON.stringify(cfg, null, 2)}
-      />
+      <Form.TextArea id="json" title="Config JSON" defaultValue={JSON.stringify(cfg, null, 2)} />
     </Form>
   );
 }
@@ -1086,13 +967,7 @@ type ValidationState =
   | { state: "issues"; issues: ConfigIssue[] }
   | { state: "valid" };
 
-function Editor({
-  initial,
-  reload,
-}: {
-  initial: Record<string, unknown>;
-  reload: () => void;
-}) {
+function Editor({ initial, reload }: { initial: Record<string, unknown>; reload: () => void }) {
   const { push } = useNavigation();
   const [cfg, setCfg] = useState<Cfg>(() => asObj(initial));
   const [rollbackMs, setRollbackMs] = useState(60_000);
@@ -1146,13 +1021,11 @@ function Editor({
       errors?: ConfigIssue[];
     }>("/api/config/validate", cfg);
     if (res.errors?.length) push(<IssuesView issues={res.errors} />);
-    else if (res.ok)
-      void showToast({ style: Toast.Style.Success, title: "Valid ✓" });
+    else if (res.ok) void showToast({ style: Toast.Style.Success, title: "Valid ✓" });
     else
-      await showFailureToast(
-        new Error(res.error ?? "Validation was rejected"),
-        { title: "Validation failed" },
-      );
+      await showFailureToast(new Error(res.error ?? "Validation was rejected"), {
+        title: "Validation failed",
+      });
   };
   const testDevices = (): void => {
     const devices = asObj(cfg.devices);
@@ -1258,11 +1131,7 @@ function Editor({
           icon={Icon.Clock}
           target={<HistoryView onReload={reload} />}
         />
-        <Action.Push
-          title="Field Guide"
-          icon={Icon.Book}
-          target={<FieldGuideView />}
-        />
+        <Action.Push title="Field Guide" icon={Icon.Book} target={<FieldGuideView />} />
       </ActionPanel.Section>
       <ActionPanel.Section>
         <ActionPanel.Submenu title="Auto-Revert Window" icon={Icon.Clock}>
@@ -1334,11 +1203,7 @@ function Editor({
                       ) : s.kind === "modules" ? (
                         <ModulesScreen cfg={cfg} onChange={setCfg} />
                       ) : (
-                        <SectionScreen
-                          cfg={cfg}
-                          section={s}
-                          onChange={setCfg}
-                        />
+                        <SectionScreen cfg={cfg} section={s} onChange={setCfg} />
                       )
                     }
                   />
@@ -1380,28 +1245,16 @@ export default function Command() {
         navigationTitle="Config"
         actions={
           <ActionPanel>
-            <Action
-              title="Reload"
-              icon={Icon.ArrowClockwise}
-              onAction={cfg.revalidate}
-            />
-            <Action
-              title="Open Preferences"
-              icon={Icon.Gear}
-              onAction={openExtensionPreferences}
-            />
+            <Action title="Reload" icon={Icon.ArrowClockwise} onAction={cfg.revalidate} />
+            <Action title="Open Preferences" icon={Icon.Gear} onAction={openExtensionPreferences} />
           </ActionPanel>
         }
       >
         <List.EmptyView
           icon={Icon.Gear}
-          title={
-            cfg.isLoading ? "Loading configuration…" : "Could not load config"
-          }
+          title={cfg.isLoading ? "Loading configuration…" : "Could not load config"}
           description={
-            cfg.isLoading
-              ? undefined
-              : "Check the Dashboard URL / token in extension preferences."
+            cfg.isLoading ? undefined : "Check the Dashboard URL / token in extension preferences."
           }
         />
       </List>

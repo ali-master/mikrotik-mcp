@@ -8,8 +8,6 @@
       "description": "Interface name or RouterOS '.id'"
     }
   },
-  "required": [
-    "port_id"
-  ],
+  "required": ["port_id"],
   "additionalProperties": false
 }

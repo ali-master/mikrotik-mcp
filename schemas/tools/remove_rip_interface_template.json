@@ -8,8 +8,6 @@
       "description": "Template id, e.g. \"*1\""
     }
   },
-  "required": [
-    "template_id"
-  ],
+  "required": ["template_id"],
   "additionalProperties": false
 }

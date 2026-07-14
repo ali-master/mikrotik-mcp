@@ -24,10 +24,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "source",
-    "dont_require_permissions"
-  ],
+  "required": ["name", "source", "dont_require_permissions"],
   "additionalProperties": false
 }

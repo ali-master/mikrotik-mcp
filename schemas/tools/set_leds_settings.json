@@ -6,12 +6,7 @@
     "all_leds_off": {
       "description": "When to turn all LEDs off (dark mode)",
       "type": "string",
-      "enum": [
-        "never",
-        "immediate",
-        "after-1h",
-        "after-1min"
-      ]
+      "enum": ["never", "immediate", "after-1h", "after-1min"]
     }
   },
   "additionalProperties": false

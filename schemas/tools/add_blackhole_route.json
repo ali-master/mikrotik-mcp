@@ -18,9 +18,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "dst_address",
-    "distance"
-  ],
+  "required": ["dst_address", "distance"],
   "additionalProperties": false
 }

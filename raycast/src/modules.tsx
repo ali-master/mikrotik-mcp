@@ -4,16 +4,7 @@
  * global MCP App Views switch. Each toggle persists to the config file and
  * applies live (the MCP client must reconnect to see the change).
  */
-import {
-  Action,
-  ActionPanel,
-  Color,
-  Icon,
-  Keyboard,
-  List,
-  Toast,
-  showToast,
-} from "@raycast/api";
+import { Action, ActionPanel, Color, Icon, Keyboard, List, Toast, showToast } from "@raycast/api";
 import { postJson } from "./lib/api";
 import { showFailureToast } from "./lib/confirm";
 import { useApi } from "./lib/hooks";
@@ -24,8 +15,7 @@ export default function Command() {
   const modules = data?.modules ?? [];
 
   const groups = new Map<string, ModuleItem[]>();
-  for (const m of modules)
-    groups.set(m.group, [...(groups.get(m.group) ?? []), m]);
+  for (const m of modules) groups.set(m.group, [...(groups.get(m.group) ?? []), m]);
 
   async function toggle(slug: string, enabled: boolean, label: string) {
     const toast = await showToast({
@@ -44,8 +34,7 @@ export default function Command() {
       if (res.error) throw new Error(res.error);
       toast.style = Toast.Style.Success;
       toast.title = `${label} ${enabled ? "enabled" : "disabled"}`;
-      if (res.requiresReconnect)
-        toast.message = "Reconnect the MCP client to apply";
+      if (res.requiresReconnect) toast.message = "Reconnect the MCP client to apply";
       else if (res.warning) toast.message = res.warning;
       revalidate();
     } catch (e) {
@@ -63,12 +52,11 @@ export default function Command() {
     });
     try {
       for (const m of targets) {
-        const res = await postJson<{ ok?: boolean; error?: string }>(
-          "/api/modules/toggle",
-          { slug: m.slug, enabled },
-        );
-        if (res.ok !== true)
-          throw new Error(res.error ?? `Could not toggle ${m.slug}`);
+        const res = await postJson<{ ok?: boolean; error?: string }>("/api/modules/toggle", {
+          slug: m.slug,
+          enabled,
+        });
+        if (res.ok !== true) throw new Error(res.error ?? `Could not toggle ${m.slug}`);
       }
       toast.style = Toast.Style.Success;
       toast.title = `${what} ${enabled ? "enabled" : "disabled"}`;
@@ -144,11 +132,7 @@ export default function Command() {
       {[...groups.entries()].map(([group, items]) => {
         const on = items.filter((m) => m.enabled).length;
         return (
-          <List.Section
-            key={group}
-            title={group}
-            subtitle={`${on}/${items.length} on`}
-          >
+          <List.Section key={group} title={group} subtitle={`${on}/${items.length} on`}>
             {items.map((m) => (
               <List.Item
                 key={m.slug}

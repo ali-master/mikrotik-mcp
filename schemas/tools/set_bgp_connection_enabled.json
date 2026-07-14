@@ -11,9 +11,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "enabled"
-  ],
+  "required": ["name", "enabled"],
   "additionalProperties": false
 }

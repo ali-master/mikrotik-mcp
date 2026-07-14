@@ -39,10 +39,7 @@
     },
     "tls_version": {
       "type": "string",
-      "enum": [
-        "any",
-        "only-1.2"
-      ]
+      "enum": ["any", "only-1.2"]
     },
     "pfs": {
       "description": "Enable Perfect Forward Secrecy",
@@ -96,12 +93,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "connect_to",
-    "user",
-    "password",
-    "disabled"
-  ],
+  "required": ["name", "connect_to", "user", "password", "disabled"],
   "additionalProperties": false
 }

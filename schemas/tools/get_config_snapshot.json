@@ -11,9 +11,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "id",
-    "include_body"
-  ],
+  "required": ["id", "include_body"],
   "additionalProperties": false
 }

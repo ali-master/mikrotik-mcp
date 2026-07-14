@@ -8,8 +8,6 @@
       "description": "Public DNS name that resolves to this router, e.g. 'vpn.example.com'"
     }
   },
-  "required": [
-    "dns_name"
-  ],
+  "required": ["dns_name"],
   "additionalProperties": false
 }

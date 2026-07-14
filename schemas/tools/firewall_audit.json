@@ -14,9 +14,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "include_nat",
-    "include_mangle"
-  ],
+  "required": ["include_nat", "include_mangle"],
   "additionalProperties": false
 }

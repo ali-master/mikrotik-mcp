@@ -8,8 +8,6 @@
       "description": "Service name, e.g. 'ssh', 'www', 'winbox'"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

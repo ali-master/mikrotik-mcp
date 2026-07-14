@@ -16,10 +16,6 @@
       "description": "Container destination path, e.g. '/data'"
     }
   },
-  "required": [
-    "name",
-    "src",
-    "dst"
-  ],
+  "required": ["name", "src", "dst"],
   "additionalProperties": false
 }

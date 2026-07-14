@@ -5,22 +5,11 @@
   "properties": {
     "chain": {
       "type": "string",
-      "enum": [
-        "prerouting",
-        "output"
-      ]
+      "enum": ["prerouting", "output"]
     },
     "action": {
       "type": "string",
-      "enum": [
-        "accept",
-        "drop",
-        "notrack",
-        "jump",
-        "log",
-        "passthrough",
-        "return"
-      ]
+      "enum": ["accept", "drop", "notrack", "jump", "log", "passthrough", "return"]
     },
     "src_address": {
       "type": "string"
@@ -120,11 +109,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "chain",
-    "action",
-    "disabled",
-    "log"
-  ],
+  "required": ["chain", "action", "disabled", "log"],
   "additionalProperties": false
 }

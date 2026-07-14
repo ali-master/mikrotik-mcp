@@ -25,9 +25,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "terse",
-    "show_sensitive"
-  ],
+  "required": ["terse", "show_sensitive"],
   "additionalProperties": false
 }

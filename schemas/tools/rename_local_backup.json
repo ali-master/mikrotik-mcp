@@ -12,9 +12,6 @@
       "description": "Desired filename (an `.rsc` suffix is added if missing)."
     }
   },
-  "required": [
-    "name",
-    "new_name"
-  ],
+  "required": ["name", "new_name"],
   "additionalProperties": false
 }

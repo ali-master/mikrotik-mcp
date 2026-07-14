@@ -28,13 +28,7 @@ import type { LiveMode, Risk, ToolEvent } from "./lib/types";
 // worker, so we retain a bounded window of events and coalesce bursts (below).
 const CAP = 150;
 const FLUSH_MS = 700;
-const RISKS: Risk[] = [
-  "READ",
-  "WRITE",
-  "WRITE_IDEMPOTENT",
-  "DESTRUCTIVE",
-  "DANGEROUS",
-];
+const RISKS: Risk[] = ["READ", "WRITE", "WRITE_IDEMPOTENT", "DESTRUCTIVE", "DANGEROUS"];
 
 function pretty(raw: string): string {
   try {
@@ -59,22 +53,12 @@ function EventDetail({ e }: { e: ToolEvent }) {
       metadata={
         <Detail.Metadata>
           <Detail.Metadata.TagList title="Risk">
-            <Detail.Metadata.TagList.Item
-              text={riskLabel(e.risk)}
-              color={RISK_COLOR[e.risk]}
-            />
+            <Detail.Metadata.TagList.Item text={riskLabel(e.risk)} color={RISK_COLOR[e.risk]} />
           </Detail.Metadata.TagList>
           <Detail.Metadata.Label title="Title" text={e.title} />
-          <Detail.Metadata.Label
-            title="Time"
-            text={new Date(e.ts).toLocaleString()}
-          />
-          {e.device ? (
-            <Detail.Metadata.Label title="Device" text={e.device} />
-          ) : null}
-          {e.transport ? (
-            <Detail.Metadata.Label title="Transport" text={e.transport} />
-          ) : null}
+          <Detail.Metadata.Label title="Time" text={new Date(e.ts).toLocaleString()} />
+          {e.device ? <Detail.Metadata.Label title="Device" text={e.device} /> : null}
+          {e.transport ? <Detail.Metadata.Label title="Transport" text={e.transport} /> : null}
           <Detail.Metadata.Label title="Duration" text={ms(e.durationMs)} />
           <Detail.Metadata.Label
             title="Status"
@@ -85,10 +69,7 @@ function EventDetail({ e }: { e: ToolEvent }) {
             }}
           />
           {e.hasStructured ? (
-            <Detail.Metadata.Label
-              title="Structured"
-              text="renders an MCP App view"
-            />
+            <Detail.Metadata.Label title="Structured" text="renders an MCP App view" />
           ) : null}
         </Detail.Metadata>
       }
@@ -233,11 +214,7 @@ export default function Command() {
             ]}
             actions={
               <ActionPanel>
-                <Action.Push
-                  title="View Details"
-                  icon={Icon.Eye}
-                  target={<EventDetail e={e} />}
-                />
+                <Action.Push title="View Details" icon={Icon.Eye} target={<EventDetail e={e} />} />
                 <Action.CopyToClipboard
                   title="Copy Output"
                   content={e.output}

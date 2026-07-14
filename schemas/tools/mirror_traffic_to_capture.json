@@ -16,13 +16,7 @@
     "chain": {
       "default": "forward",
       "type": "string",
-      "enum": [
-        "forward",
-        "input",
-        "output",
-        "prerouting",
-        "postrouting"
-      ]
+      "enum": ["forward", "input", "output", "prerouting", "postrouting"]
     },
     "src_address": {
       "type": "string"
@@ -37,10 +31,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "receiver_host",
-    "port",
-    "chain"
-  ],
+  "required": ["receiver_host", "port", "chain"],
   "additionalProperties": false
 }

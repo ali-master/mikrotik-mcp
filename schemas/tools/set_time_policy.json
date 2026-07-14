@@ -42,12 +42,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "list",
-    "block_start",
-    "block_end",
-    "apply"
-  ],
+  "required": ["name", "list", "block_start", "block_end", "apply"],
   "additionalProperties": false
 }

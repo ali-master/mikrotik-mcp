@@ -23,8 +23,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "simple_queue"
-  ],
+  "required": ["simple_queue"],
   "additionalProperties": false
 }

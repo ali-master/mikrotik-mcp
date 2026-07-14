@@ -6,23 +6,8 @@
  * (`./lib/charts`). Auto-refreshes on a 5s poll; the time window is selectable.
  */
 import { useState } from "react";
-import {
-  Action,
-  ActionPanel,
-  Color,
-  Detail,
-  Icon,
-  Keyboard,
-} from "@raycast/api";
-import {
-  HEALTH_COLOR,
-  RISK_COLOR,
-  RISK_TINT,
-  WINDOWS,
-  bytes,
-  ms,
-  num,
-} from "./lib/format";
+import { Action, ActionPanel, Color, Detail, Icon, Keyboard } from "@raycast/api";
+import { HEALTH_COLOR, RISK_COLOR, RISK_TINT, WINDOWS, bytes, ms, num } from "./lib/format";
 import {
   barChart,
   chartImage,
@@ -40,14 +25,7 @@ function errColor(rate: number): Color {
   return Color.Green;
 }
 
-const TOOL_HUE = [
-  Color.Blue,
-  Color.Green,
-  Color.Purple,
-  Color.Orange,
-  Color.Magenta,
-  Color.Yellow,
-];
+const TOOL_HUE = [Color.Blue, Color.Green, Color.Purple, Color.Orange, Color.Magenta, Color.Yellow];
 
 export default function Command() {
   const [win, setWin] = useState(3_600_000);
@@ -61,17 +39,13 @@ export default function Command() {
   usePolling(revalidate, 5000);
 
   const winLabel = WINDOWS.find(([, v]) => v === win)?.[0] ?? `${win}ms`;
-  const errPct = stats
-    ? (stats.errorRate * 100).toFixed(stats.errorRate >= 0.05 ? 1 : 2)
-    : "0";
+  const errPct = stats ? (stats.errorRate * 100).toFixed(stats.errorRate >= 0.05 ? 1 : 2) : "0";
 
   // ── fleet health rollup ────────────────────────────────────────────────────
   const devices = devicesData?.devices ?? [];
   const online = devices.filter((d) => d.status.reachable === true).length;
   const offline = devices.filter((d) => d.status.reachable === false).length;
-  const busiestDevice = [...devices].sort(
-    (a, b) => b.activity.calls - a.activity.calls,
-  )[0];
+  const busiestDevice = [...devices].sort((a, b) => b.activity.calls - a.activity.calls)[0];
   const slowestTool = stats?.byTool.length
     ? [...stats.byTool].sort((a, b) => b.p95Ms - a.p95Ms)[0]
     : undefined;
@@ -175,9 +149,7 @@ export default function Command() {
   const healthGauges =
     health &&
     busiestDevice?.status.reachable === true &&
-    (health.cpuLoad != null ||
-      health.memUsedPct != null ||
-      health.hddUsedPct != null)
+    (health.cpuLoad != null || health.memUsedPct != null || health.hddUsedPct != null)
       ? gaugeRow(
           [
             health.cpuLoad != null
@@ -205,27 +177,20 @@ export default function Command() {
     stats && stats.recentErrors.length
       ? `## Recent errors\n\n${stats.recentErrors
           .slice(0, 6)
-          .map(
-            (e) =>
-              `- \`${e.tool}\` — ${e.error.replace(/\n/g, " ").slice(0, 120)}`,
-          )
+          .map((e) => `- \`${e.tool}\` — ${e.error.replace(/\n/g, " ").slice(0, 120)}`)
           .join("\n")}`
       : "";
 
   const markdown = stats
     ? [
         hero ? chartImage(hero, "kpis") : "",
-        activity
-          ? `\n### Calls over time\n\n${chartImage(activity, "activity")}`
-          : "",
+        activity ? `\n### Calls over time\n\n${chartImage(activity, "activity")}` : "",
         riskDonut ? `\n### By risk\n\n${chartImage(riskDonut, "risk")}` : "",
         toolBars ? `\n### Top tools\n\n${chartImage(toolBars, "tools")}` : "",
         healthGauges
           ? `\n### ${busiestDevice?.name} · live health\n\n${chartImage(healthGauges, "health")}`
           : "",
-        deviceBars
-          ? `\n### Calls by device\n\n${chartImage(deviceBars, "devices")}`
-          : "",
+        deviceBars ? `\n### Calls by device\n\n${chartImage(deviceBars, "devices")}` : "",
         recentErrors ? `\n${recentErrors}` : "",
       ]
         .filter(Boolean)
@@ -255,15 +220,9 @@ export default function Command() {
               text={`${ms(stats.latency.avg)} · ${ms(stats.latency.p95)} · ${ms(stats.latency.p99)}`}
               icon={{ source: Icon.Gauge, tintColor: Color.Orange }}
             />
-            <Detail.Metadata.Label
-              title="Max latency"
-              text={ms(stats.latency.max)}
-            />
+            <Detail.Metadata.Label title="Max latency" text={ms(stats.latency.max)} />
             <Detail.Metadata.Separator />
-            <Detail.Metadata.Label
-              title="Distinct tools"
-              text={num(stats.distinctTools)}
-            />
+            <Detail.Metadata.Label title="Distinct tools" text={num(stats.distinctTools)} />
             {stats.byTool.length ? (
               <Detail.Metadata.Label
                 title="Busiest tool"
@@ -276,19 +235,12 @@ export default function Command() {
                 text={`${slowestTool.tool} (p95 ${ms(slowestTool.p95Ms)})`}
               />
             ) : null}
-            <Detail.Metadata.Label
-              title="Output volume"
-              text={bytes(stats.outputBytes)}
-            />
+            <Detail.Metadata.Label title="Output volume" text={bytes(stats.outputBytes)} />
             <Detail.Metadata.TagList title="By risk">
               {(Object.entries(stats.byRisk) as [Risk, number][])
                 .filter(([, n]) => n > 0)
                 .map(([r, n]) => (
-                  <Detail.Metadata.TagList.Item
-                    key={r}
-                    text={`${r} ${n}`}
-                    color={RISK_TINT[r]}
-                  />
+                  <Detail.Metadata.TagList.Item key={r} text={`${r} ${n}`} color={RISK_TINT[r]} />
                 ))}
             </Detail.Metadata.TagList>
             {devices.length ? (
@@ -300,15 +252,9 @@ export default function Command() {
                   icon={{ source: Icon.HardDrive }}
                 />
                 <Detail.Metadata.TagList title="Reachability">
-                  <Detail.Metadata.TagList.Item
-                    text={`${online} online`}
-                    color={Color.Green}
-                  />
+                  <Detail.Metadata.TagList.Item text={`${online} online`} color={Color.Green} />
                   {offline > 0 ? (
-                    <Detail.Metadata.TagList.Item
-                      text={`${offline} offline`}
-                      color={Color.Red}
-                    />
+                    <Detail.Metadata.TagList.Item text={`${offline} offline`} color={Color.Red} />
                   ) : null}
                 </Detail.Metadata.TagList>
                 {busiestDevice ? (
@@ -331,8 +277,7 @@ export default function Command() {
                   text={num(meta.liveClients)}
                   icon={{
                     source: Icon.Dot,
-                    tintColor:
-                      meta.liveClients > 0 ? Color.Green : Color.SecondaryText,
+                    tintColor: meta.liveClients > 0 ? Color.Green : Color.SecondaryText,
                   }}
                 />
               </>

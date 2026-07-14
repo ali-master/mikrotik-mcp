@@ -101,11 +101,7 @@ function round1(x: number): number {
 }
 
 /** Root <svg> document with transparent background and the system font. */
-function Svg(props: {
-  width: number;
-  height: number;
-  children: React.ReactNode;
-}): ReactElement {
+function Svg(props: { width: number; height: number; children: React.ReactNode }): ReactElement {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -119,8 +115,7 @@ function Svg(props: {
   );
 }
 
-const isNum = (v: number | null | undefined): v is number =>
-  v != null && Number.isFinite(v);
+const isNum = (v: number | null | undefined): v is number => v != null && Number.isFinite(v);
 
 // ── area / line chart ───────────────────────────────────────────────────────
 
@@ -134,10 +129,7 @@ export interface AreaOpts {
 }
 
 /** A smooth gradient-filled area chart with a glowing last point and min/max guides. */
-export function areaChart(
-  values: Array<number | null | undefined>,
-  opts?: AreaOpts,
-): string {
+export function areaChart(values: Array<number | null | undefined>, opts?: AreaOpts): string {
   const W = opts?.width ?? 720;
   const c = colorToHex(opts?.color ?? Color.Blue);
   const t = theme();
@@ -188,13 +180,7 @@ export function areaChart(
   return render(
     <Svg width={W} height={H}>
       <defs>
-        <LinearGradient
-          id="fill"
-          from={c}
-          to={c}
-          fromOpacity={0.34}
-          toOpacity={0.02}
-        />
+        <LinearGradient id="fill" from={c} to={c} fromOpacity={0.34} toOpacity={0.02} />
         <LinearGradient
           id="stroke"
           from={c}
@@ -204,12 +190,7 @@ export function areaChart(
           vertical={false}
         />
       </defs>
-      <Line
-        from={{ x: PL, y: PT }}
-        to={{ x: PL + cw, y: PT }}
-        stroke={t.grid}
-        strokeWidth={1}
-      />
+      <Line from={{ x: PL, y: PT }} to={{ x: PL + cw, y: PT }} stroke={t.grid} strokeWidth={1} />
       <Line
         from={{ x: PL, y: base }}
         to={{ x: PL + cw, y: base }}
@@ -273,14 +254,7 @@ export function areaChart(
         {opts?.unit ?? ""}
       </text>
       {opts?.label ? (
-        <text
-          x={PL}
-          y={16}
-          fontSize={13.5}
-          fontWeight={700}
-          fill={t.ink}
-          letterSpacing={0.2}
-        >
+        <text x={PL} y={16} fontSize={13.5} fontWeight={700} fill={t.ink} letterSpacing={0.2}>
           {opts.label}
         </text>
       ) : null}
@@ -295,10 +269,7 @@ export interface Band {
   color: Color | string;
   label: string;
 }
-export function multiAreaChart(
-  bands: Band[],
-  opts?: { width?: number; height?: number },
-): string {
+export function multiAreaChart(bands: Band[], opts?: { width?: number; height?: number }): string {
   const W = opts?.width ?? 720;
   const H = opts?.height ?? 160;
   const t = theme();
@@ -317,11 +288,7 @@ export function multiAreaChart(
 
   return render(
     <Svg width={W} height={H}>
-      <Line
-        from={{ x: PL, y: base }}
-        to={{ x: PL + cw, y: base }}
-        stroke={t.grid}
-      />
+      <Line from={{ x: PL, y: base }} to={{ x: PL + cw, y: base }} stroke={t.grid} />
       {bands.map((b, bi) => {
         const c = colorToHex(b.color);
         const n = b.values.length;
@@ -391,10 +358,7 @@ export interface StatCard {
 }
 
 /** A single-row band of KPI "cards", each a big value + label + optional sparkline. */
-export function statCards(
-  cards: StatCard[],
-  opts?: { width?: number; height?: number },
-): string {
+export function statCards(cards: StatCard[], opts?: { width?: number; height?: number }): string {
   const W = opts?.width ?? 720;
   const H = opts?.height ?? 104;
   const t = theme();
@@ -456,15 +420,7 @@ export function statCards(
         }
         return (
           <Group key={i}>
-            <Bar
-              x={x}
-              y={0}
-              width={cardW}
-              height={H}
-              rx={12}
-              fill={t.track}
-              fillOpacity={0.6}
-            />
+            <Bar x={x} y={0} width={cardW} height={H} rx={12} fill={t.track} fillOpacity={0.6} />
             <Bar x={x} y={0} width={3} height={H} fill={c} fillOpacity={0.9} />
             <text
               x={x + padX}
@@ -476,13 +432,7 @@ export function statCards(
             >
               {card.label.toUpperCase()}
             </text>
-            <text
-              x={x + padX}
-              y={52}
-              fontSize={27}
-              fontWeight={700}
-              fill={card.accent ? c : t.ink}
-            >
+            <text x={x + padX} y={52} fontSize={27} fontWeight={700} fill={card.accent ? c : t.ink}>
               {card.value}
             </text>
             {card.sub ? (
@@ -536,24 +486,12 @@ export function donutChart(
             {({ arcs, path }) =>
               arcs.map((a, i) => {
                 const d = path(a);
-                return d ? (
-                  <path
-                    key={i}
-                    d={d}
-                    fill={colorToHex((a.data as Seg).color)}
-                  />
-                ) : null;
+                return d ? <path key={i} d={d} fill={colorToHex((a.data as Seg).color)} /> : null;
               })
             }
           </Pie>
         ) : null}
-        <text
-          y={-2}
-          textAnchor="middle"
-          fontSize={30}
-          fontWeight={700}
-          fill={t.ink}
-        >
+        <text y={-2} textAnchor="middle" fontSize={30} fontWeight={700} fill={t.ink}>
           {cv}
         </text>
         {cl ? (
@@ -608,22 +546,8 @@ export function barChart(
                 {it.sub}
               </text>
             ) : null}
-            <Bar
-              x={barX}
-              y={y + 3}
-              width={barW}
-              height={bh}
-              rx={bh / 2}
-              fill={t.track}
-            />
-            <Bar
-              x={barX}
-              y={y + 3}
-              width={w}
-              height={bh}
-              rx={bh / 2}
-              fill={c}
-            />
+            <Bar x={barX} y={y + 3} width={barW} height={bh} rx={bh / 2} fill={t.track} />
+            <Bar x={barX} y={y + 3} width={w} height={bh} rx={bh / 2} fill={c} />
             <text
               x={W}
               y={y + rowH / 2 + 4}
@@ -674,23 +598,10 @@ export function diffBars(rows: StackRow[], opts?: { width?: number }): string {
             <text x={0} y={y + rowH / 2 + 4} fontSize={10.5} fill={t.ink}>
               {r.label}
             </text>
-            <Bar
-              x={barX}
-              y={y + 3}
-              width={barW}
-              height={bh}
-              rx={3}
-              fill={t.track}
-            />
+            <Bar x={barX} y={y + 3} width={barW} height={bh} rx={3} fill={t.track} />
             <Bar x={barX} y={y + 3} width={aw} height={bh} rx={3} fill={g} />
             <Bar x={barX + aw} y={y + 3} width={rw} height={bh} fill={rd} />
-            <text
-              x={W}
-              y={y + rowH / 2 + 4}
-              textAnchor="end"
-              fontSize={9.5}
-              fill={t.faint}
-            >
+            <text x={W} y={y + rowH / 2 + 4} textAnchor="end" fontSize={9.5} fill={t.faint}>
               +{r.added}/−{r.removed}
             </text>
           </Group>
@@ -719,9 +630,7 @@ function GaugeBody(props: {
   const cy = size / 2 + 6;
   const r = size / 2 - 16;
   const p = Math.max(0, Math.min(100, props.pct));
-  const c = colorToHex(
-    props.color ?? (p >= 85 ? Color.Red : p >= 60 ? Color.Yellow : Color.Green),
-  );
+  const c = colorToHex(props.color ?? (p >= 85 ? Color.Red : p >= 60 ? Color.Yellow : Color.Green));
   const ring = 11;
   const inner = r - ring / 2;
   const outer = r + ring / 2;
@@ -743,13 +652,7 @@ function GaugeBody(props: {
         cornerRadius={ring / 2}
         fill={c}
       />
-      <text
-        y={3}
-        textAnchor="middle"
-        fontSize={27}
-        fontWeight={700}
-        fill={t.ink}
-      >
+      <text y={3} textAnchor="middle" fontSize={27} fontWeight={700} fill={t.ink}>
         {Math.round(p)}
         <tspan fontSize={13} fill={t.faint}>
           %
@@ -788,13 +691,7 @@ export function gaugeChart(
   const size = opts?.size ?? 150;
   return render(
     <Svg width={size} height={size}>
-      <GaugeBody
-        pct={pct}
-        size={size}
-        label={opts?.label}
-        sub={opts?.sub}
-        color={opts?.color}
-      />
+      <GaugeBody pct={pct} size={size} label={opts?.label} sub={opts?.sub} color={opts?.color} />
     </Svg>,
   );
 }
@@ -814,13 +711,7 @@ export function gaugeRow(
     <Svg width={W} height={each}>
       {gauges.map((g, i) => (
         <Group key={i} left={i * each}>
-          <GaugeBody
-            pct={g.pct}
-            size={each}
-            label={g.label}
-            sub={g.sub}
-            color={g.color}
-          />
+          <GaugeBody pct={g.pct} size={each} label={g.label} sub={g.sub} color={g.color} />
         </Group>
       ))}
     </Svg>,
@@ -849,8 +740,7 @@ export function heatmapChart(
   const W = leftPad + cols * step + 6;
   const H = topPad + 7 * step + 18;
 
-  const level = (c: number): number =>
-    c <= 0 ? 0 : Math.min(4, Math.ceil((c / max) * 4));
+  const level = (c: number): number => (c <= 0 ? 0 : Math.min(4, Math.ceil((c / max) * 4)));
   const alpha = [0.08, 0.3, 0.5, 0.72, 1];
   const wl = ["", "Mon", "", "Wed", "", "Fri", ""];
   const legY = topPad + 7 * step + 10;
@@ -859,13 +749,7 @@ export function heatmapChart(
     <Svg width={W} height={H}>
       {wl.map((lab, i) =>
         lab ? (
-          <text
-            key={`wl-${i}`}
-            x={2}
-            y={topPad + i * step + cell - 2}
-            fontSize={8}
-            fill={t.faint}
-          >
+          <text key={`wl-${i}`} x={2} y={topPad + i * step + cell - 2} fontSize={8} fill={t.faint}>
             {lab}
           </text>
         ) : null,
@@ -904,12 +788,7 @@ export function heatmapChart(
           fillOpacity={al}
         />
       ))}
-      <text
-        x={leftPad + 30 + alpha.length * (cell + 2) + 4}
-        y={legY}
-        fontSize={8.5}
-        fill={t.faint}
-      >
+      <text x={leftPad + 30 + alpha.length * (cell + 2) + 4} y={legY} fontSize={8.5} fill={t.faint}>
         More
       </text>
     </Svg>,
@@ -959,12 +838,7 @@ export function sparklineIcon(
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle
-        cx={xScale(lastIdx)}
-        cy={yScale(values[lastIdx] as number)}
-        r={1.8}
-        fill={c}
-      />
+      <circle cx={xScale(lastIdx)} cy={yScale(values[lastIdx] as number)} r={1.8} fill={c} />
     </Svg>,
   );
   return svgIcon(svg);

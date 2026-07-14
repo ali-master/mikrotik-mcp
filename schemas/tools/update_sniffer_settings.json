@@ -27,19 +27,12 @@
     "filter_direction": {
       "description": "Capture direction: any, rx, or tx",
       "type": "string",
-      "enum": [
-        "any",
-        "rx",
-        "tx"
-      ]
+      "enum": ["any", "rx", "tx"]
     },
     "filter_operator_between_entries": {
       "description": "How filter entries combine: and / or",
       "type": "string",
-      "enum": [
-        "and",
-        "or"
-      ]
+      "enum": ["and", "or"]
     },
     "filter_stream": {
       "description": "Capture only TZSP-streamed packets",

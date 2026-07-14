@@ -21,8 +21,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "detail"
-  ],
+  "required": ["detail"],
   "additionalProperties": false
 }

@@ -8,8 +8,6 @@
       "description": "Username of the active session to disconnect"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

@@ -12,8 +12,6 @@
       "description": "Exact entity names to retrieve"
     }
   },
-  "required": [
-    "names"
-  ],
+  "required": ["names"],
   "additionalProperties": false
 }

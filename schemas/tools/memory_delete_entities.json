@@ -12,8 +12,6 @@
       "description": "Names of entities to delete"
     }
   },
-  "required": [
-    "entityNames"
-  ],
+  "required": ["entityNames"],
   "additionalProperties": false
 }

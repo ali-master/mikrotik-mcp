@@ -6,10 +6,7 @@
     "protocol": {
       "default": "tcp",
       "type": "string",
-      "enum": [
-        "tcp",
-        "udp"
-      ]
+      "enum": ["tcp", "udp"]
     },
     "external_port": {
       "type": "integer",
@@ -43,11 +40,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "protocol",
-    "external_port",
-    "internal_host",
-    "apply"
-  ],
+  "required": ["protocol", "external_port", "internal_host", "apply"],
   "additionalProperties": false
 }

@@ -5,13 +5,7 @@
   "properties": {
     "chain": {
       "type": "string",
-      "enum": [
-        "prerouting",
-        "input",
-        "forward",
-        "output",
-        "postrouting"
-      ]
+      "enum": ["prerouting", "input", "forward", "output", "postrouting"]
     },
     "action": {
       "type": "string",
@@ -281,11 +275,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "chain",
-    "action",
-    "disabled",
-    "log"
-  ],
+  "required": ["chain", "action", "disabled", "log"],
   "additionalProperties": false
 }

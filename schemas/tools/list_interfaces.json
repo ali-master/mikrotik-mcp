@@ -34,9 +34,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "running_only",
-    "disabled_only"
-  ],
+  "required": ["running_only", "disabled_only"],
   "additionalProperties": false
 }

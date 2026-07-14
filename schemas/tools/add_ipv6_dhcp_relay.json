@@ -25,11 +25,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "interface",
-    "dhcp_server",
-    "disabled"
-  ],
+  "required": ["name", "interface", "dhcp_server", "disabled"],
   "additionalProperties": false
 }

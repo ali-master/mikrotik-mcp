@@ -11,8 +11,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "disabled_only"
-  ],
+  "required": ["disabled_only"],
   "additionalProperties": false
 }

@@ -14,12 +14,7 @@
     "mode": {
       "description": "NTP client operating mode",
       "type": "string",
-      "enum": [
-        "unicast",
-        "broadcast",
-        "multicast",
-        "manycast"
-      ]
+      "enum": ["unicast", "broadcast", "multicast", "manycast"]
     },
     "vrf": {
       "description": "VRF the NTP client operates in (e.g. 'main')",

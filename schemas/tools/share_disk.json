@@ -24,8 +24,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "slot"
-  ],
+  "required": ["slot"],
   "additionalProperties": false
 }

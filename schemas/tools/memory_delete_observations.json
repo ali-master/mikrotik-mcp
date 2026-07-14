@@ -22,16 +22,11 @@
             "description": "Exact observation strings to delete"
           }
         },
-        "required": [
-          "entityName",
-          "observations"
-        ],
+        "required": ["entityName", "observations"],
         "additionalProperties": false
       }
     }
   },
-  "required": [
-    "deletions"
-  ],
+  "required": ["deletions"],
   "additionalProperties": false
 }

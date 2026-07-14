@@ -17,25 +17,21 @@ function nodeIcon(n: TopoNode): { source: Icon; tintColor: Color } {
   const r = n.reachable;
   return {
     source: Icon.Dot,
-    tintColor:
-      r === true ? Color.Green : r === false ? Color.Red : Color.SecondaryText,
+    tintColor: r === true ? Color.Green : r === false ? Color.Red : Color.SecondaryText,
   };
 }
 
 function accessoriesFor(n: TopoNode) {
   const acc: { text?: string; tag?: { value: string; color?: Color } }[] = [];
   if (n.cpuLoad != null) acc.push({ text: `cpu ${Math.round(n.cpuLoad)}%` });
-  if (n.memUsedPct != null)
-    acc.push({ text: `mem ${Math.round(n.memUsedPct)}%` });
+  if (n.memUsedPct != null) acc.push({ text: `mem ${Math.round(n.memUsedPct)}%` });
   if (n.version) acc.push({ text: n.version });
-  if (n.onboardable)
-    acc.push({ tag: { value: "onboard", color: Color.Green } });
+  if (n.onboardable) acc.push({ tag: { value: "onboard", color: Color.Green } });
   return acc;
 }
 
 export default function Command() {
-  const { data, isLoading, revalidate } =
-    useApi<TopologyPayload>("/api/topology");
+  const { data, isLoading, revalidate } = useApi<TopologyPayload>("/api/topology");
   usePolling(revalidate, 4000);
 
   const nodes = data?.nodes ?? [];
@@ -47,10 +43,7 @@ export default function Command() {
       key={n.id}
       icon={nodeIcon(n)}
       title={n.label}
-      subtitle={
-        [n.ip, n.mac, n.board ?? n.platform].filter(Boolean).join(" · ") ||
-        undefined
-      }
+      subtitle={[n.ip, n.mac, n.board ?? n.platform].filter(Boolean).join(" · ") || undefined}
       accessories={accessoriesFor(n)}
       actions={
         <ActionPanel>
@@ -61,9 +54,7 @@ export default function Command() {
               shortcut={Keyboard.Shortcut.Common.Copy}
             />
           ) : null}
-          {n.mac ? (
-            <Action.CopyToClipboard title="Copy MAC" content={n.mac} />
-          ) : null}
+          {n.mac ? <Action.CopyToClipboard title="Copy MAC" content={n.mac} /> : null}
           {n.onboardable && n.suggestedConfig ? (
             <Action.CopyToClipboard
               title="Copy Config Stub"
@@ -84,18 +75,13 @@ export default function Command() {
 
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Filter nodes…">
-      <List.Section
-        title="Devices"
-        subtitle={data ? `${data.stats.devices}` : undefined}
-      >
+      <List.Section title="Devices" subtitle={data ? `${data.stats.devices}` : undefined}>
         {devices.map(row)}
       </List.Section>
       <List.Section
         title="Neighbours"
         subtitle={
-          data
-            ? `${data.stats.neighbors} · ${data.stats.onboardable} onboardable`
-            : undefined
+          data ? `${data.stats.neighbors} · ${data.stats.onboardable} onboardable` : undefined
         }
       >
         {neighbors.map(row)}

@@ -5,12 +5,7 @@
   "properties": {
     "op": {
       "type": "string",
-      "enum": [
-        "add",
-        "update",
-        "remove",
-        "toggle"
-      ]
+      "enum": ["add", "update", "remove", "toggle"]
     },
     "slug": {
       "type": "string",
@@ -43,9 +38,6 @@
       }
     }
   },
-  "required": [
-    "op",
-    "slug"
-  ],
+  "required": ["op", "slug"],
   "additionalProperties": false
 }

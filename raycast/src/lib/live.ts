@@ -22,8 +22,7 @@ interface SseLike {
   close(): void;
 }
 type SseCtor = new (url: string) => SseLike;
-const SSE: SseCtor | undefined = (globalThis as { EventSource?: SseCtor })
-  .EventSource;
+const SSE: SseCtor | undefined = (globalThis as { EventSource?: SseCtor }).EventSource;
 
 export function useLiveStream(
   onEvent: (e: ToolEvent) => void,

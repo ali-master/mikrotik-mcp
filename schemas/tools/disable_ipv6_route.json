@@ -7,8 +7,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "route_id"
-  ],
+  "required": ["route_id"],
   "additionalProperties": false
 }

@@ -14,10 +14,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "interface",
-    "disabled"
-  ],
+  "required": ["name", "interface", "disabled"],
   "additionalProperties": false
 }

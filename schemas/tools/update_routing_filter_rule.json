@@ -20,8 +20,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "rule_id"
-  ],
+  "required": ["rule_id"],
   "additionalProperties": false
 }

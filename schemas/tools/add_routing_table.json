@@ -20,10 +20,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "fib",
-    "disabled"
-  ],
+  "required": ["name", "fib", "disabled"],
   "additionalProperties": false
 }
