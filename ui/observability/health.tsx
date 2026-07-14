@@ -93,6 +93,29 @@ export function DeviceHealthCard({ d }: { d: DeviceInfo }): ReactNode {
         RAM {memHuman(s.totalMemory && s.freeMemory ? s.totalMemory - s.freeMemory : undefined)} /{" "}
         {memHuman(s.totalMemory)} · free disk {memHuman(s.freeHdd)}
       </div>
+      {s.disks && s.disks.length > 0 && (
+        <div className="grid gap-1">
+          <span className="text-muted-foreground font-mono text-[10px] tracking-[0.05em] uppercase">
+            External storage
+          </span>
+          {s.disks.map((disk) => (
+            <div
+              key={disk.slot}
+              className="flex items-center justify-between gap-2 font-mono text-[11px]"
+            >
+              <span className="truncate">
+                <Badge type="secondary">{disk.slot}</Badge>{" "}
+                {disk.model ?? disk.mountPoint ?? "disk"}
+                {disk.fs ? ` · ${disk.fs}` : ""}
+              </span>
+              <span className="text-muted-foreground whitespace-nowrap">
+                {memHuman(disk.free)} free / {memHuman(disk.size)}
+                {disk.usedPct != null ? ` · ${disk.usedPct}%` : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

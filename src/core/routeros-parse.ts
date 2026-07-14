@@ -524,3 +524,51 @@ export function parseSizeToBytes(value: string | undefined): number | null {
   };
   return n * (factor[unit] ?? 1);
 }
+
+/** One external/attached disk from `/disk print detail`. */
+export interface RouterDisk {
+  /** Slot name, e.g. `usb1` — the stable identifier. */
+  slot: string;
+  model?: string;
+  /** Filesystem (`ext4`, `fat32`, …). */
+  fs?: string;
+  /** Capacity in bytes. */
+  size?: number;
+  /** Free space in bytes. */
+  free?: number;
+  mountPoint?: string;
+  /** Used percent 0–100. */
+  usedPct?: number;
+}
+
+/**
+ * Parse `/disk print detail` into the mounted, non-empty disks. RouterOS groups
+ * large numbers with spaces (`size=124 948 316 160`), which would otherwise cut
+ * the token at the first space — so digit-grouping spaces are collapsed before
+ * tokenising. Empty slots (flag `E`) and sizeless rows are dropped. Pure.
+ */
+export function parseDisks(text: string): RouterDisk[] {
+  const collapsed = text.replace(/(\d) (?=\d)/g, "$1");
+  const { rows } = parseRecords(collapsed);
+  const disks: RouterDisk[] = [];
+  for (const r of rows) {
+    const slot = r.slot ?? r.name ?? "";
+    if (!slot) continue;
+    if (/E/.test(r.flags ?? "")) continue; // empty slot — nothing attached
+    const size = parseLeadingNumber(r.size);
+    if (size == null || size <= 0) continue;
+    const free = parseLeadingNumber(r.free);
+    const usePct = parseLeadingNumber(r.use);
+    disks.push({
+      slot,
+      model: r.model,
+      fs: r.fs,
+      size,
+      free: free ?? undefined,
+      mountPoint: r["mount-point"],
+      usedPct:
+        usePct ?? (free != null && size > 0 ? Math.round(((size - free) / size) * 100) : undefined),
+    });
+  }
+  return disks;
+}

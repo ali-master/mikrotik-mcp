@@ -13,6 +13,7 @@ import {
   parsePercent,
   parseFlagLegend,
   parseRecords,
+  parseDisks,
   buildRecordsView,
 } from "../../src/core/routeros-parse";
 
@@ -169,6 +170,44 @@ describe("parseRecords — detail (key=value) format", () => {
       "channel.band": "5ghz-ax", // abbreviated `.band`
       "channel.width": "20/40/80mhz",
     });
+  });
+});
+
+describe("parseDisks", () => {
+  it("parses an attached USB disk with space-grouped byte counts", () => {
+    // Real `/disk print detail` output (hAP ax3, KIOXIA USB stick).
+    const text = [
+      "Flags: X - DISABLED; A - ACQUIRED, E - EMPTY, B - BLOCK-DEVICE;",
+      "M - MOUNTED, F - FORMATTING, S - SWAP-ENABLED;",
+      ' 0  BM         type=hardware slot="usb1" fs-label="mikrotik-ax3" fs=ext4',
+      '               model="KIOXIA TransMemory" serial="B06EBF0AB44EE581A1433FA8"',
+      "               size=124 948 316 160 free=122 382 983 168 use=0%",
+      '               mount-point="usb1" mount-filesystem=yes',
+    ].join("\n");
+    const disks = parseDisks(text);
+    expect(disks).toHaveLength(1);
+    expect(disks[0]).toMatchObject({
+      slot: "usb1",
+      fs: "ext4",
+      model: "KIOXIA TransMemory",
+      size: 124948316160, // space grouping collapsed, full number kept
+      free: 122382983168,
+      mountPoint: "usb1",
+      usedPct: 0,
+    });
+  });
+
+  it("skips empty slots and rows with no size", () => {
+    const text = [
+      "Flags: E - EMPTY, B - BLOCK-DEVICE, M - MOUNTED",
+      ' 0  E          slot="usb1" type="hardware"',
+    ].join("\n");
+    expect(parseDisks(text)).toEqual([]);
+  });
+
+  it("computes used percent from size/free when `use` is absent", () => {
+    const text = ' 0  BM slot="nvme1" fs=ext4 size=1 000 000 000 free=250 000 000';
+    expect(parseDisks(text)[0]).toMatchObject({ slot: "nvme1", usedPct: 75 });
   });
 });
 

@@ -11,7 +11,8 @@
  */
 import type { DeviceConfig } from "../config";
 import { getConfig } from "../core/runtime";
-import { parseKeyValues, parseSystemResource } from "../core/routeros-parse";
+import { parseDisks, parseKeyValues, parseSystemResource } from "../core/routeros-parse";
+import type { RouterDisk } from "../core/routeros-parse";
 import { createDeviceClient } from "../core/transport";
 import { logger } from "../logger";
 import { parseNeighbors } from "./topology";
@@ -54,6 +55,11 @@ export interface DeviceStatus {
   totalHdd?: number;
   /** Used disk, percent 0–100. */
   hddUsedPct?: number;
+  /**
+   * Attached external disks (`/disk print detail`) — USB/NVMe storage that the
+   * internal `total-hdd-space` figure does NOT include. Empty when none.
+   */
+  disks?: RouterDisk[];
   /** Human uptime string (e.g. `1w2d3h`). */
   uptime?: string;
 }
@@ -188,6 +194,14 @@ export async function probeDevice(name: string, dc: DeviceConfig): Promise<Devic
         neighbors.set(name, parseNeighbors(await client.run("/ip neighbor print detail")));
       } catch {
         /* keep the last known neighbour list */
+      }
+      // External storage: `/system resource` reports only the internal flash, so
+      // read `/disk` for any attached USB/NVMe. Best-effort — a device with no
+      // `/disk` support (older ROS) or none attached just yields an empty list.
+      try {
+        status.disks = parseDisks(await client.run("/disk print detail"));
+      } catch {
+        /* no disk subsystem / none attached — leave undefined */
       }
     }
   } catch (e) {

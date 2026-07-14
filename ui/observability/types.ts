@@ -72,7 +72,17 @@ export interface DeviceStatus {
   freeHdd?: number;
   totalHdd?: number;
   hddUsedPct?: number;
+  disks?: RouterDisk[];
   uptime?: string;
+}
+export interface RouterDisk {
+  slot: string;
+  model?: string;
+  fs?: string;
+  size?: number;
+  free?: number;
+  mountPoint?: string;
+  usedPct?: number;
 }
 export interface MetricSample {
   ts: number;
