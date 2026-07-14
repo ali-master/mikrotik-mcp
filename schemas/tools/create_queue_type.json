@@ -24,14 +24,7 @@
     },
     "cake_flowmode": {
       "type": "string",
-      "enum": [
-        "triple-isolate",
-        "dual-srchost",
-        "dual-dsthost",
-        "host",
-        "flow",
-        "none"
-      ]
+      "enum": ["triple-isolate", "dual-srchost", "dual-dsthost", "host", "flow", "none"]
     },
     "cake_nat": {
       "type": "boolean"
@@ -48,20 +41,11 @@
     },
     "cake_diffserv": {
       "type": "string",
-      "enum": [
-        "besteffort",
-        "diffserv3",
-        "diffserv4",
-        "diffserv8"
-      ]
+      "enum": ["besteffort", "diffserv3", "diffserv4", "diffserv8"]
     },
     "cake_ack_filter": {
       "type": "string",
-      "enum": [
-        "filter",
-        "aggressive",
-        "none"
-      ]
+      "enum": ["filter", "aggressive", "none"]
     },
     "cake_rtt": {
       "description": "Round-trip time e.g. \"50ms\", \"100ms\"",
@@ -80,11 +64,7 @@
     "cake_atm": {
       "description": "Link-layer ATM/PTM compensation",
       "type": "string",
-      "enum": [
-        "none",
-        "atm",
-        "ptm"
-      ]
+      "enum": ["none", "atm", "ptm"]
     },
     "cake_autorate_ingress": {
       "description": "Automatic ingress rate estimation",
@@ -213,9 +193,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "name",
-    "kind"
-  ],
+  "required": ["name", "kind"],
   "additionalProperties": false
 }

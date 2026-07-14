@@ -71,6 +71,7 @@ import { DriftView } from "./drift";
 import { MemoryView } from "./memory";
 import { ModulesView } from "./modules";
 import { ReleasesView } from "./releases";
+import { CapsmanView } from "./capsman";
 import { PacketCapture } from "./packet-capture";
 import { S3Manage } from "./s3";
 import { SnapshotsView } from "./snapshots";
@@ -121,6 +122,7 @@ type ViewId =
   | "config"
   | "memory"
   | "releases"
+  | "capsman"
   | "feed";
 const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "overview", label: "Overview", sub: "Calls, latency & risk at a glance" },
@@ -138,6 +140,7 @@ const VIEWS: { id: ViewId; label: string; sub: string }[] = [
   { id: "config", label: "Config", sub: "Effective configuration & safe editor" },
   { id: "memory", label: "Memory", sub: "Knowledge graph — entities, relations & observations" },
   { id: "releases", label: "Releases", sub: "Update, downgrade & read every version's notes" },
+  { id: "capsman", label: "CAPsMAN", sub: "Wi-Fi fabric: coverage, weak signal, load, FT & HA" },
   { id: "feed", label: "Live Feed", sub: "Every tool call, in real time" },
 ];
 /** Valid view ids — used to validate a hash/stored route before trusting it. */
@@ -199,6 +202,7 @@ const VIEW_ACCENT: Record<ViewId, [string, string]> = {
   config: MONO_ACCENT,
   memory: MONO_ACCENT,
   releases: MONO_ACCENT,
+  capsman: MONO_ACCENT,
   feed: MONO_ACCENT,
 };
 
@@ -328,6 +332,14 @@ const HELP: Record<ViewId, { what: string; tips: string[] }> = {
       "The green dot marks the version you're running now; the brand dot marks the latest.",
       "Install runs `bun i -g @usex/mikrotik-mcp@<version>` on the server, then it self-restarts onto that version (the connection drops briefly).",
       "Click a version to expand its release notes; the latest is expanded by default.",
+    ],
+  },
+  capsman: {
+    what: "The CAPsMAN Wi-Fi fabric for this controller: managed APs grouped by floor with per-radio health (client load, CPU, co-channel conflicts), weak-signal clients with the recommended neighbor AP to steer toward, and a roaming (802.11r FT) + HA redundancy audit.",
+    tips: [
+      "Radio cards are colored by health; a red 'co-ch' badge means an adjacent radio shares its channel — the proposed channel is shown as →N.",
+      "Floors come from the AP identity/comment tag (e.g. AP-F3-E); unfloored APs are grouped by inferred signal adjacency.",
+      "This page is read-only in this release — steering, channel-plan apply, FT enable and HA setup arrive in later phases.",
     ],
   },
   feed: {
@@ -601,6 +613,14 @@ function NavIcon({ name }: { name: ViewId }): ReactNode {
         <path d="M12 3v12" />
         <path d="M8 11l4 4 4-4" />
         <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      </>
+    ),
+    capsman: (
+      <>
+        <path d="M5 12a7 7 0 0 1 14 0" />
+        <path d="M8.5 12a3.5 3.5 0 0 1 7 0" />
+        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+        <path d="M12 13.4V20" />
       </>
     ),
     feed: <path d="M4 6h16M4 12h16M4 18h10" />,
@@ -1508,6 +1528,9 @@ function App(): ReactNode {
 
         {/* ── Releases & Updates ── */}
         {view === "releases" && <ReleasesView />}
+
+        {/* ── CAPsMAN Wi-Fi fabric ── */}
+        {view === "capsman" && <CapsmanView />}
 
         {/* ── Live Feed ── */}
         {view === "feed" && (

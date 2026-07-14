@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "apply_capsman_fixes",
+  "type": "object",
+  "properties": {
+    "finding_ids": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Explicit finding_id(s) from a prior run_capsman_audit. No blanket apply."
+    },
+    "confirm": {
+      "description": "Must be true to write; omit for a dry-run preview.",
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": ["finding_ids"],
+  "additionalProperties": false
+}

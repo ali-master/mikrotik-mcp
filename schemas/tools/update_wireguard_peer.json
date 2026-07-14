@@ -65,8 +65,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "peer_id"
-  ],
+  "required": ["peer_id"],
   "additionalProperties": false
 }

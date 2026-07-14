@@ -95,6 +95,11 @@ imported lazily — `bun:sqlite` is only loaded when the dashboard is enabled.
   the active transport (`live · ws` / `live · sse`).
 - **Detail drawer** — click any row for full metadata plus the redacted input
   and complete output, with copy buttons.
+- **CAPsMAN** — the CAPsMAN Wi-Fi fabric for a controller device: managed APs by
+  floor with per-radio health (client load, CPU, co-channel conflicts), a
+  weak-signal client table with the recommended neighbor AP to steer toward, and a
+  roaming (802.11r FT) + HA redundancy audit. Read-only in this release (see
+  [CAPsMAN Orchestrator](./capsman.md)).
 - **Releases & Updates** — a version timeline of every published release with its
   rendered notes. It detects when a newer version is available and lets you
   **upgrade to the latest, or install any specific version** to upgrade or

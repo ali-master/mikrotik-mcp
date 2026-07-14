@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "setup_capsman_ha",
+  "type": "object",
+  "properties": {
+    "backup_manager_address": {
+      "description": "Address of the (planned) backup manager, woven into the guidance.",
+      "type": "string"
+    },
+    "confirm": {
+      "description": "Must be true to write; omit for a dry-run preview.",
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "additionalProperties": false
+}

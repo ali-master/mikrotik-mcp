@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "run_capsman_audit",
+  "type": "object",
+  "properties": {
+    "categories": {
+      "description": "Narrow to specific categories. Omit to audit all five.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["coverage", "weak_signal", "load", "ft", "ha"]
+      }
+    },
+    "weak_dbm": {
+      "description": "Weak-signal threshold in dBm (negative; default -70).",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": -1
+    }
+  },
+  "additionalProperties": false
+}

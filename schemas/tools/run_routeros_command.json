@@ -8,8 +8,6 @@
       "description": "Full RouterOS CLI command exactly as typed, e.g. '/ip address print'"
     }
   },
-  "required": [
-    "command"
-  ],
+  "required": ["command"],
   "additionalProperties": false
 }

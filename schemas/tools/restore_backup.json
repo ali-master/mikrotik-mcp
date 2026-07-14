@@ -10,8 +10,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "filename"
-  ],
+  "required": ["filename"],
   "additionalProperties": false
 }

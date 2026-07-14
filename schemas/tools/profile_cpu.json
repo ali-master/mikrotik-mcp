@@ -15,8 +15,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "duration"
-  ],
+  "required": ["duration"],
   "additionalProperties": false
 }

@@ -23,10 +23,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "instance",
-    "address",
-    "disabled"
-  ],
+  "required": ["instance", "address", "disabled"],
   "additionalProperties": false
 }

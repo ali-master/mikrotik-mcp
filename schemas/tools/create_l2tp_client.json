@@ -34,10 +34,7 @@
     },
     "use_ipsec": {
       "type": "string",
-      "enum": [
-        "yes",
-        "no"
-      ]
+      "enum": ["yes", "no"]
     },
     "ipsec_secret": {
       "description": "Pre-shared key for L2TP/IPsec",
@@ -87,13 +84,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "connect_to",
-    "user",
-    "password",
-    "profile",
-    "disabled"
-  ],
+  "required": ["name", "connect_to", "user", "password", "profile", "disabled"],
   "additionalProperties": false
 }

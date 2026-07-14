@@ -52,8 +52,7 @@ interface EntityConfig {
   empty?: string;
 }
 
-const isDisabled = (r: Row): boolean =>
-  (r.flags ?? "").includes("X") || r.disabled === "yes";
+const isDisabled = (r: Row): boolean => (r.flags ?? "").includes("X") || r.disabled === "yes";
 const rowLabel = (r: Row, cfg: EntityConfig): string =>
   r[cfg.idKey] || r.name || r.address || r.user || "(row)";
 
@@ -302,8 +301,7 @@ function EntityForm({
               for (const f of config.fields) {
                 const v = values[f.key];
                 if (f.type === "bool") fields[f.key] = v ? "yes" : "no";
-                else if (v != null && String(v).length > 0)
-                  fields[f.key] = String(v);
+                else if (v != null && String(v).length > 0) fields[f.key] = String(v);
               }
               const ok = editing
                 ? await runAaa(
@@ -329,21 +327,11 @@ function EntityForm({
         const title = f.required ? `${f.label} *` : f.label;
         if (f.type === "bool")
           return (
-            <Form.Checkbox
-              key={f.key}
-              id={f.key}
-              label={f.label}
-              defaultValue={cur === "yes"}
-            />
+            <Form.Checkbox key={f.key} id={f.key} label={f.label} defaultValue={cur === "yes"} />
           );
         if (f.type === "password")
           return (
-            <Form.PasswordField
-              key={f.key}
-              id={f.key}
-              title={title}
-              placeholder={f.placeholder}
-            />
+            <Form.PasswordField key={f.key} id={f.key} title={title} placeholder={f.placeholder} />
           );
         if (f.type === "select")
           return (
@@ -373,13 +361,7 @@ function EntityForm({
 }
 
 // ── per-entity manager ──────────────────────────────────────────────────────
-function EntityManager({
-  config,
-  device,
-}: {
-  config: EntityConfig;
-  device: string;
-}) {
+function EntityManager({ config, device }: { config: EntityConfig; device: string }) {
   const { data, isLoading, revalidate } = useApi<AaaList>(
     `/api/aaa/list/${config.slug}?device=${encodeURIComponent(device)}`,
   );
@@ -392,12 +374,7 @@ function EntityManager({
       actionTitle: "Remove",
     });
     if (!ok) return;
-    await runAaa(
-      "Removing…",
-      "/api/aaa/remove",
-      { device, slug: config.slug, id },
-      revalidate,
-    );
+    await runAaa("Removing…", "/api/aaa/remove", { device, slug: config.slug, id }, revalidate);
   }
 
   return (
@@ -410,9 +387,7 @@ function EntityManager({
           <Action.Push
             title="Add"
             icon={Icon.Plus}
-            target={
-              <EntityForm config={config} device={device} onDone={revalidate} />
-            }
+            target={<EntityForm config={config} device={device} onDone={revalidate} />}
           />
         </ActionPanel>
       }
@@ -455,25 +430,14 @@ function EntityManager({
                     title="Edit"
                     icon={Icon.Pencil}
                     target={
-                      <EntityForm
-                        config={config}
-                        device={device}
-                        row={r}
-                        onDone={revalidate}
-                      />
+                      <EntityForm config={config} device={device} row={r} onDone={revalidate} />
                     }
                   />
                 ) : null}
                 <Action.Push
                   title="Add"
                   icon={Icon.Plus}
-                  target={
-                    <EntityForm
-                      config={config}
-                      device={device}
-                      onDone={revalidate}
-                    />
-                  }
+                  target={<EntityForm config={config} device={device} onDone={revalidate} />}
                 />
                 {config.toggle ? (
                   <Action
@@ -543,15 +507,10 @@ function SessionsView({ device }: { device: string }) {
           key={r[".id"] || `${i}`}
           icon={{
             source: Icon.Dot,
-            tintColor:
-              r.status === "active" || !r["end-time"]
-                ? Color.Green
-                : Color.SecondaryText,
+            tintColor: r.status === "active" || !r["end-time"] ? Color.Green : Color.SecondaryText,
           }}
           title={r.user || r["user-name"] || "(session)"}
-          subtitle={[r["calling-station-id"], r["nas-ip-address"]]
-            .filter(Boolean)
-            .join(" · ")}
+          subtitle={[r["calling-station-id"], r["nas-ip-address"]].filter(Boolean).join(" · ")}
           accessories={[
             ...(r["download"] ? [{ text: `↓${r["download"]}` }] : []),
             ...(r["upload"] ? [{ text: `↑${r["upload"]}` }] : []),
@@ -583,13 +542,11 @@ function SettingsForm({
   onDone: () => void;
 }) {
   const { pop } = useNavigation();
-  const { data, isLoading } = useApi<
-    { available?: boolean; settings?: Row } & Row
-  >(`${getPath}?device=${encodeURIComponent(device)}`);
-  const settings: Row = (data?.settings as Row) ?? (data as Row) ?? {};
-  const keys = Object.keys(settings).filter(
-    (k) => k !== "available" && k !== ".id",
+  const { data, isLoading } = useApi<{ available?: boolean; settings?: Row } & Row>(
+    `${getPath}?device=${encodeURIComponent(device)}`,
   );
+  const settings: Row = (data?.settings as Row) ?? (data as Row) ?? {};
+  const keys = Object.keys(settings).filter((k) => k !== "available" && k !== ".id");
 
   return (
     <Form
@@ -606,32 +563,18 @@ function SettingsForm({
                 if (typeof v === "boolean") fields[k] = v ? "yes" : "no";
                 else if (v != null) fields[k] = String(v);
               }
-              const ok = await runAaa(
-                "Saving…",
-                setPath,
-                { device, fields },
-                onDone,
-              );
+              const ok = await runAaa("Saving…", setPath, { device, fields }, onDone);
               if (ok) pop();
             }}
           />
         </ActionPanel>
       }
     >
-      {keys.length === 0 ? (
-        <Form.Description text="No settings reported for this device." />
-      ) : null}
+      {keys.length === 0 ? <Form.Description text="No settings reported for this device." /> : null}
       {keys.map((k) => {
         const v = settings[k];
         if (v === "yes" || v === "no")
-          return (
-            <Form.Checkbox
-              key={k}
-              id={k}
-              label={k}
-              defaultValue={v === "yes"}
-            />
-          );
+          return <Form.Checkbox key={k} id={k} label={k} defaultValue={v === "yes"} />;
         return <Form.TextField key={k} id={k} title={k} defaultValue={v} />;
       })}
     </Form>
@@ -640,9 +583,7 @@ function SettingsForm({
 
 function SamplerForm({ onDone }: { onDone: () => void }) {
   const { pop } = useNavigation();
-  const { data, isLoading } = useApi<{ intervalMs: number }>(
-    "/api/usage/sampler",
-  );
+  const { data, isLoading } = useApi<{ intervalMs: number }>("/api/usage/sampler");
   return (
     <Form
       isLoading={isLoading}
@@ -790,10 +731,7 @@ function UserUsageView({ device, user }: { device: string; user: string }) {
       )
     : "_No usage history._";
   const heatChart = days.length
-    ? chartImage(
-        heatmapChart(days, { color: Color.Green, max: heat.data?.max }),
-        "heatmap",
-      )
+    ? chartImage(heatmapChart(days, { color: Color.Green, max: heat.data?.max }), "heatmap")
     : "";
   const md = [
     `# Usage · ${user}`,
@@ -810,22 +748,10 @@ function UserUsageView({ device, user }: { device: string; user: string }) {
       navigationTitle={`Usage · ${user}`}
       metadata={
         <Detail.Metadata>
-          <Detail.Metadata.Label
-            title="Total download"
-            text={bytes(usage.data?.totalRx ?? 0)}
-          />
-          <Detail.Metadata.Label
-            title="Total upload"
-            text={bytes(usage.data?.totalTx ?? 0)}
-          />
-          <Detail.Metadata.Label
-            title="Connections"
-            text={String(heat.data?.total ?? 0)}
-          />
-          <Detail.Metadata.Label
-            title="Busiest day"
-            text={String(heat.data?.max ?? 0)}
-          />
+          <Detail.Metadata.Label title="Total download" text={bytes(usage.data?.totalRx ?? 0)} />
+          <Detail.Metadata.Label title="Total upload" text={bytes(usage.data?.totalTx ?? 0)} />
+          <Detail.Metadata.Label title="Connections" text={String(heat.data?.total ?? 0)} />
+          <Detail.Metadata.Label title="Busiest day" text={String(heat.data?.max ?? 0)} />
         </Detail.Metadata>
       }
     />
@@ -874,9 +800,7 @@ export default function Command() {
   const [device, setDevice] = useState("");
   useEffect(() => {
     if (!device && devicesQ.data)
-      setDevice(
-        devicesQ.data.defaultDevice || devicesQ.data.devices[0]?.name || "",
-      );
+      setDevice(devicesQ.data.defaultDevice || devicesQ.data.devices[0]?.name || "");
   }, [devicesQ.data, device]);
   const deviceNames = devicesQ.data?.devices.map((d) => d.name) ?? [];
 

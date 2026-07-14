@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "report_weak_signal_clients",
+  "type": "object",
+  "properties": {
+    "weak_dbm": {
+      "description": "Weak-signal threshold in dBm (negative; default -70).",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": -1
+    }
+  },
+  "additionalProperties": false
+}

@@ -24,17 +24,9 @@ import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { bytes } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
 import { chartImage, diffBars } from "./lib/charts";
-import type {
-  DriftBaseline,
-  DriftDeviceStatus,
-  DriftReport,
-  SnapshotMeta,
-} from "./lib/types";
+import type { DriftBaseline, DriftDeviceStatus, DriftReport, SnapshotMeta } from "./lib/types";
 
-const STATUS: Record<
-  DriftDeviceStatus["status"],
-  { color: Color; label: string }
-> = {
+const STATUS: Record<DriftDeviceStatus["status"], { color: Color; label: string }> = {
   "in-sync": { color: Color.Green, label: "in sync" },
   drifted: { color: Color.Red, label: "drifted" },
   unknown: { color: Color.Yellow, label: "unknown" },
@@ -44,9 +36,7 @@ const STATUS: Record<
 function CheckView({ device }: { device: string }) {
   const { data, isLoading } = usePromise(
     (d: string) =>
-      api<DriftReport | { error: string }>(
-        `/api/drift/check/${encodeURIComponent(d)}`,
-      ),
+      api<DriftReport | { error: string }>(`/api/drift/check/${encodeURIComponent(d)}`),
     [device],
   );
   const report = data && !("error" in data) ? (data as DriftReport) : undefined;
@@ -70,10 +60,7 @@ function CheckView({ device }: { device: string }) {
       : "";
     const attrs = report.attributions.length
       ? `\n## Attribution\n\n${report.attributions
-          .map(
-            (a) =>
-              `- ${a.timestamp ?? ""} ${a.user ?? ""} ${a.action ?? ""} — ${a.section}`,
-          )
+          .map((a) => `- ${a.timestamp ?? ""} ${a.user ?? ""} ${a.action ?? ""} — ${a.section}`)
           .join("\n")}`
       : "";
     md = [
@@ -85,22 +72,10 @@ function CheckView({ device }: { device: string }) {
       report.unified ? `\n## Diff\n\n${diffMarkdown(report.unified)}` : "",
     ].join("\n");
   }
-  return (
-    <Detail
-      isLoading={isLoading}
-      markdown={md}
-      navigationTitle={`Drift · ${device}`}
-    />
-  );
+  return <Detail isLoading={isLoading} markdown={md} navigationTitle={`Drift · ${device}`} />;
 }
 
-function SetBaselineForm({
-  device,
-  onDone,
-}: {
-  device: string;
-  onDone: () => void;
-}) {
+function SetBaselineForm({ device, onDone }: { device: string; onDone: () => void }) {
   const { pop } = useNavigation();
   const { data, isLoading } = useApi<{ snapshots: SnapshotMeta[] }>(
     `/api/drift/history/${encodeURIComponent(device)}?limit=20`,
@@ -164,16 +139,13 @@ function SetBaselineForm({
 
 export default function Command() {
   const status = useApi<{ devices: DriftDeviceStatus[] }>("/api/drift/status");
-  const baselines = useApi<{ baselines: DriftBaseline[] }>(
-    "/api/drift/baselines",
-  );
+  const baselines = useApi<{ baselines: DriftBaseline[] }>("/api/drift/baselines");
   usePolling(status.revalidate, 15000);
 
   async function removeBaseline(device: string) {
     const ok = await confirmDestructive({
       title: `Remove baseline for ${device}?`,
-      message:
-        "Drift detection will report no baseline until you set a new one.",
+      message: "Drift detection will report no baseline until you set a new one.",
       actionTitle: "Remove",
     });
     if (!ok) return;
@@ -210,10 +182,7 @@ export default function Command() {
               key={d.device}
               icon={{ source: Icon.Dot, tintColor: st.color }}
               title={d.device}
-              subtitle={
-                d.baseline?.label ??
-                (d.baseline ? "baseline set" : "no baseline")
-              }
+              subtitle={d.baseline?.label ?? (d.baseline ? "baseline set" : "no baseline")}
               accessories={[{ tag: { value: st.label, color: st.color } }]}
               actions={
                 <ActionPanel>
@@ -265,10 +234,7 @@ export default function Command() {
             subtitle={b.label ?? b.snapshotId.slice(0, 10)}
             accessories={[
               ...(b.snapshot
-                ? [
-                    { text: `${b.snapshot.lines} lines` },
-                    { text: bytes(b.snapshot.bytes) },
-                  ]
+                ? [{ text: `${b.snapshot.lines} lines` }, { text: bytes(b.snapshot.bytes) }]
                 : []),
               { date: new Date(b.setAt) },
             ]}

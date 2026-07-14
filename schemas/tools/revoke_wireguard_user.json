@@ -8,8 +8,6 @@
       "description": "The user label used at onboarding"
     }
   },
-  "required": [
-    "user"
-  ],
+  "required": ["user"],
   "additionalProperties": false
 }

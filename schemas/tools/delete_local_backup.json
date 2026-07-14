@@ -8,8 +8,6 @@
       "description": "Backup filename to delete."
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "steer_client",
+  "type": "object",
+  "properties": {
+    "mac": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Client MAC address to steer."
+    },
+    "mode": {
+      "default": "hard",
+      "description": "hard = signal-range reject; soft = k/v only (no write).",
+      "type": "string",
+      "enum": ["soft", "hard"]
+    },
+    "reject_above_dbm": {
+      "description": "dBm ceiling of the reject band for hard mode (default -70).",
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": -1
+    },
+    "confirm": {
+      "description": "Must be true to write; omit for a dry-run preview.",
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": ["mac", "mode"],
+  "additionalProperties": false
+}

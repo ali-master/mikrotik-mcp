@@ -8,14 +8,7 @@
  * host) respawns it — a full restart that also re-registers tools and reloads
  * code; it drops the connection, so it's confirmed first.
  */
-import {
-  Action,
-  ActionPanel,
-  Detail,
-  Icon,
-  Toast,
-  showToast,
-} from "@raycast/api";
+import { Action, ActionPanel, Detail, Icon, Toast, showToast } from "@raycast/api";
 import { postJson } from "./lib/api";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 

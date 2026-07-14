@@ -41,11 +41,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "group",
-    "address",
-    "port",
-    "disabled"
-  ],
+  "required": ["group", "address", "port", "disabled"],
   "additionalProperties": false
 }

@@ -131,6 +131,7 @@ import { vpnOnboardTools } from "./vpn-onboard";
 import { wireguardTools } from "./wireguard";
 import { wirelessTools } from "./wireless";
 import { wifiOptimizerTools } from "./wifi-optimizer";
+import { capsmanTools } from "./capsman";
 import { memoryTools } from "./memory";
 
 export interface ModuleInfo {
@@ -222,6 +223,17 @@ export const moduleCatalog: ModuleInfo[] = [
       "Survey RF channel usage and tune a wireless radio to the least-congested frequency, with " +
       "preview-before-apply (legacy `/interface wireless`).",
     tools: wifiOptimizerTools,
+  },
+  {
+    label: "CAPsMAN Orchestrator",
+    slug: "capsman",
+    group: "Interfaces",
+    description:
+      "Enterprise CAPsMAN Wi-Fi control-plane audit: coverage/co-channel, weak-signal clients + " +
+      "neighbor steering, resource-aware load, 802.11r fast-roaming (FT) and HA redundancy — one " +
+      "severity-ranked report (read-only; steering/apply land in later phases). Supports v7 " +
+      "`/interface wifi` CAPsMAN and legacy `/caps-man`.",
+    tools: capsmanTools,
   },
   {
     label: "PoE",

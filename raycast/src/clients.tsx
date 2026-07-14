@@ -73,12 +73,7 @@ function clientTitle(c: Client): string {
   return c.host || c.comment || c.ip;
 }
 
-async function runOp(
-  label: string,
-  path: string,
-  body: unknown,
-  onDone: () => void,
-) {
+async function runOp(label: string, path: string, body: unknown, onDone: () => void) {
   const toast = await showToast({ style: Toast.Style.Animated, title: label });
   try {
     const res = await postJson<ClientOpResult>(path, body);
@@ -201,13 +196,9 @@ function UsageView({ device, client }: { device: string; client: Client }) {
         "usage",
       )
     : "_No usage history._";
-  const md = [
-    `# Usage · ${clientTitle(client)}`,
-    ``,
-    `### Daily traffic (90d)`,
-    ``,
-    chart,
-  ].join("\n");
+  const md = [`# Usage · ${clientTitle(client)}`, ``, `### Daily traffic (90d)`, ``, chart].join(
+    "\n",
+  );
   return (
     <Detail
       isLoading={isLoading}
@@ -216,19 +207,10 @@ function UsageView({ device, client }: { device: string; client: Client }) {
       metadata={
         data ? (
           <Detail.Metadata>
-            <Detail.Metadata.Label
-              title="Total download"
-              text={bytes(data.totalRx)}
-            />
-            <Detail.Metadata.Label
-              title="Total upload"
-              text={bytes(data.totalTx)}
-            />
+            <Detail.Metadata.Label title="Total download" text={bytes(data.totalRx)} />
+            <Detail.Metadata.Label title="Total upload" text={bytes(data.totalTx)} />
             <Detail.Metadata.Label title="Peak day" text={bytes(peak)} />
-            <Detail.Metadata.Label
-              title="Window"
-              text={`${series.length} days`}
-            />
+            <Detail.Metadata.Label title="Window" text={`${series.length} days`} />
           </Detail.Metadata>
         ) : null
       }
@@ -241,15 +223,12 @@ export default function Command() {
   const [device, setDevice] = useState<string>("");
   useEffect(() => {
     if (!device && devicesQ.data)
-      setDevice(
-        devicesQ.data.defaultDevice || devicesQ.data.devices[0]?.name || "",
-      );
+      setDevice(devicesQ.data.defaultDevice || devicesQ.data.devices[0]?.name || "");
   }, [devicesQ.data, device]);
 
-  const view = useApi<DevicesView>(
-    `/api/clients?device=${encodeURIComponent(device)}`,
-    { execute: !!device },
-  );
+  const view = useApi<DevicesView>(`/api/clients?device=${encodeURIComponent(device)}`, {
+    execute: !!device,
+  });
   usePolling(view.revalidate, 15000, !!device);
 
   const traffic = useApi<BulkTrafficSample>(
@@ -262,9 +241,7 @@ export default function Command() {
 
   // Compute per-IP bit-rates from consecutive cumulative-byte samples.
   const prevRef = useRef<BulkTrafficSample | null>(null);
-  const [rates, setRates] = useState<
-    Record<string, { rx: number; tx: number }>
-  >({});
+  const [rates, setRates] = useState<Record<string, { rx: number; tx: number }>>({});
   useEffect(() => {
     const cur = traffic.data;
     if (!cur) return;
@@ -355,13 +332,7 @@ export default function Command() {
                     <Action.Push
                       title="Rate Limits…"
                       icon={Icon.Gauge}
-                      target={
-                        <LimitsForm
-                          device={device}
-                          client={c}
-                          onDone={view.revalidate}
-                        />
-                      }
+                      target={<LimitsForm device={device} client={c} onDone={view.revalidate} />}
                     />
                     <Action.Push
                       title="Set IP…"
@@ -428,8 +399,7 @@ export default function Command() {
                         onAction={async () => {
                           const ok = await confirmDestructive({
                             title: `Block ${clientTitle(c)}?`,
-                            message:
-                              "Cuts this device off the network (drop rule + static lease).",
+                            message: "Cuts this device off the network (drop rule + static lease).",
                             actionTitle: "Block",
                             icon: Icon.MinusCircle,
                           });

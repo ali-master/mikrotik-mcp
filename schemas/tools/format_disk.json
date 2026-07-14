@@ -10,12 +10,7 @@
     "file_system": {
       "description": "Filesystem to create (RouterOS can format these)",
       "type": "string",
-      "enum": [
-        "ext4",
-        "exfat",
-        "fat32",
-        "ntfs"
-      ]
+      "enum": ["ext4", "exfat", "fat32", "ntfs"]
     },
     "label": {
       "description": "Volume label",
@@ -38,9 +33,6 @@
       "description": "Must be true to actually ERASE the disk"
     }
   },
-  "required": [
-    "slot",
-    "confirm"
-  ],
+  "required": ["slot", "confirm"],
   "additionalProperties": false
 }

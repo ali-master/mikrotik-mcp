@@ -11,8 +11,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "destination"
-  ],
+  "required": ["destination"],
   "additionalProperties": false
 }

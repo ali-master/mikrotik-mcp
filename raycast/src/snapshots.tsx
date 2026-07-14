@@ -4,14 +4,7 @@
  * the full snapshot (`/api/snapshot/:id`); "Diff Against…" pushes a picker, then
  * renders the server-computed unified diff via the shared DiffDetail.
  */
-import {
-  Action,
-  ActionPanel,
-  Detail,
-  Icon,
-  Keyboard,
-  List,
-} from "@raycast/api";
+import { Action, ActionPanel, Detail, Icon, Keyboard, List } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { postJson } from "./lib/api";
 import { DiffDetail } from "./lib/diff";
@@ -26,11 +19,7 @@ function label(s: Snapshot): string {
 function SnapshotBody({ snap }: { snap: Snapshot }) {
   const { data, isLoading } = useApi<Snapshot>(`/api/snapshot/${snap.id}`);
   const body = data?.body ?? "";
-  const md = body
-    ? `\`\`\`\n${body}\n\`\`\``
-    : isLoading
-      ? "Loading…"
-      : "_No body captured._";
+  const md = body ? `\`\`\`\n${body}\n\`\`\`` : isLoading ? "Loading…" : "_No body captured._";
   return (
     <Detail
       isLoading={isLoading}
@@ -39,10 +28,7 @@ function SnapshotBody({ snap }: { snap: Snapshot }) {
       metadata={
         <Detail.Metadata>
           <Detail.Metadata.Label title="Device" text={snap.device} />
-          <Detail.Metadata.Label
-            title="Captured"
-            text={new Date(snap.ts).toLocaleString()}
-          />
+          <Detail.Metadata.Label title="Captured" text={new Date(snap.ts).toLocaleString()} />
           {snap.rosVersion ? (
             <Detail.Metadata.Label title="RouterOS" text={snap.rosVersion} />
           ) : null}
@@ -58,10 +44,10 @@ function SnapshotBody({ snap }: { snap: Snapshot }) {
 function DiffResult({ from, to }: { from: Snapshot; to: Snapshot }) {
   const { data, isLoading } = usePromise(
     (a: string, b: string) =>
-      postJson<{ summary: DiffSummary; unified: string }>(
-        "/api/snapshots/diff",
-        { from: a, to: b },
-      ),
+      postJson<{ summary: DiffSummary; unified: string }>("/api/snapshots/diff", {
+        from: a,
+        to: b,
+      }),
     [from.id, to.id],
   );
   return (
@@ -75,13 +61,7 @@ function DiffResult({ from, to }: { from: Snapshot; to: Snapshot }) {
   );
 }
 
-function DiffPicker({
-  from,
-  snapshots,
-}: {
-  from: Snapshot;
-  snapshots: Snapshot[];
-}) {
+function DiffPicker({ from, snapshots }: { from: Snapshot; snapshots: Snapshot[] }) {
   return (
     <List searchBarPlaceholder="Diff against…">
       {snapshots
@@ -109,14 +89,11 @@ function DiffPicker({
 }
 
 export default function Command() {
-  const { data, isLoading, revalidate } = useApi<{ snapshots: Snapshot[] }>(
-    "/api/snapshots",
-  );
+  const { data, isLoading, revalidate } = useApi<{ snapshots: Snapshot[] }>("/api/snapshots");
   usePolling(revalidate, 15000);
   const snapshots = data?.snapshots ?? [];
   const byDevice = new Map<string, Snapshot[]>();
-  for (const s of snapshots)
-    byDevice.set(s.device, [...(byDevice.get(s.device) ?? []), s]);
+  for (const s of snapshots) byDevice.set(s.device, [...(byDevice.get(s.device) ?? []), s]);
 
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Filter snapshots…">

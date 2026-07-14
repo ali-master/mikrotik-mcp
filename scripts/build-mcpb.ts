@@ -25,7 +25,15 @@
  *   bun run scripts/build-mcpb.ts --skip-build     # reuse dist/ as-is
  *   bun run scripts/build-mcpb.ts --no-smoke       # skip the stdio smoke test
  */
-import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { arch, platform } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -131,14 +139,17 @@ function smokeTest(stage: string, target: Target, expected: number): void {
     "",
   ].join("\n");
 
-  const res = bun.spawnSync([join(stage, "runtime", target.exe), join(stage, "dist", "cli.js"), "serve"], {
-    stdin: new TextEncoder().encode(requests),
-    stdout: "pipe",
-    stderr: "pipe",
-    // The smoke test never opens a connection — it exercises only the MCP
-    // handshake and the static tool catalog — so the address need not resolve.
-    env: { ...process.env, MIKROTIK_HOST: "192.0.2.1", MIKROTIK_DISABLE_UPDATE_CHECK: "1" },
-  });
+  const res = bun.spawnSync(
+    [join(stage, "runtime", target.exe), join(stage, "dist", "cli.js"), "serve"],
+    {
+      stdin: new TextEncoder().encode(requests),
+      stdout: "pipe",
+      stderr: "pipe",
+      // The smoke test never opens a connection — it exercises only the MCP
+      // handshake and the static tool catalog — so the address need not resolve.
+      env: { ...process.env, MIKROTIK_HOST: "192.0.2.1", MIKROTIK_DISABLE_UPDATE_CHECK: "1" },
+    },
+  );
 
   const stderr = res.stderr.toString();
   const messages = res.stdout
@@ -155,7 +166,9 @@ function smokeTest(stage: string, target: Target, expected: number): void {
     | undefined;
   if (!tools?.length) throw new Error(`smoke test: no tools/list response.\n${stderr}`);
   if (tools.length !== expected) {
-    throw new Error(`smoke test: server listed ${tools.length} tools, manifest declares ${expected}`);
+    throw new Error(
+      `smoke test: server listed ${tools.length} tools, manifest declares ${expected}`,
+    );
   }
   const untyped = tools.filter((t) => !t.inputSchema);
   if (untyped.length) throw new Error(`smoke test: ${untyped.length} tools have no inputSchema`);
@@ -199,7 +212,18 @@ async function buildTarget(slug: string, target: Target, opts: { smoke: boolean 
   // 2) Production dependencies, installed flat by npm so the archive holds real
   // directories — Bun's isolated linker leaves symlinks that may not survive a zip.
   log("  • installing production dependencies");
-  run(["npm", "install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund", "--loglevel=error"], stage);
+  run(
+    [
+      "npm",
+      "install",
+      "--omit=dev",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      "--loglevel=error",
+    ],
+    stage,
+  );
 
   // 3) Runtime assets, at the paths the server already expects.
   for (const rel of COPY) {
@@ -216,9 +240,14 @@ async function buildTarget(slug: string, target: Target, opts: { smoke: boolean 
   // 5) A manifest specialised for this target: one platform, no overrides, and the
   // real tool list pulled from the catalog.
   const names = await toolNames();
-  const manifest = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8")) as Record<string, any>;
+  const manifest = JSON.parse(readFileSync(join(ROOT, "manifest.json"), "utf8")) as Record<
+    string,
+    any
+  >;
   if (manifest.version !== pkg.version) {
-    throw new Error(`manifest.json version ${manifest.version} != package.json ${pkg.version}. Bump both.`);
+    throw new Error(
+      `manifest.json version ${manifest.version} != package.json ${pkg.version}. Bump both.`,
+    );
   }
   manifest.server.entry_point = `runtime/${target.exe}`;
   manifest.server.mcp_config.command = `\${__dirname}/runtime/${target.exe}`;
@@ -238,7 +267,13 @@ async function buildTarget(slug: string, target: Target, opts: { smoke: boolean 
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
-  run(["bunx", "mcpb", "pack", stage, join(OUT_DIR, `${manifest.name}-${pkg.version}-${slug}.mcpb`)]);
+  run([
+    "bunx",
+    "mcpb",
+    "pack",
+    stage,
+    join(OUT_DIR, `${manifest.name}-${pkg.version}-${slug}.mcpb`),
+  ]);
 }
 
 const argv = process.argv.slice(2);
@@ -250,7 +285,8 @@ const opt = (n: string): string | undefined => {
 
 const slugs = flag("all") ? Object.keys(TARGETS) : [opt("target") ?? hostSlug()];
 for (const slug of slugs) {
-  if (!TARGETS[slug]) throw new Error(`Unknown target "${slug}". Known: ${Object.keys(TARGETS).join(", ")}`);
+  if (!TARGETS[slug])
+    throw new Error(`Unknown target "${slug}". Known: ${Object.keys(TARGETS).join(", ")}`);
 }
 
 if (!flag("skip-build")) {

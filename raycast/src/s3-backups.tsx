@@ -3,16 +3,7 @@
  * short-lived presigned URL) and delete objects in the configured S3 backup
  * bucket. Delete is gated as destructive (permanent object removal).
  */
-import {
-  Action,
-  ActionPanel,
-  Icon,
-  Keyboard,
-  List,
-  Toast,
-  open,
-  showToast,
-} from "@raycast/api";
+import { Action, ActionPanel, Icon, Keyboard, List, Toast, open, showToast } from "@raycast/api";
 import { api, postJson } from "./lib/api";
 import { confirmDestructive, showFailureToast } from "./lib/confirm";
 import { bytes } from "./lib/format";
@@ -30,9 +21,7 @@ export default function Command() {
       title: "Getting link…",
     });
     try {
-      const res = await api<{ url?: string }>(
-        `/api/s3/presign?key=${encodeURIComponent(key)}`,
-      );
+      const res = await api<{ url?: string }>(`/api/s3/presign?key=${encodeURIComponent(key)}`);
       if (!res.url) throw new Error("No presigned URL returned");
       toast.hide();
       await open(res.url);
@@ -54,10 +43,7 @@ export default function Command() {
       title: "Deleting…",
     });
     try {
-      const res = await postJson<{ ok?: boolean; error?: string }>(
-        "/api/s3/delete",
-        { key },
-      );
+      const res = await postJson<{ ok?: boolean; error?: string }>("/api/s3/delete", { key });
       if (!res.ok) throw new Error(res.error ?? "Request failed");
       toast.style = Toast.Style.Success;
       toast.title = "Deleted";
@@ -79,17 +65,10 @@ export default function Command() {
             key={o.key}
             icon={Icon.Box}
             title={o.key}
-            accessories={[
-              { text: bytes(o.size) },
-              { date: new Date(o.lastModified) },
-            ]}
+            accessories={[{ text: bytes(o.size) }, { date: new Date(o.lastModified) }]}
             actions={
               <ActionPanel>
-                <Action
-                  title="Download"
-                  icon={Icon.Download}
-                  onAction={() => download(o.key)}
-                />
+                <Action title="Download" icon={Icon.Download} onAction={() => download(o.key)} />
                 <Action.CopyToClipboard
                   title="Copy Key"
                   content={o.key}

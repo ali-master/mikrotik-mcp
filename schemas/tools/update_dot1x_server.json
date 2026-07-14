@@ -9,11 +9,7 @@
     },
     "auth_types": {
       "type": "string",
-      "enum": [
-        "dot1x",
-        "mac-auth",
-        "dot1x,mac-auth"
-      ]
+      "enum": ["dot1x", "mac-auth", "dot1x,mac-auth"]
     },
     "accounting": {
       "type": "boolean"
@@ -23,10 +19,7 @@
     },
     "mac_auth_mode": {
       "type": "string",
-      "enum": [
-        "mac-as-username",
-        "mac-as-username-and-password"
-      ]
+      "enum": ["mac-as-username", "mac-as-username-and-password"]
     },
     "guest_vlan_id": {
       "type": "string"
@@ -47,8 +40,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "server_id"
-  ],
+  "required": ["server_id"],
   "additionalProperties": false
 }

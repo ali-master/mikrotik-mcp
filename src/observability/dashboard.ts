@@ -103,6 +103,22 @@ import { redact, riskOf } from "./event";
 import type { Risk, ToolEvent } from "./event";
 import { listPrompts } from "../prompts";
 import {
+  buildChannelPlanCommands,
+  buildFtCommands,
+  buildHaCommands,
+  buildLoadBalanceCommands,
+  buildSteerCommands,
+  capsmanOverview,
+  haGuidance,
+  loadBalancePlan,
+  reportWeakClients,
+  runCapsmanAudit,
+  steerAlreadyPresent,
+} from "../core/capsman";
+import { captureSnapshot } from "../snapshots/capture";
+import { applyWritesSafely } from "../utils/safe-mode-apply";
+import { fetchCapsmanState } from "../utils/wifi-query";
+import {
   getDeviceHistory,
   getDeviceNeighbors,
   getDeviceStatus,
@@ -114,6 +130,9 @@ import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./
 import { subscribeTraffic } from "./traffic-hub";
 import { openSqliteStore } from "./store";
 import type { EventFilter, EventStore } from "./store";
+import { openCapsmanStore } from "./capsman-store";
+import type { CapsmanStore } from "./capsman-store";
+import { startCapsmanSampler, stopCapsmanSampler } from "./capsman-sampler";
 import { openUsageStore } from "./usage-store";
 import type { UsageStore } from "./usage-store";
 import {
@@ -846,6 +865,121 @@ async function captureRoutes(req: Request, url: URL): Promise<Response | null> {
  * RouterOS commands. Mutations return the operation result plus a refreshed
  * device `view` so the page can adopt the new state without a second request.
  */
+/**
+ * CAPsMAN read-only routes for the dashboard page. Each builds a device context
+ * from `?device=` and runs the pure engine over the fetched CAPsMAN state.
+ */
+/** CAPsMAN trend store, opened in runDashboard and filled by the slow sampler. */
+let capsmanStore: CapsmanStore | null = null;
+
+async function capsmanRoutes(req: Request, url: URL): Promise<Response | null> {
+  const p = url.pathname;
+  if (!p.startsWith("/api/capsman")) return null;
+
+  if (req.method === "GET") {
+    const ctx = createContext(undefined, url.searchParams.get("device") ?? undefined);
+    if (p === "/api/capsman/overview") {
+      return json(capsmanOverview(await fetchCapsmanState(ctx)));
+    }
+    if (p === "/api/capsman/clients") {
+      const state = await fetchCapsmanState(ctx);
+      const weakDbm = Number.parseInt(url.searchParams.get("weak_dbm") ?? "", 10);
+      const weak = reportWeakClients(state, Number.isFinite(weakDbm) ? weakDbm : undefined);
+      return json({ clients: state.clients, weak });
+    }
+    if (p === "/api/capsman/audit") {
+      return json(runCapsmanAudit(await fetchCapsmanState(ctx)));
+    }
+    if (p === "/api/capsman/trends") {
+      if (!capsmanStore) return json({ error: "capsman store not active" }, 503);
+      const device = resolveDeviceName(url.searchParams.get("device") ?? undefined);
+      const days = daysParam(url, 7, 30);
+      const series = capsmanStore.radioSeries(device, Date.now() - days * 86_400_000);
+      return json({ series, days });
+    }
+    return null;
+  }
+
+  // Writes: same snapshot + Safe-Mode envelope as the tools (fallback OFF).
+  if (req.method === "POST") {
+    const body = (await readJson(req)) as {
+      device?: string;
+      action?: string;
+      mac?: string;
+      mode?: string;
+      confirm?: boolean;
+    };
+    const ctx = createContext(undefined, body?.device);
+    const state = await fetchCapsmanState(ctx);
+
+    if (p === "/api/capsman/apply/steer") {
+      const client = state.clients.find(
+        (c) => c.mac.toLowerCase() === (body.mac ?? "").toLowerCase(),
+      );
+      if (!client) return json({ ok: false, error: "client not associated" }, 400);
+      if (steerAlreadyPresent(state, body.mac ?? "")) {
+        return json({ ok: true, message: "already steered (no-op)" });
+      }
+      const mode = body.mode === "soft" ? "soft" : "hard";
+      const commands = buildSteerCommands(state, body.mac ?? "", client.radioId, mode);
+      if (!body.confirm) return json({ ok: true, preview: commands });
+      return json(await applyCapsmanWrites(ctx, commands, `pre-steer-${body.mac}`));
+    }
+    if (p === "/api/capsman/apply/load-balance") {
+      const plan = loadBalancePlan(state);
+      const commands = buildLoadBalanceCommands(state, plan);
+      if (!body.confirm) return json({ ok: true, preview: commands, plan });
+      return json(await applyCapsmanWrites(ctx, commands, "pre-load-balance"));
+    }
+    if (p === "/api/capsman/apply/channel-plan") {
+      if (state.path === "/caps-man") {
+        return json({ ok: false, error: "channel-plan apply is v7 /interface wifi only" }, 400);
+      }
+      const commands = buildChannelPlanCommands(state);
+      if (!body.confirm) return json({ ok: true, preview: commands });
+      return json(await applyCapsmanWrites(ctx, commands, "pre-channel-plan"));
+    }
+    if (p === "/api/capsman/apply/ft") {
+      const commands = buildFtCommands(state);
+      if (!body.confirm) return json({ ok: true, preview: commands });
+      return json(await applyCapsmanWrites(ctx, commands, "pre-ft"));
+    }
+    if (p === "/api/capsman/apply/ha") {
+      const commands = buildHaCommands(state);
+      const guidance = haGuidance(state);
+      if (!body.confirm) return json({ ok: true, preview: commands, guidance });
+      const res = await applyCapsmanWrites(ctx, commands, "pre-ha");
+      return json({ ...res, guidance });
+    }
+  }
+  return null;
+}
+
+/** Snapshot + Safe-Mode apply for the dashboard CAPsMAN write routes. */
+async function applyCapsmanWrites(
+  ctx: ReturnType<typeof createContext>,
+  commands: string[],
+  label: string,
+): Promise<{
+  ok: boolean;
+  snapshotId?: string;
+  safeMode?: string;
+  applied?: number;
+  error?: string;
+}> {
+  if (commands.length === 0) return { ok: true, applied: 0 };
+  const snapshotId = await captureSnapshot(ctx, label);
+  const device = resolveDeviceName(ctx.device);
+  const outcome = await applyWritesSafely(ctx, device, commands, { allowDirectFallback: false });
+  return {
+    ok: outcome.committed && !outcome.error,
+    snapshotId,
+    safeMode: outcome.safeMode,
+    applied: outcome.applied,
+    error: outcome.error,
+  };
+}
+
 async function clientsRoutes(req: Request, url: URL): Promise<Response | null> {
   const p = url.pathname;
   if (!p.startsWith("/api/clients")) return null;
@@ -1323,6 +1457,15 @@ export async function runDashboard(
     logger.warn(`[${SERVER_TAG}] usage history disabled: ${String(e)}`);
   }
 
+  // CAPsMAN trends: a SQLite DB beside the events DB, filled by a slow (5-min)
+  // background sampler that snapshots each radio's client load for the graphs.
+  try {
+    capsmanStore = await openCapsmanStore(join(dirname(cfg.dbPath), "capsman.db"));
+    startCapsmanSampler(capsmanStore);
+  } catch (e) {
+    logger.warn(`[${SERVER_TAG}] capsman trends disabled: ${String(e)}`);
+  }
+
   // Seed an initial config baseline so the version timeline always has at least
   // one restore point (the state the dashboard started with).
   try {
@@ -1397,6 +1540,9 @@ export async function runDashboard(
 
     const captureResp = await captureRoutes(req, url);
     if (captureResp) return captureResp;
+
+    const capsmanResp = await capsmanRoutes(req, url);
+    if (capsmanResp) return capsmanResp;
 
     const clientsResp = await clientsRoutes(req, url);
     if (clientsResp) return clientsResp;
@@ -1713,10 +1859,13 @@ export async function runDashboard(
     stop() {
       stopHealthChecks();
       stopUsageSampler();
+      stopCapsmanSampler();
       void server.stop(true);
       store.close();
       usageStore?.close();
       usageStore = null;
+      capsmanStore?.close();
+      capsmanStore = null;
       closeMemoryStore();
     },
   };

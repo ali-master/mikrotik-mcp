@@ -22,16 +22,11 @@
             "description": "Observations to add"
           }
         },
-        "required": [
-          "entityName",
-          "contents"
-        ],
+        "required": ["entityName", "contents"],
         "additionalProperties": false
       }
     }
   },
-  "required": [
-    "observations"
-  ],
+  "required": ["observations"],
   "additionalProperties": false
 }

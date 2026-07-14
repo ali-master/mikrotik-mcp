@@ -10,11 +10,7 @@
     "mode": {
       "description": "Whether the router transmits and/or receives discovery frames.",
       "type": "string",
-      "enum": [
-        "tx-only",
-        "rx-only",
-        "tx-and-rx"
-      ]
+      "enum": ["tx-only", "rx-only", "tx-and-rx"]
     },
     "protocol": {
       "description": "Comma-separated protocols, e.g. \"mndp,cdp,lldp\".",

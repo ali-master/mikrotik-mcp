@@ -18,8 +18,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "confirm"
-  ],
+  "required": ["confirm"],
   "additionalProperties": false
 }

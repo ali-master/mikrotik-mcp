@@ -5,11 +5,7 @@
   "properties": {
     "target": {
       "type": "string",
-      "enum": [
-        "radius-incoming",
-        "um-settings",
-        "radius-reset-counters"
-      ]
+      "enum": ["radius-incoming", "um-settings", "radius-reset-counters"]
     },
     "fields": {
       "type": "object",
@@ -21,8 +17,6 @@
       }
     }
   },
-  "required": [
-    "target"
-  ],
+  "required": ["target"],
   "additionalProperties": false
 }

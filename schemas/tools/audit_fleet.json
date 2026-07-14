@@ -13,12 +13,7 @@
     "severity_threshold": {
       "description": "Only report checks at or above this severity (default: all).",
       "type": "string",
-      "enum": [
-        "critical",
-        "high",
-        "medium",
-        "low"
-      ]
+      "enum": ["critical", "high", "medium", "low"]
     },
     "generate_fix_script": {
       "default": false,
@@ -26,8 +21,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "generate_fix_script"
-  ],
+  "required": ["generate_fix_script"],
   "additionalProperties": false
 }

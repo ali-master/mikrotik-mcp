@@ -13,8 +13,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "post_check"
-  ],
+  "required": ["post_check"],
   "additionalProperties": false
 }

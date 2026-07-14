@@ -3,15 +3,7 @@
  * RouterOS commands and get a risk-scored, safely-reordered dry-run plan. Pure
  * analysis (`POST /api/plan`) — it never touches a device.
  */
-import {
-  Action,
-  ActionPanel,
-  Color,
-  Detail,
-  Form,
-  Icon,
-  useNavigation,
-} from "@raycast/api";
+import { Action, ActionPanel, Color, Detail, Form, Icon, useNavigation } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { postJson } from "./lib/api";
 import { showFailureToast } from "./lib/confirm";
@@ -30,10 +22,7 @@ const OP_SIGN: Record<string, string> = {
 function PlanResult({ script }: { script: string }) {
   const { data, isLoading } = usePromise(
     (s: string) =>
-      postJson<{ plan?: ChangePlan; text?: string; error?: string }>(
-        "/api/plan",
-        { script: s },
-      ),
+      postJson<{ plan?: ChangePlan; text?: string; error?: string }>("/api/plan", { script: s }),
     [script],
   );
   const plan = data?.plan;
@@ -63,28 +52,15 @@ function PlanResult({ script }: { script: string }) {
       metadata={
         plan ? (
           <Detail.Metadata>
-            <Detail.Metadata.Label
-              title="Risk"
-              text={`${plan.riskScore}/100`}
-            />
+            <Detail.Metadata.Label title="Risk" text={`${plan.riskScore}/100`} />
             <Detail.Metadata.TagList title="Grade">
               <Detail.Metadata.TagList.Item
                 text={plan.grade}
-                color={
-                  plan.grade === "critical" || plan.grade === "high"
-                    ? Color.Red
-                    : Color.Green
-                }
+                color={plan.grade === "critical" || plan.grade === "high" ? Color.Red : Color.Green}
               />
             </Detail.Metadata.TagList>
-            <Detail.Metadata.Label
-              title="Steps"
-              text={String(plan.counts.total)}
-            />
-            <Detail.Metadata.Label
-              title="Reordered"
-              text={plan.reordered ? "yes" : "no"}
-            />
+            <Detail.Metadata.Label title="Steps" text={String(plan.counts.total)} />
+            <Detail.Metadata.Label title="Reordered" text={plan.reordered ? "yes" : "no"} />
           </Detail.Metadata>
         ) : null
       }

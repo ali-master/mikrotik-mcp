@@ -33,11 +33,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "address",
-    "shared_secret",
-    "disabled"
-  ],
+  "required": ["name", "address", "shared_secret", "disabled"],
   "additionalProperties": false
 }

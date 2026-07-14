@@ -29,9 +29,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "address",
-    "count"
-  ],
+  "required": ["address", "count"],
   "additionalProperties": false
 }

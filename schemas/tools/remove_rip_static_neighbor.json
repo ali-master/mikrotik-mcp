@@ -8,8 +8,6 @@
       "description": "Static-neighbor id, e.g. \"*1\""
     }
   },
-  "required": [
-    "neighbor_id"
-  ],
+  "required": ["neighbor_id"],
   "additionalProperties": false
 }

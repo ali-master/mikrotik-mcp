@@ -30,9 +30,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "interface",
-    "disabled"
-  ],
+  "required": ["interface", "disabled"],
   "additionalProperties": false
 }

@@ -8,8 +8,6 @@
       "description": "RouterOS .id (e.g. '*1') or the prefix"
     }
   },
-  "required": [
-    "prefix_id"
-  ],
+  "required": ["prefix_id"],
   "additionalProperties": false
 }

@@ -11,8 +11,6 @@
       "maximum": 500
     }
   },
-  "required": [
-    "limit"
-  ],
+  "required": ["limit"],
   "additionalProperties": false
 }

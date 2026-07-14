@@ -7,8 +7,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "key_id"
-  ],
+  "required": ["key_id"],
   "additionalProperties": false
 }

@@ -12,9 +12,6 @@
       "description": "New reserved IP address"
     }
   },
-  "required": [
-    "mac",
-    "ip"
-  ],
+  "required": ["mac", "ip"],
   "additionalProperties": false
 }

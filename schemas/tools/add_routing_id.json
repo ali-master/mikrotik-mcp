@@ -23,9 +23,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "disabled"
-  ],
+  "required": ["name", "disabled"],
   "additionalProperties": false
 }

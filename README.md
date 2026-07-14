@@ -385,6 +385,7 @@ source** (`bun run gen:schemas`) so they can never drift:
 | **[Firewall Audit](docs/firewall-audit.md)**                  | Shadowed/broad/dead rules, risk-scored                                |
 | **[Security Hardening](docs/security-hardening.md)**          | Per-category audit+remediate, fix by finding_id, snapshot + Safe-Mode |
 | **[Port-Scan Detection](docs/port-scan-detection.md)**        | Detect+tag six scan signatures behind a trust-excluding jump-gate     |
+| **[CAPsMAN Orchestrator](docs/capsman.md)**                   | Wi-Fi fabric audit: coverage/co-channel, weak signal, load, FT & HA   |
 | **[Packet Capture Studio](docs/packet-capture.md)**           | Live TZSP capture + pcap export                                       |
 | **[Discovery](docs/discovery.md)**                            | `bun run discover`, MNDP neighbours, topology map                     |
 | **[Config Studio](docs/config-studio.md)**                    | Edit config in the dashboard with autocomplete                        |

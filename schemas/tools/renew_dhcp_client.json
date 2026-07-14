@@ -12,9 +12,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "interface",
-    "release"
-  ],
+  "required": ["interface", "release"],
   "additionalProperties": false
 }

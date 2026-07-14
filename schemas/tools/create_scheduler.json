@@ -35,10 +35,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "on_event",
-    "disabled"
-  ],
+  "required": ["name", "on_event", "disabled"],
   "additionalProperties": false
 }

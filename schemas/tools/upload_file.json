@@ -12,9 +12,6 @@
       "description": "File bytes, base64-encoded (binary-safe)"
     }
   },
-  "required": [
-    "filename",
-    "content_base64"
-  ],
+  "required": ["filename", "content_base64"],
   "additionalProperties": false
 }
