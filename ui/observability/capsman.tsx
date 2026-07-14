@@ -160,8 +160,8 @@ function SteerButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button className="h-6 px-2 text-[11px]">
-          <Wifi className="size-3" /> Steer
+        <Button size="sm" icon={<Wifi />}>
+          Steer
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -318,8 +318,8 @@ export function CapsmanView(): ReactNode {
             {overview.cochannel.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="h-6 px-2 text-[11px]">
-                    <RadioIcon className="size-3" /> Apply channel plan
+                  <Button size="sm" icon={<RadioIcon />}>
+                    Apply channel plan
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -352,8 +352,8 @@ export function CapsmanView(): ReactNode {
             )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="h-6 px-2 text-[11px]">
-                  <Scale className="size-3" /> Auto-balance
+                <Button size="sm" icon={<Scale />}>
+                  Auto-balance
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -455,8 +455,8 @@ export function CapsmanView(): ReactNode {
             {audit && audit.findings.some((f) => f.category === "ft") && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="h-6 px-2 text-[11px]">
-                    <Wifi className="size-3" /> Enable FT
+                  <Button size="sm" icon={<Wifi />}>
+                    Enable FT
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -484,8 +484,8 @@ export function CapsmanView(): ReactNode {
             {audit && audit.findings.some((f) => f.category === "ha") && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="h-6 px-2 text-[11px]">
-                    <AlertTriangle className="size-3" /> Harden HA
+                  <Button size="sm" icon={<AlertTriangle />}>
+                    Harden HA
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
