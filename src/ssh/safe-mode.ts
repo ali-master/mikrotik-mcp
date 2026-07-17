@@ -115,6 +115,14 @@ export class SafeModeManager {
   private ssh: MikroTikSSHClient | null = null;
   private channel: ClientChannel | null = null;
   private active = false;
+  /**
+   * Set when the persistent shell drops WHILE Safe Mode was active — i.e. the
+   * session died before an explicit commit, so RouterOS has already auto-reverted
+   * every staged change. Distinguishes "never enabled / cleanly closed" from
+   * "died with your changes still pending" so commit/status can report the revert
+   * instead of a reassuring false success. Cleared on the next enable().
+   */
+  private droppedUnexpectedly = false;
   /** Serializes channel access so concurrent tool calls don't interleave I/O. */
   private queue: Promise<unknown> = Promise.resolve();
 
@@ -139,6 +147,8 @@ export class SafeModeManager {
   enable(): Promise<string> {
     return this.lock(async () => {
       if (this.active) return "Safe mode is already active.";
+      // Fresh session — clear any drop flag left by a previously died session.
+      this.droppedUnexpectedly = false;
 
       const dc = getDevice(this.deviceName);
       // Safe Mode rides a persistent SSH shell (Ctrl+X). A MAC-Telnet device has
@@ -157,6 +167,14 @@ export class SafeModeManager {
 
       this.ssh = ssh;
       this.channel = await ssh.shell({ term: "dumb", cols: 220, rows: 50 });
+      // The persistent shell IS the Safe Mode session: if it drops (device idle
+      // timeout, network blip, RouterOS dropping the session after an error),
+      // RouterOS auto-reverts every staged change. Without this listener the
+      // manager would stay a zombie — `active` true over a dead channel — and
+      // commit/status would report a reassuring success against changes that no
+      // longer exist. Catch the drop so that state is corrected honestly.
+      this.channel.on("close", this.handleUnexpectedDrop);
+      this.channel.on("error", this.handleUnexpectedDrop);
 
       const initial = (await this.readUntilPrompt(20_000)).text;
       if (!PROMPT_RE.test(initial)) {
@@ -199,6 +217,12 @@ export class SafeModeManager {
    */
   execute(command: string): Promise<string> {
     return this.lock(async () => {
+      if (this.droppedUnexpectedly) {
+        throw new Error(
+          "Safe Mode session dropped — RouterOS auto-reverted every staged change; nothing " +
+            "was saved. Re-enable Safe Mode and re-apply, or apply the change directly.",
+        );
+      }
       if (!this.active || !this.channel) {
         throw new Error("Safe mode session is not active.");
       }
@@ -222,6 +246,18 @@ export class SafeModeManager {
    */
   commit(): Promise<CommitResult> {
     return this.lock(async () => {
+      // A session that dropped before commit already had all staged changes
+      // reverted by RouterOS — report that, never a benign "nothing to commit".
+      if (this.droppedUnexpectedly) {
+        this.droppedUnexpectedly = false;
+        return {
+          ok: false,
+          message:
+            "Commit FAILED — the Safe Mode session dropped before this commit, so RouterOS " +
+            "automatically reverted ALL staged changes and NOTHING was saved. Re-enable Safe Mode " +
+            "and re-apply the changes (or apply them directly and verify each with a read).",
+        };
+      }
       if (!this.active || !this.channel) {
         return { ok: true, message: "Safe mode is not active. Nothing to commit." };
       }
@@ -284,6 +320,13 @@ export class SafeModeManager {
   /** Close the session to trigger MikroTik's automatic safe-mode revert. */
   rollback(): Promise<string> {
     return this.lock(async () => {
+      if (this.droppedUnexpectedly) {
+        this.droppedUnexpectedly = false;
+        return (
+          "Safe Mode session had already dropped — RouterOS auto-reverted all staged changes; " +
+          "nothing was left to roll back."
+        );
+      }
       if (!this.active) return "Safe mode is not active. Nothing to roll back.";
       this.cleanup();
       return "Safe mode session closed. MikroTik has reverted all uncommitted changes automatically.";
@@ -291,6 +334,12 @@ export class SafeModeManager {
   }
 
   status(): string {
+    if (this.droppedUnexpectedly) {
+      return (
+        "Safe mode session DROPPED unexpectedly — RouterOS auto-reverted all staged changes; they " +
+        "were NOT saved. Re-enable Safe Mode and re-apply, or apply changes directly (verify each with a read)."
+      );
+    }
     return this.active
       ? "Safe mode is ACTIVE. Changes are pending — they are NOT yet persisted. " +
           "Call commit_safe_mode to persist or rollback_safe_mode to revert."
@@ -298,6 +347,20 @@ export class SafeModeManager {
   }
 
   // ── internals ────────────────────────────────────────────────────────────
+
+  /**
+   * Fired by the persistent shell's `close`/`error` events. Arrow-bound so the
+   * same reference is used for add/removeListener. Acts ONLY when we still think
+   * Safe Mode is active — a drop then means the session died with staged changes
+   * pending, which RouterOS has auto-reverted, so we flag it and tear the zombie
+   * handles down. A close during our own cleanup() (which clears `active` first)
+   * is a no-op: it is an intentional teardown, not a lost session.
+   */
+  private readonly handleUnexpectedDrop = (): void => {
+    if (!this.active) return;
+    this.droppedUnexpectedly = true;
+    this.cleanup();
+  };
 
   /**
    * Read from the channel until `isDone(cleaned)` is satisfied or the shell goes

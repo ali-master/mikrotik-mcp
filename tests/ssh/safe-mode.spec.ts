@@ -4,7 +4,12 @@
  * and both must count as activated.
  */
 import { describe, expect, test } from "vite-plus/test";
-import { classifyPrompt, isSafeModeActivated, isSafeModeReleased } from "../../src/ssh/safe-mode";
+import {
+  SafeModeManager,
+  classifyPrompt,
+  isSafeModeActivated,
+  isSafeModeReleased,
+} from "../../src/ssh/safe-mode";
 
 describe("isSafeModeActivated", () => {
   test("accepts the <SAFE> prompt marker", () => {
@@ -57,5 +62,45 @@ describe("classifyPrompt — commit-side mode detection", () => {
   test("settles on the LAST prompt after a Ctrl+X then Enter nudge", () => {
     // Ctrl+X redraws <SAFE>, Enter then renders the real post-commit prompt.
     expect(classifyPrompt("[admin@MikroTik] <SAFE> > \r\n[admin@MikroTik] > ")).toBe("released");
+  });
+});
+
+describe("unexpected session drop — no false success", () => {
+  /**
+   * Simulate the reported bug: the persistent shell drops WHILE Safe Mode is
+   * active (changes staged, not committed), so RouterOS has auto-reverted them.
+   * The manager must never then report a commit as succeeding.
+   */
+  function droppedManager(): SafeModeManager {
+    const mgr = new SafeModeManager("test-device");
+    // Mid-session state, then fire the shell's close listener.
+    (mgr as unknown as { active: boolean }).active = true;
+    (mgr as unknown as { handleUnexpectedDrop: () => void }).handleUnexpectedDrop();
+    return mgr;
+  }
+
+  test("a drop clears active and records the revert", () => {
+    const mgr = droppedManager();
+    expect(mgr.isActive).toBe(false);
+    expect(mgr.status()).toMatch(/DROPPED/i);
+    expect(mgr.status()).toMatch(/NOT saved/i);
+  });
+
+  test("commit after a drop reports failure, not 'nothing to commit'", async () => {
+    const result = await droppedManager().commit();
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/reverted/i);
+    expect(result.message).not.toMatch(/nothing to commit/i);
+  });
+
+  test("rollback after a drop explains the changes were already reverted", async () => {
+    const msg = await droppedManager().rollback();
+    expect(msg).toMatch(/auto-reverted/i);
+  });
+
+  test("a close while inactive (clean teardown) is a no-op", () => {
+    const mgr = new SafeModeManager("test-device");
+    (mgr as unknown as { handleUnexpectedDrop: () => void }).handleUnexpectedDrop();
+    expect(mgr.status()).toMatch(/NOT active/i);
   });
 });
