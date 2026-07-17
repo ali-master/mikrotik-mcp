@@ -1291,7 +1291,12 @@ function App(): ReactNode {
               ) : (
                 <div className="reveal grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
                   {shownDevices.map((d) => (
-                    <DeviceCard key={d.name} d={d} onToggle={toggleDevice} />
+                    <DeviceCard
+                      key={d.name}
+                      d={d}
+                      allNames={devices.devices.map((x) => x.name)}
+                      onToggle={toggleDevice}
+                    />
                   ))}
                 </div>
               )}

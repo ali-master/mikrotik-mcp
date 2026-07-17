@@ -65,14 +65,22 @@ export function statusInfo(s: DeviceStatus): { label: string; color: string } {
 }
 
 /**
- * A stable, vivid colour per device, derived deterministically from its name —
- * so each device keeps the same colour across reloads with no storage, and a new
- * device gets a distinct hue. Used to tint its connectivity orb and device card.
+ * A stable, vivid, UNIQUE colour per device. The hue is spread evenly by the
+ * device's rank within a stable (sorted) list of ALL device names, so no two
+ * devices can share a colour — a plain name→hue hash clustered near-identical
+ * hues, making distinct devices look the same. Sorting (rather than render order)
+ * keeps a device's colour stable across reloads and identical between the radar
+ * (full fleet) and the device cards (which may render a filtered subset), so the
+ * two never disagree. Lightness is staggered by rank so that even a large fleet —
+ * where evenly-spaced hues get close — stays visually separable.
  */
-export function deviceColor(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (Math.imul(h, 31) + name.charCodeAt(i)) >>> 0;
-  return `hsl(${h % 360} 70% 62%)`;
+export function deviceColor(name: string, allNames: string[]): string {
+  const ranked = [...new Set(allNames)].sort();
+  const count = Math.max(1, ranked.length);
+  const rank = Math.max(0, ranked.indexOf(name));
+  const hue = Math.round((rank * 360) / count);
+  const light = 62 - (rank % 3) * 5;
+  return `hsl(${hue} 70% ${light}%)`;
 }
 
 /** A point on a quadratic Bézier (core → control → device) at parameter `t`. */
@@ -148,6 +156,7 @@ export function ConnectivityGraph({
 }): ReactNode {
   const devices = payload.devices;
   const n = Math.max(1, devices.length);
+  const names = devices.map((d) => d.name);
 
   // Each orb's radius scales with its device name, so the ring must leave room
   // for the largest orb AND a clear lane between the core and every node, or the
@@ -483,7 +492,7 @@ export function ConnectivityGraph({
           const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
           // Each device's orb carries its own persistent colour; the small corner
           // dot still shows live online/offline status.
-          const col = deviceColor(d.name);
+          const col = deviceColor(d.name, names);
           return (
             <g key={`n-${d.name}`} className="conn-node" opacity={d.disabled ? 0.35 : 1}>
               {online && <circle className="conn-node-halo" cx={x} cy={y} r={r + 1} stroke={col} />}
@@ -574,9 +583,13 @@ export function ConnectivityGraph({
 
 export function DeviceCard({
   d,
+  allNames,
   onToggle,
 }: {
   d: DeviceInfo;
+  /** Every device name in the fleet — needed so the card's colour matches the
+   *  radar's for the same device regardless of any filtering applied to the grid. */
+  allNames: string[];
   onToggle?: (name: string, disabled: boolean) => void;
 }): ReactNode {
   const info = statusInfo(d.status);
@@ -586,7 +599,7 @@ export function DeviceCard({
       : d.status.reachable === false
         ? `${info.label}${d.status.error ? ` · ${d.status.error}` : ""}`
         : info.label;
-  const col = deviceColor(d.name);
+  const col = deviceColor(d.name, allNames);
   return (
     <div
       className={cn(
