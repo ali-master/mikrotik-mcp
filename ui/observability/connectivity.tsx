@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ms } from "./format";
-import { RadioTower, ShieldCheck } from "lucide-react";
+import { Activity, Loader2, RadioTower, RotateCw, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Badge } from "./geist";
@@ -585,13 +586,27 @@ export function DeviceCard({
   d,
   allNames,
   onToggle,
+  onTest,
+  onReconnect,
 }: {
   d: DeviceInfo;
   /** Every device name in the fleet — needed so the card's colour matches the
    *  radar's for the same device regardless of any filtering applied to the grid. */
   allNames: string[];
   onToggle?: (name: string, disabled: boolean) => void;
+  /** Probe the device now (fresh SSH connect + health refresh). */
+  onTest?: (name: string) => Promise<void>;
+  /** Drop the pooled connection and re-establish it, then refresh health. */
+  onReconnect?: (name: string) => Promise<void>;
 }): ReactNode {
+  const [busy, setBusy] = useState<"test" | "reconnect" | null>(null);
+  const runAction = (kind: "test" | "reconnect"): void => {
+    if (busy) return;
+    const fn = kind === "test" ? onTest : onReconnect;
+    if (!fn) return;
+    setBusy(kind);
+    void fn(d.name).finally(() => setBusy(null));
+  };
   const info = statusInfo(d.status);
   const statusLine =
     d.status.reachable === true
@@ -702,6 +717,32 @@ export function DeviceCard({
           >
             <RadioTower className="size-3" /> {d.name}
           </span>
+        </div>
+      )}
+      {(onTest || onReconnect) && (
+        <div className="mt-1.5 flex gap-2" onClick={(e) => e.stopPropagation()}>
+          {onTest && (
+            <Button
+              variant="outline"
+              size="xs"
+              disabled={!!busy}
+              onClick={() => runAction("test")}
+              title="Probe this device now (fresh SSH connect + health refresh)"
+            >
+              {busy === "test" ? <Loader2 className="animate-spin" /> : <Activity />} Test
+            </Button>
+          )}
+          {onReconnect && (
+            <Button
+              variant="outline"
+              size="xs"
+              disabled={!!busy}
+              onClick={() => runAction("reconnect")}
+              title="Drop the pooled SSH connection and re-establish it"
+            >
+              {busy === "reconnect" ? <Loader2 className="animate-spin" /> : <RotateCw />} Reconnect
+            </Button>
+          )}
         </div>
       )}
     </div>

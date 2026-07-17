@@ -844,6 +844,33 @@ function App(): ReactNode {
       .catch(() => toast.error(`Could not ${disabled ? "disable" : "enable"} ${name}`));
   }, []);
 
+  // Probe a device now / drop-and-reconnect its pooled SSH connection. Both hit
+  // the server, which refreshes the cached health and returns the full device
+  // payload, so the card reflects the result immediately.
+  const probeAction = useCallback(
+    async (kind: "test" | "reconnect", name: string): Promise<void> => {
+      try {
+        const r = await postJson<DevicesPayload & { status?: { reachable?: boolean | null } }>(
+          `/api/devices/${kind}`,
+          { device: name },
+        );
+        setDevices(r);
+        const reachable = r.status?.reachable;
+        const verb = kind === "reconnect" ? "Reconnected to" : "Tested";
+        if (reachable === false) toast.error(`${name} is unreachable`);
+        else toast.success(`${verb} ${name}`);
+      } catch {
+        toast.error(`Could not ${kind === "reconnect" ? "reconnect to" : "test"} ${name}`);
+      }
+    },
+    [],
+  );
+  const testDevice = useCallback((name: string) => probeAction("test", name), [probeAction]);
+  const reconnectDevice = useCallback(
+    (name: string) => probeAction("reconnect", name),
+    [probeAction],
+  );
+
   // Esc closes the drawer (the What's New modal handles its own Escape key).
   useEffect(() => {
     const h = (e: KeyboardEvent): void => {
@@ -1296,6 +1323,8 @@ function App(): ReactNode {
                       d={d}
                       allNames={devices.devices.map((x) => x.name)}
                       onToggle={toggleDevice}
+                      onTest={testDevice}
+                      onReconnect={reconnectDevice}
                     />
                   ))}
                 </div>

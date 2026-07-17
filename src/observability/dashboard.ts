@@ -144,7 +144,7 @@ import {
 import { computeStats } from "./stats";
 import { buildTopology } from "./topology";
 import { capture, DEFAULT_TZSP_PORT } from "./capture";
-import { isPoolEnabled, poolStatus } from "../core/connection-pool";
+import { closeDevice, isPoolEnabled, poolStatus } from "../core/connection-pool";
 import { isMacTelnetDevice } from "../core/transport";
 import { VERSION } from "../version";
 import { driftRoutes } from "./drift-routes";
@@ -1650,6 +1650,22 @@ export async function runDashboard(
         warning,
         ...(devicesPayload(db) as Record<string, unknown>),
       });
+    }
+
+    // Probe a saved device NOW (fresh SSH connect + `/system resource`) and
+    // refresh the cached health the cards read. `reconnect` additionally drops the
+    // device's pooled connection first, so the next real tool call dials fresh.
+    if (
+      (url.pathname === "/api/devices/test" || url.pathname === "/api/devices/reconnect") &&
+      req.method === "POST"
+    ) {
+      const b = (await readJson(req)) as { device?: string };
+      const name = typeof b?.device === "string" ? b.device : "";
+      const cfg = getConfig();
+      if (!(name in cfg.devices)) return json({ error: `unknown device: ${name}` }, 404);
+      if (url.pathname === "/api/devices/reconnect") closeDevice(name);
+      const status = await probeDevice(name, cfg.devices[name]);
+      return json({ ok: true, status, ...(devicesPayload(db) as Record<string, unknown>) });
     }
 
     if (url.pathname === "/api/topology") {
