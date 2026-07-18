@@ -19,7 +19,11 @@ export function useApi<T>(
 }
 
 /** Call `revalidate` every `intervalMs` while `active`. A no-op when inactive or interval ≤ 0. */
-export function usePolling(revalidate: () => void, intervalMs: number, active = true): void {
+export function usePolling(
+  revalidate: () => void,
+  intervalMs: number,
+  active = true,
+): void {
   useEffect(() => {
     if (!active || intervalMs <= 0) return;
     const id = setInterval(revalidate, intervalMs);

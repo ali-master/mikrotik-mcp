@@ -2,7 +2,8 @@
 // This is a faithful copy so the Raycast client and the web dashboard share one
 // contract. Keep in sync with ui/observability/types.ts when the server changes.
 
-export type Risk = "READ" | "WRITE" | "WRITE_IDEMPOTENT" | "DESTRUCTIVE" | "DANGEROUS";
+export type Risk =
+  "READ" | "WRITE" | "WRITE_IDEMPOTENT" | "DESTRUCTIVE" | "DANGEROUS";
 export interface ToolEvent {
   id: string;
   ts: number;

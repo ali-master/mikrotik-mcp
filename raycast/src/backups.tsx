@@ -36,7 +36,13 @@ function BackupBody({ name }: { name: string }) {
   return <Detail isLoading={isLoading} markdown={md} navigationTitle={name} />;
 }
 
-function CreateForm({ data, onDone }: { data: BackupsData | undefined; onDone: () => void }) {
+function CreateForm({
+  data,
+  onDone,
+}: {
+  data: BackupsData | undefined;
+  onDone: () => void;
+}) {
   const { pop } = useNavigation();
   return (
     <Form
@@ -96,8 +102,16 @@ function CreateForm({ data, onDone }: { data: BackupsData | undefined; onDone: (
         label="Include secrets (show-sensitive)"
         defaultValue={false}
       />
-      <Form.Checkbox id="verbose" label="Verbose (full export)" defaultValue={false} />
-      <Form.Checkbox id="terse" label="Terse (one line per item)" defaultValue={false} />
+      <Form.Checkbox
+        id="verbose"
+        label="Verbose (full export)"
+        defaultValue={false}
+      />
+      <Form.Checkbox
+        id="terse"
+        label="Terse (one line per item)"
+        defaultValue={false}
+      />
     </Form>
   );
 }
@@ -116,7 +130,8 @@ function RestoreForm({
     if (confirm) {
       const ok = await confirmDestructive({
         title: `Restore ${item.name} to ${device || "default"}?`,
-        message: "Applies the backup to the device (Safe Mode; auto-reverts on lock-out).",
+        message:
+          "Applies the backup to the device (Safe Mode; auto-reverts on lock-out).",
         actionTitle: "Restore",
         icon: Icon.ArrowCounterClockwise,
       });
@@ -139,7 +154,9 @@ function RestoreForm({
       });
       if (!res.ok) throw new Error(res.error ?? "Request failed");
       toast.style = Toast.Style.Success;
-      toast.title = res.message || (confirm ? "Restored" : `Dry-run OK (${res.applied ?? 0} cmds)`);
+      toast.title =
+        res.message ||
+        (confirm ? "Restored" : `Dry-run OK (${res.applied ?? 0} cmds)`);
       onDone();
       pop();
     } catch (e) {
@@ -167,7 +184,11 @@ function RestoreForm({
       }
     >
       <Form.Description text="Dry-run applies then rolls back (shows what would change). Restore commits it." />
-      <Form.Dropdown id="device" title="Device" defaultValue={item.device ?? ""}>
+      <Form.Dropdown
+        id="device"
+        title="Device"
+        defaultValue={item.device ?? ""}
+      >
         <Form.Dropdown.Item title="Default device" value="" />
         {(data?.devices ?? []).map((d) => (
           <Form.Dropdown.Item key={d} title={d} value={d} />
@@ -177,7 +198,13 @@ function RestoreForm({
   );
 }
 
-function RenameForm({ item, onDone }: { item: BackupItem; onDone: () => void }) {
+function RenameForm({
+  item,
+  onDone,
+}: {
+  item: BackupItem;
+  onDone: () => void;
+}) {
   const { pop } = useNavigation();
   return (
     <Form
@@ -314,7 +341,11 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         </ActionPanel>
       }
     >
-      <Form.FilePicker id="file" title="Backup file" allowMultipleSelection={false} />
+      <Form.FilePicker
+        id="file"
+        title="Backup file"
+        allowMultipleSelection={false}
+      />
     </Form>
   );
 }
@@ -336,9 +367,12 @@ export default function Command() {
       title: "Deleting…",
     });
     try {
-      const res = await postJson<{ ok?: boolean; error?: string }>("/api/backups/delete", {
-        name: item.name,
-      });
+      const res = await postJson<{ ok?: boolean; error?: string }>(
+        "/api/backups/delete",
+        {
+          name: item.name,
+        },
+      );
       if (!res.ok) throw new Error(res.error ?? "Request failed");
       toast.style = Toast.Style.Success;
       toast.title = "Deleted";
@@ -389,19 +423,30 @@ export default function Command() {
             icon={Icon.Document}
             title={b.name}
             subtitle={b.device}
-            accessories={[{ text: bytes(b.bytes) }, { date: new Date(b.modified) }]}
+            accessories={[
+              { text: bytes(b.bytes) },
+              { date: new Date(b.modified) },
+            ]}
             actions={
               <ActionPanel>
-                <Action.Push title="View" icon={Icon.Eye} target={<BackupBody name={b.name} />} />
+                <Action.Push
+                  title="View"
+                  icon={Icon.Eye}
+                  target={<BackupBody name={b.name} />}
+                />
                 <Action.OpenInBrowser
                   title="Download"
                   icon={Icon.Download}
-                  url={withToken(`/api/backups/raw?name=${encodeURIComponent(b.name)}`)}
+                  url={withToken(
+                    `/api/backups/raw?name=${encodeURIComponent(b.name)}`,
+                  )}
                 />
                 <Action.Push
                   title="Restore…"
                   icon={Icon.ArrowCounterClockwise}
-                  target={<RestoreForm item={b} data={data} onDone={revalidate} />}
+                  target={
+                    <RestoreForm item={b} data={data} onDone={revalidate} />
+                  }
                 />
                 <Action.Push
                   title="Rename…"

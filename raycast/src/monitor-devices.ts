@@ -78,6 +78,9 @@ export default async function Command(): Promise<void> {
   await Promise.all(flips);
   await LocalStorage.setItem(STATE_KEY, JSON.stringify(next));
   await updateCommandMetadata({
-    subtitle: offline > 0 ? `${online} online · ${offline} offline` : `${online} online`,
+    subtitle:
+      offline > 0
+        ? `${online} online · ${offline} offline`
+        : `${online} online`,
   });
 }

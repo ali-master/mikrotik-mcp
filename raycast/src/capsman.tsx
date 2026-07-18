@@ -55,9 +55,14 @@ const SEV_COLOR: Record<Severity, Color> = {
   medium: Color.Yellow,
   low: Color.SecondaryText,
 };
-const bandLabel = (b: Band): string => (b === "2ghz" ? "2.4G" : b === "5ghz" ? "5G" : "?");
+const bandLabel = (b: Band): string =>
+  b === "2ghz" ? "2.4G" : b === "5ghz" ? "5G" : "?";
 const bandColor = (b: Band): Color =>
-  b === "5ghz" ? Color.Green : b === "2ghz" ? Color.Yellow : Color.SecondaryText;
+  b === "5ghz"
+    ? Color.Green
+    : b === "2ghz"
+      ? Color.Yellow
+      : Color.SecondaryText;
 
 export default function Command() {
   const { data: devicePayload } = useDevices();
@@ -67,7 +72,9 @@ export default function Command() {
 
   const overview = useApi<Overview>(`/api/capsman/overview${q}`);
   const clients = useApi<{ weak: WeakClient[] }>(`/api/capsman/clients${q}`);
-  const audit = useApi<{ findings: Finding[]; total: number }>(`/api/capsman/audit${q}`);
+  const audit = useApi<{ findings: Finding[]; total: number }>(
+    `/api/capsman/audit${q}`,
+  );
   const revalidate = () => {
     overview.revalidate();
     clients.revalidate();
@@ -86,7 +93,12 @@ export default function Command() {
       searchBarPlaceholder="Filter CAPsMAN fabric…"
       searchBarAccessory={
         devices.length > 1 ? (
-          <DeviceDropdown devices={devices} value={device} onChange={setDevice} includeAll />
+          <DeviceDropdown
+            devices={devices}
+            value={device}
+            onChange={setDevice}
+            includeAll
+          />
         ) : undefined
       }
     >
@@ -100,7 +112,11 @@ export default function Command() {
 
       <List.Section
         title="Radios"
-        subtitle={o ? `${num(o.totals.caps)} CAPs · ${num(o.totals.clients)} clients` : undefined}
+        subtitle={
+          o
+            ? `${num(o.totals.caps)} CAPs · ${num(o.totals.clients)} clients`
+            : undefined
+        }
       >
         {(o?.radios ?? []).map((r) => (
           <List.Item
@@ -113,12 +129,21 @@ export default function Command() {
               ...(r.channel != null ? [{ text: `ch ${r.channel}` }] : []),
               { text: `${num(r.clientCount)} clients` },
               ...(r.conflicts.length
-                ? [{ tag: { value: "co-channel", color: Color.Red }, icon: Icon.ExclamationMark }]
+                ? [
+                    {
+                      tag: { value: "co-channel", color: Color.Red },
+                      icon: Icon.ExclamationMark,
+                    },
+                  ]
                 : []),
             ]}
             actions={
               <ActionPanel>
-                <Action title="Refresh" icon={Icon.ArrowClockwise} onAction={revalidate} />
+                <Action
+                  title="Refresh"
+                  icon={Icon.ArrowClockwise}
+                  onAction={revalidate}
+                />
               </ActionPanel>
             }
           />
@@ -149,7 +174,11 @@ export default function Command() {
             actions={
               <ActionPanel>
                 <Action.CopyToClipboard title="Copy MAC" content={c.mac} />
-                <Action title="Refresh" icon={Icon.ArrowClockwise} onAction={revalidate} />
+                <Action
+                  title="Refresh"
+                  icon={Icon.ArrowClockwise}
+                  onAction={revalidate}
+                />
               </ActionPanel>
             }
           />
@@ -172,8 +201,15 @@ export default function Command() {
             ]}
             actions={
               <ActionPanel>
-                <Action.CopyToClipboard title="Copy Recommendation" content={f.recommendation} />
-                <Action title="Refresh" icon={Icon.ArrowClockwise} onAction={revalidate} />
+                <Action.CopyToClipboard
+                  title="Copy Recommendation"
+                  content={f.recommendation}
+                />
+                <Action
+                  title="Refresh"
+                  icon={Icon.ArrowClockwise}
+                  onAction={revalidate}
+                />
               </ActionPanel>
             }
           />

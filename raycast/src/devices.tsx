@@ -6,19 +6,34 @@
  * `/api/ssh-pool` every 4 s like the dashboard.
  */
 import { useState } from "react";
-import { Action, ActionPanel, Color, Icon, Keyboard, List, Toast, showToast } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Color,
+  Icon,
+  Keyboard,
+  List,
+  Toast,
+  showToast,
+} from "@raycast/api";
 import { HEALTH_COLOR, bytes, ms, num } from "./lib/format";
 import { useApi, usePolling } from "./lib/hooks";
 import { postJson } from "./lib/api";
 import { showFailureToast } from "./lib/confirm";
 import { areaChart, chartImage, gaugeRow, sparklineIcon } from "./lib/charts";
-import type { DeviceInfo, DevicesPayload, OpResult, SSHPoolPayload } from "./lib/types";
+import type {
+  DeviceInfo,
+  DevicesPayload,
+  OpResult,
+  SSHPoolPayload,
+} from "./lib/types";
 
 function reachIcon(d: DeviceInfo): { source: Icon; tintColor: Color } {
   const r = d.status.reachable;
   return {
     source: Icon.Dot,
-    tintColor: r === true ? Color.Green : r === false ? Color.Red : Color.SecondaryText,
+    tintColor:
+      r === true ? Color.Green : r === false ? Color.Red : Color.SecondaryText,
   };
 }
 
@@ -85,7 +100,9 @@ function healthColorHex(pct: number): string {
 }
 
 /** A tiny CPU-load sparkline accessory (collapsed rows), or nothing if no history. */
-function healthSparkAccessory(d: DeviceInfo): Array<{ icon: string; tooltip: string }> {
+function healthSparkAccessory(
+  d: DeviceInfo,
+): Array<{ icon: string; tooltip: string }> {
   const hist = d.history ?? [];
   if (hist.length < 2) return [];
   const icon = sparklineIcon(
@@ -95,7 +112,13 @@ function healthSparkAccessory(d: DeviceInfo): Array<{ icon: string; tooltip: str
   return icon ? [{ icon, tooltip: "CPU load" }] : [];
 }
 
-function DeviceMetadata({ d, pool }: { d: DeviceInfo; pool: SSHPoolPayload | undefined }) {
+function DeviceMetadata({
+  d,
+  pool,
+}: {
+  d: DeviceInfo;
+  pool: SSHPoolPayload | undefined;
+}) {
   const s = d.status;
   const poolDev = pool?.devices.find((p) => p.device === d.name);
 
@@ -112,9 +135,16 @@ function DeviceMetadata({ d, pool }: { d: DeviceInfo; pool: SSHPoolPayload | und
         }
         icon={reachIcon(d)}
       />
-      {s.identity ? <List.Item.Detail.Metadata.Label title="Identity" text={s.identity} /> : null}
-      {s.version ? <List.Item.Detail.Metadata.Label title="RouterOS" text={s.version} /> : null}
-      <List.Item.Detail.Metadata.Label title="Address" text={d.address ?? `${d.host}:${d.port}`} />
+      {s.identity ? (
+        <List.Item.Detail.Metadata.Label title="Identity" text={s.identity} />
+      ) : null}
+      {s.version ? (
+        <List.Item.Detail.Metadata.Label title="RouterOS" text={s.version} />
+      ) : null}
+      <List.Item.Detail.Metadata.Label
+        title="Address"
+        text={d.address ?? `${d.host}:${d.port}`}
+      />
       <List.Item.Detail.Metadata.Label
         title="Transport"
         text={d.transport ?? (d.mac ? "mac-telnet" : "ssh")}
@@ -127,14 +157,18 @@ function DeviceMetadata({ d, pool }: { d: DeviceInfo; pool: SSHPoolPayload | und
         />
       ) : null}
       <List.Item.Detail.Metadata.Separator />
-      {s.boardName ? <List.Item.Detail.Metadata.Label title="Board" text={s.boardName} /> : null}
+      {s.boardName ? (
+        <List.Item.Detail.Metadata.Label title="Board" text={s.boardName} />
+      ) : null}
       {s.architecture ? (
         <List.Item.Detail.Metadata.Label
           title="Arch"
           text={`${s.architecture}${s.cpuCount ? ` · ${s.cpuCount} cores` : ""}`}
         />
       ) : null}
-      {s.uptime ? <List.Item.Detail.Metadata.Label title="Uptime" text={s.uptime} /> : null}
+      {s.uptime ? (
+        <List.Item.Detail.Metadata.Label title="Uptime" text={s.uptime} />
+      ) : null}
       {s.totalMemory ? (
         <List.Item.Detail.Metadata.Label
           title="RAM"
@@ -142,7 +176,10 @@ function DeviceMetadata({ d, pool }: { d: DeviceInfo; pool: SSHPoolPayload | und
         />
       ) : null}
       {s.freeHdd != null ? (
-        <List.Item.Detail.Metadata.Label title="Free disk" text={bytes(s.freeHdd)} />
+        <List.Item.Detail.Metadata.Label
+          title="Free disk"
+          text={bytes(s.freeHdd)}
+        />
       ) : null}
       <List.Item.Detail.Metadata.Separator />
       <List.Item.Detail.Metadata.Label
@@ -172,7 +209,8 @@ function DeviceMetadata({ d, pool }: { d: DeviceInfo; pool: SSHPoolPayload | und
 
 export default function Command() {
   const [showDetail, setShowDetail] = useState(true);
-  const { data, isLoading, revalidate } = useApi<DevicesPayload>("/api/devices");
+  const { data, isLoading, revalidate } =
+    useApi<DevicesPayload>("/api/devices");
   const { data: pool } = useApi<SSHPoolPayload>("/api/ssh-pool");
   usePolling(revalidate, 4000);
 
@@ -190,7 +228,8 @@ export default function Command() {
       if (res.error) throw new Error(res.error);
       toast.style = Toast.Style.Success;
       toast.title = `${d.name} ${d.disabled ? "enabled" : "disabled"}`;
-      if (res.requiresReconnect) toast.message = "Reconnect the MCP client to apply";
+      if (res.requiresReconnect)
+        toast.message = "Reconnect the MCP client to apply";
       else if (res.warning) toast.message = res.warning;
       revalidate();
     } catch (e) {
@@ -205,12 +244,14 @@ export default function Command() {
   // Both hit the server, which refreshes the cached health and returns the result.
   async function probe(d: DeviceInfo, kind: "test" | "reconnect") {
     const verb = kind === "reconnect" ? "Reconnecting to" : "Testing";
-    const toast = await showToast({ style: Toast.Style.Animated, title: `${verb} ${d.name}…` });
+    const toast = await showToast({
+      style: Toast.Style.Animated,
+      title: `${verb} ${d.name}…`,
+    });
     try {
-      const res = await postJson<OpResult & { status?: { reachable?: boolean | null } }>(
-        `/api/devices/${kind}`,
-        { device: d.name },
-      );
+      const res = await postJson<
+        OpResult & { status?: { reachable?: boolean | null } }
+      >(`/api/devices/${kind}`, { device: d.name });
       if (res.error) throw new Error(res.error);
       const reachable = res.status?.reachable;
       if (reachable === false) {
@@ -232,7 +273,11 @@ export default function Command() {
   const devices = data?.devices ?? [];
 
   return (
-    <List isLoading={isLoading} isShowingDetail={showDetail} searchBarPlaceholder="Filter devices…">
+    <List
+      isLoading={isLoading}
+      isShowingDetail={showDetail}
+      searchBarPlaceholder="Filter devices…"
+    >
       <List.Section
         title="Devices"
         subtitle={
@@ -246,12 +291,16 @@ export default function Command() {
             key={d.name}
             icon={reachIcon(d)}
             title={d.name}
-            subtitle={showDetail ? undefined : (d.address ?? `${d.host}:${d.port}`)}
+            subtitle={
+              showDetail ? undefined : (d.address ?? `${d.host}:${d.port}`)
+            }
             accessories={
               showDetail
                 ? undefined
                 : [
-                    ...(d.isDefault ? [{ tag: { value: "default", color: Color.Blue } }] : []),
+                    ...(d.isDefault
+                      ? [{ tag: { value: "default", color: Color.Blue } }]
+                      : []),
                     ...(d.disabled
                       ? [
                           {
@@ -264,7 +313,9 @@ export default function Command() {
                       : []),
                     ...(d.status.version ? [{ text: d.status.version }] : []),
                     ...healthSparkAccessory(d),
-                    ...(d.status.latencyMs != null ? [{ text: ms(d.status.latencyMs) }] : []),
+                    ...(d.status.latencyMs != null
+                      ? [{ text: ms(d.status.latencyMs) }]
+                      : []),
                   ]
             }
             detail={
@@ -290,7 +341,7 @@ export default function Command() {
                   title="Reconnect"
                   icon={Icon.Repeat}
                   onAction={() => probe(d, "reconnect")}
-                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                  shortcut={Keyboard.Shortcut.Common.Refresh}
                 />
                 <Action
                   title={d.disabled ? "Enable Device" : "Disable Device"}

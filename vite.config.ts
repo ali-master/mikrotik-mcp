@@ -4,7 +4,11 @@ export default defineConfig({
   staged: {
     "*": "vp check --fix",
   },
-  fmt: {},
+  // The Raycast extension is a self-contained subproject with its own toolchain
+  // (`ray lint` / `ray build`) and its own Prettier settings; formatting it from
+  // the root would churn every file against a different config. Leave it to
+  // `cd raycast && ray lint --fix`.
+  fmt: { ignorePatterns: ["raycast/**"] },
   lint: {
     plugins: ["oxc", "typescript", "unicorn", "react", "import"],
     jsPlugins: [
@@ -125,6 +129,12 @@ export default defineConfig({
       "**/.agents",
       "**/.*/skills",
       "**/*.md",
+      // The Raycast extension is a self-contained subproject with its OWN tsconfig
+      // (DOM + node libs), eslint config, and `ray lint`/`ray build` toolchain. The
+      // root check lacks those libs, so type-aware linting it here only produces
+      // false "cannot find name setInterval/WebSocket/Buffer" errors — lint it via
+      // `cd raycast && ray lint` instead.
+      "raycast/**",
     ],
     rules: {
       "accessor-pairs": [

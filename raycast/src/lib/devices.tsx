@@ -25,7 +25,9 @@ export function DeviceDropdown(props: {
       value={props.value}
       onChange={props.onChange}
     >
-      {props.includeAll ? <List.Dropdown.Item title="All Devices" value="" /> : null}
+      {props.includeAll ? (
+        <List.Dropdown.Item title="All Devices" value="" />
+      ) : null}
       {props.devices.map((d) => (
         <List.Dropdown.Item key={d} title={d} value={d} />
       ))}

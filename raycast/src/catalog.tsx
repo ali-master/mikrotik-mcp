@@ -73,14 +73,21 @@ export default function Command() {
   const [filter, setFilter] = useState("all");
 
   const flatTools = useMemo(
-    () => (data?.modules ?? []).flatMap((m) => m.tools.map((t) => ({ tool: t, module: m }))),
+    () =>
+      (data?.modules ?? []).flatMap((m) =>
+        m.tools.map((t) => ({ tool: t, module: m })),
+      ),
     [data],
   );
 
   const showKind = (kind: "tools" | "prompts" | "modules"): boolean =>
-    filter === "all" || filter === kind || (kind === "tools" && filter.startsWith("group:"));
+    filter === "all" ||
+    filter === kind ||
+    (kind === "tools" && filter.startsWith("group:"));
 
-  const groupFilter = filter.startsWith("group:") ? filter.slice("group:".length) : null;
+  const groupFilter = filter.startsWith("group:")
+    ? filter.slice("group:".length)
+    : null;
 
   return (
     <List
@@ -89,15 +96,36 @@ export default function Command() {
       searchBarPlaceholder="Search tools, prompts & modules…"
       searchBarAccessory={
         <List.Dropdown tooltip="Filter" onChange={setFilter} storeValue>
-          <List.Dropdown.Item title="Everything" value="all" icon={Icon.AppWindowGrid3x3} />
+          <List.Dropdown.Item
+            title="Everything"
+            value="all"
+            icon={Icon.AppWindowGrid3x3}
+          />
           <List.Dropdown.Section title="Kind">
-            <List.Dropdown.Item title="Tools" value="tools" icon={Icon.Hammer} />
-            <List.Dropdown.Item title="Prompts" value="prompts" icon={Icon.Stars} />
-            <List.Dropdown.Item title="Modules" value="modules" icon={Icon.Box} />
+            <List.Dropdown.Item
+              title="Tools"
+              value="tools"
+              icon={Icon.Hammer}
+            />
+            <List.Dropdown.Item
+              title="Prompts"
+              value="prompts"
+              icon={Icon.Stars}
+            />
+            <List.Dropdown.Item
+              title="Modules"
+              value="modules"
+              icon={Icon.Box}
+            />
           </List.Dropdown.Section>
           <List.Dropdown.Section title="Tools by group">
             {(data?.groups ?? []).map((g) => (
-              <List.Dropdown.Item key={g} title={g} value={`group:${g}`} icon={Icon.Folder} />
+              <List.Dropdown.Item
+                key={g}
+                title={g}
+                value={`group:${g}`}
+                icon={Icon.Folder}
+              />
             ))}
           </List.Dropdown.Section>
         </List.Dropdown>
@@ -119,10 +147,16 @@ export default function Command() {
                   markdown={promptMarkdown(p)}
                   metadata={
                     <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label title="Invoke" text={`/${p.name}`} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Invoke"
+                        text={`/${p.name}`}
+                      />
                       <List.Item.Detail.Metadata.Separator />
                       {p.arguments.length === 0 ? (
-                        <List.Item.Detail.Metadata.Label title="Arguments" text="none" />
+                        <List.Item.Detail.Metadata.Label
+                          title="Arguments"
+                          text="none"
+                        />
                       ) : (
                         p.arguments.map((a) => (
                           <List.Item.Detail.Metadata.Label
@@ -138,8 +172,14 @@ export default function Command() {
               }
               actions={
                 <ActionPanel>
-                  <Action.CopyToClipboard title="Copy Invocation" content={`/${p.name}`} />
-                  <Action.CopyToClipboard title="Copy Prompt Body" content={p.body} />
+                  <Action.CopyToClipboard
+                    title="Copy Invocation"
+                    content={`/${p.name}`}
+                  />
+                  <Action.CopyToClipboard
+                    title="Copy Prompt Body"
+                    content={p.body}
+                  />
                   <Action.CopyToClipboard title="Copy Name" content={p.name} />
                 </ActionPanel>
               }
@@ -183,15 +223,24 @@ export default function Command() {
                                 color={r.color}
                               />
                             </List.Item.Detail.Metadata.TagList>
-                            <List.Item.Detail.Metadata.Label title="Module" text={module.label} />
-                            <List.Item.Detail.Metadata.Label title="Group" text={module.group} />
+                            <List.Item.Detail.Metadata.Label
+                              title="Module"
+                              text={module.label}
+                            />
+                            <List.Item.Detail.Metadata.Label
+                              title="Group"
+                              text={module.group}
+                            />
                           </List.Item.Detail.Metadata>
                         }
                       />
                     }
                     actions={
                       <ActionPanel>
-                        <Action.CopyToClipboard title="Copy Tool Name" content={tool.name} />
+                        <Action.CopyToClipboard
+                          title="Copy Tool Name"
+                          content={tool.name}
+                        />
                         <Action.CopyToClipboard
                           title="Copy Description"
                           content={tool.description}
@@ -214,7 +263,11 @@ export default function Command() {
               icon={{ source: Icon.Box, tintColor: Color.Blue }}
               title={m.label}
               subtitle={m.slug}
-              keywords={[m.slug, m.group, ...m.description.split(/\s+/).slice(0, 12)]}
+              keywords={[
+                m.slug,
+                m.group,
+                ...m.description.split(/\s+/).slice(0, 12),
+              ]}
               accessories={[
                 { tag: { value: m.group, color: Color.Blue } },
                 { text: `${m.toolCount} tools` },
@@ -224,9 +277,18 @@ export default function Command() {
                   markdown={moduleMarkdown(m)}
                   metadata={
                     <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label title="Slug" text={m.slug} />
-                      <List.Item.Detail.Metadata.Label title="Group" text={m.group} />
-                      <List.Item.Detail.Metadata.Label title="Tools" text={`${m.toolCount}`} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Slug"
+                        text={m.slug}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Group"
+                        text={m.group}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Tools"
+                        text={`${m.toolCount}`}
+                      />
                     </List.Item.Detail.Metadata>
                   }
                 />

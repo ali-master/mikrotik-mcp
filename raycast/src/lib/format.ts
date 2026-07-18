@@ -7,7 +7,11 @@ import { Color } from "@raycast/api";
 import type { Risk } from "./types";
 
 export const ms = (n: number): string =>
-  n < 1 ? "<1ms" : n < 1000 ? `${Math.round(n)}ms` : `${(n / 1000).toFixed(2)}s`;
+  n < 1
+    ? "<1ms"
+    : n < 1000
+      ? `${Math.round(n)}ms`
+      : `${(n / 1000).toFixed(2)}s`;
 
 export function bytes(n: number): string {
   const u = ["B", "KiB", "MiB", "GiB"];
@@ -59,7 +63,8 @@ export const RISK_TINT: Record<Risk, Color> = {
 };
 
 /** Compact risk label for tight accessories (WRITE_IDEMPOTENT → WRITE·I). */
-export const riskLabel = (r: Risk): string => (r === "WRITE_IDEMPOTENT" ? "WRITE·I" : r);
+export const riskLabel = (r: Risk): string =>
+  r === "WRITE_IDEMPOTENT" ? "WRITE·I" : r;
 
 export const WINDOWS: [string, number][] = [
   ["5m", 300_000],
