@@ -126,6 +126,8 @@ import {
   startHealthChecks,
   stopHealthChecks,
 } from "./health";
+import { getDeviceGeo, startGeoLookups, stopGeoLookups } from "./geo";
+import { flagSvg } from "./flags";
 import { configureRecorder, getEventStore, subscribe, subscriberCount } from "./recorder";
 import { subscribeTraffic } from "./traffic-hub";
 import { openSqliteStore } from "./store";
@@ -345,6 +347,9 @@ function devicesPayload(store: EventStore): unknown {
       jumpVia: dc.jumpVia,
       jumpHost: dc.jumpHost ? { host: dc.jumpHost.host, port: dc.jumpHost.port } : undefined,
       status: getDeviceStatus(name),
+      // ISO country (+ flag) geolocated from the device's public IP, when it has
+      // one. null for MAC-Telnet / private-IP / not-yet-resolved devices.
+      geo: getDeviceGeo(name),
       history: getDeviceHistory(name),
       activity: activity.get(name) ?? {
         calls: 0,
@@ -1446,6 +1451,8 @@ export async function runDashboard(
   // Periodically probe each configured device's SSH reachability for the
   // connectivity graph/status (one immediate pass, then every 30s).
   startHealthChecks(30_000);
+  // Geolocate each device's public IP for the country flag (cached ~1 day).
+  startGeoLookups();
 
   // Persisted usage history: a SQLite DB beside the events DB, filled by a slow
   // background sampler (per-client ↓/↑ snapshots + User Manager session ingest)
@@ -1602,6 +1609,20 @@ export async function runDashboard(
           totalBusy,
         },
         devices: ps,
+      });
+    }
+
+    // Country flag SVG (circle-flags), proxied same-origin so the dashboard's CSP
+    // doesn't block it. `/api/flag/<iso2>` (optional `.svg`).
+    if (url.pathname.startsWith("/api/flag/")) {
+      const code = url.pathname.slice("/api/flag/".length).replace(/\.svg$/, "");
+      const svg = await flagSvg(code);
+      if (!svg) return new Response("flag not found", { status: 404 });
+      return new Response(svg, {
+        headers: {
+          "content-type": "image/svg+xml; charset=utf-8",
+          "cache-control": "public, max-age=86400",
+        },
       });
     }
 
@@ -1874,6 +1895,7 @@ export async function runDashboard(
     store,
     stop() {
       stopHealthChecks();
+      stopGeoLookups();
       stopUsageSampler();
       stopCapsmanSampler();
       void server.stop(true);

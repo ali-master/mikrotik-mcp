@@ -37,6 +37,13 @@ function reachIcon(d: DeviceInfo): { source: Icon; tintColor: Color } {
   };
 }
 
+// Country flag from the circle-flags pack, keyed by the device's geolocated ISO
+// country code. Vendored under assets/flags/ (see scripts/download-flags.ts) and
+// bundled with the extension, so nothing is fetched at runtime.
+function flagAsset(code: string): string {
+  return `flags/${code.toLowerCase()}.svg`;
+}
+
 /** Big radial gauges + health area charts for the device detail pane. */
 function deviceMarkdown(d: DeviceInfo): string {
   const s = d.status;
@@ -135,6 +142,13 @@ function DeviceMetadata({
         }
         icon={reachIcon(d)}
       />
+      {d.geo?.countryCode ? (
+        <List.Item.Detail.Metadata.Label
+          title="Country"
+          text={d.geo.city ? `${d.geo.country} · ${d.geo.city}` : d.geo.country}
+          icon={{ source: flagAsset(d.geo.countryCode) }}
+        />
+      ) : null}
       {s.identity ? (
         <List.Item.Detail.Metadata.Label title="Identity" text={s.identity} />
       ) : null}
@@ -298,6 +312,14 @@ export default function Command() {
               showDetail
                 ? undefined
                 : [
+                    ...(d.geo?.countryCode
+                      ? [
+                          {
+                            icon: { source: flagAsset(d.geo.countryCode) },
+                            tooltip: d.geo.country,
+                          },
+                        ]
+                      : []),
                     ...(d.isDefault
                       ? [{ tag: { value: "default", color: Color.Blue } }]
                       : []),

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { ms } from "./format";
+import { withToken } from "./api";
 import { Activity, Loader2, RadioTower, RotateCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -206,6 +207,14 @@ export function ConnectivityGraph({
           <radialGradient id="conn-orb" cx="0.5" cy="0.32" r="0.85">
             <stop offset="0" stopColor="var(--muted)" />
             <stop offset="1" stopColor="var(--card)" />
+          </radialGradient>
+          {/* Vignette laid over a device's flag: a near-clear centre so the flag
+              reads, deepening to the orb colour at the rim so the circle stays
+              crisp and the centred label stays legible over any flag. */}
+          <radialGradient id="conn-orb-veil" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stopColor="var(--card)" stopOpacity="0.2" />
+            <stop offset="0.6" stopColor="var(--card)" stopOpacity="0.25" />
+            <stop offset="1" stopColor="var(--card)" stopOpacity="0.85" />
           </radialGradient>
           <radialGradient id="conn-burst" cx="0.5" cy="0.5" r="0.5">
             <stop offset="0" stopColor="var(--foreground)" />
@@ -487,7 +496,7 @@ export function ConnectivityGraph({
         </text>
 
         {/* device nodes */}
-        {nodes.map(({ d, x, y, r, label }) => {
+        {nodes.map(({ d, x, y, r, label, i }) => {
           const info = statusInfo(d.status);
           const online = d.status.reachable === true;
           const detail = online ? `${d.status.latencyMs ?? "?"} ms` : info.label;
@@ -511,9 +520,36 @@ export function ConnectivityGraph({
                   className={d.pool.inflight > 0 ? "conn-blink" : undefined}
                 />
               )}
-              {/* subtle fill tint in the device's colour, over the dark orb */}
+              {/* the dark orb backing */}
               <circle cx={x} cy={y} r={r} fill="url(#conn-orb)" />
-              <circle cx={x} cy={y} r={r} fill={col} opacity={0.16} />
+              {d.geo?.countryCode ? (
+                <>
+                  {/* the device's country flag, filling the orb and clipped to a
+                      circle (unique id per node), then veiled so it reads as a
+                      tasteful backdrop with the label still legible over it.
+                      An <image> href — NOT inlined SVG — so each flag stays an
+                      isolated document (every circle-flags SVG reuses `id="a"`;
+                      inlining several would collide and render them all alike). */}
+                  <clipPath id={`conn-orb-clip-${i}`}>
+                    <circle cx={x} cy={y} r={r} />
+                  </clipPath>
+                  <image
+                    href={withToken(`/api/flag/${d.geo.countryCode}`)}
+                    x={x - r}
+                    y={y - r}
+                    width={r * 2}
+                    height={r * 2}
+                    clipPath={`url(#conn-orb-clip-${i})`}
+                    preserveAspectRatio="xMidYMid slice"
+                    opacity={0.6}
+                  >
+                    <title>{d.geo.city ? `${d.geo.country} · ${d.geo.city}` : d.geo.country}</title>
+                  </image>
+                  <circle cx={x} cy={y} r={r} fill="url(#conn-orb-veil)" />
+                </>
+              ) : (
+                <circle cx={x} cy={y} r={r} fill={col} opacity={0.16} />
+              )}
               <circle cx={x} cy={y} r={r} fill="none" stroke={col} strokeWidth={2.5} />
               <circle
                 className={online ? "conn-blink" : undefined}
@@ -531,6 +567,11 @@ export function ConnectivityGraph({
                 fill="var(--foreground)"
                 fontSize={10}
                 fontWeight={600}
+                // Background-coloured outline keeps the name readable over the
+                // flag backdrop (paint the stroke first, then the fill on top).
+                stroke="var(--card)"
+                strokeWidth={2.75}
+                paintOrder="stroke"
               >
                 {label}
               </text>
@@ -631,6 +672,15 @@ export function DeviceCard({
           style={{ background: col }}
           title="device colour"
         />
+        {d.geo?.countryCode && (
+          <img
+            src={withToken(`/api/flag/${d.geo.countryCode}`)}
+            alt={d.geo.country}
+            title={d.geo.city ? `${d.geo.country} · ${d.geo.city}` : d.geo.country}
+            className="size-4 shrink-0"
+            loading="lazy"
+          />
+        )}
         <span className="text-[13px] font-medium">{d.name}</span>
         {d.isDefault && <Badge type="accent">default</Badge>}
         {d.disabled && <Badge type="warning">disabled</Badge>}

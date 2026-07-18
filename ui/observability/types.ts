@@ -128,6 +128,8 @@ export interface DeviceInfo {
   /** Inline SSH bastion (host/port only; no secrets) when not a named device. */
   jumpHost?: { host: string; port: number };
   status: DeviceStatus;
+  /** Country geolocated from the device's public IP; null when private/MAC/unresolved. */
+  geo?: { countryCode: string; country: string; city?: string } | null;
   history?: MetricSample[];
   activity: { calls: number; errors: number; lastSeen: number; avgMs: number };
   /** Whether this device is excluded from the MCP tool surface. */

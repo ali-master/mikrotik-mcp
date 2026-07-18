@@ -59,6 +59,7 @@
     "gen": "bun run --bun gen:schemas && bun run --bun gen:docs",
     "start": "bun run --bun src/cli.ts serve",
     "discover": "bun run --bun scripts/discover-macs.ts",
+    "flags:download": "bun run --bun scripts/download-flags.ts",
     "chat": "bunx mcp-chat --server \"./dist/cli.js serve\"",
     "inspect": "bunx @modelcontextprotocol/inspector bun run --bun src/cli.ts serve",
     "inspect:built": "bun run --bun build && bunx @modelcontextprotocol/inspector bun dist/cli.js serve",

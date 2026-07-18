@@ -62,7 +62,7 @@ const TARGETS: Record<string, Target> = {
 };
 
 /** Copied verbatim into the stage — everything the server reads from disk at runtime. */
-const COPY = ["dist", "prompts", "assets/icon.png", "README.md", "LICENSE"];
+const COPY = ["dist", "prompts", "assets/icon.png", "assets/flags", "README.md", "LICENSE"];
 
 interface PkgJson {
   name: string;
