@@ -20,6 +20,20 @@ export function useLiveStream(
     let ws: WebSocket | null = null;
     let es: EventSource | null = null;
 
+    // Drop the current transport without triggering its auto-reconnect — used
+    // before an intentional reconnect so we never end up with two live sockets.
+    const teardown = (): void => {
+      if (ws) {
+        ws.onopen = ws.onerror = ws.onmessage = ws.onclose = null;
+        ws.close();
+        ws = null;
+      }
+      if (es) {
+        es.close();
+        es = null;
+      }
+    };
+
     const connectSse = (): void => {
       if (closed) return;
       es = new EventSource(withToken("/api/sse"));
@@ -62,11 +76,31 @@ export function useLiveStream(
       };
     };
 
+    // A backgrounded tab (or a sleeping machine) often leaves the stream dead:
+    // the browser closes the WebSocket, or the SSE fallback errors out with no
+    // reconnect path — so the feed silently stops updating until a full reload.
+    // When the tab becomes visible again or the network returns, re-establish the
+    // stream if it isn't currently open. Reconnecting is cheap and guarantees a
+    // live socket whenever the user is actually looking at the page.
+    const isLive = (): boolean =>
+      ws?.readyState === WebSocket.OPEN || es?.readyState === EventSource.OPEN;
+    const revive = (): void => {
+      if (closed || isLive()) return;
+      teardown();
+      connectWs();
+    };
+    const onVisible = (): void => {
+      if (document.visibilityState === "visible") revive();
+    };
+
     connectWs();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", revive);
     return () => {
       closed = true;
-      ws?.close();
-      es?.close();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", revive);
+      teardown();
     };
   }, []);
 }
