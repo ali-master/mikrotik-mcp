@@ -50,12 +50,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "interface",
-    "add_default_route",
-    "use_peer_dns",
-    "use_peer_ntp",
-    "disabled"
-  ],
+  "required": ["interface", "add_default_route", "use_peer_dns", "use_peer_ntp", "disabled"],
   "additionalProperties": false
 }

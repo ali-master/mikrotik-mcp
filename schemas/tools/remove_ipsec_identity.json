@@ -8,8 +8,6 @@
       "description": "Internal .id from list output, e.g. '*1'"
     }
   },
-  "required": [
-    "identity_id"
-  ],
+  "required": ["identity_id"],
   "additionalProperties": false
 }

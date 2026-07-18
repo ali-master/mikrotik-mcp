@@ -8,8 +8,6 @@
       "description": "RouterOS .id, e.g. '*5'"
     }
   },
-  "required": [
-    "route_id"
-  ],
+  "required": ["route_id"],
   "additionalProperties": false
 }

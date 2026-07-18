@@ -1,5 +1,6 @@
 /** OpenVPN (OVPN) — `/interface ovpn-server` + `/interface ovpn-client`. RouterOS 7 supports UDP + TCP. */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -121,7 +122,7 @@ export const openvpnTools: ToolModule = [
       " named server use remove_ovpn_server; to list them use list_ovpn_servers. For outbound tunnels" +
       " use create_ovpn_client. Returns the created server's detail including its name.",
     inputSchema: {
-      name: z.string().describe("Unique name for the new OpenVPN server instance"),
+      name: interfaceName("Unique name for the new OpenVPN server instance"),
       port: z.number().int().default(1194),
       protocol: z.enum(["tcp", "udp"]).optional(),
       mode: z.enum(["ip", "ethernet"]).optional(),
@@ -372,7 +373,7 @@ export const openvpnTools: ToolModule = [
       " inbound OVPN server configuration use set_ovpn_server. Returns the created interface detail" +
       " including its name.",
     inputSchema: {
-      name: z.string().describe("Name for the new OpenVPN client interface"),
+      name: interfaceName("Name for the new OpenVPN client interface"),
       connect_to: z.string().describe("Remote OpenVPN server address"),
       port: z.number().int().default(1194),
       user: z.string().optional(),

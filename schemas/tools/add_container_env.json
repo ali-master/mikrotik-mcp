@@ -16,10 +16,6 @@
       "description": "Variable value"
     }
   },
-  "required": [
-    "list",
-    "key",
-    "value"
-  ],
+  "required": ["list", "key", "value"],
   "additionalProperties": false
 }

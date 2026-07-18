@@ -19,11 +19,7 @@
     },
     "ra_preference": {
       "type": "string",
-      "enum": [
-        "low",
-        "medium",
-        "high"
-      ]
+      "enum": ["low", "medium", "high"]
     },
     "hop_limit": {
       "description": "Advertised hop limit (0-255 or 'unspecified')",
@@ -64,9 +60,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "interface",
-    "disabled"
-  ],
+  "required": ["interface", "disabled"],
   "additionalProperties": false
 }

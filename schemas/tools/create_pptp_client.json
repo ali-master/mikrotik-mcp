@@ -5,6 +5,7 @@
   "properties": {
     "name": {
       "type": "string",
+      "pattern": "^\\S+$",
       "description": "Name for the new PPTP client interface"
     },
     "connect_to": {
@@ -65,12 +66,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "connect_to",
-    "user",
-    "password",
-    "disabled"
-  ],
+  "required": ["name", "connect_to", "user", "password", "disabled"],
   "additionalProperties": false
 }

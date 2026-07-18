@@ -5,6 +5,7 @@
   "properties": {
     "name": {
       "type": "string",
+      "pattern": "^\\S+$",
       "description": "Name for the new IPIP tunnel interface, e.g. 'ipip-to-hq'"
     },
     "remote_address": {
@@ -22,10 +23,7 @@
     "dont_fragment": {
       "description": "Don't-fragment behavior",
       "type": "string",
-      "enum": [
-        "inherit",
-        "no"
-      ]
+      "enum": ["inherit", "no"]
     },
     "clamp_tcp_mss": {
       "description": "Clamp TCP MSS to the tunnel MTU",
@@ -56,10 +54,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "remote_address",
-    "disabled"
-  ],
+  "required": ["name", "remote_address", "disabled"],
   "additionalProperties": false
 }

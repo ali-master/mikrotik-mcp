@@ -8,8 +8,6 @@
       "description": "New system identity / hostname"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

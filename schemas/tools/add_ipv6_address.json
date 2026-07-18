@@ -39,11 +39,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "address",
-    "interface",
-    "disabled",
-    "allow_overlap"
-  ],
+  "required": ["address", "interface", "disabled", "allow_overlap"],
   "additionalProperties": false
 }

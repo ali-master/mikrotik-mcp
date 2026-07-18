@@ -44,10 +44,7 @@
     "protocol": {
       "description": "Transport protocol used to reach the server (default udp)",
       "type": "string",
-      "enum": [
-        "udp",
-        "radsec"
-      ]
+      "enum": ["udp", "radsec"]
     },
     "certificate": {
       "description": "Certificate name to present when protocol is radsec",
@@ -64,8 +61,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "radius_id"
-  ],
+  "required": ["radius_id"],
   "additionalProperties": false
 }

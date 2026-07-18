@@ -75,9 +75,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "name",
-    "disabled"
-  ],
+  "required": ["name", "disabled"],
   "additionalProperties": false
 }

@@ -14,6 +14,7 @@
  * `executeMikrotikCommand` choke point.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { createContext } from "../core/context";
 import { DANGEROUS, defineTool } from "../core/registry";
@@ -57,7 +58,9 @@ export const wireguardMeshTools: ToolModule = [
         .string()
         .default("10.20.0.0/24")
         .describe("Mesh subnet; each device gets <prefix>.<index+1> on its WireGuard interface"),
-      interface: z.string().default("wg-mesh").describe("WireGuard interface name to create/use"),
+      interface: interfaceName()
+        .default("wg-mesh")
+        .describe("WireGuard interface name to create/use (no spaces)"),
       listen_port: z.number().int().default(13231),
       topology: z.enum(["full-mesh", "hub-spoke"]).default("full-mesh"),
       hub: z.string().optional().describe("Hub device name (required when topology=hub-spoke)"),

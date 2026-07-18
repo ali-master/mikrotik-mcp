@@ -6,6 +6,7 @@
  * touches the device.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -25,7 +26,9 @@ export const wireguardTools: ToolModule = [
       " for OpenVPN use create_ovpn_client. Returns the created interface's detail including" +
       " its name and RouterOS-generated public key.",
     inputSchema: {
-      name: z.string(),
+      name: interfaceName(
+        "WireGuard interface name to create, e.g. 'wireguard-internal' (no spaces).",
+      ),
       listen_port: z.number().int().optional(),
       private_key: z.string().optional(),
       mtu: z.number().int().optional(),
@@ -160,7 +163,7 @@ export const wireguardTools: ToolModule = [
       " Returns the updated interface's detail.",
     inputSchema: {
       name: z.string(),
-      new_name: z.string().optional(),
+      new_name: interfaceName().optional().describe("Rename the interface to this (no spaces)."),
       listen_port: z.number().int().optional(),
       private_key: z.string().optional(),
       mtu: z.number().int().optional(),

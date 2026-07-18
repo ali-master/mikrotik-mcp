@@ -12,9 +12,6 @@
       "description": "Variable name to remove"
     }
   },
-  "required": [
-    "list",
-    "key"
-  ],
+  "required": ["list", "key"],
   "additionalProperties": false
 }

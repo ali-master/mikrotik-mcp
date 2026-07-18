@@ -22,9 +22,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "static_only",
-    "blocked_only"
-  ],
+  "required": ["static_only", "blocked_only"],
   "additionalProperties": false
 }

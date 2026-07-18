@@ -8,13 +8,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": [
-          "coverage",
-          "weak_signal",
-          "load",
-          "ft",
-          "ha"
-        ]
+        "enum": ["coverage", "weak_signal", "load", "ft", "ha"]
       }
     },
     "weak_dbm": {

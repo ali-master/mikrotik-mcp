@@ -13,9 +13,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "confirm"
-  ],
+  "required": ["name", "confirm"],
   "additionalProperties": false
 }

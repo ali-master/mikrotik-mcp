@@ -6,6 +6,7 @@
  * lifecycle and follows the canonical tool-module pattern (see `vlan.ts`).
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -30,7 +31,7 @@ export const tunnelTools: ToolModule = [
       " Keepalive format: '<interval>,<retries>', e.g. '10s,3'." +
       " Returns the created interface detail including name, remote-address, and run-time status.",
     inputSchema: {
-      name: z.string().describe("Name for the new GRE tunnel interface, e.g. 'gre-to-hq'"),
+      name: interfaceName("Name for the new GRE tunnel interface, e.g. 'gre-to-hq'"),
       remote_address: z.string().describe("Remote endpoint IP address"),
       local_address: z.string().optional().describe("Local endpoint IP address"),
       keepalive: z.string().optional().describe("Keepalive interval/retries, e.g. '10s,3'"),
@@ -168,7 +169,7 @@ export const tunnelTools: ToolModule = [
       " Keepalive format: '<interval>,<retries>', e.g. '10s,3'." +
       " Returns the created interface detail including name, remote-address, and run-time status.",
     inputSchema: {
-      name: z.string().describe("Name for the new IPIP tunnel interface, e.g. 'ipip-to-hq'"),
+      name: interfaceName("Name for the new IPIP tunnel interface, e.g. 'ipip-to-hq'"),
       remote_address: z.string().describe("Remote endpoint IP address"),
       local_address: z.string().optional().describe("Local endpoint IP address"),
       keepalive: z.string().optional().describe("Keepalive interval/retries, e.g. '10s,3'"),
@@ -307,7 +308,7 @@ export const tunnelTools: ToolModule = [
       " Keepalive format: '<interval>,<retries>', e.g. '10s,3'." +
       " Returns the created interface detail including name, remote-address, tunnel-id, and run-time status.",
     inputSchema: {
-      name: z.string().describe("Name for the new EoIP tunnel interface, e.g. 'eoip-to-hq'"),
+      name: interfaceName("Name for the new EoIP tunnel interface, e.g. 'eoip-to-hq'"),
       remote_address: z.string().describe("Remote endpoint IP address"),
       tunnel_id: z.number().int().describe("Unique tunnel ID, must match on both peers"),
       local_address: z.string().optional().describe("Local endpoint IP address"),
@@ -455,7 +456,7 @@ export const tunnelTools: ToolModule = [
       " UDP port defaults to 8472; VNI must match on all participating VTEPs." +
       " Returns the created interface detail including name, VNI, port, and run-time status.",
     inputSchema: {
-      name: z.string().describe("Name for the new VXLAN interface, e.g. 'vxlan1'"),
+      name: interfaceName("Name for the new VXLAN interface, e.g. 'vxlan1'"),
       vni: z.number().int().describe("VXLAN Network Identifier (VNI)"),
       port: z.number().int().default(8472).describe("UDP port (default 8472)"),
       local_address: z.string().optional().describe("Local source IP address"),

@@ -18,11 +18,7 @@
     },
     "parity": {
       "type": "string",
-      "enum": [
-        "none",
-        "odd",
-        "even"
-      ]
+      "enum": ["none", "odd", "even"]
     },
     "stop_bits": {
       "type": "integer",
@@ -31,15 +27,9 @@
     },
     "flow_control": {
       "type": "string",
-      "enum": [
-        "none",
-        "hardware",
-        "xon-xoff"
-      ]
+      "enum": ["none", "hardware", "xon-xoff"]
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

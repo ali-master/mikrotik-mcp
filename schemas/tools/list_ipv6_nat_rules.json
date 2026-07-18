@@ -28,10 +28,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "disabled_only",
-    "invalid_only",
-    "dynamic_only"
-  ],
+  "required": ["disabled_only", "invalid_only", "dynamic_only"],
   "additionalProperties": false
 }

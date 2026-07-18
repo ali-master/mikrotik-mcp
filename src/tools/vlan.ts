@@ -7,6 +7,7 @@
  * `Cmd` and runs it through `executeMikrotikCommand`.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -27,7 +28,7 @@ export const vlanTools: ToolModule = [
       " Returns the created interface's full detail including its name, which is the identifier accepted by `get_vlan_interface`, `update_vlan_interface`, and `remove_vlan_interface`." +
       " ARP mode accepts: enabled (default), disabled, proxy-arp, reply-only.",
     inputSchema: {
-      name: z.string().describe("Name for the new VLAN interface, e.g. 'vlan100'"),
+      name: interfaceName("Name for the new VLAN interface, e.g. 'vlan100'"),
       vlan_id: z.number().int().min(1).max(4094).describe("802.1Q VLAN ID (1-4094)"),
       interface: z.string().describe("Parent interface, e.g. 'ether1' or 'bridge'"),
       comment: z.string().optional(),
@@ -145,7 +146,7 @@ export const vlanTools: ToolModule = [
       " ARP mode accepts: enabled, disabled, proxy-arp, reply-only.",
     inputSchema: {
       name: z.string().describe("Current name of the VLAN interface to update"),
-      new_name: z.string().optional(),
+      new_name: interfaceName().optional().describe("Rename the interface to this (no spaces)."),
       vlan_id: z.number().int().min(1).max(4094).optional(),
       interface: z.string().optional(),
       comment: z.string().optional(),

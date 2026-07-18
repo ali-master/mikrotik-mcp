@@ -48,10 +48,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "port",
-    "disabled"
-  ],
+  "required": ["name", "port", "disabled"],
   "additionalProperties": false
 }

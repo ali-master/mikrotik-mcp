@@ -29,9 +29,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "address",
-    "duration"
-  ],
+  "required": ["address", "duration"],
   "additionalProperties": false
 }

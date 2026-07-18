@@ -1,5 +1,6 @@
 /** L2TP VPN server and clients — `/interface l2tp-server` and `/interface l2tp-client`. Users come from `/ppp secret`. */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -105,7 +106,7 @@ export const l2tpTools: ToolModule = [
       "`connect_to` takes the remote server address; set `use_ipsec='yes'` and `ipsec_secret` to layer IPsec on top. " +
       "Returns the created interface details with passwords redacted.",
     inputSchema: {
-      name: z.string().describe("Name for the new L2TP client interface"),
+      name: interfaceName("Name for the new L2TP client interface"),
       connect_to: z.string().describe("Remote L2TP server address"),
       user: z.string().describe("Username for authentication"),
       password: z.string().describe("Password for authentication"),

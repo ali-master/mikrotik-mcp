@@ -60,10 +60,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "dst_address",
-    "gateway",
-    "disabled"
-  ],
+  "required": ["dst_address", "gateway", "disabled"],
   "additionalProperties": false
 }

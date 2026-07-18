@@ -7,7 +7,9 @@
       "type": "string"
     },
     "new_name": {
-      "type": "string"
+      "description": "Rename the interface to this (no spaces).",
+      "type": "string",
+      "pattern": "^\\S+$"
     },
     "listen_port": {
       "type": "integer",
@@ -29,8 +31,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

@@ -7,8 +7,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "user_id"
-  ],
+  "required": ["user_id"],
   "additionalProperties": false
 }

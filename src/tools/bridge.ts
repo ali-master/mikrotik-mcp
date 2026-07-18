@@ -7,6 +7,7 @@
  * tool-module pattern from `vlan.ts`.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -37,7 +38,7 @@ export const bridgeTools: ToolModule = [
       "for standalone 802.1Q VLAN sub-interfaces use `create_vlan_interface`. " +
       "Returns the created bridge's full detail including its `.id`.",
     inputSchema: {
-      name: z.string().describe("Name for the new bridge, e.g. 'bridge1'"),
+      name: interfaceName("Name for the new bridge, e.g. 'bridge1'"),
       comment: z.string().optional(),
       vlan_filtering: z
         .boolean()
@@ -181,7 +182,7 @@ export const bridgeTools: ToolModule = [
       "Identified by the current bridge `name`; supply only the fields you want to change.",
     inputSchema: {
       name: z.string().describe("Current name of the bridge to update"),
-      new_name: z.string().optional(),
+      new_name: interfaceName().optional().describe("Rename the bridge to this (no spaces)."),
       comment: z.string().optional(),
       vlan_filtering: z.boolean().optional(),
       protocol_mode: ProtocolMode.optional(),

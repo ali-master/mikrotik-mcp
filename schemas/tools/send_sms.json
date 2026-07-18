@@ -25,10 +25,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "port",
-    "phone_number",
-    "message"
-  ],
+  "required": ["port", "phone_number", "message"],
   "additionalProperties": false
 }

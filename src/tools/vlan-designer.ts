@@ -6,6 +6,7 @@
  * vlan/bridge/dhcp/firewall building blocks rather than duplicating them.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { DANGEROUS, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -32,7 +33,7 @@ export const vlanDesignerTools: ToolModule = [
       "subnet. Returns the plan or a build report.",
     inputSchema: {
       vlan_id: z.number().int().min(1).max(4094),
-      name: z.string().describe("Name for the VLAN interface, e.g. 'guest'"),
+      name: interfaceName("Name for the VLAN interface, e.g. 'guest'"),
       subnet: z.string().describe("CIDR for the segment, e.g. '192.168.30.0/24'"),
       gateway: z.string().describe("Router's address in the segment, e.g. '192.168.30.1'"),
       bridge: z.string().default("bridge").describe("Bridge to put the VLAN on"),

@@ -9,8 +9,6 @@
       "description": "Exact tool name, e.g. 'add_dhcp_lease'."
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

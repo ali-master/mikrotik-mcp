@@ -15,8 +15,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "isolation_id"
-  ],
+  "required": ["isolation_id"],
   "additionalProperties": false
 }

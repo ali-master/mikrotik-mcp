@@ -12,8 +12,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "private_key_file"
-  ],
+  "required": ["private_key_file"],
   "additionalProperties": false
 }

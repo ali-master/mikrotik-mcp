@@ -44,10 +44,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "name",
-    "dh_group",
-    "hash_algorithm"
-  ],
+  "required": ["name", "dh_group", "hash_algorithm"],
   "additionalProperties": false
 }

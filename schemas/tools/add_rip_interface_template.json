@@ -34,10 +34,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "instance",
-    "interfaces",
-    "disabled"
-  ],
+  "required": ["instance", "interfaces", "disabled"],
   "additionalProperties": false
 }

@@ -23,11 +23,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "host",
-    "port",
-    "user",
-    "command"
-  ],
+  "required": ["host", "port", "user", "command"],
   "additionalProperties": false
 }

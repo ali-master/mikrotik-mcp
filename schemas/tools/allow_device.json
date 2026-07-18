@@ -8,8 +8,6 @@
       "description": "Device MAC address to unblock"
     }
   },
-  "required": [
-    "mac"
-  ],
+  "required": ["mac"],
   "additionalProperties": false
 }

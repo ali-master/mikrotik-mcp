@@ -5,6 +5,7 @@
  * L2TP/IPsec, SSTP, or WireGuard for new deployments.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -92,7 +93,7 @@ export const pptpTools: ToolModule = [
       "NOTE: PPTP is cryptographically weak (MS-CHAPv2/MPPE); prefer L2TP/IPsec, SSTP, or WireGuard for new deployments. " +
       "Returns the created client's detail including its `.id`.",
     inputSchema: {
-      name: z.string().describe("Name for the new PPTP client interface"),
+      name: interfaceName("Name for the new PPTP client interface"),
       connect_to: z.string().describe("Remote PPTP server address"),
       user: z.string().describe("Username for authentication"),
       password: z.string().describe("Password for authentication"),

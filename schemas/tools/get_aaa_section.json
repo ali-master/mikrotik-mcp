@@ -16,8 +16,6 @@
       ]
     }
   },
-  "required": [
-    "slug"
-  ],
+  "required": ["slug"],
   "additionalProperties": false
 }

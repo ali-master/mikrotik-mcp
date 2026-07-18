@@ -18,8 +18,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "filename"
-  ],
+  "required": ["filename"],
   "additionalProperties": false
 }

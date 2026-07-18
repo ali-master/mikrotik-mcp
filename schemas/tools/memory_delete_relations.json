@@ -22,18 +22,12 @@
             "description": "Relation type in active voice (e.g. 'manages', 'connects_to', 'depends_on')"
           }
         },
-        "required": [
-          "from",
-          "to",
-          "relationType"
-        ],
+        "required": ["from", "to", "relationType"],
         "additionalProperties": false
       },
       "description": "Relations to delete"
     }
   },
-  "required": [
-    "relations"
-  ],
+  "required": ["relations"],
   "additionalProperties": false
 }

@@ -13,27 +13,16 @@
     },
     "vlan_mode": {
       "type": "string",
-      "enum": [
-        "disabled",
-        "optional",
-        "enabled",
-        "secure"
-      ]
+      "enum": ["disabled", "optional", "enabled", "secure"]
     },
     "vlan_header": {
       "type": "string",
-      "enum": [
-        "leave-as-is",
-        "always-strip",
-        "add-if-missing"
-      ]
+      "enum": ["leave-as-is", "always-strip", "add-if-missing"]
     },
     "force_vlan_id": {
       "type": "boolean"
     }
   },
-  "required": [
-    "port_id"
-  ],
+  "required": ["port_id"],
   "additionalProperties": false
 }

@@ -11,18 +11,11 @@
     },
     "traffic": {
       "type": "string",
-      "enum": [
-        "received",
-        "transmitted"
-      ]
+      "enum": ["received", "transmitted"]
     },
     "trigger": {
       "type": "string",
-      "enum": [
-        "above",
-        "below",
-        "always"
-      ]
+      "enum": ["above", "below", "always"]
     },
     "threshold": {
       "type": "integer",
@@ -39,8 +32,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

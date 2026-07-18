@@ -15,8 +15,6 @@
       "maximum": 1000
     }
   },
-  "required": [
-    "max_keys"
-  ],
+  "required": ["max_keys"],
   "additionalProperties": false
 }

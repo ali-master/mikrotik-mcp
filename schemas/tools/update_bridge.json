@@ -8,7 +8,9 @@
       "description": "Current name of the bridge to update"
     },
     "new_name": {
-      "type": "string"
+      "description": "Rename the bridge to this (no spaces).",
+      "type": "string",
+      "pattern": "^\\S+$"
     },
     "comment": {
       "type": "string"
@@ -18,12 +20,7 @@
     },
     "protocol_mode": {
       "type": "string",
-      "enum": [
-        "none",
-        "rstp",
-        "stp",
-        "mstp"
-      ]
+      "enum": ["none", "rstp", "stp", "mstp"]
     },
     "disabled": {
       "type": "boolean"
@@ -40,13 +37,7 @@
     "arp": {
       "description": "ARP resolution mode",
       "type": "string",
-      "enum": [
-        "disabled",
-        "enabled",
-        "proxy-arp",
-        "reply-only",
-        "local-proxy-arp"
-      ]
+      "enum": ["disabled", "enabled", "proxy-arp", "reply-only", "local-proxy-arp"]
     },
     "arp_timeout": {
       "description": "ARP entry timeout, e.g. '30s' or 'auto'",
@@ -67,11 +58,7 @@
     "ether_type": {
       "description": "Service VLAN (S-tag) EtherType when VLAN filtering",
       "type": "string",
-      "enum": [
-        "0x8100",
-        "0x88a8",
-        "0x9100"
-      ]
+      "enum": ["0x8100", "0x88a8", "0x9100"]
     },
     "pvid": {
       "description": "Bridge-level default port VLAN ID",
@@ -82,11 +69,7 @@
     "frame_types": {
       "description": "Default accepted frame types for ports",
       "type": "string",
-      "enum": [
-        "admit-all",
-        "admit-only-untagged-and-priority-tagged",
-        "admit-only-vlan-tagged"
-      ]
+      "enum": ["admit-all", "admit-only-untagged-and-priority-tagged", "admit-only-vlan-tagged"]
     },
     "ingress_filtering": {
       "description": "Default ingress VLAN filtering for ports",
@@ -123,8 +106,6 @@
       "maximum": 9007199254740991
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

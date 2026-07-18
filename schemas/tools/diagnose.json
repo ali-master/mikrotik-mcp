@@ -32,8 +32,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "target"
-  ],
+  "required": ["target"],
   "additionalProperties": false
 }

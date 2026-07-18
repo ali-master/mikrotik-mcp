@@ -7,6 +7,7 @@
  * command path the device speaks before issuing its real command.
  */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -65,7 +66,7 @@ export const wirelessTools: ToolModule = [
       "To modify an existing interface use update_wireless_interface; to see current interfaces use list_wireless_interfaces. " +
       "Returns the created interface's full detail print including its `.id`.",
     inputSchema: {
-      name: z.string(),
+      name: interfaceName("Name for the new wireless interface (no spaces)."),
       ssid: z.string().optional(),
       disabled: z.boolean().default(false),
       comment: z.string().optional(),
@@ -668,7 +669,7 @@ For legacy systems:
       "Returns the updated interface's full detail print.",
     inputSchema: {
       name: z.string(),
-      new_name: z.string().optional(),
+      new_name: interfaceName().optional().describe("Rename the interface to this (no spaces)."),
       ssid: z.string().optional(),
       disabled: z.boolean().optional(),
       comment: z.string().optional(),

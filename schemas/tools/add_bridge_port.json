@@ -31,11 +31,7 @@
     "frame_types": {
       "description": "Accepted frame types on ingress",
       "type": "string",
-      "enum": [
-        "admit-all",
-        "admit-only-untagged-and-priority-tagged",
-        "admit-only-vlan-tagged"
-      ]
+      "enum": ["admit-all", "admit-only-untagged-and-priority-tagged", "admit-only-vlan-tagged"]
     },
     "ingress_filtering": {
       "description": "Drop ingress frames tagged with a VLAN the port isn't a member of",
@@ -70,31 +66,17 @@
     "learn": {
       "description": "MAC address learning mode",
       "type": "string",
-      "enum": [
-        "auto",
-        "yes",
-        "no"
-      ]
+      "enum": ["auto", "yes", "no"]
     },
     "edge": {
       "description": "STP edge-port setting",
       "type": "string",
-      "enum": [
-        "auto",
-        "no",
-        "yes",
-        "no-discover",
-        "yes-discover"
-      ]
+      "enum": ["auto", "no", "yes", "no-discover", "yes-discover"]
     },
     "point_to_point": {
       "description": "STP point-to-point link setting",
       "type": "string",
-      "enum": [
-        "auto",
-        "yes",
-        "no"
-      ]
+      "enum": ["auto", "yes", "no"]
     },
     "auto_isolate": {
       "description": "Keep port in discarding until a BPDU is received",
@@ -119,11 +101,7 @@
     "multicast_router": {
       "description": "IGMP-snooping multicast router state",
       "type": "string",
-      "enum": [
-        "disabled",
-        "permanent",
-        "temporary-query"
-      ]
+      "enum": ["disabled", "permanent", "temporary-query"]
     },
     "fast_leave": {
       "description": "IGMP-snooping fast leave",
@@ -142,9 +120,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "bridge",
-    "interface"
-  ],
+  "required": ["bridge", "interface"],
   "additionalProperties": false
 }

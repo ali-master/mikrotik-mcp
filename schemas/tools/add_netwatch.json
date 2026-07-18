@@ -10,12 +10,7 @@
     "type": {
       "description": "Probe type: simple, icmp, tcp-conn, or http-get",
       "type": "string",
-      "enum": [
-        "simple",
-        "icmp",
-        "tcp-conn",
-        "http-get"
-      ]
+      "enum": ["simple", "icmp", "tcp-conn", "http-get"]
     },
     "port": {
       "description": "Target port (tcp-conn/http-get types)",
@@ -51,9 +46,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "host",
-    "disabled"
-  ],
+  "required": ["host", "disabled"],
   "additionalProperties": false
 }

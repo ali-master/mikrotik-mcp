@@ -5,6 +5,7 @@
   "properties": {
     "name": {
       "type": "string",
+      "pattern": "^\\S+$",
       "description": "Unique name for the new OpenVPN server instance"
     },
     "port": {
@@ -15,17 +16,11 @@
     },
     "protocol": {
       "type": "string",
-      "enum": [
-        "tcp",
-        "udp"
-      ]
+      "enum": ["tcp", "udp"]
     },
     "mode": {
       "type": "string",
-      "enum": [
-        "ip",
-        "ethernet"
-      ]
+      "enum": ["ip", "ethernet"]
     },
     "netmask": {
       "type": "integer",
@@ -50,10 +45,7 @@
     "tls_version": {
       "description": "Accepted TLS version",
       "type": "string",
-      "enum": [
-        "any",
-        "only-1.2"
-      ]
+      "enum": ["any", "only-1.2"]
     },
     "max_mtu": {
       "type": "integer",
@@ -74,10 +66,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "port",
-    "disabled"
-  ],
+  "required": ["name", "port", "disabled"],
   "additionalProperties": false
 }

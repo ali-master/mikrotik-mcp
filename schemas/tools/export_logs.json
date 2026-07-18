@@ -15,14 +15,9 @@
     "format": {
       "default": "plain",
       "type": "string",
-      "enum": [
-        "plain",
-        "csv"
-      ]
+      "enum": ["plain", "csv"]
     }
   },
-  "required": [
-    "format"
-  ],
+  "required": ["format"],
   "additionalProperties": false
 }

@@ -8,8 +8,6 @@
       "description": "The feed id used when subscribing"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

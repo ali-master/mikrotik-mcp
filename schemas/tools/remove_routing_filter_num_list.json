@@ -8,8 +8,6 @@
       "description": "Entry id, e.g. \"*3\""
     }
   },
-  "required": [
-    "entry_id"
-  ],
+  "required": ["entry_id"],
   "additionalProperties": false
 }

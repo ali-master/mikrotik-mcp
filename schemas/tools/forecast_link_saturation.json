@@ -18,10 +18,6 @@
       "type": "number"
     }
   },
-  "required": [
-    "interface",
-    "capacity_mbps",
-    "monthly_growth_pct"
-  ],
+  "required": ["interface", "capacity_mbps", "monthly_growth_pct"],
   "additionalProperties": false
 }

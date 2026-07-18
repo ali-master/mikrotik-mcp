@@ -10,6 +10,7 @@
     },
     "name": {
       "type": "string",
+      "pattern": "^\\S+$",
       "description": "Name for the VLAN interface, e.g. 'guest'"
     },
     "subnet": {
@@ -60,15 +61,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "vlan_id",
-    "name",
-    "subnet",
-    "gateway",
-    "bridge",
-    "dhcp",
-    "internet",
-    "apply"
-  ],
+  "required": ["vlan_id", "name", "subnet", "gateway", "bridge", "dhcp", "internet", "apply"],
   "additionalProperties": false
 }

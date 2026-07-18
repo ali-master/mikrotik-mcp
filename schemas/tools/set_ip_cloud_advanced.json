@@ -8,8 +8,6 @@
       "description": "Publish the local address (true) instead of the public address (false)"
     }
   },
-  "required": [
-    "use_local_address"
-  ],
+  "required": ["use_local_address"],
   "additionalProperties": false
 }

@@ -8,8 +8,6 @@
       "description": "BGP connection name"
     }
   },
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "additionalProperties": false
 }

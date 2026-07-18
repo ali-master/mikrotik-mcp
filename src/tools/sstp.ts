@@ -1,5 +1,6 @@
 /** SSTP VPN (TLS) — `/interface sstp-server` + `/interface sstp-client`. */
 import { z } from "zod";
+import { interfaceName } from "../core/schema";
 import { executeMikrotikCommand } from "../core/connector";
 import { WRITE_IDEMPOTENT, WRITE, READ, DESTRUCTIVE, defineTool } from "../core/registry";
 import type { ToolModule } from "../core/registry";
@@ -96,7 +97,7 @@ export const sstpTools: ToolModule = [
       "Credentials are accepted but redacted from return values. " +
       "Returns the created interface detail (name, status, remote address); use the interface `name` with `get_sstp_client` or `remove_sstp_client`.",
     inputSchema: {
-      name: z.string().describe("Name for the new SSTP client interface"),
+      name: interfaceName("Name for the new SSTP client interface"),
       connect_to: z
         .string()
         .describe("Remote SSTP server address (IP or DNS name; host:port also accepted)"),

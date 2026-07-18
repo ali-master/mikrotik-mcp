@@ -24,10 +24,7 @@
     },
     "mode": {
       "type": "string",
-      "enum": [
-        "ip",
-        "ethernet"
-      ]
+      "enum": ["ip", "ethernet"]
     },
     "port": {
       "type": "integer",
@@ -36,18 +33,12 @@
     },
     "protocol": {
       "type": "string",
-      "enum": [
-        "tcp",
-        "udp"
-      ]
+      "enum": ["tcp", "udp"]
     },
     "tls_version": {
       "description": "Accepted TLS version",
       "type": "string",
-      "enum": [
-        "any",
-        "only-1.2"
-      ]
+      "enum": ["any", "only-1.2"]
     },
     "default_profile": {
       "type": "string"

@@ -22,10 +22,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "disabled_only",
-    "dynamic_only",
-    "link_local_only"
-  ],
+  "required": ["disabled_only", "dynamic_only", "link_local_only"],
   "additionalProperties": false
 }

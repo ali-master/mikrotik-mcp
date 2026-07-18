@@ -11,9 +11,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "session_id",
-    "enabled"
-  ],
+  "required": ["session_id", "enabled"],
   "additionalProperties": false
 }

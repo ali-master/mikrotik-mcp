@@ -4,7 +4,9 @@
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^\\S+$",
+      "description": "WireGuard interface name to create, e.g. 'wireguard-internal' (no spaces)."
     },
     "listen_port": {
       "type": "integer",
@@ -27,9 +29,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "disabled"
-  ],
+  "required": ["name", "disabled"],
   "additionalProperties": false
 }

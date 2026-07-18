@@ -25,17 +25,12 @@
             }
           }
         },
-        "required": [
-          "name",
-          "entityType"
-        ],
+        "required": ["name", "entityType"],
         "additionalProperties": false
       },
       "description": "Entities to create"
     }
   },
-  "required": [
-    "entities"
-  ],
+  "required": ["entities"],
   "additionalProperties": false
 }

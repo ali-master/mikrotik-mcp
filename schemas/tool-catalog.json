@@ -264,6 +264,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new VLAN interface, e.g. 'vlan100'"
           },
           "vlan_id": {
@@ -396,7 +397,9 @@
             "description": "Current name of the VLAN interface to update"
           },
           "new_name": {
-            "type": "string"
+            "description": "Rename the interface to this (no spaces).",
+            "type": "string",
+            "pattern": "^\\S+$"
           },
           "vlan_id": {
             "type": "integer",
@@ -487,6 +490,7 @@
           },
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the VLAN interface, e.g. 'guest'"
           },
           "subnet": {
@@ -556,6 +560,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new bridge, e.g. 'bridge1'"
           },
           "comment": {
@@ -727,7 +732,9 @@
             "description": "Current name of the bridge to update"
           },
           "new_name": {
-            "type": "string"
+            "description": "Rename the bridge to this (no spaces).",
+            "type": "string",
+            "pattern": "^\\S+$"
           },
           "comment": {
             "type": "string"
@@ -1139,7 +1146,9 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^\\S+$",
+            "description": "Name for the new wireless interface (no spaces)."
           },
           "ssid": {
             "type": "string"
@@ -1635,7 +1644,9 @@
             "type": "string"
           },
           "new_name": {
-            "type": "string"
+            "description": "Rename the interface to this (no spaces).",
+            "type": "string",
+            "pattern": "^\\S+$"
           },
           "ssid": {
             "type": "string"
@@ -16483,7 +16494,9 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^\\S+$",
+            "description": "WireGuard interface name to create, e.g. 'wireguard-internal' (no spaces)."
           },
           "listen_port": {
             "type": "integer",
@@ -16602,7 +16615,9 @@
             "type": "string"
           },
           "new_name": {
-            "type": "string"
+            "description": "Rename the interface to this (no spaces).",
+            "type": "string",
+            "pattern": "^\\S+$"
           },
           "listen_port": {
             "type": "integer",
@@ -17063,8 +17078,9 @@
           },
           "interface": {
             "default": "wg-mesh",
-            "description": "WireGuard interface name to create/use",
-            "type": "string"
+            "description": "WireGuard interface name to create/use (no spaces)",
+            "type": "string",
+            "pattern": "^\\S+$"
           },
           "listen_port": {
             "default": 13231,
@@ -18680,6 +18696,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new L2TP client interface"
           },
           "connect_to": {
@@ -18952,6 +18969,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new PPTP client interface"
           },
           "connect_to": {
@@ -19190,6 +19208,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new SSTP client interface"
           },
           "connect_to": {
@@ -19490,6 +19509,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Unique name for the new OpenVPN server instance"
           },
           "port": {
@@ -19729,6 +19749,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new OpenVPN client interface"
           },
           "connect_to": {
@@ -19932,6 +19953,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new GRE tunnel interface, e.g. 'gre-to-hq'"
           },
           "remote_address": {
@@ -20065,6 +20087,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new IPIP tunnel interface, e.g. 'ipip-to-hq'"
           },
           "remote_address": {
@@ -20198,6 +20221,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new EoIP tunnel interface, e.g. 'eoip-to-hq'"
           },
           "remote_address": {
@@ -20350,6 +20374,7 @@
         "properties": {
           "name": {
             "type": "string",
+            "pattern": "^\\S+$",
             "description": "Name for the new VXLAN interface, e.g. 'vxlan1'"
           },
           "vni": {

@@ -53,10 +53,6 @@
       "type": "boolean"
     }
   },
-  "required": [
-    "name",
-    "parent",
-    "disabled"
-  ],
+  "required": ["name", "parent", "disabled"],
   "additionalProperties": false
 }
