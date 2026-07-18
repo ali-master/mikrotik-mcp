@@ -35,7 +35,9 @@ export async function notify(title: string, message: string): Promise<void> {
   if (process.platform !== "darwin") {
     if (!warnedUnsupported) {
       warnedUnsupported = true;
-      console.warn("notify: native notifications are macOS-only; skipping on this platform.");
+      console.warn(
+        "notify: native notifications are macOS-only; skipping on this platform.",
+      );
     }
     return;
   }

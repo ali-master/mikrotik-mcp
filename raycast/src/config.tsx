@@ -400,7 +400,10 @@ function HistoryView({ onReload }: { onReload: () => void }) {
         { id: v.id },
       );
       if (!res.ok) throw new Error(res.error ?? "Delete was rejected");
-      void showToast({ style: Toast.Style.Success, title: "Checkpoint deleted" });
+      void showToast({
+        style: Toast.Style.Success,
+        title: "Checkpoint deleted",
+      });
       revalidate();
     } catch (e) {
       await showFailureToast(e, { title: "Could not delete checkpoint" });
