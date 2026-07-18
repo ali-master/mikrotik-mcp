@@ -786,14 +786,32 @@ function App(): ReactNode {
     useCallback((m: LiveMode) => setLiveMode(m), []),
   );
 
-  // Initial load. Pull as many events as the live feed can hold (`FEED_CAP`) so a
-  // refresh restores the same depth the in-memory feed keeps — not a smaller
-  // slice that makes the count appear to shrink after every reload.
-  useEffect(() => {
+  // Pull as many events as the live feed can hold (`FEED_CAP`) so the depth
+  // matches the in-memory feed — not a smaller slice that makes the count appear
+  // to shrink. Used both on mount and when the tab regains focus.
+  const loadBacklog = useCallback(() => {
+    if (pausedRef.current) return;
     void api<{ events: ToolEvent[] }>(`/api/events?limit=${FEED_CAP}`)
       .then((r) => setFeed(r.events))
       .catch(() => {});
   }, []);
+
+  // Initial load.
+  useEffect(() => {
+    loadBacklog();
+  }, [loadBacklog]);
+
+  // Returning to the tab after a while: the live socket revives itself (see
+  // useLiveStream), but events that arrived while we were away were never pushed —
+  // refetch the backlog so the feed catches up immediately instead of resuming
+  // from a stale point.
+  useEffect(() => {
+    const onVisible = (): void => {
+      if (document.visibilityState === "visible") loadBacklog();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadBacklog]);
 
   // Analytics + devices polling.
   const refreshStats = useCallback(() => {
@@ -931,14 +949,36 @@ function App(): ReactNode {
   const allShownSelected = shownIds.length > 0 && shownIds.every((id) => selectedIds.has(id));
   const someShownSelected = !allShownSelected && shownIds.some((id) => selectedIds.has(id));
 
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  // Range selection: the last row toggled is the "anchor". Holding Shift while
+  // toggling another row selects every row between the anchor and it (inclusive).
+  // The anchor is tracked by id (not index) so it survives new events prepending
+  // to the feed between the two clicks. `shiftHeldRef` is set on the checkbox's
+  // pointer-down because Radix's onCheckedChange doesn't carry the mouse event.
+  const anchorIdRef = useRef<string | null>(null);
+  const shiftHeldRef = useRef(false);
+  const selectRow = useCallback(
+    (id: string) => {
+      const shift = shiftHeldRef.current;
+      shiftHeldRef.current = false;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        const anchor = anchorIdRef.current;
+        if (shift && anchor && anchor !== id) {
+          const a = shownIds.indexOf(anchor);
+          const b = shownIds.indexOf(id);
+          if (a !== -1 && b !== -1) {
+            for (let i = Math.min(a, b); i <= Math.max(a, b); i++) next.add(shownIds[i]);
+            return next;
+          }
+        }
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        anchorIdRef.current = id;
+        return next;
+      });
+    },
+    [shownIds],
+  );
 
   const toggleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
@@ -969,14 +1009,16 @@ function App(): ReactNode {
     }
   }, [selectedIds]);
 
+  // Export the SELECTED rows when any are checked, otherwise every visible row.
   const exportRows = (kind: "csv" | "json"): void => {
+    const rows = selectedIds.size ? visible.filter((e) => selectedIds.has(e.id)) : visible;
     if (kind === "json") {
-      download("mcp-events.json", JSON.stringify(visible, null, 2), "application/json");
+      download("mcp-events.json", JSON.stringify(rows, null, 2), "application/json");
       return;
     }
     const cols = ["ts", "tool", "risk", "device", "durationMs", "isError", "error", "reason"];
     const esc = (v: string): string => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-    const body = visible
+    const body = rows
       .map((e) =>
         [
           new Date(e.ts).toISOString(),
@@ -1607,11 +1649,29 @@ function App(): ReactNode {
               >
                 {paused ? "Resume" : "Pause"}
               </Button>
-              <Button size="sm" ghost onClick={() => exportRows("csv")}>
-                CSV
+              <Button
+                size="sm"
+                ghost
+                onClick={() => exportRows("csv")}
+                title={
+                  selectedIds.size
+                    ? `Export ${selectedIds.size} selected row${selectedIds.size === 1 ? "" : "s"} as CSV`
+                    : "Export all visible rows as CSV"
+                }
+              >
+                CSV{selectedIds.size ? ` (${selectedIds.size})` : ""}
               </Button>
-              <Button size="sm" ghost onClick={() => exportRows("json")}>
-                JSON
+              <Button
+                size="sm"
+                ghost
+                onClick={() => exportRows("json")}
+                title={
+                  selectedIds.size
+                    ? `Export ${selectedIds.size} selected row${selectedIds.size === 1 ? "" : "s"} as JSON`
+                    : "Export all visible rows as JSON"
+                }
+              >
+                JSON{selectedIds.size ? ` (${selectedIds.size})` : ""}
               </Button>
               <Button
                 size="sm"
@@ -1718,9 +1778,12 @@ function App(): ReactNode {
                       >
                         <TableCell onClick={(ev) => ev.stopPropagation()}>
                           <Checkbox
-                            aria-label="Select row"
+                            aria-label="Select row (Shift-click to select a range)"
                             checked={selectedIds.has(e.id)}
-                            onCheckedChange={() => toggleSelect(e.id)}
+                            onPointerDown={(ev) => {
+                              shiftHeldRef.current = ev.shiftKey;
+                            }}
+                            onCheckedChange={() => selectRow(e.id)}
                           />
                         </TableCell>
                         <TableCell className="tabular-nums">{clock(e.ts)}</TableCell>
