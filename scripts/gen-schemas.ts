@@ -13,7 +13,7 @@
  *   schemas/tools/<name>.json       — one input JSON Schema per tool
  *   schemas/README.md              — what these files are
  */
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import { MikrotikConfigSchema } from "../src/config";
@@ -31,11 +31,11 @@ function riskOf(a: {
   return a.idempotentHint ? "write-idempotent" : "write";
 }
 
-const toolsDir = join(SCHEMAS_DIR, "tools");
-rmSync(toolsDir, { recursive: true, force: true });
-mkdirSync(toolsDir, { recursive: true });
-
+// Build EVERYTHING in memory first. All the code that can throw (z.toJSONSchema
+// on each tool + the config schema) runs here, BEFORE any file is deleted — so a
+// generation failure aborts with the existing schemas/ untouched.
 const catalog: unknown[] = [];
+const toolFiles: { name: string; content: string }[] = [];
 let count = 0;
 
 for (const mod of allToolModules) {
@@ -53,23 +53,40 @@ for (const mod of allToolModules) {
       inputSchema,
     };
     catalog.push(entry);
-    writeFileSync(
-      join(toolsDir, `${tool.name}.json`),
-      `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", title: tool.name, ...inputSchema }, null, 2)}\n`,
-    );
+    toolFiles.push({
+      name: tool.name,
+      content: `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", title: tool.name, ...inputSchema }, null, 2)}\n`,
+    });
     count++;
   }
 }
 
-writeFileSync(
-  join(SCHEMAS_DIR, "tool-catalog.json"),
-  `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", version: VERSION, generated: "by scripts/gen-schemas.ts — do not edit by hand", toolCount: count, tools: catalog }, null, 2)}\n`,
-);
+const catalogContent = `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", version: VERSION, generated: "by scripts/gen-schemas.ts — do not edit by hand", toolCount: count, tools: catalog }, null, 2)}\n`;
 
-writeFileSync(
-  join(SCHEMAS_DIR, "config.schema.json"),
-  `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", title: "MikrotikConfig", ...z.toJSONSchema(MikrotikConfigSchema, { target: "draft-2020-12" }) }, null, 2)}\n`,
-);
+const configContent = `${JSON.stringify({ $schema: "https://json-schema.org/draft/2020-12/schema", title: "MikrotikConfig", ...z.toJSONSchema(MikrotikConfigSchema, { target: "draft-2020-12" }) }, null, 2)}\n`;
+
+// Only now, with all content generated, touch the filesystem. Write the per-tool
+// files into a fresh temp dir and atomically swap it in: the live schemas/tools/
+// is removed only in the instant before the rename, so a failure mid-write leaves
+// the old dir in place, never an empty one. The temp dir is cleaned up on error.
+const toolsDir = join(SCHEMAS_DIR, "tools");
+const toolsTmp = join(SCHEMAS_DIR, ".tools.tmp");
+rmSync(toolsTmp, { recursive: true, force: true });
+mkdirSync(toolsTmp, { recursive: true });
+try {
+  for (const f of toolFiles) {
+    writeFileSync(join(toolsTmp, `${f.name}.json`), f.content);
+  }
+  rmSync(toolsDir, { recursive: true, force: true });
+  renameSync(toolsTmp, toolsDir);
+} catch (e) {
+  rmSync(toolsTmp, { recursive: true, force: true });
+  throw e;
+}
+
+writeFileSync(join(SCHEMAS_DIR, "tool-catalog.json"), catalogContent);
+
+writeFileSync(join(SCHEMAS_DIR, "config.schema.json"), configContent);
 
 writeFileSync(
   join(SCHEMAS_DIR, "README.md"),
