@@ -108,8 +108,11 @@ function deviceSelectorDescription(
       .join("\n");
     return (
       "Which configured MikroTik device to run this on. Pass the EXACT config key (or its label) " +
-      "that matches the user's wording — these are different physical routers, so never substitute " +
-      'one for another (e.g. "Ali Home" is NOT "home"). Devices known at startup:\n' +
+      "that matches the user's wording — these are different physical routers in different places, " +
+      "so never substitute one for another, and never swap in a different endpoint, country, or " +
+      'role than the user named (e.g. "Ali Home" is NOT "home"; a Netherlands VPS is NOT a Germany ' +
+      "VPS). If the user's wording does not map to EXACTLY one row below, ask which device instead " +
+      "of guessing. Devices known at startup:\n" +
       `${rows}\n` +
       "This list is a startup snapshot — devices can be added at runtime (e.g. from the dashboard), " +
       "so call list_mikrotik_devices for the authoritative current set if a name isn't listed here. " +
