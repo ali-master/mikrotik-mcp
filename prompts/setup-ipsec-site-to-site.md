@@ -23,6 +23,10 @@ Local subnet: {{local_subnet}}
 Remote subnet: {{remote_subnet}}
 Peer address: {{peer_address}}
 
+## Back up before the first write
+
+Before your FIRST configuration change in this workflow — the tunnel/interface, keys/peers, addresses, routes, NAT, or any mangle or firewall filter rule — ASK the user "Create a local backup first?" and, on yes, call `create_local_backup` for each device you are about to change. It saves a host-side `.rsc` restore point you can `restore_local_backup` if the change cuts the link. Discovery and the read-only fact-gathering steps below need no backup — do it once, right before you start writing. Tunnel creation always warrants a backup; you may skip it only for a minor, non-critical mangle/filter tweak the user explicitly waves off.
+
 Build order (use the `create_ipsec_*` tools; keep phase-1/phase-2 parameters
 identical on both ends):
 

@@ -60,7 +60,18 @@ change, use diff_config_snapshots (from=latest, to=live) to confirm exactly what
 changed, and if something is wrong, get_config_snapshot returns the prior
 \`/export\` text to restore from. Do NOT use create_backup/create_export for this
 pre-change restore point — those write files to the device's flash; prefer the
-local snapshot to keep the device's disk clean.`;
+local snapshot to keep the device's disk clean.
+
+Local backup before high-risk edits — before CREATING A VPN TUNNEL, or before you
+start CHANGING ANY MANGLE OR FIREWALL FILTER RULE, ASK the user whether to create a
+restorable local backup first ("Create a local backup before this change?"). On
+yes, call create_local_backup for each device you will change (a host-side .rsc in
+the MCP vault — NOT on the device's flash — that you can restore_local_backup if the
+change cuts you off). These edits (tunnel interfaces/peers/routes, routing marks,
+filter rules) are the ones most likely to lock you out, which is why the restorable
+copy is worth it on top of the diff snapshot above. Skip the backup ONLY when the
+mangle/filter edit is minor and non-critical and the user declines — do not silently
+skip it, and never skip it for tunnel creation.`;
 
 const MULTI_DEVICE_INSTRUCTIONS = `
 
